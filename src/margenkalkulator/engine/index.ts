@@ -26,6 +26,9 @@ export type {
   DummyCatalog,
   WizardStep,
   WizardValidation,
+  // Slice C additions
+  TariffFamily,
+  ContractVariant,
 } from "./types";
 
 // Catalog
@@ -65,6 +68,8 @@ export {
   calculateOffer,
   isPromoValid,
   isFixedPromoValid,
+  // Slice C additions
+  resolveTeamDealPricing,
 } from "./pricing";
 
 // Catalog Resolver (Phase 2)

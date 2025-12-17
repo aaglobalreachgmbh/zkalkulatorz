@@ -8,6 +8,7 @@ export const mobilePrimeTariffs: MobileTariff[] = [
   {
     id: "PRIME_S",
     name: "Business Prime S",
+    family: "prime",
     tier: "S",
     productLine: "PRIME",
     baseNet: 29.99,
@@ -27,6 +28,7 @@ export const mobilePrimeTariffs: MobileTariff[] = [
   {
     id: "PRIME_M",
     name: "Business Prime M",
+    family: "prime",
     tier: "M",
     productLine: "PRIME",
     baseNet: 39.99,
@@ -47,6 +49,7 @@ export const mobilePrimeTariffs: MobileTariff[] = [
   {
     id: "PRIME_L",
     name: "Business Prime L",
+    family: "prime",
     tier: "L",
     productLine: "PRIME",
     baseNet: 49.99,
@@ -68,6 +71,7 @@ export const mobilePrimeTariffs: MobileTariff[] = [
   {
     id: "PRIME_XL",
     name: "Business Prime XL",
+    family: "prime",
     tier: "XL",
     productLine: "PRIME",
     baseNet: 69.99,

@@ -1,9 +1,10 @@
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { CalculationResult, ViewMode, OfferOptionState } from "../../engine/types";
 import { OptionCard } from "../components/OptionCard";
 import { ViewModeToggle } from "../components/ViewModeToggle";
-import { ArrowLeftRight } from "lucide-react";
+import { ArrowLeftRight, Sparkles } from "lucide-react";
 
 interface CompareStepProps {
   option1: OfferOptionState;
@@ -68,6 +69,7 @@ export function CompareStep({
           viewMode={viewMode}
           isActive={activeOption === 1}
           onCopy={() => onCopyOption(1, 2)}
+          gkEligible={result1.gkEligible}
         />
         <OptionCard
           title="Option 2"
@@ -75,6 +77,7 @@ export function CompareStep({
           viewMode={viewMode}
           isActive={activeOption === 2}
           onCopy={() => onCopyOption(2, 1)}
+          gkEligible={result2.gkEligible}
         />
       </div>
 
@@ -106,6 +109,29 @@ export function CompareStep({
           <div className="text-muted-foreground">Summe 24M (brutto)</div>
           <div className="text-center">{result1.totals.sumTermGross.toFixed(2)} €</div>
           <div className="text-center">{result2.totals.sumTermGross.toFixed(2)} €</div>
+
+          {/* GK Eligibility Row */}
+          <div className="text-muted-foreground">GK Konvergenz</div>
+          <div className="text-center">
+            {result1.gkEligible ? (
+              <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-200">
+                <Sparkles className="w-3 h-3 mr-1" />
+                Berechtigt
+              </Badge>
+            ) : (
+              <span className="text-muted-foreground">—</span>
+            )}
+          </div>
+          <div className="text-center">
+            {result2.gkEligible ? (
+              <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-200">
+                <Sparkles className="w-3 h-3 mr-1" />
+                Berechtigt
+              </Badge>
+            ) : (
+              <span className="text-muted-foreground">—</span>
+            )}
+          </div>
 
           {viewMode === "dealer" && (
             <>

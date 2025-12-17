@@ -1,0 +1,24 @@
+// ============================================
+// Business Dataset v2025-09 - Index
+// ============================================
+
+import type { Catalog } from "../../../../margenkalkulator/engine/types";
+import { mobilePrimeTariffs } from "./mobilePrime";
+import { businessPromos } from "./promos";
+import { businessSubVariants } from "./subVariants";
+import { fixedNetCableProducts } from "./fixedNetCable";
+
+export const businessCatalog2025_09: Catalog = {
+  version: "business-2025-09",
+  validFrom: "2025-09-01",
+  subVariants: businessSubVariants,
+  mobileTariffs: mobilePrimeTariffs,
+  promos: businessPromos,
+  fixedNetProducts: fixedNetCableProducts,
+};
+
+// Re-export individual modules
+export { mobilePrimeTariffs } from "./mobilePrime";
+export { businessPromos } from "./promos";
+export { businessSubVariants } from "./subVariants";
+export { fixedNetCableProducts } from "./fixedNetCable";

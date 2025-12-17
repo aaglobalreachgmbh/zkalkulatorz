@@ -46,6 +46,7 @@ export type OfferOptionMeta = {
   vatRate: number;       // default 0.19
   termMonths: number;    // default 24
   datasetVersion: DatasetVersion;
+  asOfISO?: string;      // Slice B: deterministic date for promo validity (e.g., "2025-12-17")
 };
 
 export type HardwareState = {
@@ -129,14 +130,21 @@ export type MobileTariff = {
   omoDeduction?: number;        // Phase 2: OMO25 specific deduction amount
 };
 
-export type PromoType = "NONE" | "INTRO_PRICE" | "PCT_OFF_BASE";
+export type PromoType = "NONE" | "INTRO_PRICE" | "PCT_OFF_BASE" | "ABS_OFF_BASE";
 
 export type Promo = {
   id: string;
   type: PromoType;
   label: string;
+  appliesTo?: "mobile" | "fixed" | "both";  // Slice B: target scope
   durationMonths: number;
-  value: number; // fixed price for INTRO, percentage (0-1) for PCT_OFF
+  value: number;                   // fixed price for INTRO, percentage (0-1) for PCT_OFF
+  amountNetPerMonth?: number;      // Slice B: ABS_OFF_BASE absolute discount
+  // Time-based validity (Slice B)
+  validFromISO?: string;           // e.g., "2025-09-01"
+  validUntilISO?: string;          // e.g., "2025-12-18"
+  eligibilityNote?: string;        // Display hint
+  sourceRef?: string;              // Source URL/doc reference
 };
 
 export type FixedNetProductLine = "RBI" | "RBIP" | "DSL" | "FIBER";
@@ -152,6 +160,8 @@ export type FixedNetProduct = {
     type: PromoType;
     durationMonths: number;
     value: number;
+    validFromISO?: string;   // Slice B: validity start
+    validUntilISO?: string;  // Slice B: validity end
   };
   // Phase 2 extensions
   productLine?: FixedNetProductLine;

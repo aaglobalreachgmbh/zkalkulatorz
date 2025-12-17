@@ -1,7 +1,7 @@
 // ============================================
-// Fixed Net Cable Products (RBI + RBIP) - 2025-12-17
+// Fixed Net Cable Products (RBI + RBIP) - Slice B
 // Source: https://www.vodafone.de/business/media/preisliste-und-leistungsbeschreibung-kh-00745-b8-00.pdf
-// Stand: 26.11.2025
+// Stand: 26.11.2025, Aktion gültig bis 28.01.2026
 // ============================================
 
 import type { FixedNetProduct } from "../../../../margenkalkulator/engine/types";
@@ -14,6 +14,10 @@ const SETUP_FEE_NET = 19.90;   // Bereitstellungsentgelt
 const SHIPPING_FEE_NET = 8.40; // Versandkosten Hardware
 const TOTAL_ONETIME_NET = SETUP_FEE_NET + SHIPPING_FEE_NET; // 28.30€
 
+// Promo validity (Slice B)
+const PROMO_VALID_FROM = "2025-11-26";
+const PROMO_VALID_UNTIL = "2026-01-28";
+
 export const fixedNetCableProducts: FixedNetProduct[] = [
   // ============================================
   // RBI Cable Products (Internet only, Vodafone Station)
@@ -23,7 +27,7 @@ export const fixedNetCableProducts: FixedNetProduct[] = [
     name: "Red Business Internet Cable 100",
     productLine: "RBI",
     speed: 100,
-    monthlyNet: 29.99,
+    monthlyNet: 29.90,  // Corrected: official price
     oneTimeNet: TOTAL_ONETIME_NET,
     setupWaived: false,
     routerType: "VODAFONE_STATION",
@@ -37,8 +41,10 @@ export const fixedNetCableProducts: FixedNetProduct[] = [
     ],
     promo: {
       type: "INTRO_PRICE",
-      durationMonths: 6,
-      value: 19.99, // Aktionspreis Monat 1-6
+      durationMonths: 6,  // Cable 100: 6 Monate Intro
+      value: 19.90,       // Corrected: 19.90€ per Vodafone Preisliste
+      validFromISO: PROMO_VALID_FROM,
+      validUntilISO: PROMO_VALID_UNTIL,
     },
   },
   {
@@ -46,7 +52,7 @@ export const fixedNetCableProducts: FixedNetProduct[] = [
     name: "Red Business Internet Cable 300",
     productLine: "RBI",
     speed: 300,
-    monthlyNet: 39.99,
+    monthlyNet: 39.90,  // Corrected
     oneTimeNet: TOTAL_ONETIME_NET,
     setupWaived: false,
     routerType: "VODAFONE_STATION",
@@ -59,9 +65,11 @@ export const fixedNetCableProducts: FixedNetProduct[] = [
       "24 Monate Laufzeit",
     ],
     promo: {
-      type: "PCT_OFF_BASE",
-      durationMonths: 24,
-      value: 0.5, // 50% Rabatt für 24 Monate
+      type: "INTRO_PRICE",
+      durationMonths: 12,  // Cable 300/500: 12 Monate Intro
+      value: 19.90,
+      validFromISO: PROMO_VALID_FROM,
+      validUntilISO: PROMO_VALID_UNTIL,
     },
   },
   {
@@ -69,7 +77,7 @@ export const fixedNetCableProducts: FixedNetProduct[] = [
     name: "Red Business Internet Cable 500",
     productLine: "RBI",
     speed: 500,
-    monthlyNet: 49.99,
+    monthlyNet: 49.90,  // Corrected
     oneTimeNet: TOTAL_ONETIME_NET,
     setupWaived: false,
     routerType: "VODAFONE_STATION",
@@ -82,9 +90,11 @@ export const fixedNetCableProducts: FixedNetProduct[] = [
       "24 Monate Laufzeit",
     ],
     promo: {
-      type: "PCT_OFF_BASE",
-      durationMonths: 24,
-      value: 0.5,
+      type: "INTRO_PRICE",
+      durationMonths: 12,
+      value: 19.90,
+      validFromISO: PROMO_VALID_FROM,
+      validUntilISO: PROMO_VALID_UNTIL,
     },
   },
   {
@@ -92,7 +102,7 @@ export const fixedNetCableProducts: FixedNetProduct[] = [
     name: "Red Business Internet Cable 1000",
     productLine: "RBI",
     speed: 1000,
-    monthlyNet: 69.99,
+    monthlyNet: 54.90,  // Corrected: official price for 1000
     oneTimeNet: TOTAL_ONETIME_NET,
     setupWaived: false,
     routerType: "VODAFONE_STATION",
@@ -106,9 +116,11 @@ export const fixedNetCableProducts: FixedNetProduct[] = [
       "24 Monate Laufzeit",
     ],
     promo: {
-      type: "PCT_OFF_BASE",
-      durationMonths: 24,
-      value: 0.5,
+      type: "INTRO_PRICE",
+      durationMonths: 12,
+      value: 14.90,  // Special: 14.90€ for Cable 1000
+      validFromISO: PROMO_VALID_FROM,
+      validUntilISO: PROMO_VALID_UNTIL,
     },
   },
 
@@ -120,7 +132,7 @@ export const fixedNetCableProducts: FixedNetProduct[] = [
     name: "Red Business Internet & Phone Cable 100",
     productLine: "RBIP",
     speed: 100,
-    monthlyNet: 34.99,
+    monthlyNet: 34.90,  // Corrected
     oneTimeNet: TOTAL_ONETIME_NET,
     setupWaived: false,
     routerType: "FRITZBOX",
@@ -128,7 +140,7 @@ export const fixedNetCableProducts: FixedNetProduct[] = [
     features: [
       "100 Mbit/s Download",
       "50 Mbit/s Upload",
-      "FRITZ!Box 6660/6690 inklusive",
+      "FRITZ!Box 6690 inklusive",
       "Telefon-Flat Deutschland Festnetz",
       "Feste IP optional (+5€/mtl.)",
       "24 Monate Laufzeit",
@@ -136,7 +148,9 @@ export const fixedNetCableProducts: FixedNetProduct[] = [
     promo: {
       type: "INTRO_PRICE",
       durationMonths: 6,
-      value: 24.99,
+      value: 19.90,
+      validFromISO: PROMO_VALID_FROM,
+      validUntilISO: PROMO_VALID_UNTIL,
     },
   },
   {
@@ -144,7 +158,7 @@ export const fixedNetCableProducts: FixedNetProduct[] = [
     name: "Red Business Internet & Phone Cable 300",
     productLine: "RBIP",
     speed: 300,
-    monthlyNet: 44.99,
+    monthlyNet: 44.90,  // Corrected
     oneTimeNet: TOTAL_ONETIME_NET,
     setupWaived: false,
     routerType: "FRITZBOX",
@@ -152,15 +166,17 @@ export const fixedNetCableProducts: FixedNetProduct[] = [
     features: [
       "300 Mbit/s Download",
       "50 Mbit/s Upload",
-      "FRITZ!Box 6660/6690 inklusive",
+      "FRITZ!Box 6690 inklusive",
       "Telefon-Flat Deutschland Festnetz",
       "Feste IP optional (+5€/mtl.)",
       "24 Monate Laufzeit",
     ],
     promo: {
-      type: "PCT_OFF_BASE",
-      durationMonths: 24,
-      value: 0.5,
+      type: "INTRO_PRICE",
+      durationMonths: 12,
+      value: 19.90,
+      validFromISO: PROMO_VALID_FROM,
+      validUntilISO: PROMO_VALID_UNTIL,
     },
   },
   {
@@ -168,7 +184,7 @@ export const fixedNetCableProducts: FixedNetProduct[] = [
     name: "Red Business Internet & Phone Cable 500",
     productLine: "RBIP",
     speed: 500,
-    monthlyNet: 54.99,
+    monthlyNet: 54.90,  // Corrected
     oneTimeNet: TOTAL_ONETIME_NET,
     setupWaived: false,
     routerType: "FRITZBOX",
@@ -176,16 +192,18 @@ export const fixedNetCableProducts: FixedNetProduct[] = [
     features: [
       "500 Mbit/s Download",
       "50 Mbit/s Upload",
-      "FRITZ!Box 6660/6690 inklusive",
+      "FRITZ!Box 6690 inklusive",
       "Telefon-Flat Deutschland Festnetz",
       "Feste IP inklusive",
       "Priority Support",
       "24 Monate Laufzeit",
     ],
     promo: {
-      type: "PCT_OFF_BASE",
-      durationMonths: 24,
-      value: 0.5,
+      type: "INTRO_PRICE",
+      durationMonths: 12,
+      value: 19.90,
+      validFromISO: PROMO_VALID_FROM,
+      validUntilISO: PROMO_VALID_UNTIL,
     },
   },
   {
@@ -193,7 +211,7 @@ export const fixedNetCableProducts: FixedNetProduct[] = [
     name: "Red Business Internet & Phone Cable 1000",
     productLine: "RBIP",
     speed: 1000,
-    monthlyNet: 74.99,
+    monthlyNet: 59.90,  // Corrected
     oneTimeNet: TOTAL_ONETIME_NET,
     setupWaived: false,
     routerType: "FRITZBOX",
@@ -208,9 +226,11 @@ export const fixedNetCableProducts: FixedNetProduct[] = [
       "24 Monate Laufzeit",
     ],
     promo: {
-      type: "PCT_OFF_BASE",
-      durationMonths: 24,
-      value: 0.5,
+      type: "INTRO_PRICE",
+      durationMonths: 12,
+      value: 14.90,  // Special: 14.90€ for Cable 1000
+      validFromISO: PROMO_VALID_FROM,
+      validUntilISO: PROMO_VALID_UNTIL,
     },
   },
 ];

@@ -59,9 +59,25 @@ export {
   calculateFixedNetMonthlyForMonth,
   calculateHardwareAmortization,
   calculateDealerEconomics,
+  calculateDealerEconomicsLegacy,
   generateBreakdown,
   calculateOffer,
 } from "./pricing";
+
+// Catalog Resolver (Phase 2)
+export {
+  getCatalog,
+  getSubVariantFromCatalog,
+  getMobileTariffFromCatalog,
+  getPromoFromCatalog,
+  getFixedNetProductFromCatalog,
+  listSubVariants,
+  listMobileTariffs,
+  listPromos,
+  listFixedNetProducts,
+  checkGKEligibility,
+  getOMODeduction,
+} from "./catalogResolver";
 
 // ============================================
 // Default State Factory
@@ -70,6 +86,35 @@ export {
 import type { OfferOptionState } from "./types";
 
 export function createDefaultOptionState(): OfferOptionState {
+  return {
+    meta: {
+      currency: "EUR",
+      vatRate: 0.19,
+      termMonths: 24,
+      datasetVersion: "business-2025-09",
+    },
+    hardware: {
+      name: "",
+      ekNet: 0,
+      amortize: false,
+      amortMonths: 24,
+    },
+    mobile: {
+      tariffId: "PRIME_S",
+      subVariantId: "SIM_ONLY",
+      promoId: "NONE",
+      contractType: "new",
+      quantity: 1,
+    },
+    fixedNet: {
+      enabled: false,
+      productId: "RBI_100",
+    },
+  };
+}
+
+// Legacy function for tests that need dummy data
+export function createDummyOptionState(): OfferOptionState {
   return {
     meta: {
       currency: "EUR",

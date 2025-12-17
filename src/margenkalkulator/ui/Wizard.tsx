@@ -228,6 +228,13 @@ export function Wizard() {
               <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
           </div>
+          
+          {/* Dataset Version Footer (Debug) */}
+          <div className="text-center mt-2">
+            <span className="text-xs text-muted-foreground/50">
+              Dataset: {activeState.meta.datasetVersion}
+            </span>
+          </div>
         </div>
       </footer>
     </div>

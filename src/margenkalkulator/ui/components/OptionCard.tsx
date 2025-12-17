@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import { Copy } from "lucide-react";
 import { useState } from "react";
 import type { CalculationResult, ViewMode } from "../../engine/types";
@@ -13,6 +14,7 @@ interface OptionCardProps {
   viewMode: ViewMode;
   onCopy?: () => void;
   isActive?: boolean;
+  gkEligible?: boolean;
 }
 
 export function OptionCard({ 
@@ -20,7 +22,8 @@ export function OptionCard({
   result, 
   viewMode, 
   onCopy,
-  isActive = false 
+  isActive = false,
+  gkEligible = false
 }: OptionCardProps) {
   const [showDetails, setShowDetails] = useState(false);
 
@@ -28,7 +31,14 @@ export function OptionCard({
     <Card className={`${isActive ? "ring-2 ring-primary" : ""}`}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">{title}</CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle className="text-lg">{title}</CardTitle>
+            {gkEligible && (
+              <Badge variant="secondary" className="text-xs">
+                GK Konvergenz
+              </Badge>
+            )}
+          </div>
           {onCopy && (
             <Button
               variant="ghost"

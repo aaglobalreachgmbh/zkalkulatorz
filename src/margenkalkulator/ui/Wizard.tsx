@@ -1,12 +1,18 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Check } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, AlertTriangle } from "lucide-react";
 import type { OfferOptionState, ViewMode, WizardStep, CalculationResult } from "../engine/types";
 import { createDefaultOptionState, calculateOffer } from "../engine";
+import { useWizardValidation } from "../hooks/useWizardValidation";
+import { useLocalStorageDraft, type DraftState } from "../hooks/useLocalStorageDraft";
+import { useOfferExport } from "../hooks/useOfferExport";
 import { HardwareStep } from "./steps/HardwareStep";
 import { MobileStep } from "./steps/MobileStep";
 import { FixedNetStep } from "./steps/FixedNetStep";
 import { CompareStep } from "./steps/CompareStep";
+import { GlobalControls } from "./components/GlobalControls";
+import { ValidationWarning } from "./components/ValidationWarning";
+import { useToast } from "@/hooks/use-toast";
 
 const STEPS: { id: WizardStep; label: string }[] = [
   { id: "hardware", label: "Hardware" },
@@ -16,6 +22,7 @@ const STEPS: { id: WizardStep; label: string }[] = [
 ];
 
 export function Wizard() {
+  const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState<WizardStep>("hardware");
   const [activeOption, setActiveOption] = useState<1 | 2>(1);
   const [viewMode, setViewMode] = useState<ViewMode>("dealer");
@@ -32,19 +39,36 @@ export function Wizard() {
   const result2 = useMemo(() => calculateOffer(option2), [option2]);
 
   // Validation
-  const validateStep = useCallback((step: WizardStep): { valid: boolean; errors: string[] } => {
-    const errors: string[] = [];
-    
-    if (step === "mobile") {
-      if (!activeState.mobile.tariffId) {
-        errors.push("Bitte wählen Sie einen Tarif");
-      }
-    }
-    
-    return { valid: errors.length === 0, errors };
-  }, [activeState]);
+  const validation = useWizardValidation(activeState);
 
-  const canProceed = validateStep(currentStep).valid;
+  // Draft persistence
+  const handleLoadDraft = useCallback((draft: DraftState) => {
+    setOption1(draft.option1);
+    setOption2(draft.option2);
+    setActiveOption(draft.activeOption);
+    setViewMode(draft.viewMode);
+    toast({
+      title: "Entwurf geladen",
+      description: "Ihr letzter Entwurf wurde wiederhergestellt.",
+    });
+  }, [toast]);
+
+  const draftControls = useLocalStorageDraft(
+    { option1, option2, activeOption, viewMode },
+    handleLoadDraft
+  );
+
+  // Export/Import
+  const exportControls = useOfferExport();
+
+  const handleImportSuccess = useCallback((opt1: OfferOptionState, opt2: OfferOptionState) => {
+    setOption1(opt1);
+    setOption2(opt2);
+    toast({
+      title: "Import erfolgreich",
+      description: "Das Angebot wurde importiert.",
+    });
+  }, [toast]);
 
   // Navigation
   const goToStep = (step: WizardStep) => {
@@ -68,7 +92,14 @@ export function Wizard() {
     const source = from === 1 ? option1 : option2;
     const setter = to === 1 ? setOption1 : setOption2;
     setter(JSON.parse(JSON.stringify(source)));
+    toast({
+      title: "Option kopiert",
+      description: `Option ${from} wurde nach Option ${to} kopiert.`,
+    });
   };
+
+  const canProceed = validation.canProceed(currentStep);
+  const currentValidation = validation.steps[currentStep];
 
   // Render current step
   const renderStep = () => {
@@ -114,7 +145,7 @@ export function Wizard() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4">
@@ -127,6 +158,20 @@ export function Wizard() {
         </div>
       </header>
 
+      {/* Global Controls */}
+      <GlobalControls
+        activeOption={activeOption}
+        onActiveOptionChange={setActiveOption}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        option1={option1}
+        option2={option2}
+        onImportSuccess={handleImportSuccess}
+        draftControls={draftControls}
+        exportControls={exportControls}
+        showOptionToggle={currentStep !== "compare"}
+      />
+
       {/* Stepper */}
       <nav className="border-b bg-card/50">
         <div className="container mx-auto px-4">
@@ -134,7 +179,8 @@ export function Wizard() {
             {STEPS.map((step, idx) => {
               const isActive = step.id === currentStep;
               const isPast = idx < currentStepIndex;
-              const isFuture = idx > currentStepIndex;
+              const stepStatus = validation.getStepStatus(step.id);
+              const hasIssue = stepStatus === "error" || stepStatus === "warning";
 
               return (
                 <button
@@ -157,10 +203,18 @@ export function Wizard() {
                       ? "bg-primary-foreground text-primary" 
                       : isPast 
                         ? "bg-primary text-primary-foreground" 
-                        : "bg-muted text-muted-foreground"
+                        : hasIssue && !isActive
+                          ? "bg-amber-100 text-amber-600"
+                          : "bg-muted text-muted-foreground"
                     }
                   `}>
-                    {isPast ? <Check className="w-3.5 h-3.5" /> : idx + 1}
+                    {isPast ? (
+                      <Check className="w-3.5 h-3.5" />
+                    ) : hasIssue && !isActive ? (
+                      <AlertTriangle className="w-3 h-3" />
+                    ) : (
+                      idx + 1
+                    )}
                   </span>
                   {step.label}
                 </button>
@@ -170,34 +224,14 @@ export function Wizard() {
         </div>
       </nav>
 
-      {/* Active Option Indicator (for non-compare steps) */}
-      {currentStep !== "compare" && (
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground">Bearbeite:</span>
-            <div className="flex gap-2">
-              <Button
-                variant={activeOption === 1 ? "default" : "outline"}
-                size="sm"
-                onClick={() => setActiveOption(1)}
-              >
-                Option 1
-              </Button>
-              <Button
-                variant={activeOption === 2 ? "default" : "outline"}
-                size="sm"
-                onClick={() => setActiveOption(2)}
-              >
-                Option 2
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-6">
-        <div className="max-w-4xl mx-auto">
+      <main className="container mx-auto px-4 py-6 flex-1">
+        <div className="max-w-4xl mx-auto space-y-4">
+          {/* Validation Warning for current step */}
+          {(currentValidation.errors.length > 0 || currentValidation.warnings.length > 0) && (
+            <ValidationWarning validation={currentValidation} />
+          )}
+          
           {renderStep()}
         </div>
       </main>

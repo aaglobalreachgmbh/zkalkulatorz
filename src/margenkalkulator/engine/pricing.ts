@@ -1,5 +1,5 @@
 // ============================================
-// Calculation Engine - Phase 1
+// Calculation Engine - Phase 2
 // ============================================
 
 import type {
@@ -13,13 +13,16 @@ import type {
   Promo,
   SubVariant,
   FixedNetProduct,
+  ContractType,
 } from "./types";
 import {
-  getSubVariant,
-  getMobileTariff,
-  getPromo,
-  getFixedNetProduct,
-} from "./catalog.dummy";
+  getSubVariantFromCatalog,
+  getMobileTariffFromCatalog,
+  getPromoFromCatalog,
+  getFixedNetProductFromCatalog,
+  checkGKEligibility,
+  getOMODeduction,
+} from "./catalogResolver";
 import {
   collectPeriodBoundaries,
   createPeriodsFromBoundaries,
@@ -103,6 +106,16 @@ export function calculateFixedNetMonthlyForMonth(
   }
 }
 
+/**
+ * Get effective one-time cost (considering setupWaived)
+ */
+export function getEffectiveOneTimeCost(product: FixedNetProduct): number {
+  if (product.setupWaived) {
+    return 0;
+  }
+  return product.oneTimeNet;
+}
+
 // ============================================
 // Hardware Amortization
 // ============================================
@@ -122,16 +135,19 @@ export function calculateHardwareAmortization(
 }
 
 // ============================================
-// Dealer Economics
+// Dealer Economics - Phase 2 Enhanced
 // ============================================
 
 /**
  * Calculate dealer economics (provision, deductions, margin)
+ * Phase 2: Supports OMO25 deductions and renewal provisions
  */
 export function calculateDealerEconomics(
   tariff: MobileTariff | undefined,
+  contractType: ContractType,
   quantity: number,
-  hardwareEkNet: number
+  hardwareEkNet: number,
+  promoId: string = "NONE"
 ): DealerEconomics {
   if (!tariff) {
     return {
@@ -143,8 +159,20 @@ export function calculateDealerEconomics(
     };
   }
   
-  const provisionBase = tariff.provisionBase * quantity;
-  const deductions = Math.round(provisionBase * tariff.deductionRate * 100) / 100;
+  // Use renewal provision if available and contract is renewal
+  const baseProvision = contractType === "renewal" && tariff.provisionRenewal !== undefined
+    ? tariff.provisionRenewal
+    : tariff.provisionBase;
+  
+  const provisionBase = baseProvision * quantity;
+  
+  // Standard deduction rate
+  let deductions = Math.round(provisionBase * tariff.deductionRate * 100) / 100;
+  
+  // OMO25 specific deduction (per line)
+  const omoDeduction = getOMODeduction(tariff, promoId) * quantity;
+  deductions += omoDeduction;
+  
   const provisionAfter = Math.max(0, provisionBase - deductions);
   const margin = Math.round((provisionAfter - hardwareEkNet) * 100) / 100;
   
@@ -157,8 +185,17 @@ export function calculateDealerEconomics(
   };
 }
 
+// Legacy signature for backward compatibility with tests
+export function calculateDealerEconomicsLegacy(
+  tariff: MobileTariff | undefined,
+  quantity: number,
+  hardwareEkNet: number
+): DealerEconomics {
+  return calculateDealerEconomics(tariff, "new", quantity, hardwareEkNet, "NONE");
+}
+
 // ============================================
-// Breakdown Generation
+// Breakdown Generation - Phase 2 Enhanced
 // ============================================
 
 /**
@@ -170,7 +207,8 @@ export function generateBreakdown(
   subVariant: SubVariant | undefined,
   promo: Promo | undefined,
   fixedProduct: FixedNetProduct | undefined,
-  dealer: DealerEconomics
+  dealer: DealerEconomics,
+  gkEligible: boolean
 ): BreakdownItem[] {
   const breakdown: BreakdownItem[] = [];
   const { vatRate } = state.meta;
@@ -202,7 +240,9 @@ export function generateBreakdown(
     if (promo && promo.type !== "NONE") {
       const promoLabel = promo.type === "INTRO_PRICE" 
         ? `Intro-Preis (${promo.durationMonths} Monate)`
-        : `${promo.value * 100}% Rabatt auf Base (${promo.durationMonths} Monate)`;
+        : promo.id === "OMO25"
+          ? "OMO 25% Dauerrabatt"
+          : `${promo.value * 100}% Rabatt auf Base (${promo.durationMonths} Monate)`;
       
       breakdown.push({
         key: "mobile_promo",
@@ -210,7 +250,18 @@ export function generateBreakdown(
         appliesTo: "monthly",
         periodRef: `1-${promo.durationMonths}`,
         net: 0, // Calculated in periods
-        ruleId: promo.type === "INTRO_PRICE" ? "promo_intro" : "promo_pct_off_base",
+        ruleId: promo.id === "OMO25" ? "promo_omo25" : promo.type === "INTRO_PRICE" ? "promo_intro" : "promo_pct_off_base",
+      });
+    }
+    
+    // GK Eligibility Badge (Phase 2)
+    if (gkEligible) {
+      breakdown.push({
+        key: "gk_benefit",
+        label: "GK Konvergenz: Unlimited möglich",
+        appliesTo: "monthly",
+        net: 0,
+        ruleId: "gk_eligible",
       });
     }
   }
@@ -226,8 +277,17 @@ export function generateBreakdown(
       ruleId: "fixed_base",
     });
     
-    // Fixed one-time
-    if (fixedProduct.oneTimeNet > 0) {
+    // Fixed one-time (Phase 2: consider setupWaived)
+    if (fixedProduct.setupWaived) {
+      breakdown.push({
+        key: "fixed_onetime_waived",
+        label: "Bereitstellung erlassen",
+        appliesTo: "oneTime",
+        net: 0,
+        gross: 0,
+        ruleId: "fixed_setup_waived",
+      });
+    } else if (fixedProduct.oneTimeNet > 0) {
       breakdown.push({
         key: "fixed_onetime",
         label: `${fixedProduct.name} Einrichtung`,
@@ -235,6 +295,20 @@ export function generateBreakdown(
         net: fixedProduct.oneTimeNet,
         gross: calculateGross(fixedProduct.oneTimeNet, vatRate),
         ruleId: "fixed_setup",
+      });
+    }
+    
+    // Router inclusion (Phase 2)
+    if (fixedProduct.routerType) {
+      const routerLabel = fixedProduct.routerType === "FRITZBOX" 
+        ? "FRITZ!Box inklusive" 
+        : "Vodafone Station inklusive";
+      breakdown.push({
+        key: "fixed_router",
+        label: routerLabel,
+        appliesTo: "monthly",
+        net: 0,
+        ruleId: "router_included",
       });
     }
     
@@ -271,7 +345,7 @@ export function generateBreakdown(
   // Dealer breakdown
   breakdown.push({
     key: "dealer_provision_base",
-    label: "Provision (Basis)",
+    label: state.mobile.contractType === "renewal" ? "Provision (Verlängerung)" : "Provision (Neuvertrag)",
     appliesTo: "dealer",
     net: dealer.provisionBase,
     ruleId: "provision_base",
@@ -279,7 +353,7 @@ export function generateBreakdown(
   
   breakdown.push({
     key: "dealer_deductions",
-    label: "Abzüge",
+    label: state.mobile.promoId === "OMO25" ? "Abzüge (inkl. OMO)" : "Abzüge",
     appliesTo: "dealer",
     net: -dealer.deductions,
     ruleId: "deductions",
@@ -324,12 +398,18 @@ export function generateBreakdown(
  */
 export function calculateOffer(state: OfferOptionState): CalculationResult {
   const { meta, hardware, mobile, fixedNet } = state;
+  const datasetVersion = meta.datasetVersion;
   
-  // Get catalog items
-  const tariff = getMobileTariff(mobile.tariffId);
-  const subVariant = getSubVariant(mobile.subVariantId);
-  const promo = getPromo(mobile.promoId);
-  const fixedProduct = fixedNet.enabled ? getFixedNetProduct(fixedNet.productId) : undefined;
+  // Get catalog items using resolver
+  const tariff = getMobileTariffFromCatalog(datasetVersion, mobile.tariffId);
+  const subVariant = getSubVariantFromCatalog(datasetVersion, mobile.subVariantId);
+  const promo = getPromoFromCatalog(datasetVersion, mobile.promoId);
+  const fixedProduct = fixedNet.enabled 
+    ? getFixedNetProductFromCatalog(datasetVersion, fixedNet.productId) 
+    : undefined;
+  
+  // Check GK eligibility (Phase 2)
+  const gkEligible = checkGKEligibility(tariff, fixedNet.enabled);
   
   // Determine promo durations
   const mobilePromoDuration = promo?.durationMonths ?? 0;
@@ -353,7 +433,6 @@ export function calculateOffer(state: OfferOptionState): CalculationResult {
   const periods = createPeriodsFromBoundaries(
     boundaries,
     (fromMonth: number, _toMonth: number) => {
-      // We use fromMonth to determine which promo phase we're in
       const month = fromMonth;
       
       // Mobile cost
@@ -382,10 +461,13 @@ export function calculateOffer(state: OfferOptionState): CalculationResult {
     meta.vatRate
   );
   
-  // One-time costs
+  // One-time costs (Phase 2: consider setupWaived)
   const oneTime: Money[] = [];
-  if (fixedNet.enabled && fixedProduct && fixedProduct.oneTimeNet > 0) {
-    oneTime.push(createMoney(fixedProduct.oneTimeNet, meta.vatRate));
+  if (fixedNet.enabled && fixedProduct) {
+    const effectiveSetup = getEffectiveOneTimeCost(fixedProduct);
+    if (effectiveSetup > 0) {
+      oneTime.push(createMoney(effectiveSetup, meta.vatRate));
+    }
   }
   
   // Calculate totals
@@ -399,8 +481,14 @@ export function calculateOffer(state: OfferOptionState): CalculationResult {
     sumTermGross: Math.round((periodTotals.gross + oneTimeTotalGross) * 100) / 100,
   };
   
-  // Dealer economics
-  const dealer = calculateDealerEconomics(tariff, mobile.quantity, hardware.ekNet);
+  // Dealer economics (Phase 2: with contract type and promo)
+  const dealer = calculateDealerEconomics(
+    tariff, 
+    mobile.contractType, 
+    mobile.quantity, 
+    hardware.ekNet,
+    mobile.promoId
+  );
   
   // Generate breakdown
   const breakdown = generateBreakdown(
@@ -409,7 +497,8 @@ export function calculateOffer(state: OfferOptionState): CalculationResult {
     subVariant,
     promo,
     fixedProduct,
-    dealer
+    dealer,
+    gkEligible
   );
   
   return {
@@ -418,5 +507,6 @@ export function calculateOffer(state: OfferOptionState): CalculationResult {
     totals,
     dealer,
     breakdown,
+    gkEligible,
   };
 }

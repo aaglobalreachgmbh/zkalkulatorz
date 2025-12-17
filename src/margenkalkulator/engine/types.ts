@@ -1,10 +1,11 @@
 // ============================================
-// MargenKalkulator Types - Phase 1
+// MargenKalkulator Types - Phase 2
 // ============================================
 
 export type Currency = "EUR";
 export type ContractType = "new" | "renewal";
 export type ViewMode = "customer" | "dealer";
+export type DatasetVersion = "dummy-v0" | "business-2025-09";
 
 // ============================================
 // Money & Period Types
@@ -44,7 +45,7 @@ export type OfferOptionMeta = {
   currency: Currency;
   vatRate: number;       // default 0.19
   termMonths: number;    // default 24
-  datasetVersion: string; // e.g., "dummy-v0"
+  datasetVersion: DatasetVersion;
 };
 
 export type HardwareState = {
@@ -57,7 +58,7 @@ export type HardwareState = {
 export type MobileState = {
   tariffId: string;          // from catalog
   subVariantId: string;      // SIM_ONLY / SUB5 / SUB10
-  promoId: string;           // NONE / INTRO / PCT_OFF
+  promoId: string;           // NONE / 12X50 / OMO25
   contractType: ContractType;
   quantity: number;          // default 1
 };
@@ -98,10 +99,11 @@ export type CalculationResult = {
   totals: CalculationTotals;
   dealer: DealerEconomics;
   breakdown: BreakdownItem[];
+  gkEligible: boolean;  // Phase 2: GK convergence benefit
 };
 
 // ============================================
-// Catalog Types
+// Catalog Types - Extended for Phase 2
 // ============================================
 
 export type SubVariant = {
@@ -110,13 +112,21 @@ export type SubVariant = {
   monthlyAddNet: number;
 };
 
+export type TariffTier = "S" | "M" | "L" | "XL";
+export type ProductLine = "PRIME" | "SMART" | "TEAMDEAL";
+
 export type MobileTariff = {
   id: string;
   name: string;
   baseNet: number;
   features: string[];
   provisionBase: number;
-  deductionRate: number; // percentage of provision as deduction
+  provisionRenewal?: number;    // Phase 2: provision for renewals
+  deductionRate: number;        // percentage of provision as deduction
+  tier?: TariffTier;            // Phase 2: S/M/L/XL
+  productLine?: ProductLine;    // Phase 2: PRIME/SMART/TEAMDEAL
+  oneNumberIncluded?: boolean;  // Phase 2: OneNumber feature
+  omoDeduction?: number;        // Phase 2: OMO25 specific deduction amount
 };
 
 export type PromoType = "NONE" | "INTRO_PRICE" | "PCT_OFF_BASE";
@@ -129,6 +139,9 @@ export type Promo = {
   value: number; // fixed price for INTRO, percentage (0-1) for PCT_OFF
 };
 
+export type FixedNetProductLine = "RBI" | "RBIP" | "DSL" | "FIBER";
+export type RouterType = "FRITZBOX" | "VODAFONE_STATION";
+
 export type FixedNetProduct = {
   id: string;
   name: string;
@@ -140,15 +153,25 @@ export type FixedNetProduct = {
     durationMonths: number;
     value: number;
   };
+  // Phase 2 extensions
+  productLine?: FixedNetProductLine;
+  speed?: number;               // Mbit/s
+  setupWaived?: boolean;        // Setup fee waived
+  routerType?: RouterType;
+  includesPhone?: boolean;      // Phone line included (RBIP)
 };
 
-export type DummyCatalog = {
-  version: string;
+export type Catalog = {
+  version: DatasetVersion;
+  validFrom?: string;           // Phase 2: validity date
   subVariants: SubVariant[];
   mobileTariffs: MobileTariff[];
   promos: Promo[];
   fixedNetProducts: FixedNetProduct[];
 };
+
+// Legacy alias for backward compatibility
+export type DummyCatalog = Catalog;
 
 // ============================================
 // Wizard Types

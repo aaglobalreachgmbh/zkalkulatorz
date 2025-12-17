@@ -85,6 +85,8 @@ export function Wizard() {
           <MobileStep
             value={activeState.mobile}
             onChange={(mobile) => setActiveState({ ...activeState, mobile })}
+            datasetVersion={activeState.meta.datasetVersion}
+            fixedNetEnabled={activeState.fixedNet.enabled}
           />
         );
       case "fixedNet":
@@ -92,6 +94,7 @@ export function Wizard() {
           <FixedNetStep
             value={activeState.fixedNet}
             onChange={(fixedNet) => setActiveState({ ...activeState, fixedNet })}
+            datasetVersion={activeState.meta.datasetVersion}
           />
         );
       case "compare":

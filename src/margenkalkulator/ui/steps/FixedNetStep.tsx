@@ -1,6 +1,7 @@
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -8,16 +9,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { FixedNetState } from "../../engine/types";
-import { fixedNetProducts, getFixedNetProduct } from "../../engine/catalog.dummy";
-import { Wifi } from "lucide-react";
+import type { FixedNetState, DatasetVersion } from "../../engine/types";
+import { listFixedNetProducts, getFixedNetProductFromCatalog } from "../../engine/catalogResolver";
+import { Wifi, Router, Phone, CheckCircle } from "lucide-react";
 
 interface FixedNetStepProps {
   value: FixedNetState;
   onChange: (value: FixedNetState) => void;
+  datasetVersion: DatasetVersion;
 }
 
-export function FixedNetStep({ value, onChange }: FixedNetStepProps) {
+export function FixedNetStep({ value, onChange, datasetVersion }: FixedNetStepProps) {
   const updateField = <K extends keyof FixedNetState>(
     field: K,
     fieldValue: FixedNetState[K]
@@ -25,7 +27,10 @@ export function FixedNetStep({ value, onChange }: FixedNetStepProps) {
     onChange({ ...value, [field]: fieldValue });
   };
 
-  const selectedProduct = value.enabled ? getFixedNetProduct(value.productId) : undefined;
+  const fixedNetProducts = listFixedNetProducts(datasetVersion);
+  const selectedProduct = value.enabled 
+    ? getFixedNetProductFromCatalog(datasetVersion, value.productId) 
+    : undefined;
 
   return (
     <Card>
@@ -37,7 +42,7 @@ export function FixedNetStep({ value, onChange }: FixedNetStepProps) {
           <div>
             <CardTitle>Festnetz & Internet</CardTitle>
             <CardDescription>
-              Optional: Festnetzprodukt zum Angebot hinzufügen
+              Optional: Festnetzprodukt zum Angebot hinzufügen (aktiviert GK-Konvergenz)
             </CardDescription>
           </div>
         </div>
@@ -71,9 +76,19 @@ export function FixedNetStep({ value, onChange }: FixedNetStepProps) {
                 <SelectContent>
                   {fixedNetProducts.map((product) => (
                     <SelectItem key={product.id} value={product.id}>
-                      <div className="flex items-center justify-between w-full">
-                        <span>{product.name}</span>
-                        <span className="text-muted-foreground ml-2">
+                      <div className="flex items-center justify-between w-full gap-4">
+                        <div className="flex items-center gap-2">
+                          <span>{product.name}</span>
+                          {product.speed && (
+                            <Badge variant="outline" className="text-xs">
+                              {product.speed} Mbit/s
+                            </Badge>
+                          )}
+                          {product.includesPhone && (
+                            <Phone className="w-3 h-3 text-muted-foreground" />
+                          )}
+                        </div>
+                        <span className="text-muted-foreground">
                           {product.monthlyNet.toFixed(2)} €/Mo
                         </span>
                       </div>
@@ -85,6 +100,29 @@ export function FixedNetStep({ value, onChange }: FixedNetStepProps) {
 
             {selectedProduct && (
               <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+                {/* Badges for key features */}
+                <div className="flex flex-wrap gap-2">
+                  {selectedProduct.setupWaived && (
+                    <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-200">
+                      <CheckCircle className="w-3 h-3 mr-1" />
+                      Setup erlassen
+                    </Badge>
+                  )}
+                  {selectedProduct.routerType && (
+                    <Badge variant="secondary">
+                      <Router className="w-3 h-3 mr-1" />
+                      {selectedProduct.routerType === "FRITZBOX" ? "FRITZ!Box" : "Vodafone Station"} inkl.
+                    </Badge>
+                  )}
+                  {selectedProduct.includesPhone && (
+                    <Badge variant="secondary">
+                      <Phone className="w-3 h-3 mr-1" />
+                      Telefon-Flat
+                    </Badge>
+                  )}
+                </div>
+
+                {/* Features */}
                 <div className="flex flex-wrap gap-1.5">
                   {selectedProduct.features.map((feature, idx) => (
                     <span
@@ -96,6 +134,7 @@ export function FixedNetStep({ value, onChange }: FixedNetStepProps) {
                   ))}
                 </div>
 
+                {/* Pricing */}
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <span className="text-muted-foreground">Monatlich:</span>
@@ -106,11 +145,16 @@ export function FixedNetStep({ value, onChange }: FixedNetStepProps) {
                   <div>
                     <span className="text-muted-foreground">Einmalig:</span>
                     <span className="ml-2 font-medium">
-                      {selectedProduct.oneTimeNet.toFixed(2)} € netto
+                      {selectedProduct.setupWaived ? (
+                        <span className="text-green-600">0,00 € (erlassen)</span>
+                      ) : (
+                        `${selectedProduct.oneTimeNet.toFixed(2)} € netto`
+                      )}
                     </span>
                   </div>
                 </div>
 
+                {/* Promo info */}
                 {selectedProduct.promo && selectedProduct.promo.type !== "NONE" && (
                   <div className="text-sm text-primary">
                     <span className="font-medium">Aktion: </span>

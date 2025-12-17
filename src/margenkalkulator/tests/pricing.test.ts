@@ -10,7 +10,7 @@ import {
   calculateMobileMonthlyForMonth,
   calculateFixedNetMonthlyForMonth,
   calculateHardwareAmortization,
-  calculateDealerEconomics,
+  calculateDealerEconomicsLegacy,
   calculateOffer,
   collectPeriodBoundaries,
   calculateAverageMonthly,
@@ -19,9 +19,9 @@ import {
   getSubVariant,
   getPromo,
   getFixedNetProduct,
-  createDefaultOptionState,
+  createDummyOptionState,
 } from "../engine";
-import type { OfferOptionState, Period, Money } from "../engine/types";
+import type { OfferOptionState, Period } from "../engine/types";
 
 // ============================================
 // Test 1: VAT Calculation (net → gross)
@@ -139,7 +139,7 @@ describe("Period Splitting", () => {
 // ============================================
 describe("One-time Costs", () => {
   it("should include fixed net setup fee in oneTime array", () => {
-    const state = createDefaultOptionState();
+    const state = createDummyOptionState();
     state.fixedNet.enabled = true;
     state.fixedNet.productId = "CABLE_250"; // oneTimeNet = 50
 
@@ -150,7 +150,7 @@ describe("One-time Costs", () => {
   });
 
   it("should have empty oneTime when no fixed net", () => {
-    const state = createDefaultOptionState();
+    const state = createDummyOptionState();
     state.fixedNet.enabled = false;
 
     const result = calculateOffer(state);
@@ -197,7 +197,7 @@ describe("Sum 24 Month Calculation", () => {
 describe("Provision Clamping", () => {
   it("should clamp provisionAfter to 0 when deductions exceed base", () => {
     // Create a mock tariff with high deduction rate
-    const dealer = calculateDealerEconomics(
+    const dealer = calculateDealerEconomicsLegacy(
       { 
         id: "TEST", 
         name: "Test", 
@@ -215,7 +215,7 @@ describe("Provision Clamping", () => {
 
   it("should calculate normal provision when deductions are reasonable", () => {
     const tariff = getMobileTariff("RED_BIZ_S")!;
-    const dealer = calculateDealerEconomics(tariff, 1, 0);
+    const dealer = calculateDealerEconomicsLegacy(tariff, 1, 0);
     
     expect(dealer.provisionBase).toBe(200);
     expect(dealer.deductions).toBe(20); // 10% of 200
@@ -229,7 +229,7 @@ describe("Provision Clamping", () => {
 describe("Margin Calculation", () => {
   it("should calculate margin as provisionAfter minus hardware EK", () => {
     const tariff = getMobileTariff("RED_BIZ_M")!; // provision 300
-    const dealer = calculateDealerEconomics(tariff, 1, 150);
+    const dealer = calculateDealerEconomicsLegacy(tariff, 1, 150);
     
     // provisionBase = 300, deductions = 30 (10%), provisionAfter = 270
     // margin = 270 - 150 = 120
@@ -238,7 +238,7 @@ describe("Margin Calculation", () => {
 
   it("should allow negative margin when hardware exceeds provision", () => {
     const tariff = getMobileTariff("RED_BIZ_S")!; // provision 200
-    const dealer = calculateDealerEconomics(tariff, 1, 500);
+    const dealer = calculateDealerEconomicsLegacy(tariff, 1, 500);
     
     // provisionAfter = 180, margin = 180 - 500 = -320
     expect(dealer.margin).toBe(-320);
@@ -250,7 +250,7 @@ describe("Margin Calculation", () => {
 // ============================================
 describe("Breakdown Generation", () => {
   it("should include base, sub, promo, provision, and margin entries", () => {
-    const state = createDefaultOptionState();
+    const state = createDummyOptionState();
     state.mobile.tariffId = "RED_BIZ_M";
     state.mobile.subVariantId = "SUB10";
     state.mobile.promoId = "PCT_OFF_BASE";
@@ -270,7 +270,7 @@ describe("Breakdown Generation", () => {
   });
 
   it("should include fixed net breakdown when enabled", () => {
-    const state = createDefaultOptionState();
+    const state = createDummyOptionState();
     state.fixedNet.enabled = true;
     state.fixedNet.productId = "CABLE_250";
 
@@ -301,7 +301,7 @@ describe("Hardware Amortization", () => {
   });
 
   it("should include amortization in monthly periods", () => {
-    const state = createDefaultOptionState();
+    const state = createDummyOptionState();
     state.hardware.ekNet = 240;
     state.hardware.amortize = true;
     state.hardware.amortMonths = 24;

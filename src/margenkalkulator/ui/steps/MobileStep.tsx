@@ -2,6 +2,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -9,16 +10,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { MobileState, ContractType } from "../../engine/types";
-import { mobileTariffs, subVariants, promos, getMobileTariff } from "../../engine/catalog.dummy";
-import { Signal, Zap } from "lucide-react";
+import type { MobileState, ContractType, DatasetVersion } from "../../engine/types";
+import { 
+  listMobileTariffs, 
+  listSubVariants, 
+  listPromos, 
+  getMobileTariffFromCatalog,
+  checkGKEligibility,
+} from "../../engine/catalogResolver";
+import { Signal, Zap, Sparkles } from "lucide-react";
 
 interface MobileStepProps {
   value: MobileState;
   onChange: (value: MobileState) => void;
+  datasetVersion: DatasetVersion;
+  fixedNetEnabled?: boolean;
 }
 
-export function MobileStep({ value, onChange }: MobileStepProps) {
+export function MobileStep({ value, onChange, datasetVersion, fixedNetEnabled = false }: MobileStepProps) {
   const updateField = <K extends keyof MobileState>(
     field: K,
     fieldValue: MobileState[K]
@@ -26,7 +35,12 @@ export function MobileStep({ value, onChange }: MobileStepProps) {
     onChange({ ...value, [field]: fieldValue });
   };
 
-  const selectedTariff = getMobileTariff(value.tariffId);
+  const mobileTariffs = listMobileTariffs(datasetVersion);
+  const subVariants = listSubVariants(datasetVersion);
+  const promos = listPromos(datasetVersion);
+  
+  const selectedTariff = getMobileTariffFromCatalog(datasetVersion, value.tariffId);
+  const isGKEligible = checkGKEligibility(selectedTariff, fixedNetEnabled);
 
   return (
     <Card>
@@ -35,8 +49,16 @@ export function MobileStep({ value, onChange }: MobileStepProps) {
           <div className="p-2 bg-primary/10 rounded-lg">
             <Signal className="w-5 h-5 text-primary" />
           </div>
-          <div>
-            <CardTitle>Mobilfunk-Tarif</CardTitle>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <CardTitle>Mobilfunk-Tarif</CardTitle>
+              {isGKEligible && (
+                <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-200">
+                  <Sparkles className="w-3 h-3 mr-1" />
+                  GK Unlimited möglich
+                </Badge>
+              )}
+            </div>
             <CardDescription>
               Tarif, Hardware-Variante und Aktionen auswählen
             </CardDescription>
@@ -57,9 +79,16 @@ export function MobileStep({ value, onChange }: MobileStepProps) {
             <SelectContent>
               {mobileTariffs.map((tariff) => (
                 <SelectItem key={tariff.id} value={tariff.id}>
-                  <div className="flex items-center justify-between w-full">
-                    <span>{tariff.name}</span>
-                    <span className="text-muted-foreground ml-2">
+                  <div className="flex items-center justify-between w-full gap-4">
+                    <div className="flex items-center gap-2">
+                      <span>{tariff.name}</span>
+                      {tariff.tier && (
+                        <Badge variant="outline" className="text-xs">
+                          {tariff.tier}
+                        </Badge>
+                      )}
+                    </div>
+                    <span className="text-muted-foreground">
                       {tariff.baseNet.toFixed(2)} €
                     </span>
                   </div>
@@ -68,15 +97,22 @@ export function MobileStep({ value, onChange }: MobileStepProps) {
             </SelectContent>
           </Select>
           {selectedTariff && (
-            <div className="flex flex-wrap gap-1.5 mt-2">
-              {selectedTariff.features.map((feature, idx) => (
-                <span
-                  key={idx}
-                  className="text-xs bg-muted px-2 py-0.5 rounded-full"
-                >
-                  {feature}
-                </span>
-              ))}
+            <div className="space-y-2 mt-2">
+              <div className="flex flex-wrap gap-1.5">
+                {selectedTariff.features.map((feature, idx) => (
+                  <span
+                    key={idx}
+                    className="text-xs bg-muted px-2 py-0.5 rounded-full"
+                  >
+                    {feature}
+                  </span>
+                ))}
+              </div>
+              {selectedTariff.oneNumberIncluded && (
+                <Badge variant="secondary" className="text-xs">
+                  OneNumber inklusive
+                </Badge>
+              )}
             </div>
           )}
         </div>
@@ -127,11 +163,23 @@ export function MobileStep({ value, onChange }: MobileStepProps) {
             <SelectContent>
               {promos.map((promo) => (
                 <SelectItem key={promo.id} value={promo.id}>
-                  {promo.label}
+                  <div className="flex items-center gap-2">
+                    <span>{promo.label}</span>
+                    {promo.id === "OMO25" && (
+                      <Badge variant="destructive" className="text-xs">
+                        Provision-Abzug
+                      </Badge>
+                    )}
+                  </div>
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
+          {value.promoId === "OMO25" && (
+            <p className="text-xs text-amber-600">
+              OMO25 führt zu einem Provisions-Abzug je nach Tarif
+            </p>
+          )}
         </div>
 
         {/* Contract Type */}
@@ -155,6 +203,11 @@ export function MobileStep({ value, onChange }: MobileStepProps) {
               </Label>
             </div>
           </RadioGroup>
+          {value.contractType === "renewal" && selectedTariff?.provisionRenewal && (
+            <p className="text-xs text-muted-foreground">
+              Verlängerungsprovision: {selectedTariff.provisionRenewal} € (statt {selectedTariff.provisionBase} €)
+            </p>
+          )}
         </div>
 
         {/* Quantity */}

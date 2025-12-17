@@ -111,8 +111,53 @@ export function calculateMobileBaseForMonth(
   }
 }
 
+// ============================================
+// TeamDeal Fallback Logic (Slice C)
+// ============================================
+
+export type TeamDealResolution = {
+  effectiveNet: number;
+  dataVolumeGB: number | "unlimited";
+  isFallback: boolean;
+};
+
+/**
+ * Resolve TeamDeal pricing based on primeOnAccount status
+ * If no Prime on account, falls back to Smart Business Plus (13€/1GB)
+ */
+export function resolveTeamDealPricing(
+  tariff: MobileTariff,
+  primeOnAccount: boolean
+): TeamDealResolution {
+  // Only applies to TeamDeal family
+  if (tariff.family !== "teamdeal") {
+    return {
+      effectiveNet: tariff.baseNet,
+      dataVolumeGB: tariff.dataVolumeGB ?? 0,
+      isFallback: false,
+    };
+  }
+  
+  // TeamDeal WITHOUT Prime → Fallback to Smart Business Plus
+  if (!primeOnAccount) {
+    return {
+      effectiveNet: 13, // Smart Business Plus SIM-only
+      dataVolumeGB: 1,
+      isFallback: true,
+    };
+  }
+  
+  // TeamDeal WITH Prime → Special conditions apply
+  return {
+    effectiveNet: tariff.baseNet,
+    dataVolumeGB: tariff.dataVolumeGB ?? 0,
+    isFallback: false,
+  };
+}
+
 /**
  * Calculate total mobile monthly cost for a given month
+ * Slice C: Added primeOnAccount for TeamDeal fallback
  */
 export function calculateMobileMonthlyForMonth(
   tariff: MobileTariff,
@@ -120,9 +165,19 @@ export function calculateMobileMonthlyForMonth(
   promo: Promo,
   quantity: number,
   month: number,
-  asOfISO?: string
+  asOfISO?: string,
+  primeOnAccount?: boolean
 ): number {
-  const basePrice = calculateMobileBaseForMonth(tariff, promo, month, asOfISO);
+  let basePrice: number;
+  
+  // TeamDeal uses special fallback logic
+  if (tariff.family === "teamdeal") {
+    const resolved = resolveTeamDealPricing(tariff, primeOnAccount ?? false);
+    basePrice = resolved.effectiveNet;
+  } else {
+    basePrice = calculateMobileBaseForMonth(tariff, promo, month, asOfISO);
+  }
+  
   // SUB is always added at full price, never affected by promo
   const totalPerLine = basePrice + subVariant.monthlyAddNet;
   return totalPerLine * quantity;
@@ -345,6 +400,17 @@ export function generateBreakdown(
         ruleId: "gk_eligible",
       });
     }
+    
+    // Slice C: TeamDeal fallback warning
+    if (tariff.family === "teamdeal" && !state.mobile.primeOnAccount) {
+      breakdown.push({
+        key: "teamdeal_fallback",
+        label: "TeamDeal Fallback: Ohne Prime → Smart Business Plus (1 GB / 13€)",
+        appliesTo: "monthly",
+        net: 13 * state.mobile.quantity,
+        ruleId: "teamdeal_fallback_no_prime",
+      });
+    }
   }
   
   // Fixed net
@@ -542,7 +608,8 @@ export function calculateOffer(state: OfferOptionState): CalculationResult {
           promo,
           mobile.quantity,
           month,
-          asOfISO
+          asOfISO,
+          mobile.primeOnAccount // Slice C: TeamDeal fallback
         );
       }
       

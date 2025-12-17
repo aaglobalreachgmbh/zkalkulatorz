@@ -62,6 +62,9 @@ export type MobileState = {
   promoId: string;           // NONE / 12X50 / OMO25
   contractType: ContractType;
   quantity: number;          // default 1
+  // Slice C extensions
+  contractVariant?: ContractVariant;  // SIM_ONLY / BASIC / SMARTPHONE
+  primeOnAccount?: boolean;           // TeamDeal fallback toggle
 };
 
 export type FixedNetState = {
@@ -113,8 +116,10 @@ export type SubVariant = {
   monthlyAddNet: number;
 };
 
-export type TariffTier = "S" | "M" | "L" | "XL";
-export type ProductLine = "PRIME" | "SMART" | "TEAMDEAL";
+export type TariffTier = "XS" | "S" | "M" | "L" | "XL";
+export type ProductLine = "PRIME" | "BUSINESS_SMART" | "SMART_BUSINESS" | "SMART_BUSINESS_PLUS" | "TEAMDEAL";
+export type TariffFamily = "prime" | "business_smart" | "smart_business" | "teamdeal";
+export type ContractVariant = "SIM_ONLY" | "BASIC" | "SMARTPHONE";
 
 export type MobileTariff = {
   id: string;
@@ -128,6 +133,18 @@ export type MobileTariff = {
   productLine?: ProductLine;    // Phase 2: PRIME/SMART/TEAMDEAL
   oneNumberIncluded?: boolean;  // Phase 2: OneNumber feature
   omoDeduction?: number;        // Phase 2: OMO25 specific deduction amount
+  // Slice C extensions
+  family?: TariffFamily;        // For UI grouping
+  dataVolumeGB?: number | "unlimited";
+  pricesByVariant?: {           // Device tier prices (SIM/Basic/Smartphone)
+    SIM_ONLY: number;
+    BASIC?: number;
+    SMARTPHONE?: number;
+  };
+  minTermMonths?: number;       // 24 or 1 (Flex)
+  setupFeeNet?: number;         // 0 for Business Smart
+  teamDealBase?: string;        // e.g. "SMART_BUSINESS_PLUS"
+  teamDealDelta?: number;       // e.g. -3.50 for XS
 };
 
 export type PromoType = "NONE" | "INTRO_PRICE" | "PCT_OFF_BASE" | "ABS_OFF_BASE";

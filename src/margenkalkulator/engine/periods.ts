@@ -122,3 +122,34 @@ export function calculateAverageMonthly(periods: Period[], termMonths: number): 
   const total = calculateTotalFromPeriods(periods);
   return Math.round((total.net / termMonths) * 100) / 100;
 }
+
+/**
+ * Slice B: Merge consecutive periods with same monthly price
+ * Only show period splits when there's an actual price change
+ */
+export function mergePeriodsWithSamePrice(periods: Period[]): Period[] {
+  if (periods.length <= 1) return periods;
+  
+  const merged: Period[] = [];
+  let current = { ...periods[0] };
+  
+  for (let i = 1; i < periods.length; i++) {
+    const next = periods[i];
+    
+    // Check if monthly prices are the same (within rounding tolerance)
+    if (Math.abs(current.monthly.net - next.monthly.net) < 0.01) {
+      // Extend current period
+      current.toMonth = next.toMonth;
+      current.label = generatePeriodLabel(current.fromMonth, current.toMonth);
+    } else {
+      // Price changed, push current and start new
+      merged.push(current);
+      current = { ...next };
+    }
+  }
+  
+  // Push final period
+  merged.push(current);
+  
+  return merged;
+}

@@ -50,6 +50,7 @@ export {
   createPeriodsFromBoundaries,
   calculateTotalFromPeriods,
   calculateAverageMonthly,
+  mergePeriodsWithSamePrice,
 } from "./periods";
 
 // Pricing / Calculation
@@ -62,6 +63,8 @@ export {
   calculateDealerEconomicsLegacy,
   generateBreakdown,
   calculateOffer,
+  isPromoValid,
+  isFixedPromoValid,
 } from "./pricing";
 
 // Catalog Resolver (Phase 2)
@@ -92,6 +95,7 @@ export function createDefaultOptionState(): OfferOptionState {
       vatRate: 0.19,
       termMonths: 24,
       datasetVersion: "business-2025-09",
+      asOfISO: "2025-12-17",  // Slice B: deterministic date
     },
     hardware: {
       name: "",

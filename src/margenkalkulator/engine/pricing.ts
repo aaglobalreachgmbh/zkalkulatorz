@@ -1,5 +1,5 @@
 // ============================================
-// Calculation Engine - Phase 2
+// Calculation Engine - Phase 2 / Slice B
 // ============================================
 
 import type {
@@ -30,7 +30,45 @@ import {
   calculateAverageMonthly,
   createMoney,
   calculateGross,
+  mergePeriodsWithSamePrice,
 } from "./periods";
+
+// ============================================
+// Promo Validity (Slice B)
+// ============================================
+
+/**
+ * Check if a promo is valid for a given date
+ * Uses asOfISO for deterministic calculation (no new Date())
+ */
+export function isPromoValid(
+  promo: Promo | undefined,
+  asOfISO?: string
+): boolean {
+  if (!promo || promo.type === "NONE") return true;
+  
+  // If no validity dates set, promo is always valid
+  if (!promo.validFromISO || !promo.validUntilISO) return true;
+  
+  // If no asOfISO provided, assume promo is valid (backward compat)
+  if (!asOfISO) return true;
+  
+  return asOfISO >= promo.validFromISO && asOfISO <= promo.validUntilISO;
+}
+
+/**
+ * Check if a fixed product promo is valid
+ */
+export function isFixedPromoValid(
+  promo: FixedNetProduct["promo"],
+  asOfISO?: string
+): boolean {
+  if (!promo || promo.type === "NONE") return true;
+  if (!promo.validFromISO || !promo.validUntilISO) return true;
+  if (!asOfISO) return true;
+  
+  return asOfISO >= promo.validFromISO && asOfISO <= promo.validUntilISO;
+}
 
 // ============================================
 // Mobile Calculation
@@ -39,12 +77,19 @@ import {
 /**
  * Calculate mobile base price for a given month (considering promo)
  * IMPORTANT: Promo only affects base price, NOT SUB add-on
+ * Slice B: Added ABS_OFF_BASE support
  */
 export function calculateMobileBaseForMonth(
   tariff: MobileTariff,
   promo: Promo,
-  month: number
+  month: number,
+  asOfISO?: string
 ): number {
+  // Check if promo is time-valid (Slice B)
+  if (!isPromoValid(promo, asOfISO)) {
+    return tariff.baseNet;
+  }
+  
   const isPromoActive = promo.durationMonths > 0 && month <= promo.durationMonths;
   
   if (!isPromoActive || promo.type === "NONE") {
@@ -58,6 +103,9 @@ export function calculateMobileBaseForMonth(
     case "PCT_OFF_BASE":
       // Percentage discount on base only
       return tariff.baseNet * (1 - promo.value);
+    case "ABS_OFF_BASE":
+      // Slice B: Absolute discount on base (e.g., -5€/month)
+      return Math.max(0, tariff.baseNet - (promo.amountNetPerMonth ?? 0));
     default:
       return tariff.baseNet;
   }
@@ -71,9 +119,10 @@ export function calculateMobileMonthlyForMonth(
   subVariant: SubVariant,
   promo: Promo,
   quantity: number,
-  month: number
+  month: number,
+  asOfISO?: string
 ): number {
-  const basePrice = calculateMobileBaseForMonth(tariff, promo, month);
+  const basePrice = calculateMobileBaseForMonth(tariff, promo, month, asOfISO);
   // SUB is always added at full price, never affected by promo
   const totalPerLine = basePrice + subVariant.monthlyAddNet;
   return totalPerLine * quantity;
@@ -85,14 +134,21 @@ export function calculateMobileMonthlyForMonth(
 
 /**
  * Calculate fixed net monthly cost for a given month (considering promo)
+ * Slice B: Added time validity check
  */
 export function calculateFixedNetMonthlyForMonth(
   product: FixedNetProduct,
-  month: number
+  month: number,
+  asOfISO?: string
 ): number {
   const promo = product.promo;
   
-  if (!promo || promo.type === "NONE" || month > promo.durationMonths) {
+  // Check time validity (Slice B)
+  if (!promo || promo.type === "NONE" || !isFixedPromoValid(promo, asOfISO)) {
+    return product.monthlyNet;
+  }
+  
+  if (month > promo.durationMonths) {
     return product.monthlyNet;
   }
   
@@ -195,11 +251,12 @@ export function calculateDealerEconomicsLegacy(
 }
 
 // ============================================
-// Breakdown Generation - Phase 2 Enhanced
+// Breakdown Generation - Phase 2 / Slice B Enhanced
 // ============================================
 
 /**
  * Generate breakdown items for explainability
+ * Slice B: Added promo_expired handling
  */
 export function generateBreakdown(
   state: OfferOptionState,
@@ -211,7 +268,7 @@ export function generateBreakdown(
   gkEligible: boolean
 ): BreakdownItem[] {
   const breakdown: BreakdownItem[] = [];
-  const { vatRate } = state.meta;
+  const { vatRate, asOfISO } = state.meta;
   
   // Mobile base
   if (tariff) {
@@ -236,22 +293,46 @@ export function generateBreakdown(
       });
     }
     
-    // Promo
+    // Promo handling (Slice B: check validity)
     if (promo && promo.type !== "NONE") {
-      const promoLabel = promo.type === "INTRO_PRICE" 
-        ? `Intro-Preis (${promo.durationMonths} Monate)`
-        : promo.id === "OMO25"
-          ? "OMO 25% Dauerrabatt"
-          : `${promo.value * 100}% Rabatt auf Base (${promo.durationMonths} Monate)`;
+      const promoValid = isPromoValid(promo, asOfISO);
       
-      breakdown.push({
-        key: "mobile_promo",
-        label: promoLabel,
-        appliesTo: "monthly",
-        periodRef: `1-${promo.durationMonths}`,
-        net: 0, // Calculated in periods
-        ruleId: promo.id === "OMO25" ? "promo_omo25" : promo.type === "INTRO_PRICE" ? "promo_intro" : "promo_pct_off_base",
-      });
+      if (!promoValid) {
+        // Slice B: Expired promo warning
+        breakdown.push({
+          key: "mobile_promo_expired",
+          label: `${promo.label} – Promo abgelaufen, nicht angewendet`,
+          appliesTo: "monthly",
+          net: 0,
+          ruleId: "promo_expired",
+        });
+      } else {
+        // Active promo
+        const promoLabel = promo.type === "INTRO_PRICE" 
+          ? `Intro-Preis (${promo.durationMonths} Monate)`
+          : promo.type === "ABS_OFF_BASE"
+            ? `${promo.label} (${promo.durationMonths} Monate)`
+            : promo.id === "OMO25"
+              ? "OMO 25% Dauerrabatt"
+              : `${promo.value * 100}% Rabatt auf Base (${promo.durationMonths} Monate)`;
+        
+        const ruleId = promo.type === "ABS_OFF_BASE" 
+          ? "promo_abs_off_base"
+          : promo.id === "OMO25" 
+            ? "promo_omo25" 
+            : promo.type === "INTRO_PRICE" 
+              ? "promo_intro" 
+              : "promo_pct_off_base";
+        
+        breakdown.push({
+          key: "mobile_promo",
+          label: promoLabel,
+          appliesTo: "monthly",
+          periodRef: `1-${promo.durationMonths}`,
+          net: 0, // Calculated in periods
+          ruleId,
+        });
+      }
     }
     
     // GK Eligibility Badge (Phase 2)
@@ -312,16 +393,28 @@ export function generateBreakdown(
       });
     }
     
-    // Fixed promo
+    // Fixed promo (Slice B: check validity)
     if (fixedProduct.promo && fixedProduct.promo.type !== "NONE") {
-      breakdown.push({
-        key: "fixed_promo",
-        label: `Festnetz Aktion (${fixedProduct.promo.durationMonths} Monate)`,
-        appliesTo: "monthly",
-        periodRef: `1-${fixedProduct.promo.durationMonths}`,
-        net: 0,
-        ruleId: "fixed_promo",
-      });
+      const fixedPromoValid = isFixedPromoValid(fixedProduct.promo, asOfISO);
+      
+      if (!fixedPromoValid) {
+        breakdown.push({
+          key: "fixed_promo_expired",
+          label: "Festnetz Aktion – abgelaufen, nicht angewendet",
+          appliesTo: "monthly",
+          net: 0,
+          ruleId: "promo_expired",
+        });
+      } else {
+        breakdown.push({
+          key: "fixed_promo",
+          label: `Festnetz Aktion (${fixedProduct.promo.durationMonths} Monate)`,
+          appliesTo: "monthly",
+          periodRef: `1-${fixedProduct.promo.durationMonths}`,
+          net: 0,
+          ruleId: "fixed_promo",
+        });
+      }
     }
   }
   
@@ -395,10 +488,12 @@ export function generateBreakdown(
 /**
  * Calculate complete result for an offer option
  * This is a pure function with no side effects
+ * Slice B: Uses asOfISO for deterministic promo evaluation
  */
 export function calculateOffer(state: OfferOptionState): CalculationResult {
   const { meta, hardware, mobile, fixedNet } = state;
   const datasetVersion = meta.datasetVersion;
+  const asOfISO = meta.asOfISO;
   
   // Get catalog items using resolver
   const tariff = getMobileTariffFromCatalog(datasetVersion, mobile.tariffId);
@@ -411,9 +506,12 @@ export function calculateOffer(state: OfferOptionState): CalculationResult {
   // Check GK eligibility (Phase 2)
   const gkEligible = checkGKEligibility(tariff, fixedNet.enabled);
   
-  // Determine promo durations
-  const mobilePromoDuration = promo?.durationMonths ?? 0;
-  const fixedPromoDuration = fixedProduct?.promo?.durationMonths ?? 0;
+  // Determine effective promo durations (Slice B: check validity)
+  const mobilePromoValid = isPromoValid(promo, asOfISO);
+  const fixedPromoValid = fixedProduct?.promo ? isFixedPromoValid(fixedProduct.promo, asOfISO) : false;
+  
+  const mobilePromoDuration = mobilePromoValid ? (promo?.durationMonths ?? 0) : 0;
+  const fixedPromoDuration = fixedPromoValid ? (fixedProduct?.promo?.durationMonths ?? 0) : 0;
   
   // Calculate hardware amortization
   const hardwareAmortPerMonth = calculateHardwareAmortization(
@@ -430,12 +528,12 @@ export function calculateOffer(state: OfferOptionState): CalculationResult {
   );
   
   // Create periods with combined costs
-  const periods = createPeriodsFromBoundaries(
+  let periods = createPeriodsFromBoundaries(
     boundaries,
     (fromMonth: number, _toMonth: number) => {
       const month = fromMonth;
       
-      // Mobile cost
+      // Mobile cost (Slice B: pass asOfISO)
       let mobileCost = 0;
       if (tariff && subVariant && promo) {
         mobileCost = calculateMobileMonthlyForMonth(
@@ -443,14 +541,15 @@ export function calculateOffer(state: OfferOptionState): CalculationResult {
           subVariant,
           promo,
           mobile.quantity,
-          month
+          month,
+          asOfISO
         );
       }
       
-      // Fixed net cost
+      // Fixed net cost (Slice B: pass asOfISO)
       let fixedCost = 0;
       if (fixedNet.enabled && fixedProduct) {
-        fixedCost = calculateFixedNetMonthlyForMonth(fixedProduct, month);
+        fixedCost = calculateFixedNetMonthlyForMonth(fixedProduct, month, asOfISO);
       }
       
       // Hardware amortization (if enabled)
@@ -460,6 +559,9 @@ export function calculateOffer(state: OfferOptionState): CalculationResult {
     },
     meta.vatRate
   );
+  
+  // Slice B: Merge periods with same price (avoid unnecessary splits)
+  periods = mergePeriodsWithSamePrice(periods);
   
   // One-time costs (Phase 2: consider setupWaived)
   const oneTime: Money[] = [];

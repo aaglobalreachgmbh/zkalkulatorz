@@ -50,11 +50,11 @@ function validateHardwareStep(state: OfferOptionState): StepValidation {
 
   // Hardware is optional, but if ekNet is set, name should be set
   if (state.hardware.ekNet > 0 && !state.hardware.name.trim()) {
-    warnings.push("Hardware-Name fehlt");
+    warnings.push("Name fehlt");
   }
 
   if (state.hardware.amortize && state.hardware.amortMonths < 1) {
-    errors.push("Amortisierungsdauer muss mindestens 1 Monat sein");
+    errors.push("Amortisierung min. 1 Monat");
   }
 
   return { step: "hardware", valid: errors.length === 0, errors, warnings };
@@ -65,15 +65,15 @@ function validateMobileStep(state: OfferOptionState): StepValidation {
   const warnings: string[] = [];
 
   if (!state.mobile.tariffId) {
-    errors.push("Bitte wählen Sie einen Tarif");
+    errors.push("Tarif wählen");
   }
 
   if (!state.mobile.subVariantId) {
-    errors.push("Bitte wählen Sie eine Tarifvariante");
+    errors.push("Variante wählen");
   }
 
   if (state.mobile.quantity < 1) {
-    errors.push("Mindestens 1 Vertrag erforderlich");
+    errors.push("Min. 1 Vertrag");
   }
 
   return { step: "mobile", valid: errors.length === 0, errors, warnings };
@@ -84,7 +84,7 @@ function validateFixedNetStep(state: OfferOptionState): StepValidation {
   const warnings: string[] = [];
 
   if (state.fixedNet.enabled && !state.fixedNet.productId) {
-    errors.push("Bitte wählen Sie ein Festnetzprodukt");
+    errors.push("Produkt wählen");
   }
 
   return { step: "fixedNet", valid: errors.length === 0, errors, warnings };
@@ -96,7 +96,7 @@ function validateCompareStep(state: OfferOptionState): StepValidation {
 
   // Compare needs at least mobile to be configured
   if (!state.mobile.tariffId) {
-    warnings.push("Mobilfunk nicht konfiguriert - Vergleich möglicherweise unvollständig");
+    warnings.push("Mobilfunk fehlt");
   }
 
   return { step: "compare", valid: true, errors, warnings };

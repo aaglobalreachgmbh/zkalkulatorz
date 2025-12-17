@@ -1,11 +1,9 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Check, AlertTriangle } from "lucide-react";
-import type { OfferOptionState, ViewMode, WizardStep, CalculationResult } from "../engine/types";
+import type { OfferOptionState, ViewMode, WizardStep } from "../engine/types";
 import { createDefaultOptionState, calculateOffer } from "../engine";
 import { useWizardValidation } from "../hooks/useWizardValidation";
-import { useLocalStorageDraft, type DraftState } from "../hooks/useLocalStorageDraft";
-import { useOfferExport } from "../hooks/useOfferExport";
 import { HardwareStep } from "./steps/HardwareStep";
 import { MobileStep } from "./steps/MobileStep";
 import { FixedNetStep } from "./steps/FixedNetStep";
@@ -41,35 +39,6 @@ export function Wizard() {
   // Validation
   const validation = useWizardValidation(activeState);
 
-  // Draft persistence
-  const handleLoadDraft = useCallback((draft: DraftState) => {
-    setOption1(draft.option1);
-    setOption2(draft.option2);
-    setActiveOption(draft.activeOption);
-    setViewMode(draft.viewMode);
-    toast({
-      title: "Entwurf geladen",
-      description: "Ihr letzter Entwurf wurde wiederhergestellt.",
-    });
-  }, [toast]);
-
-  const draftControls = useLocalStorageDraft(
-    { option1, option2, activeOption, viewMode },
-    handleLoadDraft
-  );
-
-  // Export/Import
-  const exportControls = useOfferExport();
-
-  const handleImportSuccess = useCallback((opt1: OfferOptionState, opt2: OfferOptionState) => {
-    setOption1(opt1);
-    setOption2(opt2);
-    toast({
-      title: "Import erfolgreich",
-      description: "Das Angebot wurde importiert.",
-    });
-  }, [toast]);
-
   // Navigation
   const goToStep = (step: WizardStep) => {
     setCurrentStep(step);
@@ -94,7 +63,7 @@ export function Wizard() {
     setter(JSON.parse(JSON.stringify(source)));
     toast({
       title: "Option kopiert",
-      description: `Option ${from} wurde nach Option ${to} kopiert.`,
+      description: `Option ${from} → Option ${to}`,
     });
   };
 
@@ -164,11 +133,6 @@ export function Wizard() {
         onActiveOptionChange={setActiveOption}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
-        option1={option1}
-        option2={option2}
-        onImportSuccess={handleImportSuccess}
-        draftControls={draftControls}
-        exportControls={exportControls}
         showOptionToggle={currentStep !== "compare"}
       />
 

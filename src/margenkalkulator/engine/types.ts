@@ -114,6 +114,10 @@ export type CalculationResult = {
   dealer: DealerEconomics;
   breakdown: BreakdownItem[];
   gkEligible: boolean;  // Phase 2: GK convergence benefit
+  meta: {
+    convergenceEligible: boolean;           // true if fixed net active
+    primeUnlimitedUpgradeEligible: boolean; // true if Prime + eligible FixedNet
+  };
 };
 
 // ============================================

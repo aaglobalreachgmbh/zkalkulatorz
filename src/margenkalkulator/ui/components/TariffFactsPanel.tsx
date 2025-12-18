@@ -16,6 +16,9 @@ interface MobileTariffFactsProps {
 interface FixedNetFactsProps {
   type: "fixednet";
   product: FixedNetProduct | undefined;
+  fixedIpEnabled?: boolean;
+  expertSetupEnabled?: boolean;
+  expertSetupNet?: number;
 }
 
 type TariffFactsPanelProps = MobileTariffFactsProps | FixedNetFactsProps;
@@ -24,7 +27,12 @@ export function TariffFactsPanel(props: TariffFactsPanelProps) {
   if (props.type === "mobile") {
     return <MobileTariffFacts tariff={props.tariff} />;
   }
-  return <FixedNetFacts product={props.product} />;
+  return <FixedNetFacts 
+    product={props.product} 
+    fixedIpEnabled={props.fixedIpEnabled}
+    expertSetupEnabled={props.expertSetupEnabled}
+    expertSetupNet={props.expertSetupNet}
+  />;
 }
 
 // ============================================
@@ -96,7 +104,17 @@ function MobileTariffFacts({ tariff }: { tariff: MobileTariff | undefined }) {
 // Fixed Net Facts
 // ============================================
 
-function FixedNetFacts({ product }: { product: FixedNetProduct | undefined }) {
+function FixedNetFacts({ 
+  product, 
+  fixedIpEnabled,
+  expertSetupEnabled,
+  expertSetupNet = 89.99,
+}: { 
+  product: FixedNetProduct | undefined;
+  fixedIpEnabled?: boolean;
+  expertSetupEnabled?: boolean;
+  expertSetupNet?: number;
+}) {
   if (!product) {
     return (
       <Card className="bg-muted/30">
@@ -108,6 +126,10 @@ function FixedNetFacts({ product }: { product: FixedNetProduct | undefined }) {
       </Card>
     );
   }
+
+  // Constants for one-time costs breakdown
+  const SETUP_FEE = 19.90;
+  const SHIPPING_FEE = 8.40;
 
   return (
     <Card className="bg-muted/30">
@@ -136,14 +158,22 @@ function FixedNetFacts({ product }: { product: FixedNetProduct | undefined }) {
 
         {/* Badges */}
         <div className="flex flex-wrap gap-1.5 pt-2">
-          <Badge variant="outline" className="text-xs">
-            <Router className="w-3 h-3 mr-1" />
-            {product.routerType} inkl.
-          </Badge>
+          {product.includesRouter && (
+            <Badge variant="outline" className="text-xs bg-green-50 border-green-200 text-green-700">
+              <Router className="w-3 h-3 mr-1" />
+              {product.routerModelDefault || "Router"} inkl. (0€)
+            </Badge>
+          )}
           {product.includesPhone && (
             <Badge variant="outline" className="text-xs">
               <Phone className="w-3 h-3 mr-1" />
               Telefon-Flat
+            </Badge>
+          )}
+          {product.fixedIpIncluded && (
+            <Badge variant="outline" className="text-xs bg-blue-50 border-blue-200 text-blue-700">
+              <Shield className="w-3 h-3 mr-1" />
+              Feste IP inkl.
             </Badge>
           )}
           {product.setupWaived && (
@@ -151,22 +181,59 @@ function FixedNetFacts({ product }: { product: FixedNetProduct | undefined }) {
               Bereitstellung entfällt
             </Badge>
           )}
-          {(product.speed ?? 0) >= 500 && (
-            <Badge variant="outline" className="text-xs">
-              <Shield className="w-3 h-3 mr-1" />
-              Feste IP inkl.
-            </Badge>
-          )}
         </div>
 
-        {/* One-Time Costs Info */}
-        <div className="pt-2 border-t text-xs text-muted-foreground space-y-1">
+        {/* One-Time Costs Section */}
+        <div className="pt-2 border-t">
+          <p className="text-xs font-medium text-muted-foreground mb-2">Einmalige Kosten</p>
+          <div className="space-y-1 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Bereitstellung</span>
+              <span>{product.setupWaived ? <span className="text-green-600">erlassen</span> : `${SETUP_FEE.toFixed(2)} €`}</span>
+            </div>
+            {!product.setupWaived && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Versand Hardware</span>
+                <span>{SHIPPING_FEE.toFixed(2)} €</span>
+              </div>
+            )}
+            {expertSetupEnabled && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Experten-Service</span>
+                <span>{expertSetupNet.toFixed(2)} €</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Optional Section */}
+        <div className="pt-2 border-t">
+          <p className="text-xs font-medium text-muted-foreground mb-2">Optionen</p>
+          <div className="space-y-1 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Feste IP</span>
+              {product.fixedIpIncluded ? (
+                <span className="text-green-600">inklusive</span>
+              ) : fixedIpEnabled ? (
+                <span>+{(product.fixedIpAddonNet ?? 5).toFixed(2)} €/Mo</span>
+              ) : (
+                <span className="text-muted-foreground">zubuchbar</span>
+              )}
+            </div>
+            {product.expertSetupAvailable && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Experten-Einrichtung</span>
+                <span className={expertSetupEnabled ? "" : "text-muted-foreground"}>
+                  {expertSetupEnabled ? "gebucht" : "verfügbar"}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Contract Info */}
+        <div className="pt-2 border-t text-xs text-muted-foreground">
           <p>Mindestvertragslaufzeit: 24 Monate</p>
-          <p>Bereitstellung: {product.setupWaived ? "entfällt" : "19,90€ netto"}</p>
-          <p>Versand Hardware: 8,40€ netto</p>
-          {(product.speed ?? 0) < 500 && (
-            <p>Feste IP: optional (+5€/mtl.)</p>
-          )}
         </div>
 
         {/* Promo Info if exists */}

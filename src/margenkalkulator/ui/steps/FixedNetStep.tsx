@@ -26,7 +26,8 @@ import {
 } from "../../data/business/v2025_09/fixedNetKomfort";
 import { DATA_SOURCES } from "../../data/business/v2025_09/sources";
 import { calculateGigaKombi } from "../../engine/benefitsEngine";
-import { Wifi, Router, Phone, CheckCircle, Cable, Zap, PhoneCall, Infinity, Settings } from "lucide-react";
+import { Wifi, Cable, Zap, PhoneCall, Infinity, Settings, Phone } from "lucide-react";
+import { TariffFactsPanel } from "../components/TariffFactsPanel";
 
 // Constants
 const EXPERT_SETUP_NET = 89.99;
@@ -340,75 +341,15 @@ export function FixedNetStep({ value, onChange, datasetVersion, mobileState }: F
               </div>
             )}
 
-            {/* Product Details Panel */}
+            {/* Product Details Panel - using TariffFactsPanel */}
             {selectedProduct && !isKomfort && (
-              <div className="bg-muted/50 rounded-lg p-4 space-y-3">
-                {/* Badges for key features */}
-                <div className="flex flex-wrap gap-2">
-                  {selectedProduct.includesRouter && (
-                    <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-200">
-                      <Router className="w-3 h-3 mr-1" />
-                      {selectedProduct.routerModelDefault || "Router"} inkl.
-                    </Badge>
-                  )}
-                  {selectedProduct.fixedIpIncluded && (
-                    <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-200">
-                      <CheckCircle className="w-3 h-3 mr-1" />
-                      Feste IP inkl.
-                    </Badge>
-                  )}
-                  {selectedProduct.includesPhone && (
-                    <Badge variant="secondary">
-                      <Phone className="w-3 h-3 mr-1" />
-                      Telefon-Flat
-                    </Badge>
-                  )}
-                </div>
-
-                {/* Features */}
-                <div className="flex flex-wrap gap-1.5">
-                  {selectedProduct.features.slice(0, 4).map((feature, idx) => (
-                    <span
-                      key={idx}
-                      className="text-xs bg-background px-2 py-0.5 rounded-full"
-                    >
-                      {feature}
-                    </span>
-                  ))}
-                </div>
-
-                {/* Pricing */}
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-muted-foreground">Monatlich:</span>
-                    <span className="ml-2 font-medium">
-                      {selectedProduct.monthlyNet.toFixed(2)} € netto
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Einmalig:</span>
-                    <span className="ml-2 font-medium">
-                      {selectedProduct.oneTimeNet > 0 
-                        ? `${selectedProduct.oneTimeNet.toFixed(2)} € netto`
-                        : "0,00 €"
-                      }
-                    </span>
-                  </div>
-                </div>
-
-                {/* Promo info */}
-                {selectedProduct.promo && selectedProduct.promo.type !== "NONE" && (
-                  <div className="text-sm text-primary">
-                    <span className="font-medium">Aktion: </span>
-                    {selectedProduct.promo.type === "INTRO_PRICE" && (
-                      <span>
-                        {selectedProduct.promo.value.toFixed(2)} €/Mo für{" "}
-                        {selectedProduct.promo.durationMonths} Monate
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
+              <TariffFactsPanel
+                type="fixednet"
+                product={selectedProduct}
+                fixedIpEnabled={value.fixedIpEnabled}
+                expertSetupEnabled={value.expertSetupEnabled}
+                expertSetupNet={EXPERT_SETUP_NET}
+              />
             )}
 
             {/* GigaKombi Benefits Box */}

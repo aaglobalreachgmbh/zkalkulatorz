@@ -1,10 +1,17 @@
 // ============================================
 // Smart Business / Smart Business Plus Tariffs - 2025-09
-// Source: Vodafone Gesamtpreisliste Mobilfunk
-// (https://www.vodafone.de/business/media/vodafone-gesamtpreisliste-mobilfunk.pdf)
+// Source: InfoDok 4260 (April 2025)
+// https://www.vodafone.de/infofaxe/4260.pdf
+// Smart Business Plus serves as BASIS for TeamDeal
 // ============================================
 
-import type { MobileTariff } from "../../../../margenkalkulator/engine/types";
+import type { MobileTariff, SubVariantId } from "../../../../margenkalkulator/engine/types";
+
+const SMART_BUSINESS_ALLOWED_SUBS: SubVariantId[] = [
+  "SIM_ONLY",
+  "BASIC_PHONE",
+  "SMARTPHONE",
+];
 
 export const smartBusinessTariffs: MobileTariff[] = [
   {
@@ -13,16 +20,19 @@ export const smartBusinessTariffs: MobileTariff[] = [
     family: "smart_business",
     productLine: "SMART_BUSINESS",
     dataVolumeGB: 0.5, // 500 MB
-    baseNet: 9, // SIM-only price
+    baseNet: 9,
     pricesByVariant: {
       SIM_ONLY: 9,
       BASIC: 14,
       SMARTPHONE: 19,
     },
+    euRoamingNote: "wie in DE",
+    allowedSubVariants: SMART_BUSINESS_ALLOWED_SUBS,
     features: [
       "500 MB Datenvolumen",
       "Allnet-Flat (Sprache & SMS)",
       "LTE",
+      "EU: Daten wie in DE",
     ],
     minTermMonths: 24,
     setupFeeNet: 0,
@@ -36,16 +46,19 @@ export const smartBusinessTariffs: MobileTariff[] = [
     family: "smart_business",
     productLine: "SMART_BUSINESS_PLUS",
     dataVolumeGB: 1,
-    baseNet: 13, // SIM-only price
+    baseNet: 13,
     pricesByVariant: {
       SIM_ONLY: 13,
       BASIC: 18,
       SMARTPHONE: 23,
     },
+    euRoamingNote: "wie in DE",
+    allowedSubVariants: SMART_BUSINESS_ALLOWED_SUBS,
     features: [
       "1 GB Datenvolumen",
       "Allnet-Flat (Sprache & SMS)",
       "LTE/5G",
+      "EU: Daten wie in DE",
     ],
     minTermMonths: 24,
     setupFeeNet: 0,

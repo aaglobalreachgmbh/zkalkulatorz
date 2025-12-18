@@ -1,5 +1,6 @@
 // ============================================
-// SUB Variants - 2025-09
+// SUB Variants (Geräteklassen) - 2025-09
+// Source: InfoDok 4246 (Oktober 2025)
 // ============================================
 
 import type { SubVariant } from "../../../../margenkalkulator/engine/types";
@@ -11,13 +12,23 @@ export const businessSubVariants: SubVariant[] = [
     monthlyAddNet: 0 
   },
   { 
-    id: "SUB5", 
-    label: "SUB5 (+5€)", 
+    id: "BASIC_PHONE", 
+    label: "Basic Phone (+5€)", 
     monthlyAddNet: 5 
   },
   { 
-    id: "SUB10", 
-    label: "SUB10 (+10€)", 
+    id: "SMARTPHONE", 
+    label: "Smartphone (+10€)", 
     monthlyAddNet: 10 
+  },
+  { 
+    id: "PREMIUM_SMARTPHONE", 
+    label: "Premium Smartphone (+25€)", 
+    monthlyAddNet: 25 
+  },
+  { 
+    id: "SPECIAL_PREMIUM_SMARTPHONE", 
+    label: "Special Premium (+40€)", 
+    monthlyAddNet: 40 
   },
 ];

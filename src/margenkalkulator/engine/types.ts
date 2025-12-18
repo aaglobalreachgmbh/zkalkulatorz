@@ -124,8 +124,16 @@ export type CalculationResult = {
 // Catalog Types - Extended for Phase 2
 // ============================================
 
+// SUB Variant IDs
+export type SubVariantId = 
+  | "SIM_ONLY" 
+  | "BASIC_PHONE" 
+  | "SMARTPHONE" 
+  | "PREMIUM_SMARTPHONE" 
+  | "SPECIAL_PREMIUM_SMARTPHONE";
+
 export type SubVariant = {
-  id: string;
+  id: SubVariantId | string;
   label: string;
   monthlyAddNet: number;
 };
@@ -134,6 +142,11 @@ export type TariffTier = "XS" | "S" | "M" | "L" | "XL";
 export type ProductLine = "PRIME" | "BUSINESS_SMART" | "SMART_BUSINESS" | "SMART_BUSINESS_PLUS" | "TEAMDEAL";
 export type TariffFamily = "prime" | "business_smart" | "smart_business" | "teamdeal";
 export type ContractVariant = "SIM_ONLY" | "BASIC" | "SMARTPHONE";
+
+// GigaDepot status for Prime tariffs
+export type GigaDepotStatus = 
+  | { status: "included" }
+  | { status: "optional"; priceNet: number };
 
 export type MobileTariff = {
   id: string;
@@ -159,6 +172,13 @@ export type MobileTariff = {
   setupFeeNet?: number;         // 0 for Business Smart
   teamDealBase?: string;        // e.g. "SMART_BUSINESS_PLUS"
   teamDealDelta?: number;       // e.g. -3.50 for XS
+  // Phase 2 Mobilfunk extensions
+  euRoamingHighspeedGB?: number;        // Prime: 45/65/80/95
+  euRoamingNote?: string;               // Smart: "wie in DE"
+  roamingPacketZone1GB?: number;        // Prime: 1/2/3/5
+  oneNumberIncludedCount?: number;      // Prime: 1/2/3/1
+  gigaDepot?: GigaDepotStatus;          // Prime S: optional, M/L/XL: included
+  allowedSubVariants?: SubVariantId[];  // For UI filtering
 };
 
 export type PromoType = "NONE" | "INTRO_PRICE" | "PCT_OFF_BASE" | "ABS_OFF_BASE";

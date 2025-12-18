@@ -3,7 +3,13 @@
 // Source: InfoDok 4262 (https://www.vodafone.de/infofaxe/4262.pdf)
 // ============================================
 
-import type { MobileTariff } from "../../../../margenkalkulator/engine/types";
+import type { MobileTariff, SubVariantId } from "../../../../margenkalkulator/engine/types";
+
+const BUSINESS_SMART_ALLOWED_SUBS: SubVariantId[] = [
+  "SIM_ONLY",
+  "BASIC_PHONE",
+  "SMARTPHONE",
+];
 
 export const businessSmartTariffs: MobileTariff[] = [
   {
@@ -13,17 +19,19 @@ export const businessSmartTariffs: MobileTariff[] = [
     productLine: "BUSINESS_SMART",
     tier: "S",
     dataVolumeGB: 1,
-    baseNet: 11, // SIM-only price
+    baseNet: 11,
     pricesByVariant: {
       SIM_ONLY: 11,
       BASIC: 16,
       SMARTPHONE: 21,
     },
+    euRoamingNote: "wie in DE",
+    allowedSubVariants: BUSINESS_SMART_ALLOWED_SUBS,
     features: [
       "1 GB Datenvolumen",
       "Allnet-Flat (Sprache & SMS)",
       "LTE/5G",
-      "EU-Roaming inklusive",
+      "EU: Daten wie in DE",
     ],
     minTermMonths: 24,
     setupFeeNet: 0,
@@ -38,17 +46,19 @@ export const businessSmartTariffs: MobileTariff[] = [
     productLine: "BUSINESS_SMART",
     tier: "M",
     dataVolumeGB: 5,
-    baseNet: 15, // SIM-only price
+    baseNet: 15,
     pricesByVariant: {
       SIM_ONLY: 15,
       BASIC: 20,
       SMARTPHONE: 25,
     },
+    euRoamingNote: "wie in DE",
+    allowedSubVariants: BUSINESS_SMART_ALLOWED_SUBS,
     features: [
       "5 GB Datenvolumen",
       "Allnet-Flat (Sprache & SMS)",
       "LTE/5G",
-      "EU-Roaming inklusive",
+      "EU: Daten wie in DE",
     ],
     minTermMonths: 24,
     setupFeeNet: 0,
@@ -56,7 +66,7 @@ export const businessSmartTariffs: MobileTariff[] = [
     provisionRenewal: 50,
     deductionRate: 0,
   },
-  // Flex variants (1-month minimum term) - display only
+  // Flex variants (1-month minimum term) - SIM-only only
   {
     id: "BUSINESS_SMART_S_FLEX",
     name: "Business Smart S Flex",
@@ -68,6 +78,8 @@ export const businessSmartTariffs: MobileTariff[] = [
     pricesByVariant: {
       SIM_ONLY: 11,
     },
+    euRoamingNote: "wie in DE",
+    allowedSubVariants: ["SIM_ONLY"],
     features: [
       "1 GB Datenvolumen",
       "Allnet-Flat",
@@ -75,7 +87,7 @@ export const businessSmartTariffs: MobileTariff[] = [
     ],
     minTermMonths: 1,
     setupFeeNet: 0,
-    provisionBase: 0, // No provision for Flex
+    provisionBase: 0,
     deductionRate: 0,
   },
   {
@@ -89,6 +101,8 @@ export const businessSmartTariffs: MobileTariff[] = [
     pricesByVariant: {
       SIM_ONLY: 15,
     },
+    euRoamingNote: "wie in DE",
+    allowedSubVariants: ["SIM_ONLY"],
     features: [
       "5 GB Datenvolumen",
       "Allnet-Flat",

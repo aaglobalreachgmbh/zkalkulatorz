@@ -1,10 +1,15 @@
 // ============================================
 // XLSX Importer using SheetJS
+// Supports both Canonical and Business formats
 // ============================================
 
 import * as XLSX from "xlsx";
 import { TEMPLATE_SCHEMA } from "../schema";
-import type { ParsedSheets } from "../types";
+import type { ParsedSheets, CanonicalDataset } from "../types";
+import { detectFormat, type FormatDetectionResult } from "../businessFormat/detector";
+import { parseBusinessFormat } from "../businessFormat/parser";
+import { mapBusinessToCanonical } from "../businessFormat/mapper";
+import { transformToCanonical } from "../adapter";
 
 export async function parseXLSX(file: File): Promise<ParsedSheets> {
   return new Promise((resolve, reject) => {
@@ -116,4 +121,72 @@ export async function getSheetNames(file: File): Promise<string[]> {
     reader.onerror = () => reject(new Error("File read failed"));
     reader.readAsArrayBuffer(file);
   });
+}
+
+// ============================================
+// Unified XLSX Parser with Format Detection
+// ============================================
+
+export type UnifiedParseResult = {
+  canonical: CanonicalDataset;
+  format: "CANONICAL" | "BUSINESS";
+  detection: FormatDetectionResult;
+};
+
+export async function parseXLSXUnified(file: File): Promise<UnifiedParseResult> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: "array" });
+        
+        // Step 1: Detect format
+        const detection = detectFormat(workbook);
+        
+        if (detection.format === "CANONICAL") {
+          // Use existing canonical parser
+          const sheets = parseCanonicalSheets(workbook);
+          const canonical = transformToCanonical(sheets);
+          resolve({ canonical, format: "CANONICAL", detection });
+          
+        } else if (detection.format === "BUSINESS") {
+          // Use new business parser
+          const business = parseBusinessFormat(workbook, detection, file.name);
+          const canonical = mapBusinessToCanonical(business);
+          resolve({ canonical, format: "BUSINESS", detection });
+          
+        } else {
+          reject(new Error(
+            "Unbekanntes Dateiformat. Erwartet: Canonical (mit meta, mobile_tariffs) " +
+            "oder Business (mit mtl. Grundpreis, FH-Partner)."
+          ));
+        }
+      } catch (err) {
+        reject(new Error(`XLSX parsing failed: ${err instanceof Error ? err.message : "Unknown error"}`));
+      }
+    };
+    
+    reader.onerror = () => reject(new Error("File read failed"));
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+// Parse canonical format sheets (reuses existing normalizeRows)
+function parseCanonicalSheets(workbook: XLSX.WorkBook): ParsedSheets {
+  const result: ParsedSheets = {};
+  
+  for (const sheetName of Object.keys(TEMPLATE_SCHEMA)) {
+    const sheet = workbook.Sheets[sheetName];
+    if (sheet) {
+      const rows = XLSX.utils.sheet_to_json(sheet, {
+        defval: null,
+        raw: false,
+      });
+      result[sheetName as keyof ParsedSheets] = normalizeRows(rows as Record<string, unknown>[]);
+    }
+  }
+  
+  return result;
 }

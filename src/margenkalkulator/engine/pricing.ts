@@ -424,7 +424,10 @@ export function generateBreakdown(
       ruleId: "fixed_base",
     });
     
-    // Fixed one-time (Phase 2: consider setupWaived)
+    // Fixed one-time (Phase 2: split into Bereitstellung + Versand)
+    const SETUP_FEE_NET = 19.90;
+    const SHIPPING_FEE_NET = 8.40;
+    
     if (fixedProduct.setupWaived) {
       breakdown.push({
         key: "fixed_onetime_waived",
@@ -435,13 +438,47 @@ export function generateBreakdown(
         ruleId: "fixed_setup_waived",
       });
     } else if (fixedProduct.oneTimeNet > 0) {
+      // Split into Bereitstellung + Versand
       breakdown.push({
-        key: "fixed_onetime",
-        label: `${fixedProduct.name} Einrichtung`,
+        key: "fixed_setup",
+        label: "Bereitstellung",
         appliesTo: "oneTime",
-        net: fixedProduct.oneTimeNet,
-        gross: calculateGross(fixedProduct.oneTimeNet, vatRate),
+        net: SETUP_FEE_NET,
+        gross: calculateGross(SETUP_FEE_NET, vatRate),
         ruleId: "fixed_setup",
+      });
+      breakdown.push({
+        key: "fixed_shipping",
+        label: "Versand Hardware",
+        appliesTo: "oneTime",
+        net: SHIPPING_FEE_NET,
+        gross: calculateGross(SHIPPING_FEE_NET, vatRate),
+        ruleId: "fixed_shipping",
+      });
+    }
+    
+    // Expert Setup add-on (Cable only)
+    if (state.fixedNet.expertSetupEnabled) {
+      const EXPERT_SETUP_NET = 89.99;
+      breakdown.push({
+        key: "fixed_expert_setup",
+        label: "Experten-Service Einrichtung",
+        appliesTo: "oneTime",
+        net: EXPERT_SETUP_NET,
+        gross: calculateGross(EXPERT_SETUP_NET, vatRate),
+        ruleId: "fixed_expert_setup",
+      });
+    }
+    
+    // Fixed IP add-on
+    if (state.fixedNet.fixedIpEnabled && fixedProduct.fixedIpAddonNet) {
+      breakdown.push({
+        key: "fixed_ip_addon",
+        label: "Feste IP-Adresse",
+        appliesTo: "monthly",
+        net: fixedProduct.fixedIpAddonNet,
+        gross: calculateGross(fixedProduct.fixedIpAddonNet, vatRate),
+        ruleId: "fixed_ip_addon",
       });
     }
     
@@ -670,6 +707,12 @@ export function calculateOffer(state: OfferOptionState): CalculationResult {
     gkEligible
   );
   
+  // Determine convergence flags
+  const convergenceEligible = fixedNet.enabled;
+  const primeUnlimitedUpgradeEligible = fixedNet.enabled && 
+    gkEligible && 
+    tariff?.family === "prime";
+
   return {
     periods,
     oneTime,
@@ -677,5 +720,9 @@ export function calculateOffer(state: OfferOptionState): CalculationResult {
     dealer,
     breakdown,
     gkEligible,
+    meta: {
+      convergenceEligible,
+      primeUnlimitedUpgradeEligible,
+    },
   };
 }

@@ -235,6 +235,17 @@ export type FixedNetProduct = {
   }[];
 };
 
+// Hardware Item (for device catalog)
+export type HardwareItem = {
+  id: string;
+  brand: string;
+  model: string;
+  category: "smartphone" | "tablet" | "accessory" | "none" | "custom";
+  ekNet: number;         // Einkaufspreis netto
+  imageUrl?: string;
+  sortOrder?: number;
+};
+
 export type Catalog = {
   version: DatasetVersion;
   validFrom?: string;           // Phase 2: validity date
@@ -242,6 +253,7 @@ export type Catalog = {
   mobileTariffs: MobileTariff[];
   promos: Promo[];
   fixedNetProducts: FixedNetProduct[];
+  hardwareCatalog?: HardwareItem[];  // Hardware catalog
 };
 
 // Legacy alias for backward compatibility

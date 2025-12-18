@@ -11,6 +11,7 @@ import type {
   SubVariant,
   SubVariantId,
   FixedNetAccessType,
+  HardwareItem,
 } from "../engine/types";
 import type { 
   CanonicalDataset, 
@@ -18,6 +19,7 @@ import type {
   FixedNetProductRow,
   PromoDefinitionRow,
   SubVariantRow,
+  HardwareItemRow,
   ParsedSheets,
 } from "./types";
 
@@ -138,6 +140,21 @@ export function mapCanonicalToCatalog(canonical: CanonicalDataset): Catalog {
       .filter(p => p.active !== false)
       .map(mapFixedNetProduct),
     promos: canonical.promos.map(mapPromo),
+    hardwareCatalog: canonical.hardwareCatalog
+      .filter(h => h.active !== false)
+      .map(mapHardwareItem),
+  };
+}
+
+function mapHardwareItem(row: HardwareItemRow): HardwareItem {
+  return {
+    id: row.id,
+    brand: row.brand,
+    model: row.model,
+    category: row.category as HardwareItem["category"],
+    ekNet: row.ek_net,
+    imageUrl: row.image_url,
+    sortOrder: row.sort_order,
   };
 }
 

@@ -13,6 +13,7 @@ import { fixedNetCableProducts } from "./fixedNetCable";
 import { fixedNetDSLProducts } from "./fixedNetDSL";
 import { fixedNetFiberProducts } from "./fixedNetFiber";
 import { fixedNetKomfortProducts } from "./fixedNetKomfort";
+import { hardwareCatalog } from "./hardware";
 
 export const businessCatalog2025_09: Catalog = {
   version: "business-2025-09",
@@ -31,6 +32,7 @@ export const businessCatalog2025_09: Catalog = {
     ...fixedNetFiberProducts,
     ...fixedNetKomfortProducts,
   ],
+  hardwareCatalog,
 };
 
 // Re-export individual modules
@@ -44,6 +46,7 @@ export { fixedNetCableProducts } from "./fixedNetCable";
 export { fixedNetDSLProducts } from "./fixedNetDSL";
 export { fixedNetFiberProducts } from "./fixedNetFiber";
 export { fixedNetKomfortProducts } from "./fixedNetKomfort";
+export { hardwareCatalog } from "./hardware";
 export { 
   komfortRegioPhoneTiers, 
   komfortRegioInternetOptions,

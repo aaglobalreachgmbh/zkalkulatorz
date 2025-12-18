@@ -149,26 +149,23 @@ export function Wizard() {
               const stepValidation = validation.steps[step.id];
               const isActive = currentStep === step.id;
               const isPast = idx < currentStepIndex;
-              const isClickable = idx <= currentStepIndex;
               const hasError = stepValidation && !stepValidation.valid && isPast;
 
               return (
                 <button
                   key={step.id}
-                  onClick={() => isClickable && goToStep(step.id)}
-                  disabled={!isClickable}
+                  onClick={() => goToStep(step.id)}
                   className={`
                     relative px-4 py-2.5 rounded-full text-sm font-medium
-                    transition-all duration-200 ease-out
+                    transition-all duration-200 ease-out cursor-pointer
                     ${isActive
                       ? "bg-primary text-primary-foreground shadow-card scale-105"
                       : isPast
                         ? hasError
                           ? "bg-destructive/15 text-destructive hover:bg-destructive/20"
                           : "bg-primary/10 text-primary hover:bg-primary/20"
-                        : "bg-muted/50 text-muted-foreground"
+                        : "bg-muted/50 text-muted-foreground hover:bg-muted"
                     }
-                    ${isClickable ? "cursor-pointer" : "cursor-not-allowed opacity-60"}
                   `}
                 >
                   <span className="flex items-center gap-2">

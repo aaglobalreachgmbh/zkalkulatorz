@@ -18,8 +18,22 @@ export type {
 export { TEMPLATE_SCHEMA, SHEET_LABELS } from "./schema";
 
 // Importers
-export { parseXLSX, getSheetNames } from "./importers/xlsxImporter";
+export { parseXLSX, getSheetNames, parseXLSXUnified, type UnifiedParseResult } from "./importers/xlsxImporter";
 export { parseCSV } from "./importers/csvImporter";
+
+// Business Format
+export { 
+  detectFormat,
+  parseBusinessFormat,
+  mapBusinessToCanonical,
+  parseBusinessValue,
+  generateStableId,
+  type OmoMatrix,
+  type BusinessDataset,
+  type BusinessTariffRow,
+  type BusinessHardwareRow,
+  type FormatDetectionResult,
+} from "./businessFormat";
 
 // Validation
 export { 

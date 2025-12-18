@@ -17,9 +17,6 @@ import {
   Info,
 } from "lucide-react";
 import { 
-  parseXLSX,
-  validateParsedSheets,
-  transformToCanonical,
   validateDataset,
   diffDatasets,
   formatDiffSummary,
@@ -27,6 +24,11 @@ import {
   type DiffResult,
   type CanonicalDataset,
 } from "@/margenkalkulator/dataManager";
+import { 
+  parseXLSXUnified,
+  type UnifiedParseResult,
+} from "@/margenkalkulator/dataManager/importers/xlsxImporter";
+import type { FormatDetectionResult } from "@/margenkalkulator/dataManager/businessFormat";
 import { 
   saveCustomDataset, 
   clearCustomDataset,
@@ -41,6 +43,7 @@ export default function DataManager() {
   const [parsedData, setParsedData] = useState<CanonicalDataset | null>(null);
   const [validation, setValidation] = useState<ValidationResult | null>(null);
   const [diff, setDiff] = useState<DiffResult | null>(null);
+  const [detection, setDetection] = useState<FormatDetectionResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [activeVersion, setActiveVersion] = useState(getActiveDatasetVersion());
 
@@ -53,37 +56,29 @@ export default function DataManager() {
     setParsedData(null);
     setValidation(null);
     setDiff(null);
+    setDetection(null);
     
     try {
-      // Step 1: Parse XLSX
-      const sheets = await parseXLSX(selectedFile);
+      // Step 1: Parse XLSX with unified parser (auto-detects format)
+      const result: UnifiedParseResult = await parseXLSXUnified(selectedFile);
       
-      // Step 2: Validate parsed sheets
-      const sheetsValidation = validateParsedSheets(sheets);
+      setDetection(result.detection);
       
-      if (!sheetsValidation.isValid) {
-        setValidation(sheetsValidation);
-        return;
-      }
-      
-      // Step 3: Transform to canonical format
-      const canonical = transformToCanonical(sheets);
-      
-      // Step 4: Validate canonical dataset
-      const datasetValidation = validateDataset(canonical);
+      // Step 2: Validate canonical dataset
+      const datasetValidation = validateDataset(result.canonical);
       setValidation(datasetValidation);
       
       if (!datasetValidation.isValid) {
         return;
       }
       
-      setParsedData(canonical);
+      setParsedData(result.canonical);
       
-      // Step 5: Calculate diff against current dataset
+      // Step 3: Calculate diff against current dataset
       const currentCanonical = loadCustomDataset() ?? convertCatalogToCanonical(businessCatalog2025_09);
       const diffResult = diffDatasets(
         currentCanonical as unknown as Record<string, { id: string }[]>,
-        canonical as unknown as Record<string, { id: string }[]>
+        result.canonical as unknown as Record<string, { id: string }[]>
       );
       setDiff(diffResult);
       
@@ -123,6 +118,7 @@ export default function DataManager() {
     setParsedData(null);
     setValidation(null);
     setDiff(null);
+    setDetection(null);
     setFile(null);
     toast({
       title: "Zurückgesetzt",
@@ -230,7 +226,31 @@ export default function DataManager() {
         </CardContent>
       </Card>
 
-      {/* Validation Results */}
+      {/* Format Detection Result */}
+      {detection && (
+        <Alert className="mb-6">
+          <Info className="h-4 w-4" />
+          <AlertTitle>
+            Erkanntes Format: {detection.format === "BUSINESS" ? "Business (SoHo/PK)" : detection.format}
+          </AlertTitle>
+          <AlertDescription>
+            {detection.format === "BUSINESS" && detection.sheets.length > 0 && (
+              <span>
+                {detection.sheets.length} Sheet(s) erkannt:{" "}
+                {detection.sheets.map((s, i) => (
+                  <Badge key={i} variant="outline" className="mr-1">
+                    {s.name} ({s.type})
+                  </Badge>
+                ))}
+              </span>
+            )}
+            {detection.format === "CANONICAL" && "Standard-Template mit meta, mobile_tariffs, etc."}
+            {detection.format === "UNKNOWN" && (
+              <span className="text-destructive">{detection.reason}</span>
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
       {validation && (
         <Card className="mb-6">
           <CardHeader className="pb-3">

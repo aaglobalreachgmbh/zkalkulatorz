@@ -102,22 +102,30 @@ describe("Business Format Parser", () => {
   });
 
   describe("generateStableId", () => {
-    it("generates consistent ID from sheet + name + type", () => {
-      const id1 = generateStableId("Tarife SoHo_Neu", "RV 190000 Red XL", "NEU");
-      const id2 = generateStableId("Tarife SoHo_Neu", "RV 190000 Red XL", "NEU");
+    it("generates consistent ID from sheet + name + type + row", () => {
+      const id1 = generateStableId("Tarife SoHo_Neu", "Red XL", "NEU", 3);
+      const id2 = generateStableId("Tarife SoHo_Neu", "Red XL", "NEU", 3);
       expect(id1).toBe(id2);
     });
     
     it("generates different ID for VVL vs NEU", () => {
-      const idNeu = generateStableId("Sheet", "Tarif A", "NEU");
-      const idVvl = generateStableId("Sheet", "Tarif A", "VVL");
+      const idNeu = generateStableId("Sheet", "Tarif A", "NEU", 3);
+      const idVvl = generateStableId("Sheet", "Tarif A", "VVL", 3);
       expect(idNeu).not.toBe(idVvl);
       expect(idNeu).toContain("neu");
       expect(idVvl).toContain("vvl");
     });
     
+    it("generates unique IDs for different rows", () => {
+      const id1 = generateStableId("Sheet", "Tarif A", "NEU", 3);
+      const id2 = generateStableId("Sheet", "Tarif A", "NEU", 4);
+      expect(id1).not.toBe(id2);
+      expect(id1).toContain("_r3");
+      expect(id2).toContain("_r4");
+    });
+    
     it("handles umlauts correctly", () => {
-      const id = generateStableId("Tarife Für Geschäft", "Büro Tarif", "NEU");
+      const id = generateStableId("Tarife Für Geschäft", "Büro Tarif", "NEU", 5);
       expect(id).not.toContain("ü");
       expect(id).not.toContain("ä");
       expect(id).toContain("ue");
@@ -126,7 +134,7 @@ describe("Business Format Parser", () => {
     
     it("limits ID length to 60 characters", () => {
       const longName = "A".repeat(100);
-      const id = generateStableId(longName, longName, "NEU");
+      const id = generateStableId(longName, longName, "NEU", 999);
       expect(id.length).toBeLessThanOrEqual(60);
     });
   });

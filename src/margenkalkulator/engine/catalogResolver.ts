@@ -10,6 +10,7 @@ import type {
   MobileTariff,
   Promo,
   FixedNetProduct,
+  FixedNetAccessType,
 } from "./types";
 import { dummyCatalog } from "./catalog.dummy";
 import { businessCatalog2025_09 } from "../data/business/v2025_09";
@@ -86,22 +87,53 @@ export function listFixedNetProducts(version: DatasetVersion): FixedNetProduct[]
 }
 
 // ============================================
+// Phase 2: List Fixed Net by Access Type
+// ============================================
+
+export function listFixedNetByAccessType(
+  version: DatasetVersion,
+  accessType: FixedNetAccessType
+): FixedNetProduct[] {
+  const products = getCatalog(version).fixedNetProducts;
+  return products
+    .filter((p) => p.accessType === accessType)
+    .sort((a, b) => (a.speed ?? 0) - (b.speed ?? 0));
+}
+
+export function getAvailableAccessTypes(version: DatasetVersion): FixedNetAccessType[] {
+  const products = getCatalog(version).fixedNetProducts;
+  const types = new Set<FixedNetAccessType>();
+  products.forEach((p) => {
+    if (p.accessType) types.add(p.accessType);
+  });
+  return Array.from(types);
+}
+
+// ============================================
 // GK Eligibility Check
 // ============================================
 
 /**
  * Check if combination is eligible for GK (Geschäftskunden) convergence benefit
- * Requires: Prime tariff + FixedNet enabled
+ * Requires: Prime tariff + FixedNet enabled with eligible access type
  */
 export function checkGKEligibility(
   tariff: MobileTariff | undefined,
-  fixedNetEnabled: boolean
+  fixedNetEnabled: boolean,
+  accessType?: FixedNetAccessType
 ): boolean {
   if (!tariff || !fixedNetEnabled) {
     return false;
   }
   // GK benefit applies to Prime product line
-  return tariff.productLine === "PRIME";
+  if (tariff.productLine !== "PRIME") {
+    return false;
+  }
+  // Only Cable, DSL, Fiber are GK-eligible
+  if (accessType && !["CABLE", "DSL", "FIBER"].includes(accessType)) {
+    return false;
+  }
+  return true;
 }
 
 // ============================================

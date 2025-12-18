@@ -7,7 +7,7 @@
 // REQUIREMENT: Active Business Prime on same customer account
 // ============================================
 
-import type { MobileTariff } from "../../../../margenkalkulator/engine/types";
+import type { MobileTariff, SubVariantId } from "../../../../margenkalkulator/engine/types";
 
 // Fallback constants (when no Prime on account)
 export const TEAMDEAL_FALLBACK = {
@@ -16,6 +16,9 @@ export const TEAMDEAL_FALLBACK = {
   tariffId: "SMART_BUSINESS_PLUS",
 } as const;
 
+// TeamDeal is SIM-only (no SUB variants)
+const TEAMDEAL_ALLOWED_SUBS: SubVariantId[] = ["SIM_ONLY"];
+
 export const teamDealTariffs: MobileTariff[] = [
   {
     id: "TEAMDEAL_XS",
@@ -23,22 +26,25 @@ export const teamDealTariffs: MobileTariff[] = [
     family: "teamdeal",
     productLine: "TEAMDEAL",
     tier: "XS",
-    dataVolumeGB: 15, // Smart Business Plus 1GB + 14GB bonus
-    baseNet: 9.50,    // 13€ - 3.50€ delta
+    dataVolumeGB: 15,
+    baseNet: 9.50,
     pricesByVariant: {
       SIM_ONLY: 9.50,
     },
+    euRoamingNote: "wie in DE",
+    allowedSubVariants: TEAMDEAL_ALLOWED_SUBS,
     features: [
       "15 GB Datenvolumen",
       "Allnet-Flat (Sprache & SMS)",
       "LTE/5G",
-      "Voraussetzung: Business Prime auf Kundenkonto",
+      "EU: Daten wie in DE",
+      "Voraussetzung: Business Prime",
     ],
     minTermMonths: 24,
     setupFeeNet: 0,
     teamDealBase: "SMART_BUSINESS_PLUS",
     teamDealDelta: -3.50,
-    provisionBase: 0, // No provision for TeamDeal
+    provisionBase: 0,
     deductionRate: 0,
   },
   {
@@ -47,16 +53,19 @@ export const teamDealTariffs: MobileTariff[] = [
     family: "teamdeal",
     productLine: "TEAMDEAL",
     tier: "S",
-    dataVolumeGB: 30, // 1GB + 29GB bonus
-    baseNet: 14.50,   // 13€ + 1.50€ delta
+    dataVolumeGB: 30,
+    baseNet: 14.50,
     pricesByVariant: {
       SIM_ONLY: 14.50,
     },
+    euRoamingNote: "wie in DE",
+    allowedSubVariants: TEAMDEAL_ALLOWED_SUBS,
     features: [
       "30 GB Datenvolumen",
       "Allnet-Flat (Sprache & SMS)",
       "LTE/5G",
-      "Voraussetzung: Business Prime auf Kundenkonto",
+      "EU: Daten wie in DE",
+      "Voraussetzung: Business Prime",
     ],
     minTermMonths: 24,
     setupFeeNet: 0,
@@ -71,16 +80,19 @@ export const teamDealTariffs: MobileTariff[] = [
     family: "teamdeal",
     productLine: "TEAMDEAL",
     tier: "M",
-    dataVolumeGB: 75, // 1GB + 74GB bonus
-    baseNet: 19.50,   // 13€ + 6.50€ delta
+    dataVolumeGB: 75,
+    baseNet: 19.50,
     pricesByVariant: {
       SIM_ONLY: 19.50,
     },
+    euRoamingNote: "wie in DE",
+    allowedSubVariants: TEAMDEAL_ALLOWED_SUBS,
     features: [
       "75 GB Datenvolumen",
       "Allnet-Flat (Sprache & SMS)",
       "LTE/5G",
-      "Voraussetzung: Business Prime auf Kundenkonto",
+      "EU: Daten wie in DE",
+      "Voraussetzung: Business Prime",
     ],
     minTermMonths: 24,
     setupFeeNet: 0,
@@ -96,15 +108,18 @@ export const teamDealTariffs: MobileTariff[] = [
     productLine: "TEAMDEAL",
     tier: "XL",
     dataVolumeGB: "unlimited",
-    baseNet: 29.50,   // 13€ + 16.50€ delta
+    baseNet: 29.50,
     pricesByVariant: {
       SIM_ONLY: 29.50,
     },
+    euRoamingNote: "wie in DE",
+    allowedSubVariants: TEAMDEAL_ALLOWED_SUBS,
     features: [
       "Unbegrenztes Datenvolumen in DE",
       "Allnet-Flat (Sprache & SMS)",
       "LTE/5G",
-      "Voraussetzung: Business Prime auf Kundenkonto",
+      "EU: Daten wie in DE",
+      "Voraussetzung: Business Prime",
     ],
     minTermMonths: 24,
     setupFeeNet: 0,

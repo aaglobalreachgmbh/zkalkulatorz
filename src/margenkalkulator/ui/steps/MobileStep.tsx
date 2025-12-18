@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { MobileState, ContractType, DatasetVersion, TariffFamily, MobileTariff } from "../../engine/types";
+import type { MobileState, ContractType, DatasetVersion, TariffFamily, MobileTariff, SubVariantId } from "../../engine/types";
 import { 
   listMobileTariffs, 
   listSubVariants, 
@@ -63,6 +63,12 @@ export function MobileStep({ value, onChange, datasetVersion, fixedNetEnabled = 
   // Filter tariffs by family
   const tariffsInFamily = mobileTariffs.filter(t => t.family === selectedFamily);
   
+  // Filter SUB variants based on tariff's allowedSubVariants
+  const allowedSubs = selectedTariff?.allowedSubVariants ?? ["SIM_ONLY"];
+  const filteredSubVariants = subVariants.filter(sv => 
+    allowedSubs.includes(sv.id as SubVariantId)
+  );
+  
   // When family changes, select first tariff in that family
   const handleFamilyChange = (family: TariffFamily) => {
     setSelectedFamily(family);
@@ -85,6 +91,13 @@ export function MobileStep({ value, onChange, datasetVersion, fixedNetEnabled = 
       setSelectedFamily(selectedTariff.family ?? "prime");
     }
   }, [selectedTariff, selectedFamily]);
+  
+  // Reset SUB to SIM_ONLY if current selection is not allowed
+  useEffect(() => {
+    if (selectedTariff && !allowedSubs.includes(value.subVariantId as SubVariantId)) {
+      updateField("subVariantId", "SIM_ONLY");
+    }
+  }, [selectedTariff?.id]);
 
   const isTeamDeal = selectedFamily === "teamdeal";
   const showTeamDealWarning = isTeamDeal && !value.primeOnAccount;
@@ -200,37 +213,86 @@ export function MobileStep({ value, onChange, datasetVersion, fixedNetEnabled = 
               ))}
             </SelectContent>
           </Select>
-          {selectedTariff && (
-            <div className="space-y-2 mt-2">
-              <div className="flex flex-wrap gap-1.5">
-                {selectedTariff.features.map((feature, idx) => (
-                  <span
-                    key={idx}
-                    className="text-xs bg-muted px-2 py-0.5 rounded-full"
-                  >
-                    {feature}
-                  </span>
-                ))}
-              </div>
-              {selectedTariff.oneNumberIncluded && (
-                <Badge variant="secondary" className="text-xs">
-                  OneNumber inklusive
-                </Badge>
-              )}
-              {/* Show effective price for TeamDeal fallback */}
-              {isTeamDeal && showTeamDealWarning && (
-                <p className="text-xs text-amber-600">
-                  Effektiver Preis: 13,00 € (Fallback auf Smart Business Plus)
-                </p>
-              )}
-            </div>
-          )}
         </div>
 
-        {/* SUB Variant - only for non-TeamDeal */}
-        {!isTeamDeal && (
+        {/* Leistungen-Box (structured features panel) */}
+        {selectedTariff && (
+          <div className="p-4 bg-muted/50 rounded-lg space-y-3">
+            <h4 className="font-semibold text-sm">Leistungen</h4>
+            
+            {/* Daten DE */}
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Daten DE:</span>
+              <span className="font-medium">{formatDataVolume(selectedTariff.dataVolumeGB)}</span>
+            </div>
+            
+            {/* EU-Roaming */}
+            {selectedTariff.euRoamingHighspeedGB && (
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">EU Highspeed:</span>
+                <span>{selectedTariff.euRoamingHighspeedGB} GB</span>
+              </div>
+            )}
+            {selectedTariff.euRoamingNote && (
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">EU Daten:</span>
+                <span>{selectedTariff.euRoamingNote}</span>
+              </div>
+            )}
+            
+            {/* OneNumber */}
+            {selectedTariff.oneNumberIncludedCount && (
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">OneNumber inkl.:</span>
+                <span>{selectedTariff.oneNumberIncludedCount}× kostenlos</span>
+              </div>
+            )}
+            
+            {/* GigaDepot */}
+            {selectedTariff.gigaDepot && (
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">GigaDepot:</span>
+                <span>
+                  {selectedTariff.gigaDepot.status === "included" 
+                    ? "inklusive" 
+                    : `optional (+${selectedTariff.gigaDepot.priceNet}€/mtl.)`}
+                </span>
+              </div>
+            )}
+            
+            {/* Roaming Zone 1 */}
+            {selectedTariff.roamingPacketZone1GB && (
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">ReisePaket Zone 1:</span>
+                <span>{selectedTariff.roamingPacketZone1GB} GB (48h/Monat)</span>
+              </div>
+            )}
+            
+            {/* Additional features as badges */}
+            <div className="flex flex-wrap gap-1.5 pt-2 border-t border-border/50">
+              {selectedTariff.features.slice(0, 4).map((feature, idx) => (
+                <span
+                  key={idx}
+                  className="text-xs bg-background px-2 py-0.5 rounded-full"
+                >
+                  {feature}
+                </span>
+              ))}
+            </div>
+            
+            {/* Show effective price for TeamDeal fallback */}
+            {isTeamDeal && showTeamDealWarning && (
+              <p className="text-xs text-amber-600 pt-2">
+                Effektiver Preis: 13,00 € (Fallback auf Smart Business Plus)
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* SUB Variant - filtered based on allowedSubVariants */}
+        {filteredSubVariants.length > 1 && (
           <div className="space-y-2">
-            <Label>Hardware-Variante (SUB)</Label>
+            <Label>Geräteklasse (SUB)</Label>
             <Select
               value={value.subVariantId}
               onValueChange={(v) => updateField("subVariantId", v)}
@@ -239,7 +301,7 @@ export function MobileStep({ value, onChange, datasetVersion, fixedNetEnabled = 
                 <SelectValue placeholder="Variante wählen" />
               </SelectTrigger>
               <SelectContent>
-                {subVariants.map((sv) => (
+                {filteredSubVariants.map((sv) => (
                   <SelectItem key={sv.id} value={sv.id}>
                     <div className="flex items-center justify-between w-full">
                       <span>{sv.label}</span>
@@ -254,15 +316,17 @@ export function MobileStep({ value, onChange, datasetVersion, fixedNetEnabled = 
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              SUB-Aufpreis wird nie durch Aktionen rabattiert
+              SUB = monatlicher Aufpreis je Geräteklasse (auch ohne Handy buchbar)
             </p>
           </div>
         )}
         
-        {/* TeamDeal is SIM-only info */}
-        {isTeamDeal && (
+        {/* TeamDeal / Flex is SIM-only info */}
+        {filteredSubVariants.length <= 1 && (
           <div className="text-sm text-muted-foreground p-3 bg-muted/50 rounded-lg">
-            TeamDeal ist nur als SIM-only verfügbar (keine Geräte-Optionen)
+            {isTeamDeal 
+              ? "TeamDeal ist nur als SIM-only verfügbar (keine Geräte-Optionen)"
+              : "Dieser Tarif ist nur als SIM-only verfügbar"}
           </div>
         )}
 

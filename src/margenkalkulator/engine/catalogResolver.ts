@@ -12,6 +12,7 @@ import type {
   Promo,
   FixedNetProduct,
   FixedNetAccessType,
+  HardwareItem,
 } from "./types";
 import { dummyCatalog } from "./catalog.dummy";
 import { businessCatalog2025_09 } from "../data/business/v2025_09";
@@ -124,6 +125,20 @@ export function listFixedNetProducts(version: DatasetVersion): FixedNetProduct[]
   const products = getCatalog(version).fixedNetProducts;
   // Sort by speed ascending for better UX
   return [...products].sort((a, b) => (a.speed ?? 0) - (b.speed ?? 0));
+}
+
+export function listHardwareItems(version: DatasetVersion): HardwareItem[] {
+  const catalog = getCatalog(version);
+  return (catalog.hardwareCatalog ?? [])
+    .sort((a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999));
+}
+
+export function getHardwareItem(
+  version: DatasetVersion,
+  id: string
+): HardwareItem | undefined {
+  const catalog = getCatalog(version);
+  return catalog.hardwareCatalog?.find((h) => h.id === id);
 }
 
 // ============================================

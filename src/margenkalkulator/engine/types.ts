@@ -67,9 +67,19 @@ export type MobileState = {
   primeOnAccount?: boolean;           // TeamDeal fallback toggle
 };
 
+// Fixed Net Access Type (for UI grouping)
+export type FixedNetAccessType = "CABLE" | "DSL" | "FIBER" | "KOMFORT_REGIO" | "KOMFORT_FTTH";
+
 export type FixedNetState = {
   enabled: boolean;
-  productId: string;         // from catalog if enabled
+  accessType?: FixedNetAccessType;  // Phase 2: selected access type
+  productId: string;                // from catalog if enabled
+  // Phase 2 add-ons
+  fixedIpEnabled?: boolean;         // Fixed IP add-on toggle
+  expertSetupEnabled?: boolean;     // Expert setup toggle (Cable only)
+  // Komfort-specific
+  phoneTierId?: string;             // M/L/XL/XXL tier ID
+  internetOptionId?: string;        // Speed option ID
 };
 
 export type OfferOptionState = {
@@ -164,7 +174,7 @@ export type Promo = {
   sourceRef?: string;              // Source URL/doc reference
 };
 
-export type FixedNetProductLine = "RBI" | "RBIP" | "DSL" | "FIBER";
+export type FixedNetProductLine = "RBI" | "RBIP" | "DSL" | "FIBER" | "KOMFORT";
 export type RouterType = "FRITZBOX" | "VODAFONE_STATION";
 
 export type FixedNetProduct = {
@@ -182,10 +192,23 @@ export type FixedNetProduct = {
   };
   // Phase 2 extensions
   productLine?: FixedNetProductLine;
-  speed?: number;               // Mbit/s
-  setupWaived?: boolean;        // Setup fee waived
+  accessType?: FixedNetAccessType;  // Phase 2: for filtering/grouping
+  speed?: number;                   // Mbit/s
+  setupWaived?: boolean;            // Setup fee waived
   routerType?: RouterType;
-  includesPhone?: boolean;      // Phone line included (RBIP)
+  includesPhone?: boolean;          // Phone line included (RBIP)
+  // Phase 2 Slice B: New fields
+  includesRouter?: boolean;         // Router hardware included
+  routerModelDefault?: string;      // e.g., "FRITZ!Box 6690"
+  fixedIpIncluded?: boolean;        // Fixed IP included in base
+  fixedIpAddonNet?: number;         // Fixed IP add-on price if optional
+  expertSetupAvailable?: boolean;   // Expert setup can be booked
+  komfortTier?: "M" | "L" | "XL" | "XXL";  // Komfort phone tier
+  sources?: {                       // Source traceability
+    title: string;
+    url: string;
+    versionDate: string;
+  }[];
 };
 
 export type Catalog = {

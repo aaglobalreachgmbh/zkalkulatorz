@@ -10,6 +10,9 @@ import { teamDealTariffs } from "./teamDeal";
 import { businessPromos } from "./promos";
 import { businessSubVariants } from "./subVariants";
 import { fixedNetCableProducts } from "./fixedNetCable";
+import { fixedNetDSLProducts } from "./fixedNetDSL";
+import { fixedNetFiberProducts } from "./fixedNetFiber";
+import { fixedNetKomfortProducts } from "./fixedNetKomfort";
 
 export const businessCatalog2025_09: Catalog = {
   version: "business-2025-09",
@@ -22,7 +25,12 @@ export const businessCatalog2025_09: Catalog = {
     ...teamDealTariffs,
   ],
   promos: businessPromos,
-  fixedNetProducts: fixedNetCableProducts,
+  fixedNetProducts: [
+    ...fixedNetCableProducts,
+    ...fixedNetDSLProducts,
+    ...fixedNetFiberProducts,
+    ...fixedNetKomfortProducts,
+  ],
 };
 
 // Re-export individual modules
@@ -33,3 +41,17 @@ export { teamDealTariffs, TEAMDEAL_FALLBACK } from "./teamDeal";
 export { businessPromos } from "./promos";
 export { businessSubVariants } from "./subVariants";
 export { fixedNetCableProducts } from "./fixedNetCable";
+export { fixedNetDSLProducts } from "./fixedNetDSL";
+export { fixedNetFiberProducts } from "./fixedNetFiber";
+export { fixedNetKomfortProducts } from "./fixedNetKomfort";
+export { 
+  komfortRegioPhoneTiers, 
+  komfortRegioInternetOptions,
+  komfortFTTHPhoneTiers,
+  komfortFTTHInternetOptions,
+  getKomfortPhoneTier,
+  getKomfortInternetOption,
+  calculateKomfortMonthly,
+  KOMFORT_FIXED_IP_ADDON_NET,
+} from "./fixedNetKomfort";
+export { DATA_SOURCES } from "./sources";

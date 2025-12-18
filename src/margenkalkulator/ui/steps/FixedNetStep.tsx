@@ -235,15 +235,15 @@ export function FixedNetStep({ value, onChange, datasetVersion, mobileState }: F
 
                 <div className="space-y-2">
                   <Label>Internetoption</Label>
-                  <Select
-                    value={value.internetOptionId || ""}
-                    onValueChange={(v) => updateField("internetOptionId", v)}
+                <Select
+                    value={value.internetOptionId || "_none"}
+                    onValueChange={(v) => updateField("internetOptionId", v === "_none" ? undefined : v)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Internetoption wählen (optional)" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Keine Internetoption</SelectItem>
+                      <SelectItem value="_none">Keine Internetoption</SelectItem>
                       {komfortInternetOptions.map((opt) => (
                         <SelectItem key={opt.id} value={opt.id}>
                           <div className="flex justify-between w-full gap-4">

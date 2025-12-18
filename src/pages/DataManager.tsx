@@ -393,20 +393,46 @@ export default function DataManager() {
       {/* Help Section */}
       <Card className="mt-6">
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg">XLSX-Template</CardTitle>
+          <CardTitle className="text-lg">Unterstützte Formate</CardTitle>
         </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
-          <p className="mb-2">Die XLSX-Datei muss folgende Sheets enthalten:</p>
-          <ul className="list-disc list-inside space-y-1">
-            <li><code className="text-xs bg-muted px-1 rounded">meta</code> – Dataset-Version und Gültigkeit</li>
-            <li><code className="text-xs bg-muted px-1 rounded">mobile_tariffs</code> – Mobilfunk-Tarife</li>
-            <li><code className="text-xs bg-muted px-1 rounded">fixednet_products</code> – Festnetz-Produkte</li>
-            <li><code className="text-xs bg-muted px-1 rounded">sub_variants</code> – SUB-Varianten</li>
-            <li><code className="text-xs bg-muted px-1 rounded">promos_possible</code> – Aktionen/Promos</li>
-          </ul>
-          <p className="mt-4 text-xs">
-            Optionale Sheets: mobile_features, mobile_dependencies, hardware_catalog
-          </p>
+        <CardContent className="text-sm text-muted-foreground space-y-6">
+          {/* Format A: Canonical */}
+          <div>
+            <h4 className="font-semibold text-foreground mb-2">
+              Format A: Canonical Template
+            </h4>
+            <p className="mb-2">XLSX mit folgenden Sheets:</p>
+            <ul className="list-disc list-inside space-y-1">
+              <li><code className="text-xs bg-muted px-1 rounded">meta</code> – Dataset-Version und Gültigkeit</li>
+              <li><code className="text-xs bg-muted px-1 rounded">mobile_tariffs</code> – Mobilfunk-Tarife</li>
+              <li><code className="text-xs bg-muted px-1 rounded">fixednet_products</code> – Festnetz-Produkte</li>
+              <li><code className="text-xs bg-muted px-1 rounded">sub_variants</code> – SUB-Varianten</li>
+              <li><code className="text-xs bg-muted px-1 rounded">promos_possible</code> – Aktionen/Promos</li>
+            </ul>
+            <p className="mt-2 text-xs">
+              Optionale Sheets: mobile_features, mobile_dependencies, hardware_catalog
+            </p>
+          </div>
+          
+          <Separator />
+          
+          {/* Format B: Business (NEU) */}
+          <div>
+            <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
+              Format B: Business (SoHo/PK)
+              <Badge variant="secondary" className="text-xs">NEU</Badge>
+            </h4>
+            <p className="mb-2">XLSX mit deutschen Headers (automatisch erkannt):</p>
+            <ul className="list-disc list-inside space-y-1">
+              <li><strong>Tarif-Sheets:</strong> mtl. Grundpreis, FH-Partner, Push, Datenvolumen</li>
+              <li><strong>OMO-Spalten:</strong> OMO Rabatt 0%, 5%, 10%, 15%, 17,5%, 20%, 25%</li>
+              <li><strong>Hardware-Sheet:</strong> Endgerät, Preis</li>
+            </ul>
+            <p className="mt-2 text-xs">
+              Sheets wie „Tarife SoHo_Neu", „Tarife SoHo_Daten", „Hardware" werden automatisch erkannt.
+              RV-Codes in Spalte A werden extrahiert.
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Check, AlertTriangle } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, AlertTriangle, Database } from "lucide-react";
 import type { OfferOptionState, ViewMode, WizardStep } from "../engine/types";
 import { createDefaultOptionState, calculateOffer } from "../engine";
 import { useWizardValidation } from "../hooks/useWizardValidation";
@@ -120,13 +121,21 @@ export function Wizard() {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4">
-          <h1 className="text-xl font-semibold text-foreground">
-            MargenKalkulator Vodafone
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            allenetze.de – Angebots- und Margenkalkulation
-          </p>
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-semibold text-foreground">
+              MargenKalkulator Vodafone
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              allenetze.de – Angebots- und Margenkalkulation
+            </p>
+          </div>
+          <Link to="/data-manager">
+            <Button variant="outline" size="sm">
+              <Database className="h-4 w-4 mr-2" />
+              Daten
+            </Button>
+          </Link>
         </div>
       </header>
 

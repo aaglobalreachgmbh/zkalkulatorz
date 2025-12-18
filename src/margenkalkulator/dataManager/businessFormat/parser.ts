@@ -137,8 +137,8 @@ function parseTariffSheet(
     const basePrice = values["mtl_grundpreis"] ?? values["mtlgrundpreis"];
     if (basePrice === null || basePrice === undefined) continue;
     
-    // Generate stable ID
-    const id = generateStableId(sheetInfo.name, rawName, contractType);
+    // Generate stable ID (include row for uniqueness)
+    const id = generateStableId(sheetInfo.name, tarifName, contractType, row + 1);
     
     rows.push({
       id,
@@ -270,10 +270,13 @@ export function parseBusinessValue(
 
 export function generateStableId(
   sheetName: string, 
-  rawName: string, 
-  contractType: string
+  tarifName: string, 
+  contractType: string,
+  row: number
 ): string {
-  const base = `${slugify(sheetName)}_${slugify(rawName)}_${contractType.toLowerCase()}`;
+  const sheetSlug = slugify(sheetName).substring(0, 20);
+  const tarifSlug = slugify(tarifName).substring(0, 25);
+  const base = `${sheetSlug}_${tarifSlug}_${contractType.toLowerCase()}_r${row}`;
   return base.substring(0, 60);
 }
 

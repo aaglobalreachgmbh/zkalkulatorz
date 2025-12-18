@@ -118,81 +118,75 @@ export function Wizard() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-semibold text-foreground">
-              MargenKalkulator Vodafone
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              allenetze.de – Angebots- und Margenkalkulation
-            </p>
-          </div>
-          <Link to="/data-manager">
-            <Button variant="outline" size="sm">
-              <Database className="h-4 w-4 mr-2" />
-              Daten
-            </Button>
-          </Link>
+    <div className="min-h-screen flex flex-col">
+      {/* Header with glassmorphism */}
+      <header className="border-b border-border/50 bg-card/80 backdrop-blur-md sticky top-0 z-50 shadow-soft">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+          <h1 className="text-lg font-semibold text-foreground">Margen<span className="text-primary">Kalkulator</span></h1>
+          <a href="/data-manager" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+            Data Manager →
+          </a>
         </div>
       </header>
 
       {/* Global Controls */}
-      <GlobalControls
-        activeOption={activeOption}
-        onActiveOptionChange={setActiveOption}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-        showOptionToggle={currentStep !== "compare"}
-      />
+      <div className="border-b border-border/30 bg-card/60 backdrop-blur-sm">
+        <div className="container mx-auto px-4 py-3">
+          <GlobalControls
+            activeOption={activeOption}
+            onActiveOptionChange={setActiveOption}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+          />
+        </div>
+      </div>
 
-      {/* Stepper */}
-      <nav className="border-b bg-card/50">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center gap-2 py-3 overflow-x-auto">
+      {/* Stepper Navigation with pill-style buttons */}
+      <nav className="border-b border-border/30 bg-card/50 backdrop-blur-sm">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-center gap-2 md:gap-3">
             {STEPS.map((step, idx) => {
-              const isActive = step.id === currentStep;
+              const stepValidation = validation.steps[step.id];
+              const isActive = currentStep === step.id;
               const isPast = idx < currentStepIndex;
-              const stepStatus = validation.getStepStatus(step.id);
-              const hasIssue = stepStatus === "error" || stepStatus === "warning";
+              const isClickable = idx <= currentStepIndex;
+              const hasError = stepValidation && !stepValidation.valid && isPast;
 
               return (
                 <button
                   key={step.id}
-                  onClick={() => goToStep(step.id)}
+                  onClick={() => isClickable && goToStep(step.id)}
+                  disabled={!isClickable}
                   className={`
-                    flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
-                    transition-colors whitespace-nowrap
-                    ${isActive 
-                      ? "bg-primary text-primary-foreground" 
-                      : isPast 
-                        ? "bg-primary/10 text-primary hover:bg-primary/20" 
-                        : "text-muted-foreground hover:bg-muted"
+                    relative px-4 py-2.5 rounded-full text-sm font-medium
+                    transition-all duration-200 ease-out
+                    ${isActive
+                      ? "bg-primary text-primary-foreground shadow-card scale-105"
+                      : isPast
+                        ? hasError
+                          ? "bg-destructive/15 text-destructive hover:bg-destructive/20"
+                          : "bg-primary/10 text-primary hover:bg-primary/20"
+                        : "bg-muted/50 text-muted-foreground"
                     }
+                    ${isClickable ? "cursor-pointer" : "cursor-not-allowed opacity-60"}
                   `}
                 >
-                  <span className={`
-                    w-6 h-6 rounded-full flex items-center justify-center text-xs
-                    ${isActive 
-                      ? "bg-primary-foreground text-primary" 
-                      : isPast 
-                        ? "bg-primary text-primary-foreground" 
-                        : hasIssue && !isActive
-                          ? "bg-amber-100 text-amber-600"
+                  <span className="flex items-center gap-2">
+                    <span className={`
+                      w-5 h-5 rounded-full text-xs flex items-center justify-center font-semibold
+                      ${isActive 
+                        ? "bg-primary-foreground/20 text-primary-foreground" 
+                        : isPast 
+                          ? hasError 
+                            ? "bg-destructive/20 text-destructive" 
+                            : "bg-primary/20 text-primary"
                           : "bg-muted text-muted-foreground"
-                    }
-                  `}>
-                    {isPast ? (
-                      <Check className="w-3.5 h-3.5" />
-                    ) : hasIssue && !isActive ? (
-                      <AlertTriangle className="w-3 h-3" />
-                    ) : (
-                      idx + 1
-                    )}
+                      }
+                    `}>
+                      {idx + 1}
+                    </span>
+                    <span className="hidden sm:inline">{step.label}</span>
                   </span>
-                  {step.label}
                 </button>
               );
             })}
@@ -201,49 +195,43 @@ export function Wizard() {
       </nav>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-6 flex-1">
-        <div className="max-w-4xl mx-auto space-y-4">
-          {/* Validation Warning for current step */}
-          {(currentValidation.errors.length > 0 || currentValidation.warnings.length > 0) && (
-            <ValidationWarning validation={currentValidation} />
+      <main className="flex-1 container mx-auto px-4 py-8">
+        <div className="max-w-5xl mx-auto">
+          {/* Validation Warning */}
+          {currentValidation && !currentValidation.valid && (
+            <div className="mb-6">
+              <ValidationWarning validation={currentValidation} />
+            </div>
           )}
-          
-          {renderStep()}
+
+          {/* Step Content in glass card */}
+          <div className="bg-card/80 backdrop-blur-sm rounded-2xl shadow-card border border-border/50 p-6 md:p-8">
+            {renderStep()}
+          </div>
         </div>
       </main>
 
-      {/* Footer Navigation */}
-      <footer className="border-t bg-card sticky bottom-0">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between max-w-4xl mx-auto">
-            <Button
-              variant="outline"
-              onClick={goBack}
-              disabled={currentStepIndex === 0}
-            >
-              <ChevronLeft className="w-4 h-4 mr-1" />
-              Zurück
-            </Button>
-
-            <div className="text-sm text-muted-foreground">
-              Schritt {currentStepIndex + 1} von {STEPS.length}
-            </div>
-
-            <Button
-              onClick={goNext}
-              disabled={currentStepIndex === STEPS.length - 1 || !canProceed}
-            >
-              Weiter
-              <ChevronRight className="w-4 h-4 ml-1" />
-            </Button>
-          </div>
-          
-          {/* Dataset Version Footer (Debug) */}
-          <div className="text-center mt-2">
-            <span className="text-xs text-muted-foreground/50">
-              Dataset: {activeState.meta.datasetVersion}
-            </span>
-          </div>
+      {/* Footer with glassmorphism */}
+      <footer className="border-t border-border/50 bg-card/80 backdrop-blur-md sticky bottom-0 z-40 shadow-soft">
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <Button
+            variant="outline"
+            onClick={goBack}
+            disabled={currentStepIndex === 0}
+            className="rounded-xl"
+          >
+            ← Zurück
+          </Button>
+          <span className="text-sm text-muted-foreground">
+            Schritt {currentStepIndex + 1} von {STEPS.length}
+          </span>
+          <Button
+            onClick={goNext}
+            disabled={currentStepIndex === STEPS.length - 1 || !canProceed}
+            className="rounded-xl shadow-soft"
+          >
+            Weiter →
+          </Button>
         </div>
       </footer>
     </div>

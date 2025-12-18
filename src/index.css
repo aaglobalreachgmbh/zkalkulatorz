@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --background: 0 0% 99%;
+    --background: 0 0% 97%;
     --foreground: 0 0% 10%;
 
     --card: 0 0% 100%;
@@ -20,7 +20,7 @@
     --secondary: 0 0% 96%;
     --secondary-foreground: 0 0% 10%;
 
-    --muted: 0 0% 96%;
+    --muted: 0 0% 94%;
     --muted-foreground: 0 0% 45%;
 
     --accent: 0 85% 95%;
@@ -29,11 +29,21 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
+    --border: 0 0% 88%;
+    --input: 0 0% 88%;
     --ring: 0 85% 45%;
 
-    --radius: 0.5rem;
+    /* Larger radius for premium look */
+    --radius: 0.75rem;
+
+    /* Glassmorphism */
+    --glass-bg: 0 0% 100% / 0.75;
+    --glass-border: 0 0% 100% / 0.3;
+
+    /* Dealer panel (dark) */
+    --panel-dark: 220 15% 20%;
+    --panel-dark-foreground: 0 0% 98%;
+    --panel-dark-muted: 220 10% 50%;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 0 0% 26%;
@@ -74,6 +84,13 @@
     --input: 0 0% 18%;
     --ring: 0 85% 50%;
 
+    --glass-bg: 0 0% 10% / 0.75;
+    --glass-border: 0 0% 20% / 0.3;
+
+    --panel-dark: 220 15% 12%;
+    --panel-dark-foreground: 0 0% 98%;
+    --panel-dark-muted: 220 10% 60%;
+
     --sidebar-background: 0 0% 10%;
     --sidebar-foreground: 0 0% 96%;
     --sidebar-primary: 0 85% 50%;
@@ -92,5 +109,7 @@
 
   body {
     @apply bg-background text-foreground;
+    background: linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--muted)) 100%);
+    min-height: 100vh;
   }
 }

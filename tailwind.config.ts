@@ -57,11 +57,27 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        "panel-dark": {
+          DEFAULT: "hsl(var(--panel-dark))",
+          foreground: "hsl(var(--panel-dark-foreground))",
+          muted: "hsl(var(--panel-dark-muted))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        "xl": "1rem",
+        "2xl": "1.25rem",
+        "3xl": "1.5rem",
+      },
+      boxShadow: {
+        "soft": "0 4px 20px -4px hsla(0, 0%, 0%, 0.08)",
+        "card": "0 8px 30px -8px hsla(0, 0%, 0%, 0.1)",
+        "elevated": "0 12px 40px -12px hsla(0, 0%, 0%, 0.15)",
+      },
+      backdropBlur: {
+        "glass": "12px",
       },
       keyframes: {
         "accordion-down": {

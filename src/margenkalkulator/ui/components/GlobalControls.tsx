@@ -18,7 +18,7 @@ export function GlobalControls({
   showOptionToggle = true,
 }: GlobalControlsProps) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 py-3 px-4 bg-card border-b">
+    <div className="flex flex-wrap items-center justify-between gap-3">
       {/* Left: Option Toggle */}
       <div className="flex items-center gap-3">
         {showOptionToggle && (

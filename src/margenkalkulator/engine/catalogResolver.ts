@@ -1,6 +1,7 @@
 // ============================================
 // Catalog Resolver - Phase 2
 // Switches between dummy and business datasets
+// Supports localStorage override for custom datasets
 // ============================================
 
 import type {
@@ -14,6 +15,12 @@ import type {
 } from "./types";
 import { dummyCatalog } from "./catalog.dummy";
 import { businessCatalog2025_09 } from "../data/business/v2025_09";
+import { 
+  loadCustomDataset, 
+  hasCustomDataset,
+  getStoredDatasetVersion,
+} from "../dataManager/storage";
+import { mapCanonicalToCatalog } from "../dataManager/adapter";
 
 // ============================================
 // Catalog Registry
@@ -25,7 +32,40 @@ const catalogs: Record<DatasetVersion, Catalog> = {
 };
 
 // ============================================
-// Resolver Functions
+// Active Dataset Resolution (localStorage override)
+// ============================================
+
+/**
+ * Get the active dataset - checks localStorage for custom dataset first,
+ * then falls back to default business catalog.
+ */
+export function getActiveDataset(): Catalog {
+  if (hasCustomDataset()) {
+    try {
+      const canonical = loadCustomDataset();
+      if (canonical) {
+        return mapCanonicalToCatalog(canonical);
+      }
+    } catch (e) {
+      console.warn("Failed to load custom dataset, using default:", e);
+    }
+  }
+  return businessCatalog2025_09;
+}
+
+/**
+ * Get the version string of the active dataset
+ */
+export function getActiveDatasetVersion(): string {
+  const storedVersion = getStoredDatasetVersion();
+  if (storedVersion) {
+    return `custom: ${storedVersion}`;
+  }
+  return "business-2025-09";
+}
+
+// ============================================
+// Standard Resolver Functions
 // ============================================
 
 export function getCatalog(version: DatasetVersion): Catalog {

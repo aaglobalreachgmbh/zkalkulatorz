@@ -36,17 +36,23 @@ export function AiConsultant({ config, result }: AiConsultantProps) {
   }, [messages, isOpen]);
 
   const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
+    const trimmed = input.trim();
+    
+    // Client-side validation
+    if (!trimmed || isLoading) return;
+    if (trimmed.length > 1000) {
+      setMessages((prev) => [...prev, { role: "assistant", content: "Nachricht zu lang (max. 1000 Zeichen)." }]);
+      return;
+    }
 
-    const userMessage = input.trim();
     setInput("");
-    setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
+    setMessages((prev) => [...prev, { role: "user", content: trimmed }]);
     setIsLoading(true);
 
     try {
       const response = await supabase.functions.invoke("ai-consultant", {
         body: {
-          message: userMessage,
+          message: trimmed,
           config: {
             hardware: config.hardware,
             mobile: config.mobile,
@@ -61,7 +67,7 @@ export function AiConsultant({ config, result }: AiConsultantProps) {
       });
 
       if (response.error) {
-        throw new Error(response.error.message);
+        throw new Error(response.error.message || "Fehler");
       }
 
       const aiResponse = response.data?.response || "Es ist ein Fehler aufgetreten.";
@@ -71,10 +77,10 @@ export function AiConsultant({ config, result }: AiConsultantProps) {
       let errorMessage = "Ein Fehler ist aufgetreten. Bitte versuche es erneut.";
       
       if (error instanceof Error) {
-        if (error.message.includes("429")) {
+        if (error.message.includes("429") || error.message.includes("Zu viele")) {
           errorMessage = "Zu viele Anfragen. Bitte warte einen Moment.";
         } else if (error.message.includes("402")) {
-          errorMessage = "AI-Guthaben aufgebraucht. Bitte lade dein Konto auf.";
+          errorMessage = "AI-Guthaben aufgebraucht.";
         }
       }
       
@@ -208,10 +214,11 @@ export function AiConsultant({ config, result }: AiConsultantProps) {
             <input
               type="text"
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => setInput(e.target.value.slice(0, 1000))}
               onKeyDown={handleKeyDown}
               placeholder="Frage z.B.: 'Wie kann ich die Marge verbessern?'"
               disabled={isLoading}
+              maxLength={1000}
               className="
                 w-full pl-4 pr-12 py-3
                 bg-background border border-border rounded-xl

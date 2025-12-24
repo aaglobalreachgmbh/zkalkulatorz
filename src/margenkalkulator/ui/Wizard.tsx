@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Check, AlertTriangle, Database } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, AlertTriangle, Database, Calculator } from "lucide-react";
 import {
   type OfferOptionState,
   type ViewMode,
@@ -16,6 +16,7 @@ import { FixedNetStep } from "./steps/FixedNetStep";
 import { CompareStep } from "./steps/CompareStep";
 import { GlobalControls } from "./components/GlobalControls";
 import { ValidationWarning } from "./components/ValidationWarning";
+import { AiConsultant } from "./components/AiConsultant";
 import { useToast } from "@/hooks/use-toast";
 
 const STEPS: { id: WizardStep; label: string }[] = [
@@ -122,12 +123,24 @@ export function Wizard() {
     }
   };
 
+  // Get active result for footer KPI
+  const activeResult = activeOption === 1 ? result1 : result2;
+  const avgMonthlyNet = activeResult.totals.avgTermNet;
+
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header with glassmorphism */}
       <header className="border-b border-border/50 bg-card/80 backdrop-blur-md sticky top-0 z-50 shadow-soft">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <h1 className="text-lg font-semibold text-foreground">Margen<span className="text-primary">Kalkulator</span></h1>
+          <div className="flex items-center gap-2">
+            <Calculator className="w-5 h-5 text-primary" />
+            <div>
+              <h1 className="text-lg font-semibold text-foreground">
+                Margen<span className="text-primary">Kalkulator</span>
+              </h1>
+              <p className="text-xs text-muted-foreground hidden sm:block">Vodafone Business Partner</p>
+            </div>
+          </div>
           <a href="/data-manager" className="text-sm text-muted-foreground hover:text-primary transition-colors">
             Data Manager →
           </a>
@@ -201,19 +214,19 @@ export function Wizard() {
         <div className="max-w-5xl mx-auto">
           {/* Validation Warning */}
           {currentValidation && !currentValidation.valid && (
-            <div className="mb-6">
+            <div className="mb-6 animate-fade-in">
               <ValidationWarning validation={currentValidation} />
             </div>
           )}
 
           {/* Step Content in glass card */}
-          <div className="bg-card/80 backdrop-blur-sm rounded-2xl shadow-card border border-border/50 p-6 md:p-8">
+          <div className="bg-card/80 backdrop-blur-sm rounded-2xl shadow-card border border-border/50 p-6 md:p-8 animate-fade-in-up">
             {renderStep()}
           </div>
         </div>
       </main>
 
-      {/* Footer with glassmorphism */}
+      {/* Footer with glassmorphism and Live-KPI */}
       <footer className="border-t border-border/50 bg-card/80 backdrop-blur-md sticky bottom-0 z-40 shadow-soft">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <Button
@@ -224,9 +237,22 @@ export function Wizard() {
           >
             ← Zurück
           </Button>
-          <span className="text-sm text-muted-foreground">
-            Schritt {currentStepIndex + 1} von {STEPS.length}
-          </span>
+
+          {/* Live KPI - Customer Average Monthly */}
+          <div className="flex flex-col items-center">
+            <span className="text-xs text-muted-foreground">Mtl. Ø (Kunde)</span>
+            <div className="flex items-center gap-1">
+              <span className="text-lg font-bold text-foreground">
+                {avgMonthlyNet.toFixed(2)} €
+              </span>
+              {activeState.mobile.quantity > 1 && (
+                <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">
+                  x{activeState.mobile.quantity}
+                </span>
+              )}
+            </div>
+          </div>
+
           <Button
             onClick={goNext}
             disabled={currentStepIndex === STEPS.length - 1 || !canProceed}
@@ -236,6 +262,11 @@ export function Wizard() {
           </Button>
         </div>
       </footer>
+
+      {/* AI Consultant FAB - only show when mobile tariff is selected */}
+      {activeState.mobile.tariffId && (
+        <AiConsultant config={activeState} result={activeResult} />
+      )}
     </div>
   );
 }

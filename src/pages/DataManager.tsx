@@ -461,6 +461,10 @@ function convertCatalogToCanonical(catalog: typeof businessCatalog2025_09): Part
       minTermMonths: 24,
       monthly_net: p.monthlyNet,
       speed_mbit: p.speed,
+      router_included: p.includesRouter ?? true,
+      one_time_setup_net: p.setupWaived ? 0 : 19.90,
+      one_time_shipping_net: 8.40,
+      fixed_ip_included: p.fixedIpIncluded ?? false,
       active: true,
     })),
   };

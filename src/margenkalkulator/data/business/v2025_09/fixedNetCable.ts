@@ -5,14 +5,13 @@
 // ============================================
 
 import type { FixedNetProduct } from "../../../../margenkalkulator/engine/types";
+import { FIXED_NET_FEES } from "@/margenkalkulator/config";
 
 // RBI = Red Business Internet Cable (Data only)
 // RBIP = Red Business Internet & Phone Cable (Data + Voice)
 
-// Constants
-const SETUP_FEE_NET = 19.90;   // Bereitstellungsentgelt
-const SHIPPING_FEE_NET = 8.40; // Versandkosten Hardware
-const TOTAL_ONETIME_NET = SETUP_FEE_NET + SHIPPING_FEE_NET; // 28.30€
+// Calculated one-time total
+const TOTAL_ONETIME_NET = FIXED_NET_FEES.SETUP_NET + FIXED_NET_FEES.SHIPPING_NET; // 28.30€
 
 // Promo validity (Slice B)
 const PROMO_VALID_FROM = "2025-11-26";
@@ -281,6 +280,7 @@ export const fixedNetCableProducts: FixedNetProduct[] = [
 
 // ============================================
 // Optional Add-ons (for UI display / future use)
+// Re-exported from config for backward compatibility
 // ============================================
-export const FIXED_IP_ADDON_NET = 5.00; // €/Monat für 100/300 Mbit
-export const EXPERT_SETUP_NET = 89.99;  // Einmalig optional
+export const FIXED_IP_ADDON_NET = FIXED_NET_FEES.FIXED_IP_ADDON_NET; // €/Monat für 100/300 Mbit
+export const EXPERT_SETUP_NET = FIXED_NET_FEES.EXPERT_SETUP_NET;     // Einmalig optional

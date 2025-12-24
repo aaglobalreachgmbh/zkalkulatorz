@@ -10,6 +10,10 @@
 //   import type { MobileTariff } from "@/margenkalkulator/engine/types"
 // ============================================
 
+// === CONFIG ===
+// Zentrale Konstanten (VAT, TERM, FEES, etc.)
+export * from "./config";
+
 // === ENGINE ===
 // Types, Calculation, Catalog-Access
 export * from "./engine";

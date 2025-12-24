@@ -95,21 +95,22 @@ export {
 // ============================================
 
 import type { OfferOptionState } from "./types";
+import { TAX, TERM, CURRENCY, DATASETS } from "../config";
 
 export function createDefaultOptionState(): OfferOptionState {
   return {
     meta: {
-      currency: "EUR",
-      vatRate: 0.19,
-      termMonths: 24,
-      datasetVersion: "business-2025-09",
+      currency: CURRENCY.DEFAULT,
+      vatRate: TAX.VAT_RATE,
+      termMonths: TERM.DEFAULT_MONTHS,
+      datasetVersion: DATASETS.CURRENT,
       asOfISO: "2025-12-17",  // Slice B: deterministic date
     },
     hardware: {
       name: "",
       ekNet: 0,
       amortize: false,
-      amortMonths: 24,
+      amortMonths: TERM.AMORT_MONTHS,
     },
     mobile: {
       tariffId: "PRIME_S",
@@ -129,16 +130,16 @@ export function createDefaultOptionState(): OfferOptionState {
 export function createDummyOptionState(): OfferOptionState {
   return {
     meta: {
-      currency: "EUR",
-      vatRate: 0.19,
-      termMonths: 24,
-      datasetVersion: "dummy-v0",
+      currency: CURRENCY.DEFAULT,
+      vatRate: TAX.VAT_RATE,
+      termMonths: TERM.DEFAULT_MONTHS,
+      datasetVersion: DATASETS.DUMMY,
     },
     hardware: {
       name: "",
       ekNet: 0,
       amortize: false,
-      amortMonths: 24,
+      amortMonths: TERM.AMORT_MONTHS,
     },
     mobile: {
       tariffId: "RED_BIZ_S",

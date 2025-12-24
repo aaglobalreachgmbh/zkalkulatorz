@@ -21,6 +21,7 @@ import {
   getFixedNetProduct,
   createDummyOptionState,
 } from "../engine";
+import { TAX } from "../config";
 import type { OfferOptionState, Period } from "../engine/types";
 
 // ============================================
@@ -28,13 +29,13 @@ import type { OfferOptionState, Period } from "../engine/types";
 // ============================================
 describe("VAT Calculation", () => {
   it("should calculate gross from net with 19% VAT", () => {
-    expect(calculateGross(100, 0.19)).toBe(119);
-    expect(calculateGross(25, 0.19)).toBe(29.75);
-    expect(calculateGross(0, 0.19)).toBe(0);
+    expect(calculateGross(100, TAX.VAT_RATE)).toBe(119);
+    expect(calculateGross(25, TAX.VAT_RATE)).toBe(29.75);
+    expect(calculateGross(0, TAX.VAT_RATE)).toBe(0);
   });
 
   it("should round to 2 decimal places", () => {
-    expect(calculateGross(33.33, 0.19)).toBe(39.66); // 33.33 * 1.19 = 39.6627
+    expect(calculateGross(33.33, TAX.VAT_RATE)).toBe(39.66); // 33.33 * 1.19 = 39.6627
   });
 });
 

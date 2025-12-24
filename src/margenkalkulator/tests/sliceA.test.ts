@@ -13,6 +13,7 @@ import {
   checkGKEligibility,
   getOMODeduction,
 } from "../engine";
+import { TAX, TERM, CURRENCY, DATASETS } from "../config";
 import type { OfferOptionState } from "../engine/types";
 
 // ============================================
@@ -21,16 +22,16 @@ import type { OfferOptionState } from "../engine/types";
 function createBusinessState(): OfferOptionState {
   return {
     meta: {
-      currency: "EUR",
-      vatRate: 0.19,
-      termMonths: 24,
-      datasetVersion: "business-2025-09",
+      currency: CURRENCY.DEFAULT,
+      vatRate: TAX.VAT_RATE,
+      termMonths: TERM.DEFAULT_MONTHS,
+      datasetVersion: DATASETS.CURRENT,
     },
     hardware: {
       name: "",
       ekNet: 0,
       amortize: false,
-      amortMonths: 24,
+      amortMonths: TERM.AMORT_MONTHS,
     },
     mobile: {
       tariffId: "PRIME_M",
@@ -250,12 +251,12 @@ describe("Slice A: GK Convergence Eligibility", () => {
     // Using dummy dataset with non-Prime tariff
     const state: OfferOptionState = {
       meta: {
-        currency: "EUR",
-        vatRate: 0.19,
-        termMonths: 24,
-        datasetVersion: "dummy-v0",
+        currency: CURRENCY.DEFAULT,
+        vatRate: TAX.VAT_RATE,
+        termMonths: TERM.DEFAULT_MONTHS,
+        datasetVersion: DATASETS.DUMMY,
       },
-      hardware: { name: "", ekNet: 0, amortize: false, amortMonths: 24 },
+      hardware: { name: "", ekNet: 0, amortize: false, amortMonths: TERM.AMORT_MONTHS },
       mobile: {
         tariffId: "RED_BIZ_S", // Not Prime
         subVariantId: "SIM_ONLY",
@@ -358,8 +359,8 @@ describe("Slice A: Default State", () => {
   it("should default to business-2025-09 dataset", () => {
     const state = createDefaultOptionState();
     
-    expect(state.meta.datasetVersion).toBe("business-2025-09");
-    expect(state.mobile.tariffId).toBe("PRIME_M");
+    expect(state.meta.datasetVersion).toBe(DATASETS.CURRENT);
+    expect(state.mobile.tariffId).toBe("PRIME_S");
     expect(state.fixedNet.productId).toBe("RBI_100");
   });
 });

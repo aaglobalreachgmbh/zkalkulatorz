@@ -64,9 +64,9 @@ export default function Auth() {
 
     setIsLoading(true);
     const { error } = await signIn(loginEmail, loginPassword);
-    setIsLoading(false);
 
     if (error) {
+      setIsLoading(false);
       if (error.message.includes("Invalid login credentials")) {
         toast.error("Ungültige Anmeldedaten. Bitte überprüfe E-Mail und Passwort.");
       } else {
@@ -76,7 +76,7 @@ export default function Auth() {
     }
 
     toast.success("Erfolgreich angemeldet!");
-    navigate("/", { replace: true });
+    // Navigation wird automatisch durch useEffect bei user-Änderung ausgelöst
   };
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -93,9 +93,9 @@ export default function Auth() {
 
     setIsLoading(true);
     const { error } = await signUp(signupEmail, signupPassword, signupDisplayName);
-    setIsLoading(false);
 
     if (error) {
+      setIsLoading(false);
       if (error.message.includes("already registered")) {
         toast.error("Diese E-Mail ist bereits registriert. Bitte melde dich an.");
       } else {
@@ -105,7 +105,7 @@ export default function Auth() {
     }
 
     toast.success("Konto erstellt! Du kannst dich jetzt anmelden.");
-    navigate("/", { replace: true });
+    // Navigation wird automatisch durch useEffect bei user-Änderung ausgelöst
   };
 
   if (authLoading) {
@@ -149,6 +149,7 @@ export default function Auth() {
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
                     disabled={isLoading}
+                    autoComplete="email"
                     className={errors.loginEmail ? "border-destructive" : ""}
                   />
                   {errors.loginEmail && (
@@ -168,6 +169,7 @@ export default function Auth() {
                       value={loginPassword}
                       onChange={(e) => setLoginPassword(e.target.value)}
                       disabled={isLoading}
+                      autoComplete="current-password"
                       className={errors.loginPassword ? "border-destructive" : ""}
                     />
                     <Button
@@ -212,6 +214,7 @@ export default function Auth() {
                     value={signupDisplayName}
                     onChange={(e) => setSignupDisplayName(e.target.value)}
                     disabled={isLoading}
+                    autoComplete="name"
                     className={errors.signupDisplayName ? "border-destructive" : ""}
                   />
                   {errors.signupDisplayName && (
@@ -230,6 +233,7 @@ export default function Auth() {
                     value={signupEmail}
                     onChange={(e) => setSignupEmail(e.target.value)}
                     disabled={isLoading}
+                    autoComplete="email"
                     className={errors.signupEmail ? "border-destructive" : ""}
                   />
                   {errors.signupEmail && (
@@ -249,6 +253,7 @@ export default function Auth() {
                       value={signupPassword}
                       onChange={(e) => setSignupPassword(e.target.value)}
                       disabled={isLoading}
+                      autoComplete="new-password"
                       className={errors.signupPassword ? "border-destructive" : ""}
                     />
                     <Button

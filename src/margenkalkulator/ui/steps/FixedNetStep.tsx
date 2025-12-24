@@ -11,21 +11,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { FixedNetState, DatasetVersion, FixedNetAccessType, MobileState } from "../../engine/types";
-import { 
-  listFixedNetByAccessType, 
+import {
+  type FixedNetState,
+  type DatasetVersion,
+  type FixedNetAccessType,
+  type MobileState,
+  listFixedNetByAccessType,
   getFixedNetProductFromCatalog,
   getCatalog,
-} from "../../engine/catalogResolver";
-import { 
-  komfortRegioPhoneTiers, 
+  calculateGigaKombi,
+  komfortRegioPhoneTiers,
   komfortRegioInternetOptions,
   komfortFTTHPhoneTiers,
   komfortFTTHInternetOptions,
   KOMFORT_FIXED_IP_ADDON_NET,
-} from "../../data/business/v2025_09/fixedNetKomfort";
-import { DATA_SOURCES } from "../../data/business/v2025_09/sources";
-import { calculateGigaKombi } from "../../engine/benefitsEngine";
+  DATA_SOURCES,
+} from "@/margenkalkulator";
 import { Wifi, Cable, Zap, PhoneCall, Infinity, Settings, Phone } from "lucide-react";
 import { TariffFactsPanel } from "../components/TariffFactsPanel";
 

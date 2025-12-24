@@ -1,6 +1,6 @@
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Eye, Calculator } from "lucide-react";
-import type { ViewMode } from "../../engine/types";
+import { type ViewMode } from "@/margenkalkulator";
 
 interface ViewModeToggleProps {
   value: ViewMode;

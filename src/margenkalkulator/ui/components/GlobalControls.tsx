@@ -1,5 +1,5 @@
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import type { ViewMode } from "../../engine/types";
+import { type ViewMode } from "@/margenkalkulator";
 import { ViewModeToggle } from "./ViewModeToggle";
 
 interface GlobalControlsProps {

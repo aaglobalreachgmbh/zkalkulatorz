@@ -13,14 +13,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { MobileState, ContractType, DatasetVersion, TariffFamily, MobileTariff, SubVariantId } from "../../engine/types";
-import { 
-  listMobileTariffs, 
-  listSubVariants, 
-  listPromos, 
+import {
+  type MobileState,
+  type ContractType,
+  type DatasetVersion,
+  type TariffFamily,
+  type MobileTariff,
+  type SubVariantId,
+  listMobileTariffs,
+  listSubVariants,
+  listPromos,
   getMobileTariffFromCatalog,
   checkGKEligibility,
-} from "../../engine/catalogResolver";
+} from "@/margenkalkulator";
 import { Signal, Zap, Sparkles, AlertTriangle } from "lucide-react";
 
 interface MobileStepProps {

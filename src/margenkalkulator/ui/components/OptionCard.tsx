@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Copy } from "lucide-react";
 import { useState } from "react";
-import type { CalculationResult, ViewMode } from "../../engine/types";
+import { type CalculationResult, type ViewMode } from "@/margenkalkulator";
 import { KpiSummary } from "./KpiSummary";
 import { BreakdownAccordion } from "./BreakdownAccordion";
 

@@ -21,6 +21,18 @@ export { TEMPLATE_SCHEMA, SHEET_LABELS } from "./schema";
 export { parseXLSX, getSheetNames, parseXLSXUnified, type UnifiedParseResult } from "./importers/xlsxImporter";
 export { parseCSV } from "./importers/csvImporter";
 
+// Hardware Importer
+export {
+  parseHardwareXLSX,
+  parseHardwareCSV,
+  validateHardwareRows,
+  diffHardware,
+  generateHardwareTemplate,
+  type HardwareValidationResult,
+  type HardwareDiffResult,
+  type HardwareDiffItem,
+} from "./importers/hardwareImporter";
+
 // Business Format
 export { 
   detectFormat,
@@ -55,3 +67,16 @@ export {
 
 // Adapter
 export { transformToCanonical, mapCanonicalToCatalog } from "./adapter";
+
+// Storage
+export {
+  loadCustomDataset,
+  saveCustomDataset,
+  clearCustomDataset,
+  hasCustomDataset,
+  getStoredDatasetVersion,
+  updateHardwareCatalog,
+  resetHardwareCatalog,
+  getStoredHardwareCatalog,
+  hasCustomHardware,
+} from "./storage";

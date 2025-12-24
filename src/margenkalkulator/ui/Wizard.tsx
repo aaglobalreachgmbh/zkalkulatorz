@@ -2,9 +2,14 @@ import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Check, AlertTriangle, Database } from "lucide-react";
-import type { OfferOptionState, ViewMode, WizardStep } from "../engine/types";
-import { createDefaultOptionState, calculateOffer } from "../engine";
-import { useWizardValidation } from "../hooks/useWizardValidation";
+import {
+  type OfferOptionState,
+  type ViewMode,
+  type WizardStep,
+  createDefaultOptionState,
+  calculateOffer,
+  useWizardValidation,
+} from "@/margenkalkulator";
 import { HardwareStep } from "./steps/HardwareStep";
 import { MobileStep } from "./steps/MobileStep";
 import { FixedNetStep } from "./steps/FixedNetStep";

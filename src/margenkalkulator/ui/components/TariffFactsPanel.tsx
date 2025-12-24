@@ -1,12 +1,7 @@
-// ============================================
-// Tariff Facts Panel - Phase 2 Slice A
-// Displays "Leistungen & Konditionen" for tariffs
-// ============================================
-
+import { type MobileTariff, type FixedNetProduct } from "@/margenkalkulator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Check, Info, Wifi, Phone, Router, Shield } from "lucide-react";
-import type { MobileTariff, FixedNetProduct } from "../../engine/types";
 
 interface MobileTariffFactsProps {
   type: "mobile";
@@ -35,10 +30,6 @@ export function TariffFactsPanel(props: TariffFactsPanelProps) {
   />;
 }
 
-// ============================================
-// Mobile Tariff Facts
-// ============================================
-
 function MobileTariffFacts({ tariff }: { tariff: MobileTariff | undefined }) {
   if (!tariff) {
     return (
@@ -61,7 +52,6 @@ function MobileTariffFacts({ tariff }: { tariff: MobileTariff | undefined }) {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {/* Features List */}
         <ul className="space-y-1.5">
           {tariff.features.map((feature, idx) => (
             <li key={idx} className="flex items-start gap-2 text-sm">
@@ -70,8 +60,6 @@ function MobileTariffFacts({ tariff }: { tariff: MobileTariff | undefined }) {
             </li>
           ))}
         </ul>
-
-        {/* Badges */}
         <div className="flex flex-wrap gap-1.5 pt-2">
           {tariff.oneNumberIncluded && (
             <Badge variant="outline" className="text-xs">
@@ -87,8 +75,6 @@ function MobileTariffFacts({ tariff }: { tariff: MobileTariff | undefined }) {
             24 Monate
           </Badge>
         </div>
-
-        {/* Contract Info */}
         <div className="pt-2 border-t text-xs text-muted-foreground space-y-1">
           <p>Mindestvertragslaufzeit: 24 Monate</p>
           {tariff.productLine === "PRIME" && (
@@ -99,10 +85,6 @@ function MobileTariffFacts({ tariff }: { tariff: MobileTariff | undefined }) {
     </Card>
   );
 }
-
-// ============================================
-// Fixed Net Facts
-// ============================================
 
 function FixedNetFacts({ 
   product, 
@@ -127,7 +109,6 @@ function FixedNetFacts({
     );
   }
 
-  // Constants for one-time costs breakdown
   const SETUP_FEE = 19.90;
   const SHIPPING_FEE = 8.40;
 
@@ -140,13 +121,10 @@ function FixedNetFacts({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {/* Speed Highlight */}
         <div className="flex items-center gap-2">
           <Wifi className="w-5 h-5 text-primary" />
           <span className="text-lg font-semibold">{product.speed} Mbit/s</span>
         </div>
-
-        {/* Features List */}
         <ul className="space-y-1.5">
           {product.features.map((feature, idx) => (
             <li key={idx} className="flex items-start gap-2 text-sm">
@@ -155,8 +133,6 @@ function FixedNetFacts({
             </li>
           ))}
         </ul>
-
-        {/* Badges */}
         <div className="flex flex-wrap gap-1.5 pt-2">
           {product.includesRouter && (
             <Badge variant="outline" className="text-xs bg-green-50 border-green-200 text-green-700">
@@ -182,8 +158,6 @@ function FixedNetFacts({
             </Badge>
           )}
         </div>
-
-        {/* One-Time Costs Section */}
         <div className="pt-2 border-t">
           <p className="text-xs font-medium text-muted-foreground mb-2">Einmalige Kosten</p>
           <div className="space-y-1 text-sm">
@@ -205,8 +179,6 @@ function FixedNetFacts({
             )}
           </div>
         </div>
-
-        {/* Optional Section */}
         <div className="pt-2 border-t">
           <p className="text-xs font-medium text-muted-foreground mb-2">Optionen</p>
           <div className="space-y-1 text-sm">
@@ -230,13 +202,9 @@ function FixedNetFacts({
             )}
           </div>
         </div>
-
-        {/* Contract Info */}
         <div className="pt-2 border-t text-xs text-muted-foreground">
           <p>Mindestvertragslaufzeit: 24 Monate</p>
         </div>
-
-        {/* Promo Info if exists */}
         {product.promo && (
           <div className="pt-2 border-t">
             <Badge className="bg-primary/10 text-primary text-xs">

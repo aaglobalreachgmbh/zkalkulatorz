@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 // =============================================================================
 // SECURITY: CORS Configuration
@@ -7,7 +8,7 @@ import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 const ALLOWED_ORIGINS = [
   "https://lovable.dev",
   "https://www.lovable.dev",
-  "https://preview--*.lovable.app",
+  /^https:\/\/.*\.lovable\.app$/,
   "http://localhost:5173",
   "http://localhost:8080",
 ];
@@ -16,22 +17,53 @@ function isOriginAllowed(origin: string | null): boolean {
   if (!origin) return false;
   
   return ALLOWED_ORIGINS.some(allowed => {
-    if (allowed.includes("*")) {
-      const pattern = allowed.replace("*", ".*");
-      return new RegExp(`^${pattern}$`).test(origin);
+    if (allowed instanceof RegExp) {
+      return allowed.test(origin);
     }
     return allowed === origin;
   });
 }
 
 function getCorsHeaders(origin: string | null): Record<string, string> {
-  const allowedOrigin = isOriginAllowed(origin) ? origin : ALLOWED_ORIGINS[0];
+  const allowedOrigin = isOriginAllowed(origin) ? origin : "https://lovable.dev";
   return {
     "Access-Control-Allow-Origin": allowedOrigin!,
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Max-Age": "86400",
   };
+}
+
+// =============================================================================
+// SECURITY: JWT Authentication
+// =============================================================================
+async function authenticateRequest(req: Request): Promise<{ userId: string } | null> {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) {
+    console.warn("No Authorization header");
+    return null;
+  }
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+  
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error("Supabase credentials not configured");
+    return null;
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    global: { headers: { Authorization: authHeader } },
+  });
+
+  const { data: { user }, error } = await supabase.auth.getUser();
+  
+  if (error || !user) {
+    console.warn("Invalid JWT:", error?.message);
+    return null;
+  }
+
+  return { userId: user.id };
 }
 
 // =============================================================================
@@ -206,10 +238,20 @@ serve(async (req) => {
   }
 
   try {
-    // SECURITY: Check rate limit
-    const rateCheck = checkRateLimit(clientIP);
+    // SECURITY: Authenticate user (JWT validation)
+    const authResult = await authenticateRequest(req);
+    if (!authResult) {
+      console.warn(`[${requestId}] Unauthorized request from IP: ${hashedIP}`);
+      return new Response(
+        JSON.stringify({ error: "Nicht autorisiert. Bitte melde dich an.", requestId }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // SECURITY: Check rate limit (per user now, not IP)
+    const rateCheck = checkRateLimit(authResult.userId);
     if (!rateCheck.allowed) {
-      console.warn(`[${requestId}] Rate limit exceeded for IP: ${hashedIP}`);
+      console.warn(`[${requestId}] Rate limit exceeded for user: ${authResult.userId.slice(0, 8)}`);
       return new Response(
         JSON.stringify({ 
           error: "Zu viele Anfragen. Bitte warte einen Moment.",

@@ -32,6 +32,7 @@ import {
   calculateGross,
   mergePeriodsWithSamePrice,
 } from "./periods";
+import { FIXED_NET_FEES, TEAMDEAL_FALLBACK } from "../config";
 
 // ============================================
 // Promo Validity (Slice B)
@@ -141,8 +142,8 @@ export function resolveTeamDealPricing(
   // TeamDeal WITHOUT Prime → Fallback to Smart Business Plus
   if (!primeOnAccount) {
     return {
-      effectiveNet: 13, // Smart Business Plus SIM-only
-      dataVolumeGB: 1,
+      effectiveNet: TEAMDEAL_FALLBACK.PRICE_NET,
+      dataVolumeGB: TEAMDEAL_FALLBACK.DATA_GB,
       isFallback: true,
     };
   }
@@ -405,9 +406,9 @@ export function generateBreakdown(
     if (tariff.family === "teamdeal" && !state.mobile.primeOnAccount) {
       breakdown.push({
         key: "teamdeal_fallback",
-        label: "TeamDeal Fallback: Ohne Prime → Smart Business Plus (1 GB / 13€)",
+        label: `TeamDeal Fallback: Ohne Prime → Smart Business Plus (${TEAMDEAL_FALLBACK.DATA_GB} GB / ${TEAMDEAL_FALLBACK.PRICE_NET}€)`,
         appliesTo: "monthly",
-        net: 13 * state.mobile.quantity,
+        net: TEAMDEAL_FALLBACK.PRICE_NET * state.mobile.quantity,
         ruleId: "teamdeal_fallback_no_prime",
       });
     }
@@ -425,9 +426,6 @@ export function generateBreakdown(
     });
     
     // Fixed one-time (Phase 2: split into Bereitstellung + Versand)
-    const SETUP_FEE_NET = 19.90;
-    const SHIPPING_FEE_NET = 8.40;
-    
     if (fixedProduct.setupWaived) {
       breakdown.push({
         key: "fixed_onetime_waived",
@@ -443,29 +441,28 @@ export function generateBreakdown(
         key: "fixed_setup",
         label: "Bereitstellung",
         appliesTo: "oneTime",
-        net: SETUP_FEE_NET,
-        gross: calculateGross(SETUP_FEE_NET, vatRate),
+        net: FIXED_NET_FEES.SETUP_NET,
+        gross: calculateGross(FIXED_NET_FEES.SETUP_NET, vatRate),
         ruleId: "fixed_setup",
       });
       breakdown.push({
         key: "fixed_shipping",
         label: "Versand Hardware",
         appliesTo: "oneTime",
-        net: SHIPPING_FEE_NET,
-        gross: calculateGross(SHIPPING_FEE_NET, vatRate),
+        net: FIXED_NET_FEES.SHIPPING_NET,
+        gross: calculateGross(FIXED_NET_FEES.SHIPPING_NET, vatRate),
         ruleId: "fixed_shipping",
       });
     }
-    
+
     // Expert Setup add-on (Cable only)
     if (state.fixedNet.expertSetupEnabled) {
-      const EXPERT_SETUP_NET = 89.99;
       breakdown.push({
         key: "fixed_expert_setup",
         label: "Experten-Service Einrichtung",
         appliesTo: "oneTime",
-        net: EXPERT_SETUP_NET,
-        gross: calculateGross(EXPERT_SETUP_NET, vatRate),
+        net: FIXED_NET_FEES.EXPERT_SETUP_NET,
+        gross: calculateGross(FIXED_NET_FEES.EXPERT_SETUP_NET, vatRate),
         ruleId: "fixed_expert_setup",
       });
     }

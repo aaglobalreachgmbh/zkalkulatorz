@@ -1,4 +1,17 @@
 // ============================================
+// Calculator Module Exports
+// ============================================
+
+export * from "./promo";
+export * from "./mobile";
+export * from "./dealer";
+export * from "./hardware";
+export * from "./fixedNet";
+
+// Error types
+export * from "../errors";
+
+// ============================================
 // Calculator Modules - Barrel Export
 // ============================================
 

@@ -1,5 +1,5 @@
 // ============================================
-// MargenKalkulator Engine - Phase 1 Exports
+// MargenKalkulator Engine - Modular Exports
 // ============================================
 
 // Types
@@ -29,12 +29,11 @@ export type {
   WizardStep,
   WizardValidation,
   DatasetVersion,
-  // Slice C additions
   TariffFamily,
   ContractVariant,
 } from "./types";
 
-// Catalog
+// Catalog (dummy data)
 export {
   dummyCatalog,
   subVariants,
@@ -59,21 +58,32 @@ export {
   mergePeriodsWithSamePrice,
 } from "./periods";
 
-// Pricing / Calculation
+// === MODULAR CALCULATORS ===
 export {
-  calculateMobileBaseForMonth,
-  calculateMobileMonthlyForMonth,
-  calculateFixedNetMonthlyForMonth,
-  calculateHardwareAmortization,
-  calculateDealerEconomics,
-  calculateDealerEconomicsLegacy,
-  generateBreakdown,
-  calculateOffer,
+  // Promo
   isPromoValid,
   isFixedPromoValid,
-  // Slice C additions
   resolveTeamDealPricing,
-} from "./pricing";
+  type TeamDealResolution,
+  // Mobile
+  calculateMobileBaseForMonth,
+  calculateMobileMonthlyForMonth,
+  // Fixed Net
+  calculateFixedNetMonthlyForMonth,
+  getEffectiveOneTimeCost,
+  // Hardware
+  calculateHardwareAmortization,
+  // Dealer
+  getOMODeduction,
+  calculateDealerEconomics,
+  calculateDealerEconomicsLegacy,
+} from "./calculators";
+
+// Breakdown generation
+export { generateBreakdown } from "./breakdown";
+
+// Main offer calculation
+export { calculateOffer } from "./offer";
 
 // Catalog Resolver (Phase 2)
 export {
@@ -87,7 +97,6 @@ export {
   listPromos,
   listFixedNetProducts,
   checkGKEligibility,
-  getOMODeduction,
 } from "./catalogResolver";
 
 // ============================================

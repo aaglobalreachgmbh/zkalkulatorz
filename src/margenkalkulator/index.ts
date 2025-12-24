@@ -5,9 +5,10 @@
 // Dieser Barrel-Export ermöglicht saubere Imports im gesamten Projekt:
 //   import { calculateOffer, type MobileTariff } from "@/margenkalkulator"
 //
-// Statt:
-//   import { calculateOffer } from "@/margenkalkulator/engine/pricing"
-//   import type { MobileTariff } from "@/margenkalkulator/engine/types"
+// Die Engine ist modular aufgebaut:
+//   engine/calculators/ - Spezialisierte Berechnungen (promo, mobile, fixedNet, hardware, dealer)
+//   engine/breakdown.ts - Breakdown-Generierung
+//   engine/offer.ts     - Haupt-Orchestrator (calculateOffer)
 // ============================================
 
 // === CONFIG ===

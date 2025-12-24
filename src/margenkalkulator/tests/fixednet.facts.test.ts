@@ -4,7 +4,7 @@
 // ============================================
 
 import { describe, it, expect } from "vitest";
-import { calculateOffer } from "../engine/pricing";
+import { calculateOffer } from "../engine";
 import type { OfferOptionState } from "../engine/types";
 
 // Helper to create a minimal state

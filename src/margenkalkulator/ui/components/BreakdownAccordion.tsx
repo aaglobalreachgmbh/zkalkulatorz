@@ -4,7 +4,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import type { CalculationResult, ViewMode } from "../../engine/types";
+import { type CalculationResult, type ViewMode } from "@/margenkalkulator";
 
 interface BreakdownAccordionProps {
   result: CalculationResult;

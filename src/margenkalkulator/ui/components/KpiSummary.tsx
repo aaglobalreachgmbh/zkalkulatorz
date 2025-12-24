@@ -1,5 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import type { CalculationResult, ViewMode } from "../../engine/types";
+import { type CalculationResult, type ViewMode } from "@/margenkalkulator";
 import { TrendingUp, TrendingDown, Euro, Calendar } from "lucide-react";
 
 interface KpiSummaryProps {

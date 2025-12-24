@@ -1,6 +1,6 @@
 import { AlertTriangle, XCircle, CheckCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import type { StepValidation } from "../../hooks/useWizardValidation";
+import { type StepValidation } from "@/margenkalkulator";
 
 interface ValidationWarningProps {
   validation: StepValidation;

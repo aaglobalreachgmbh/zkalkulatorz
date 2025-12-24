@@ -20,22 +20,18 @@ import {
   validateDataset,
   diffDatasets,
   formatDiffSummary,
-  type ValidationResult,
-  type DiffResult,
-  type CanonicalDataset,
-} from "@/margenkalkulator/dataManager";
-import { 
   parseXLSXUnified,
-  type UnifiedParseResult,
-} from "@/margenkalkulator/dataManager/importers/xlsxImporter";
-import type { FormatDetectionResult } from "@/margenkalkulator/dataManager/businessFormat";
-import { 
   saveCustomDataset, 
   clearCustomDataset,
   loadCustomDataset,
-} from "@/margenkalkulator/dataManager/storage";
-import { getActiveDatasetVersion } from "@/margenkalkulator/engine/catalogResolver";
-import { businessCatalog2025_09 } from "@/margenkalkulator/data/business/v2025_09";
+  getActiveDatasetVersion,
+  businessCatalog2025_09,
+  type ValidationResult,
+  type DiffResult,
+  type CanonicalDataset,
+  type UnifiedParseResult,
+  type FormatDetectionResult,
+} from "@/margenkalkulator";
 import { toast } from "@/hooks/use-toast";
 
 export default function DataManager() {
@@ -464,26 +460,8 @@ function convertCatalogToCanonical(catalog: typeof businessCatalog2025_09): Part
       name: p.name,
       minTermMonths: 24,
       monthly_net: p.monthlyNet,
-      router_included: p.includesRouter ?? false,
-      one_time_setup_net: p.oneTimeNet,
-      one_time_shipping_net: 0,
-      fixed_ip_included: p.fixedIpIncluded ?? false,
+      speed_mbit: p.speed,
       active: true,
     })),
-    subVariants: catalog.subVariants.map(sv => ({
-      id: sv.id as string,
-      label: sv.label,
-      monthly_add_net: sv.monthlyAddNet,
-    })),
-    promos: catalog.promos.map(p => ({
-      id: p.id,
-      applies_to: p.appliesTo ?? "both" as const,
-      type: p.type as "PCT_OFF_BASE" | "ABS_OFF_BASE" | "INTRO_PRICE",
-      duration_months: p.durationMonths,
-      pct: p.type === "PCT_OFF_BASE" ? p.value : undefined,
-    })),
-    mobileFeatures: [],
-    mobileDependencies: [],
-    hardwareCatalog: [],
   };
 }

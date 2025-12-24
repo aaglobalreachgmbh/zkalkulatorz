@@ -26,17 +26,15 @@ import {
   validateHardwareRows,
   diffHardware,
   generateHardwareTemplate,
-  type HardwareValidationResult,
-  type HardwareDiffResult,
-} from "@/margenkalkulator/dataManager/importers/hardwareImporter";
-import { 
   updateHardwareCatalog,
   resetHardwareCatalog,
   getStoredHardwareCatalog,
   hasCustomHardware,
-} from "@/margenkalkulator/dataManager/storage";
-import type { HardwareItemRow } from "@/margenkalkulator/dataManager/types";
-import { businessCatalog2025_09 } from "@/margenkalkulator/data/business/v2025_09";
+  businessCatalog2025_09,
+  type HardwareItemRow,
+  type HardwareValidationResult,
+  type HardwareDiffResult,
+} from "@/margenkalkulator";
 import { toast } from "@/hooks/use-toast";
 
 export default function HardwareManager() {

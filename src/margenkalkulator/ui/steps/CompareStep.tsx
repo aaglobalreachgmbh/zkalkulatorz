@@ -1,10 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { CalculationResult, ViewMode, OfferOptionState } from "../../engine/types";
-import { OptionCard } from "../components/OptionCard";
-import { ViewModeToggle } from "../components/ViewModeToggle";
-import { ArrowLeftRight, Sparkles } from "lucide-react";
+import { Eye, EyeOff, Printer, Link2Off, Smartphone, Signal } from "lucide-react";
 
 interface CompareStepProps {
   option1: OfferOptionState;
@@ -29,120 +25,155 @@ export function CompareStep({
   onViewModeChange,
   onCopyOption,
 }: CompareStepProps) {
+  const isCustomerMode = viewMode === "customer";
+  
   return (
     <div className="space-y-6">
-      {/* Header Controls */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      {/* Dark Header Bar */}
+      <div className="bg-slate-900 text-white rounded-xl p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <ToggleGroup
-            type="single"
-            value={String(activeOption)}
-            onValueChange={(v) => v && onActiveOptionChange(Number(v) as 1 | 2)}
-            className="bg-muted p-1 rounded-lg"
+          <div className="w-10 h-10 bg-slate-700 rounded-lg flex items-center justify-center">
+            {isCustomerMode ? (
+              <Eye className="w-5 h-5 text-slate-300" />
+            ) : (
+              <EyeOff className="w-5 h-5 text-emerald-400" />
+            )}
+          </div>
+          <div>
+            <h3 className="font-semibold">
+              {isCustomerMode ? "Customer Presentation" : "Dealer Dashboard"}
+            </h3>
+            <p className="text-sm text-slate-400">
+              {isCustomerMode 
+                ? "Kundenansicht: Nur Verkaufspreise" 
+                : "Händleransicht: Marge & Provision sichtbar"
+              }
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => onViewModeChange(isCustomerMode ? "dealer" : "customer")}
+            className="bg-slate-700 hover:bg-slate-600 text-white border-0"
           >
-            <ToggleGroupItem
-              value="1"
-              className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground px-4"
-            >
-              Option 1
-            </ToggleGroupItem>
-            <ToggleGroupItem
-              value="2"
-              className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground px-4"
-            >
-              Option 2
-            </ToggleGroupItem>
-          </ToggleGroup>
-          <span className="text-sm text-muted-foreground">
-            (aktiv für Bearbeitung)
-          </span>
+            Modus wechseln
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.print()}
+            className="bg-white text-slate-900 hover:bg-slate-100 border-0 gap-2"
+          >
+            <Printer className="w-4 h-4" />
+            Drucken
+          </Button>
+        </div>
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="grid lg:grid-cols-3 gap-6">
+        {/* Offer Card */}
+        <div className="lg:col-span-2">
+          <div className="bg-card rounded-xl border-2 border-primary/30 overflow-hidden">
+            {/* Orange top border accent */}
+            <div className="h-1 bg-gradient-to-r from-orange-400 to-orange-500" />
+            
+            <div className="p-6 space-y-6">
+              <div>
+                <h2 className="text-2xl font-bold text-foreground">Ihr Angebot</h2>
+                <p className="text-sm text-muted-foreground">
+                  Gültig bis {new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString('de-DE')}
+                </p>
+              </div>
+
+              {/* Positions */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-muted-foreground">Positionen</h3>
+                
+                {/* Hardware Position */}
+                <div className="flex items-center justify-between py-3 border-b border-border">
+                  <div className="flex items-center gap-3">
+                    <Smartphone className="w-5 h-5 text-muted-foreground" />
+                    <span>
+                      {option1.hardware.name || "Keine Hardware"}
+                    </span>
+                  </div>
+                  <span className="font-medium">
+                    {option1.hardware.ekNet > 0 
+                      ? `${option1.hardware.ekNet.toFixed(2)} €` 
+                      : "0,00 €"
+                    }
+                  </span>
+                </div>
+
+                {/* Mobile Position */}
+                <div className="flex items-center justify-between py-3 border-b border-border">
+                  <div className="flex items-center gap-3">
+                    <Signal className="w-5 h-5 text-muted-foreground" />
+                    <span>Mobilfunk-Tarif</span>
+                  </div>
+                  <span className="font-medium">
+                    {result1.totals.avgTermNet.toFixed(2)} € /mtl.
+                  </span>
+                </div>
+              </div>
+
+              {/* Average Monthly Cost */}
+              <div className="flex items-center justify-between pt-4 border-t-2 border-border">
+                <span className="text-muted-foreground">Ø Kosten pro Monat (pro Vertrag)</span>
+                <span className="text-4xl font-bold text-foreground">
+                  {result1.totals.avgTermNet.toFixed(2)} €
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <ViewModeToggle value={viewMode} onChange={onViewModeChange} />
-      </div>
-
-      {/* Comparison Cards */}
-      <div className="grid md:grid-cols-2 gap-6">
-        <OptionCard
-          title="Option 1"
-          result={result1}
-          viewMode={viewMode}
-          isActive={activeOption === 1}
-          onCopy={() => onCopyOption(1, 2)}
-          gkEligible={result1.gkEligible}
-        />
-        <OptionCard
-          title="Option 2"
-          result={result2}
-          viewMode={viewMode}
-          isActive={activeOption === 2}
-          onCopy={() => onCopyOption(2, 1)}
-          gkEligible={result2.gkEligible}
-        />
-      </div>
-
-      {/* Quick Actions */}
-      <div className="flex justify-center">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onCopyOption(activeOption, activeOption === 1 ? 2 : 1)}
-          className="gap-2"
-        >
-          <ArrowLeftRight className="w-4 h-4" />
-          Aktive Option in {activeOption === 1 ? "Option 2" : "Option 1"} kopieren
-        </Button>
-      </div>
-
-      {/* Summary Comparison */}
-      <div className="bg-muted/30 rounded-lg p-4">
-        <h4 className="font-medium mb-3">Vergleich auf einen Blick</h4>
-        <div className="grid grid-cols-3 gap-4 text-sm">
-          <div className="font-medium text-muted-foreground">Metrik</div>
-          <div className="font-medium text-center">Option 1</div>
-          <div className="font-medium text-center">Option 2</div>
-
-          <div className="text-muted-foreground">Ø Monat (netto)</div>
-          <div className="text-center">{result1.totals.avgTermNet.toFixed(2)} €</div>
-          <div className="text-center">{result2.totals.avgTermNet.toFixed(2)} €</div>
-
-          <div className="text-muted-foreground">Summe 24M (brutto)</div>
-          <div className="text-center">{result1.totals.sumTermGross.toFixed(2)} €</div>
-          <div className="text-center">{result2.totals.sumTermGross.toFixed(2)} €</div>
-
-          {/* GK Eligibility Row */}
-          <div className="text-muted-foreground">GK Konvergenz</div>
-          <div className="text-center">
-            {result1.gkEligible ? (
-              <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-200">
-                <Sparkles className="w-3 h-3 mr-1" />
-                Berechtigt
-              </Badge>
-            ) : (
-              <span className="text-muted-foreground">—</span>
-            )}
-          </div>
-          <div className="text-center">
-            {result2.gkEligible ? (
-              <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-200">
-                <Sparkles className="w-3 h-3 mr-1" />
-                Berechtigt
-              </Badge>
-            ) : (
-              <span className="text-muted-foreground">—</span>
-            )}
-          </div>
-
-          {viewMode === "dealer" && (
-            <>
-              <div className="text-muted-foreground">Marge</div>
-              <div className={`text-center font-medium ${result1.dealer.margin >= 0 ? "text-green-600" : "text-destructive"}`}>
-                {result1.dealer.margin.toFixed(2)} €
+        {/* Dealer Info Sidebar */}
+        <div className="lg:col-span-1">
+          {isCustomerMode ? (
+            <div className="bg-card rounded-xl border border-border p-6 flex flex-col items-center justify-center h-full text-center">
+              <Link2Off className="w-12 h-12 text-muted-foreground/30 mb-4" />
+              <h4 className="font-medium text-muted-foreground">Händler-Daten verborgen</h4>
+              <p className="text-sm text-muted-foreground mt-2">
+                Wechseln Sie in den Dealer-Modus um Margen zu sehen.
+              </p>
+            </div>
+          ) : (
+            <div className="bg-card rounded-xl border border-border p-6 space-y-4">
+              <h4 className="font-semibold">Händler-Kalkulation</h4>
+              
+              <div className="space-y-3">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Provision (brutto)</span>
+                  <span className="font-medium">{result1.dealer.provisionBase.toFixed(2)} €</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Hardware-EK</span>
+                  <span className="font-medium">-{result1.dealer.hardwareEkNet.toFixed(2)} €</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Abzüge</span>
+                  <span className="font-medium">-{result1.dealer.deductions.toFixed(2)} €</span>
+                </div>
+                <div className="border-t border-border pt-3 flex justify-between">
+                  <span className="font-semibold">Netto-Marge</span>
+                  <span className={`text-xl font-bold ${
+                    result1.dealer.margin >= 0 ? "text-emerald-600" : "text-destructive"
+                  }`}>
+                    {result1.dealer.margin.toFixed(2)} €
+                  </span>
+                </div>
               </div>
-              <div className={`text-center font-medium ${result2.dealer.margin >= 0 ? "text-green-600" : "text-destructive"}`}>
-                {result2.dealer.margin.toFixed(2)} €
-              </div>
-            </>
+
+              {result1.dealer.margin < 0 && (
+                <p className="text-xs text-destructive">
+                  Negative Marge: Hardware-Kosten übersteigen Provision.
+                </p>
+              )}
+            </div>
           )}
         </div>
       </div>

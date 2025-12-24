@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
-import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Check, AlertTriangle, Database, Calculator } from "lucide-react";
+import { Smartphone, Signal, Router, LayoutGrid, Printer, Calculator } from "lucide-react";
 import {
   type OfferOptionState,
   type ViewMode,
@@ -19,11 +18,11 @@ import { ValidationWarning } from "./components/ValidationWarning";
 import { AiConsultant } from "./components/AiConsultant";
 import { useToast } from "@/hooks/use-toast";
 
-const STEPS: { id: WizardStep; label: string }[] = [
-  { id: "hardware", label: "Hardware" },
-  { id: "mobile", label: "Mobilfunk" },
-  { id: "fixedNet", label: "Festnetz" },
-  { id: "compare", label: "Vergleich" },
+const STEPS: { id: WizardStep; label: string; icon: typeof Smartphone }[] = [
+  { id: "hardware", label: "Hardware", icon: Smartphone },
+  { id: "mobile", label: "Mobilfunk", icon: Signal },
+  { id: "fixedNet", label: "Festnetz", icon: Router },
+  { id: "compare", label: "Vergleich", icon: LayoutGrid },
 ];
 
 export function Wizard() {
@@ -128,80 +127,47 @@ export function Wizard() {
   const avgMonthlyNet = activeResult.totals.avgTermNet;
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Header with glassmorphism */}
-      <header className="border-b border-border/50 bg-card/80 backdrop-blur-md sticky top-0 z-50 shadow-soft">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Calculator className="w-5 h-5 text-primary" />
-            <div>
-              <h1 className="text-lg font-semibold text-foreground">
-                Margen<span className="text-primary">Kalkulator</span>
-              </h1>
-              <p className="text-xs text-muted-foreground hidden sm:block">Vodafone Business Partner</p>
+    <div className="min-h-screen flex flex-col bg-muted/30">
+      {/* Header - Clean with Red Icon Box */}
+      <header className="bg-background border-b border-border">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-sm">
+              <Calculator className="w-5 h-5 text-primary-foreground" />
             </div>
+            <h1 className="text-xl font-semibold text-foreground">
+              Margen<span className="text-primary">Kalkulator</span>
+            </h1>
           </div>
-          <a href="/data-manager" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-            Data Manager →
-          </a>
+          <span className="text-sm text-muted-foreground hidden sm:block">
+            Vodafone Business Partner
+          </span>
         </div>
       </header>
 
-      {/* Global Controls */}
-      <div className="border-b border-border/30 bg-card/60 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-3">
-          <GlobalControls
-            activeOption={activeOption}
-            onActiveOptionChange={setActiveOption}
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
-          />
-        </div>
-      </div>
-
-      {/* Stepper Navigation with pill-style buttons */}
-      <nav className="border-b border-border/30 bg-card/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-center gap-2 md:gap-3">
+      {/* Tab-Style Stepper */}
+      <nav className="bg-background border-b border-border">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-center">
             {STEPS.map((step, idx) => {
-              const stepValidation = validation.steps[step.id];
+              const Icon = step.icon;
               const isActive = currentStep === step.id;
-              const isPast = idx < currentStepIndex;
-              const hasError = stepValidation && !stepValidation.valid && isPast;
-
+              
               return (
                 <button
                   key={step.id}
                   onClick={() => goToStep(step.id)}
                   className={`
-                    relative px-4 py-2.5 rounded-full text-sm font-medium
-                    transition-all duration-200 ease-out cursor-pointer
+                    flex items-center gap-2 px-6 py-4 text-sm font-medium
+                    border-b-2 transition-colors
                     ${isActive
-                      ? "bg-primary text-primary-foreground shadow-card scale-105"
-                      : isPast
-                        ? hasError
-                          ? "bg-destructive/15 text-destructive hover:bg-destructive/20"
-                          : "bg-primary/10 text-primary hover:bg-primary/20"
-                        : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
                     }
                   `}
                 >
-                  <span className="flex items-center gap-2">
-                    <span className={`
-                      w-5 h-5 rounded-full text-xs flex items-center justify-center font-semibold
-                      ${isActive 
-                        ? "bg-primary-foreground/20 text-primary-foreground" 
-                        : isPast 
-                          ? hasError 
-                            ? "bg-destructive/20 text-destructive" 
-                            : "bg-primary/20 text-primary"
-                          : "bg-muted text-muted-foreground"
-                      }
-                    `}>
-                      {idx + 1}
-                    </span>
-                    <span className="hidden sm:inline">{step.label}</span>
-                  </span>
+                  <Icon className="w-4 h-4" />
+                  <span className="hidden sm:inline">{step.label}</span>
                 </button>
               );
             })}
@@ -219,21 +185,20 @@ export function Wizard() {
             </div>
           )}
 
-          {/* Step Content in glass card */}
-          <div className="bg-card/80 backdrop-blur-sm rounded-2xl shadow-card border border-border/50 p-6 md:p-8 animate-fade-in-up">
+          {/* Step Content */}
+          <div className="animate-fade-in">
             {renderStep()}
           </div>
         </div>
       </main>
 
-      {/* Footer with glassmorphism and Live-KPI */}
-      <footer className="border-t border-border/50 bg-card/80 backdrop-blur-md sticky bottom-0 z-40 shadow-soft">
+      {/* Footer with Live-KPI */}
+      <footer className="bg-background border-t border-border sticky bottom-0 z-40">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <Button
             variant="outline"
             onClick={goBack}
             disabled={currentStepIndex === 0}
-            className="rounded-xl"
           >
             ← Zurück
           </Button>
@@ -253,13 +218,19 @@ export function Wizard() {
             </div>
           </div>
 
-          <Button
-            onClick={goNext}
-            disabled={currentStepIndex === STEPS.length - 1 || !canProceed}
-            className="rounded-xl shadow-soft"
-          >
-            Weiter →
-          </Button>
+          {currentStepIndex === STEPS.length - 1 ? (
+            <Button onClick={() => window.print()} className="gap-2">
+              <Printer className="w-4 h-4" />
+              Drucken
+            </Button>
+          ) : (
+            <Button
+              onClick={goNext}
+              disabled={!canProceed}
+            >
+              Weiter →
+            </Button>
+          )}
         </div>
       </footer>
 

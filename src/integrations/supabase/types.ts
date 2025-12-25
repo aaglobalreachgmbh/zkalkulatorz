@@ -14,6 +14,138 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_log: {
+        Row: {
+          action: string
+          admin_id: string
+          created_at: string
+          id: string
+          ip_hash: string | null
+          new_values: Json | null
+          old_values: Json | null
+          target_id: string | null
+          target_table: string | null
+          user_agent_hash: string | null
+        }
+        Insert: {
+          action: string
+          admin_id: string
+          created_at?: string
+          id?: string
+          ip_hash?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+          target_id?: string | null
+          target_table?: string | null
+          user_agent_hash?: string | null
+        }
+        Update: {
+          action?: string
+          admin_id?: string
+          created_at?: string
+          id?: string
+          ip_hash?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+          target_id?: string | null
+          target_table?: string | null
+          user_agent_hash?: string | null
+        }
+        Relationships: []
+      }
+      blocked_ips: {
+        Row: {
+          block_count: number | null
+          blocked_until: string | null
+          created_at: string
+          id: string
+          ip_hash: string
+          reason: string
+          updated_at: string
+        }
+        Insert: {
+          block_count?: number | null
+          blocked_until?: string | null
+          created_at?: string
+          id?: string
+          ip_hash: string
+          reason: string
+          updated_at?: string
+        }
+        Update: {
+          block_count?: number | null
+          blocked_until?: string | null
+          created_at?: string
+          id?: string
+          ip_hash?: string
+          reason?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      honeypot_submissions: {
+        Row: {
+          created_at: string
+          field_name: string
+          field_value: string | null
+          form_id: string | null
+          id: string
+          ip_hash: string
+          user_agent_hash: string | null
+        }
+        Insert: {
+          created_at?: string
+          field_name: string
+          field_value?: string | null
+          form_id?: string | null
+          id?: string
+          ip_hash: string
+          user_agent_hash?: string | null
+        }
+        Update: {
+          created_at?: string
+          field_name?: string
+          field_value?: string | null
+          form_id?: string | null
+          id?: string
+          ip_hash?: string
+          user_agent_hash?: string | null
+        }
+        Relationships: []
+      }
+      login_anomalies: {
+        Row: {
+          anomaly_type: string
+          created_at: string
+          details: Json | null
+          id: string
+          ip_hash: string
+          resolved: boolean | null
+          severity: string
+          user_id: string | null
+        }
+        Insert: {
+          anomaly_type: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_hash: string
+          resolved?: boolean | null
+          severity?: string
+          user_id?: string | null
+        }
+        Update: {
+          anomaly_type?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_hash?: string
+          resolved?: boolean | null
+          severity?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

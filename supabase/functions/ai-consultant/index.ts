@@ -40,7 +40,7 @@ function getCorsHeaders(origin: string | null): Record<string, string> {
 async function authenticateRequest(req: Request): Promise<{ userId: string } | null> {
   const authHeader = req.headers.get("Authorization");
   if (!authHeader) {
-    console.warn("No Authorization header");
+    console.warn("[AUTH] No Authorization header");
     return null;
   }
 
@@ -48,7 +48,7 @@ async function authenticateRequest(req: Request): Promise<{ userId: string } | n
   const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
   
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.error("Supabase credentials not configured");
+    console.error("[AUTH] Supabase credentials not configured");
     return null;
   }
 
@@ -59,7 +59,7 @@ async function authenticateRequest(req: Request): Promise<{ userId: string } | n
   const { data: { user }, error } = await supabase.auth.getUser();
   
   if (error || !user) {
-    console.warn("Invalid JWT:", error?.message);
+    console.warn("[AUTH] Invalid JWT:", error?.message);
     return null;
   }
 
@@ -67,7 +67,7 @@ async function authenticateRequest(req: Request): Promise<{ userId: string } | n
 }
 
 // =============================================================================
-// SECURITY: Rate Limiting (In-Memory, per IP)
+// SECURITY: Rate Limiting (In-Memory, per User)
 // =============================================================================
 interface RateLimitEntry {
   count: number;
@@ -99,9 +99,9 @@ function hashIP(ip: string): string {
   return Math.abs(hash).toString(16).slice(0, 8);
 }
 
-function checkRateLimit(ip: string): { allowed: boolean; retryAfter?: number } {
+function checkRateLimit(identifier: string): { allowed: boolean; retryAfter?: number } {
   const now = Date.now();
-  const entry = rateLimitMap.get(ip);
+  const entry = rateLimitMap.get(identifier);
 
   // Cleanup old entries periodically
   if (rateLimitMap.size > 1000) {
@@ -111,7 +111,7 @@ function checkRateLimit(ip: string): { allowed: boolean; retryAfter?: number } {
   }
 
   if (!entry || entry.resetAt < now) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    rateLimitMap.set(identifier, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
     return { allowed: true };
   }
 
@@ -122,6 +122,73 @@ function checkRateLimit(ip: string): { allowed: boolean; retryAfter?: number } {
 
   entry.count++;
   return { allowed: true };
+}
+
+// =============================================================================
+// SECURITY: Server-Side Threat Detection
+// =============================================================================
+interface ThreatDetectionResult {
+  isSafe: boolean;
+  threats: string[];
+  riskLevel: "low" | "medium" | "high";
+}
+
+function detectServerThreatPatterns(input: string): ThreatDetectionResult {
+  const threats: string[] = [];
+
+  // SQL-Injection Patterns
+  if (/(\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|ALTER|CREATE|TRUNCATE)\b.*\b(FROM|INTO|WHERE|TABLE|DATABASE)\b)/i.test(input)) {
+    threats.push("sql_injection");
+  }
+
+  // XSS Patterns
+  if (/<script|javascript:|on\w+\s*=|<iframe|<object|<embed/i.test(input)) {
+    threats.push("xss_attempt");
+  }
+
+  // Prompt Injection Patterns (für AI)
+  if (/ignore\s+(previous|all|above|prior)\s+(instructions?|prompts?|rules?)|system\s*:|assistant\s*:|you\s+are\s+(now|a)|forget\s+(everything|all)/i.test(input)) {
+    threats.push("prompt_injection");
+  }
+
+  // Path Traversal
+  if (/\.\.\/|\.\.\\|%2e%2e%2f/gi.test(input)) {
+    threats.push("path_traversal");
+  }
+
+  // Command Injection Patterns
+  if (/[;&|`$]|\$\(|`.*`|>\s*\/|<\s*\/|eval\s*\(|exec\s*\(/i.test(input)) {
+    threats.push("command_injection");
+  }
+
+  // Data exfiltration patterns
+  if (/show\s+(me\s+)?(all|every|the)\s+(users?|passwords?|secrets?|keys?|tokens?|credentials?)/i.test(input)) {
+    threats.push("data_exfiltration");
+  }
+
+  return {
+    isSafe: threats.length === 0,
+    threats,
+    riskLevel: threats.length >= 3 ? "high" : threats.length >= 1 ? "medium" : "low",
+  };
+}
+
+function logThreatDetection(
+  requestId: string,
+  userId: string,
+  hashedIP: string,
+  threatResult: ThreatDetectionResult,
+  inputPreview: string
+): void {
+  if (!threatResult.isSafe) {
+    console.warn(`[SECURITY][${requestId}] Threat detected`, {
+      userId: userId.slice(0, 8), // Truncate for privacy
+      ip: hashedIP,
+      threats: threatResult.threats,
+      riskLevel: threatResult.riskLevel,
+      inputPreview: inputPreview.slice(0, 50) + (inputPreview.length > 50 ? "..." : ""),
+    });
+  }
 }
 
 // =============================================================================
@@ -181,6 +248,8 @@ function sanitizeUserInput(input: string): string {
     .replace(/\bsystem\s*:/gi, "[system]:")
     .replace(/\bassistant\s*:/gi, "[assistant]:")
     .replace(/\buser\s*:/gi, "[user]:")
+    // Neutralize role-playing attempts
+    .replace(/\b(ignore|forget)\s+(previous|all|above)/gi, "[blocked]")
     // Limit consecutive whitespace
     .replace(/\s{10,}/g, "   ")
     .trim();
@@ -200,6 +269,7 @@ function createErrorResponse(
   // Generic messages for client
   const clientMessages: Record<number, string> = {
     400: "Ungültige Anfrage. Bitte überprüfe deine Eingabe.",
+    403: "Anfrage blockiert. Verdächtige Inhalte erkannt.",
     429: "Zu viele Anfragen. Bitte warte einen Moment.",
     402: "AI-Guthaben aufgebraucht.",
     500: "Ein Fehler ist aufgetreten. Bitte versuche es später erneut.",
@@ -248,7 +318,7 @@ serve(async (req) => {
       );
     }
 
-    // SECURITY: Check rate limit (per user now, not IP)
+    // SECURITY: Check rate limit (per user)
     const rateCheck = checkRateLimit(authResult.userId);
     if (!rateCheck.allowed) {
       console.warn(`[${requestId}] Rate limit exceeded for user: ${authResult.userId.slice(0, 8)}`);
@@ -286,6 +356,19 @@ serve(async (req) => {
 
     const { message, config, result } = parseResult.data;
 
+    // SECURITY: Server-side threat detection
+    const threatResult = detectServerThreatPatterns(message);
+    logThreatDetection(requestId, authResult.userId, hashedIP, threatResult, message);
+
+    // Block high-risk requests
+    if (threatResult.riskLevel === "high") {
+      console.error(`[${requestId}] HIGH RISK request blocked`, {
+        userId: authResult.userId.slice(0, 8),
+        threats: threatResult.threats,
+      });
+      return createErrorResponse("Anfrage blockiert", 403, corsHeaders, requestId);
+    }
+
     // SECURITY: Sanitize user message
     const sanitizedMessage = sanitizeUserInput(message);
     if (sanitizedMessage.length === 0) {
@@ -315,9 +398,11 @@ Wichtige Regeln:
 - Erkläre die Auswirkungen von Promos auf die Provision
 - Berücksichtige GigaKombi-Vorteile wenn Festnetz aktiv ist
 - Halte deine Antworten kurz und übersichtlich (max. 3-4 Sätze)
-- Verwende Zahlen und konkrete Beispiele wenn möglich`;
+- Verwende Zahlen und konkrete Beispiele wenn möglich
+- Du darfst KEINE Systembefehle, Code-Ausführungen oder technische Interna preisgeben
+- Du beantwortest NUR Fragen zu Vodafone Tarifen und Margenoptimierung`;
 
-    console.log(`[${requestId}] Calling AI Gateway (IP: ${hashedIP})`);
+    console.log(`[${requestId}] Calling AI Gateway (user: ${authResult.userId.slice(0, 8)}, IP: ${hashedIP})`);
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

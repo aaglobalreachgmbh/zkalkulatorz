@@ -269,6 +269,34 @@ export function deleteTemplate(id: string): void {
   localStorage.setItem(TEMPLATES_KEY, JSON.stringify(templates));
 }
 
+export function moveTemplate(templateId: string, targetFolderId: string | undefined): void {
+  const templates = loadTemplates().map((t) =>
+    t.id === templateId ? { ...t, folderId: targetFolderId, updatedAt: new Date().toISOString() } : t
+  );
+  localStorage.setItem(TEMPLATES_KEY, JSON.stringify(templates));
+}
+
+export function duplicateTemplate(templateId: string): PersonalTemplate | null {
+  const templates = loadTemplates();
+  const source = templates.find((t) => t.id === templateId);
+  if (!source) return null;
+
+  const duplicate: PersonalTemplate = {
+    ...source,
+    id: crypto.randomUUID(),
+    name: `${source.name} (Kopie)`,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  templates.push(duplicate);
+  localStorage.setItem(TEMPLATES_KEY, JSON.stringify(templates));
+  return duplicate;
+}
+
+export function getTemplatesInFolder(folderId: string | undefined): PersonalTemplate[] {
+  return loadTemplates().filter((t) => t.folderId === folderId);
+}
+
 export function loadFolders(): TemplateFolder[] {
   try {
     const stored = localStorage.getItem(FOLDERS_KEY);
@@ -289,6 +317,13 @@ export function saveFolder(folder: TemplateFolder): void {
   localStorage.setItem(FOLDERS_KEY, JSON.stringify(folders));
 }
 
+export function renameFolder(folderId: string, newName: string): void {
+  const folders = loadFolders().map((f) =>
+    f.id === folderId ? { ...f, name: newName } : f
+  );
+  localStorage.setItem(FOLDERS_KEY, JSON.stringify(folders));
+}
+
 export function deleteFolder(id: string): void {
   // Delete folder and move templates to root
   const folders = loadFolders().filter((f) => f.id !== id);
@@ -298,6 +333,26 @@ export function deleteFolder(id: string): void {
     t.folderId === id ? { ...t, folderId: undefined } : t
   );
   localStorage.setItem(TEMPLATES_KEY, JSON.stringify(templates));
+}
+
+export function deleteFolderWithContents(folderId: string): void {
+  // Delete folder AND its templates
+  const folders = loadFolders().filter((f) => f.id !== folderId);
+  localStorage.setItem(FOLDERS_KEY, JSON.stringify(folders));
+  
+  const templates = loadTemplates().filter((t) => t.folderId !== folderId);
+  localStorage.setItem(TEMPLATES_KEY, JSON.stringify(templates));
+}
+
+export function createFolder(name: string, parentId?: string): TemplateFolder {
+  const folder: TemplateFolder = {
+    id: crypto.randomUUID(),
+    name,
+    parentId,
+    createdAt: new Date().toISOString(),
+  };
+  saveFolder(folder);
+  return folder;
 }
 
 // ============================================

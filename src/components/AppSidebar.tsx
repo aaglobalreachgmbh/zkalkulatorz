@@ -1,4 +1,4 @@
-import { Calculator, Users, BarChart3, Building2, FolderOpen, Shield, Database, Settings } from "lucide-react";
+import { Calculator, Users, BarChart3, Building2, FolderOpen, Shield, Database, Settings, Home, Package } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -15,7 +15,9 @@ import {
 } from "@/components/ui/sidebar";
 
 const mainItems = [
-  { title: "Kalkulator", url: "/", icon: Calculator },
+  { title: "Home", url: "/", icon: Home },
+  { title: "Kalkulator", url: "/calculator", icon: Calculator },
+  { title: "Bundles", url: "/bundles", icon: Package },
   { title: "Meine Angebote", url: "/offers", icon: FolderOpen },
   { title: "Kunden", url: "/customers", icon: Building2 },
   { title: "Team", url: "/team", icon: Users },

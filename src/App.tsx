@@ -8,7 +8,9 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminRoute } from "@/components/AdminRoute";
 import { SecurityProvider } from "@/providers/SecurityProvider";
 import { SecurityErrorBoundary } from "@/components/SecurityErrorBoundary";
+import Home from "./pages/Home";
 import Index from "./pages/Index";
+import Bundles from "./pages/Bundles";
 import NotFound from "./pages/NotFound";
 import DataManager from "./pages/DataManager";
 import HardwareManager from "./pages/HardwareManager";
@@ -37,7 +39,23 @@ const App = () => (
               path="/"
               element={
                 <ProtectedRoute>
+                  <Home />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/calculator"
+              element={
+                <ProtectedRoute>
                   <Index />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/bundles"
+              element={
+                <ProtectedRoute>
+                  <Bundles />
                 </ProtectedRoute>
               }
             />

@@ -452,8 +452,12 @@ export type DealerEconomics = {
   margin: number;
   /** Festnetz-Provision (optional, Phase 2.3) */
   fixedNetProvision?: number;
+  /** FH-Partner Bonus (optional) */
+  fhPartnerBonus?: number;
   /** OMO-Rabattstufe in Prozent (0-25) */
   omoRate?: number;
+  /** OMO-Quelle: "matrix" = aus XLSX, "calculated" = prozentual berechnet */
+  omoSource?: "matrix" | "calculated";
 };
 
 /**
@@ -727,13 +731,20 @@ export type MobileTariff = {
    */
   pushNet?: number;
   /**
-   * OMO-Matrix: Provisionswerte nach Rabattstufe.
+   * OMO-Matrix: Provisionswerte nach Rabattstufe (Neuvertrag).
    * 
    * STRUKTUR:
    * Key = Prozentsatz (0, 5, 10, 15, 17.5, 20, 25)
-   * Value = Provision nach diesem Abzug
+   * Value = Provision nach diesem Abzug (null = gesperrt)
    */
   omoMatrix?: Record<number, number | null>;
+  /**
+   * OMO-Matrix für Verlängerungen (VVL).
+   * 
+   * Falls nicht vorhanden, wird bei Verlängerungen omoMatrix
+   * mit provisionRenewal/provisionBase skaliert.
+   */
+  omoMatrixRenewal?: Record<number, number | null>;
 };
 
 /**

@@ -87,16 +87,17 @@ describe("calculateDealerEconomics", () => {
     });
   });
 
-  describe("deduction calculation", () => {
-    it("applies deduction rate correctly", () => {
-      // 400 * 0.08 = 32
+  describe("deduction calculation (legacy tariffs without matrix)", () => {
+    it("applies deduction rate for calculated OMO", () => {
+      // Tariff without matrix uses percentage calculation
+      // 400 provision at 0% OMO → 400, then deductionRate 0.08 → 32 deduction
       const result = calculateDealerEconomics(baseTariff, "new", 1, 0);
       expect(result.deductions).toBe(32);
     });
 
-    it("adds OMO25 deduction when applicable", () => {
+    it("adds OMO25 deduction when applicable (legacy)", () => {
       // Base deduction: 400 * 0.08 = 32
-      // OMO deduction: 50
+      // OMO25 deduction: 50
       // Total: 82
       const result = calculateDealerEconomics(baseTariff, "new", 1, 0, "OMO25");
       expect(result.deductions).toBe(82);
@@ -104,7 +105,7 @@ describe("calculateDealerEconomics", () => {
 
     it("scales OMO25 deduction by quantity", () => {
       // Base deduction: 2000 * 0.08 = 160
-      // OMO deduction: 50 * 5 = 250
+      // OMO25 deduction: 50 * 5 = 250
       // Total: 410
       const result = calculateDealerEconomics(baseTariff, "new", 5, 0, "OMO25");
       expect(result.deductions).toBe(410);
@@ -112,8 +113,8 @@ describe("calculateDealerEconomics", () => {
   });
 
   describe("provisionAfter calculation", () => {
-    it("calculates provisionAfter correctly", () => {
-      // 400 - 32 = 368
+    it("calculates provisionAfter correctly for tariff without matrix", () => {
+      // 400 - 32 = 368 (deductionRate applied)
       const result = calculateDealerEconomics(baseTariff, "new", 1, 0);
       expect(result.provisionAfter).toBe(368);
     });
@@ -131,6 +132,8 @@ describe("calculateDealerEconomics", () => {
         omoDeduction: 100, // More than provision
         features: ["Minimal"],
       };
+      // Without matrix: 50 at 0% OMO = 50, deductionRate 90% = 45, after = 5
+      // With OMO25: 5 - 100 = -95, but clamped to 0
       const result = calculateDealerEconomics(lowTariff, "new", 1, 0, "OMO25");
       expect(result.provisionAfter).toBe(0);
     });
@@ -138,7 +141,7 @@ describe("calculateDealerEconomics", () => {
 
   describe("margin calculation", () => {
     it("calculates margin as provisionAfter minus hardwareEkNet", () => {
-      // provisionAfter: 368, hardwareEkNet: 200
+      // provisionAfter: 368 (after deductionRate), hardwareEkNet: 200
       // margin: 168
       const result = calculateDealerEconomics(baseTariff, "new", 1, 200);
       expect(result.margin).toBe(168);
@@ -182,8 +185,10 @@ describe("calculateDealerEconomics", () => {
         features: ["Test"],
       };
       const result = calculateDealerEconomics(oddTariff, "new", 1, 100);
-      // Should be rounded to 2 decimals
-      expect(result.margin).toBe(Math.round((333.33 * 0.92 - 100) * 100) / 100);
+      // Without matrix: 333.33 at 0% = 333.33
+      // deductionRate 8% = 26.6664, provisionAfter = 306.6636
+      // margin = 306.6636 - 100 = 206.6636, rounded to 206.66
+      expect(result.margin).toBe(206.66);
     });
   });
 });

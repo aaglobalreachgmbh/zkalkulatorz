@@ -137,7 +137,7 @@ export function calculateOffer(state: OfferOptionState): CalculationResult {
     sumTermGross: Math.round((periodTotals.gross + oneTimeTotalGross) * 100) / 100,
   };
   
-  // Dealer economics (Phase 2: with OMO-Matrix and Fixed Net provision)
+  // Dealer economics (Phase 2: with OMO-Matrix, Fixed Net provision, FH-Partner)
   const dealer = calculateDealerEconomics(
     tariff, 
     mobile.contractType, 
@@ -145,8 +145,9 @@ export function calculateOffer(state: OfferOptionState): CalculationResult {
     hardware.ekNet,
     mobile.promoId,
     {
-      omoRate: (mobile as any).omoRate ?? 0,
+      omoRate: mobile.omoRate ?? 0,
       fixedNetProduct: fixedProduct,
+      isFHPartner: mobile.isFHPartner ?? false,
     }
   );
   

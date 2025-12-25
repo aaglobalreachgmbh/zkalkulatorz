@@ -5,10 +5,35 @@ import { Resend } from "https://esm.sh/resend@2.0.0";
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const alertEmail = Deno.env.get("SECURITY_ALERT_EMAIL");
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+// =============================================================================
+// SECURITY: CORS Configuration - Restrict to allowed origins only
+// =============================================================================
+const ALLOWED_ORIGINS = [
+  "https://lovable.dev",
+  "https://www.lovable.dev",
+  /^https:\/\/.*\.lovable\.app$/,
+  "http://localhost:5173",
+  "http://localhost:8080",
+];
+
+function isOriginAllowed(origin: string | null): boolean {
+  if (!origin) return false;
+  return ALLOWED_ORIGINS.some(allowed => {
+    if (allowed instanceof RegExp) {
+      return allowed.test(origin);
+    }
+    return allowed === origin;
+  });
+}
+
+function getCorsHeaders(origin: string | null): Record<string, string> {
+  const allowedOrigin = isOriginAllowed(origin) ? origin : "https://lovable.dev";
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin!,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+  };
+}
 
 // Bot detection patterns
 const BOT_PATTERNS = [
@@ -174,6 +199,9 @@ async function sendSecurityAlert(event: SecurityEvent, isBot: boolean, isPhishin
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  const origin = req.headers.get("origin");
+  const corsHeaders = getCorsHeaders(origin);
+
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });

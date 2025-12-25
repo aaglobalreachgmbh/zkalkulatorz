@@ -52,7 +52,9 @@ export function MainLayout({ children }: MainLayoutProps) {
 
           {/* Main content */}
           <main className="flex-1 p-4 md:p-6 overflow-auto">
-            {children}
+            <div className="max-w-screen-2xl mx-auto w-full">
+              {children}
+            </div>
           </main>
         </div>
       </div>

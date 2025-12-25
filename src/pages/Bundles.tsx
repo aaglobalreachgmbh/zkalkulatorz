@@ -374,13 +374,13 @@ export default function Bundles() {
 
   return (
     <MainLayout>
-      {/* Outer container - uses negative margin to escape MainLayout padding */}
-      <div className="min-h-full bg-background -m-4 md:-m-6">
+      {/* Outer container - uses negative margin to escape MainLayout padding for full-width ticker */}
+      <div className="min-h-full bg-background -mx-4 md:-mx-6 -mt-4 md:-mt-6">
         {/* Ticker Bar - Full Width */}
         <TickerBar />
 
-        {/* Main Content - re-add padding */}
-        <div className="px-4 md:px-6 lg:px-8 py-4">
+        {/* Main Content - constrained width and centered */}
+        <div className="max-w-screen-2xl mx-auto px-4 md:px-6 py-4">
           {/* Header */}
           <PageHeader />
 

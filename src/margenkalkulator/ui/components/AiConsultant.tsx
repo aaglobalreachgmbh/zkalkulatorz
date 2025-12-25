@@ -27,7 +27,7 @@ export function AiConsultant({ config, result }: AiConsultantProps) {
     {
       role: "assistant",
       content:
-        "Hallo! Ich bin dein AI Margen-Berater. Ich analysiere dein aktuelles Angebot und helfe dir bei der Optimierung. Frag mich z.B.: \"Wie kann ich die Marge verbessern?\"",
+        "Hallo! Ich bin dein AI Margen-Berater mit **Thinking Mode**. Ich analysiere dein Angebot tiefgehend und zeige dir Optimierungspotenziale. Frag mich z.B.: \"Wie maximiere ich meine Marge bei diesem Angebot?\"",
     },
   ]);
   const [input, setInput] = useState("");
@@ -180,8 +180,8 @@ export function AiConsultant({ config, result }: AiConsultantProps) {
         className={`
           fixed bottom-24 right-4 md:right-8 z-40 
           p-4 rounded-full shadow-elevated
-          bg-gradient-to-r from-primary to-purple-600 text-primary-foreground
-          transition-all duration-300 hover:scale-110 
+          bg-gradient-to-r from-purple-600 via-primary to-pink-500 text-white
+          transition-all duration-300 hover:scale-110 hover:shadow-lg
           flex items-center justify-center
           animate-pulse-soft
           ${isOpen ? "opacity-0 pointer-events-none scale-0" : "opacity-100"}
@@ -204,14 +204,19 @@ export function AiConsultant({ config, result }: AiConsultantProps) {
         `}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border/50 bg-gradient-to-r from-primary/10 to-purple-600/10">
+        <div className="flex items-center justify-between p-4 border-b border-border/50 bg-gradient-to-r from-purple-600/15 via-primary/10 to-pink-500/15">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-primary to-purple-600 flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-primary-foreground" />
+            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-600 via-primary to-pink-500 flex items-center justify-center shadow-md">
+              <Sparkles className="w-5 h-5 text-white" />
             </div>
             <div>
               <h3 className="font-semibold text-foreground">AI Margen-Berater</h3>
-              <p className="text-xs text-muted-foreground">Powered by Gemini</p>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Gemini 3 Pro</span>
+                <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-600 dark:text-purple-400 font-medium border border-purple-500/30">
+                  Thinking Mode
+                </span>
+              </div>
             </div>
           </div>
           <Button
@@ -276,13 +281,13 @@ export function AiConsultant({ config, result }: AiConsultantProps) {
 
           {isLoading && (
             <div className="flex gap-3 animate-fade-in">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-r from-primary/20 to-purple-600/20 flex items-center justify-center">
-                <Bot className="w-4 h-4 text-primary" />
+              <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 flex items-center justify-center">
+                <Bot className="w-4 h-4 text-purple-600" />
               </div>
-              <div className="flex-1 px-4 py-3 rounded-2xl rounded-bl-md bg-muted">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex-1 px-4 py-3 rounded-2xl rounded-bl-md bg-gradient-to-r from-purple-500/5 to-pink-500/5 border border-purple-500/20">
+                <div className="flex items-center gap-2 text-sm text-purple-600 dark:text-purple-400">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Analysiere...
+                  <span className="animate-pulse">Analysiere Profitabilität & Optionen...</span>
                 </div>
               </div>
             </div>
@@ -321,7 +326,7 @@ export function AiConsultant({ config, result }: AiConsultantProps) {
             </Button>
           </div>
           <p className="text-xs text-center text-muted-foreground mt-2">
-            Gemini 2.5 Flash • Margen-Optimierung
+            Gemini 3 Pro • Thinking Mode • Tiefe Margen-Analyse
           </p>
         </div>
       </div>

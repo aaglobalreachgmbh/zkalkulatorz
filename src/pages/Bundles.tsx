@@ -175,8 +175,8 @@ const Bundles = () => {
   return (
     <MainLayout>
       {/* News Ticker */}
-      <div className="bg-primary/5 border-b border-primary/10 overflow-hidden whitespace-nowrap">
-        <div className="animate-marquee inline-block py-2 text-sm text-muted-foreground">
+      <div className="bg-primary text-primary-foreground overflow-hidden whitespace-nowrap">
+        <div className="animate-marquee inline-block py-2 text-sm font-medium">
           {TICKER_ITEMS.map((item, i) => (
             <span key={i} className="mx-8">{item}</span>
           ))}
@@ -188,12 +188,17 @@ const Bundles = () => {
       </div>
       
       <div className="p-6 max-w-7xl mx-auto animate-fade-in">
-        {/* Header */}
+        {/* Header with Gradient */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-foreground mb-2">
-            Bundle Selector
-          </h1>
-          <p className="text-muted-foreground">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-soft">
+              <Package className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <h1 className="text-2xl font-bold text-foreground">
+              Bundle Selector
+            </h1>
+          </div>
+          <p className="text-muted-foreground ml-13">
             Wähle vorkonfigurierte Angebote oder nutze deine persönlichen Templates
           </p>
         </div>
@@ -203,12 +208,12 @@ const Bundles = () => {
           <div className="lg:col-span-2 space-y-6">
             {/* Tabs */}
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "campaigns" | "templates")}>
-              <TabsList className="grid w-full max-w-md grid-cols-2">
-                <TabsTrigger value="campaigns" className="gap-2">
+              <TabsList className="grid w-full max-w-md grid-cols-2 bg-muted/50">
+                <TabsTrigger value="campaigns" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                   <Package className="h-4 w-4" />
                   Corporate Campaigns
                 </TabsTrigger>
-                <TabsTrigger value="templates" className="gap-2">
+                <TabsTrigger value="templates" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                   <FileText className="h-4 w-4" />
                   Meine Templates
                 </TabsTrigger>
@@ -216,34 +221,46 @@ const Bundles = () => {
 
               {/* Campaigns Tab */}
               <TabsContent value="campaigns" className="mt-6 space-y-6">
-                {/* Sector Switcher */}
-                <div className="flex flex-wrap gap-2">
-                  {(Object.keys(SECTOR_LABELS) as Sector[]).map((sector) => {
-                    const Icon = SECTOR_ICON_MAP[sector];
-                    const isActive = selectedSector === sector;
-                    return (
-                      <Button
-                        key={sector}
-                        variant={isActive ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setSelectedSector(sector)}
-                        className="gap-2"
-                      >
-                        <Icon className="h-4 w-4" />
-                        {SECTOR_LABELS[sector]}
-                      </Button>
-                    );
-                  })}
+                {/* Sector Switcher - Enhanced Design */}
+                <div className="p-4 bg-card rounded-xl border border-border shadow-soft">
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3 block">Zielgruppe</span>
+                  <div className="flex flex-wrap gap-2">
+                    {(Object.keys(SECTOR_LABELS) as Sector[]).map((sector) => {
+                      const Icon = SECTOR_ICON_MAP[sector];
+                      const isActive = selectedSector === sector;
+                      return (
+                        <Button
+                          key={sector}
+                          variant={isActive ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setSelectedSector(sector)}
+                          className={`gap-2 transition-all ${isActive ? "shadow-md" : "hover:bg-muted"}`}
+                        >
+                          <Icon className="h-4 w-4" />
+                          {SECTOR_LABELS[sector]}
+                        </Button>
+                      );
+                    })}
+                  </div>
                 </div>
 
-                {/* Bundles Grid */}
+                {/* Bundles Grid - Enhanced Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {filteredBundles.map((bundle) => (
                     <Card 
                       key={bundle.id}
-                      className="group cursor-pointer hover:shadow-lg hover:border-primary/30 transition-all duration-200"
+                      className="group cursor-pointer hover:shadow-elevated hover:border-primary/30 transition-all duration-300 hover:scale-[1.01] overflow-hidden relative"
                       onClick={() => handleSelectBundle(bundle)}
                     >
+                      {/* Featured indicator */}
+                      {bundle.featured && (
+                        <div className="absolute top-0 right-0 w-16 h-16 overflow-hidden">
+                          <div className="absolute top-2 right-[-20px] bg-gradient-to-r from-amber-500 to-amber-400 text-white text-xs font-bold px-6 py-0.5 transform rotate-45 shadow-sm">
+                            TOP
+                          </div>
+                        </div>
+                      )}
+                      
                       <CardHeader className="pb-3">
                         <div className="flex items-start justify-between">
                           <CardTitle className="text-base font-semibold">
@@ -260,7 +277,11 @@ const Bundles = () => {
                       <CardContent className="pt-0">
                         <div className="flex flex-wrap gap-1.5 mb-4">
                           {bundle.tags.map((tag) => (
-                            <Badge key={tag} variant="secondary" className="text-xs">
+                            <Badge 
+                              key={tag} 
+                              variant="secondary" 
+                              className="text-xs bg-gradient-to-r from-secondary to-secondary/80"
+                            >
                               {tag}
                             </Badge>
                           ))}
@@ -275,7 +296,7 @@ const Bundles = () => {
                 </div>
 
                 {filteredBundles.length === 0 && (
-                  <div className="text-center py-12 text-muted-foreground">
+                  <div className="text-center py-12 text-muted-foreground bg-muted/30 rounded-xl">
                     <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <p>Keine Bundles für diesen Sektor verfügbar</p>
                   </div>

@@ -1,8 +1,14 @@
-import { useState, useRef, useEffect } from "react";
-import { Sparkles, Send, X, Bot, User, Loader2 } from "lucide-react";
+import { useState, useRef, useEffect, useMemo } from "react";
+import { Sparkles, Send, X, Bot, User, Loader2, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import type { OfferOptionState, CalculationResult } from "@/margenkalkulator/engine/types";
+import { 
+  detectThreatPatterns, 
+  sanitizeInput, 
+  createRateLimiter,
+  logSecurityEvent 
+} from "@/lib/securityUtils";
 
 interface AiConsultantProps {
   config: OfferOptionState;
@@ -25,7 +31,11 @@ export function AiConsultant({ config, result }: AiConsultantProps) {
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isRateLimited, setIsRateLimited] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Rate limiter: 5 requests per minute (client-side)
+  const rateLimiter = useMemo(() => createRateLimiter(5, 60 * 1000), []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -35,24 +45,85 @@ export function AiConsultant({ config, result }: AiConsultantProps) {
     scrollToBottom();
   }, [messages, isOpen]);
 
+  // Reset rate limit indicator after delay
+  useEffect(() => {
+    if (isRateLimited) {
+      const timeout = setTimeout(() => setIsRateLimited(false), 60000);
+      return () => clearTimeout(timeout);
+    }
+  }, [isRateLimited]);
+
   const handleSend = async () => {
     const trimmed = input.trim();
-    
+
     // Client-side validation
     if (!trimmed || isLoading) return;
-    if (trimmed.length > 1000) {
-      setMessages((prev) => [...prev, { role: "assistant", content: "Nachricht zu lang (max. 1000 Zeichen)." }]);
+
+    // Rate limit check (client-side)
+    if (!rateLimiter.canMakeRequest()) {
+      setIsRateLimited(true);
+      const retryAfter = Math.ceil(rateLimiter.getRetryAfterMs() / 1000);
+      setMessages((prev) => [
+        ...prev,
+        { 
+          role: "assistant", 
+          content: `Zu viele Anfragen. Bitte warte ${retryAfter} Sekunden.` 
+        },
+      ]);
+      logSecurityEvent("rate_limited", { category: "ai", severity: "warn" });
+      return;
+    }
+
+    // Threat detection (client-side warning, server does final check)
+    const threatResult = detectThreatPatterns(trimmed);
+    if (!threatResult.isSafe) {
+      logSecurityEvent("threat_detected", { 
+        category: "ai", 
+        severity: threatResult.riskLevel,
+      });
+      
+      // High risk: Block entirely
+      if (threatResult.riskLevel === "high") {
+        setMessages((prev) => [
+          ...prev,
+          { 
+            role: "assistant", 
+            content: "Deine Nachricht enthält ungültige Muster und kann nicht verarbeitet werden." 
+          },
+        ]);
+        setInput("");
+        return;
+      }
+      // Medium risk: Sanitize and continue with warning
+    }
+
+    // Sanitize input
+    const sanitized = sanitizeInput(trimmed, 1000);
+    
+    if (sanitized.length === 0) {
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: "Nachricht darf nicht leer sein." },
+      ]);
+      return;
+    }
+
+    if (sanitized.length > 1000) {
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: "Nachricht zu lang (max. 1000 Zeichen)." },
+      ]);
       return;
     }
 
     setInput("");
-    setMessages((prev) => [...prev, { role: "user", content: trimmed }]);
+    setMessages((prev) => [...prev, { role: "user", content: sanitized }]);
     setIsLoading(true);
 
     try {
       const response = await supabase.functions.invoke("ai-consultant", {
         body: {
-          message: trimmed,
+          message: sanitized,
           config: {
             hardware: config.hardware,
             mobile: config.mobile,
@@ -73,17 +144,20 @@ export function AiConsultant({ config, result }: AiConsultantProps) {
       const aiResponse = response.data?.response || "Es ist ein Fehler aufgetreten.";
       setMessages((prev) => [...prev, { role: "assistant", content: aiResponse }]);
     } catch (error) {
-      console.error("AI Consultant error:", error);
+      // Generic error logging (no sensitive data)
       let errorMessage = "Ein Fehler ist aufgetreten. Bitte versuche es erneut.";
-      
+
       if (error instanceof Error) {
         if (error.message.includes("429") || error.message.includes("Zu viele")) {
           errorMessage = "Zu viele Anfragen. Bitte warte einen Moment.";
+          setIsRateLimited(true);
         } else if (error.message.includes("402")) {
           errorMessage = "AI-Guthaben aufgebraucht.";
+        } else if (error.message.includes("401")) {
+          errorMessage = "Bitte melde dich erneut an.";
         }
       }
-      
+
       setMessages((prev) => [...prev, { role: "assistant", content: errorMessage }]);
     } finally {
       setIsLoading(false);
@@ -148,6 +222,14 @@ export function AiConsultant({ config, result }: AiConsultantProps) {
             <X className="w-5 h-5" />
           </Button>
         </div>
+
+        {/* Rate Limit Warning */}
+        {isRateLimited && (
+          <div className="px-4 py-2 bg-amber-500/10 border-b border-amber-500/30 flex items-center gap-2 text-sm text-amber-600">
+            <ShieldAlert className="w-4 h-4" />
+            <span>Rate-Limit erreicht. Bitte warte einen Moment.</span>
+          </div>
+        )}
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[200px] max-h-[400px]">
@@ -217,7 +299,7 @@ export function AiConsultant({ config, result }: AiConsultantProps) {
               onChange={(e) => setInput(e.target.value.slice(0, 1000))}
               onKeyDown={handleKeyDown}
               placeholder="Frage z.B.: 'Wie kann ich die Marge verbessern?'"
-              disabled={isLoading}
+              disabled={isLoading || isRateLimited}
               maxLength={1000}
               className="
                 w-full pl-4 pr-12 py-3
@@ -231,7 +313,7 @@ export function AiConsultant({ config, result }: AiConsultantProps) {
             <Button
               size="icon"
               onClick={handleSend}
-              disabled={isLoading || !input.trim()}
+              disabled={isLoading || !input.trim() || isRateLimited}
               className="absolute right-2 rounded-lg w-8 h-8"
             >
               <Send className="w-4 h-4" />

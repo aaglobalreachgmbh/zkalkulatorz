@@ -10,8 +10,34 @@ import { detectFormat, type FormatDetectionResult } from "../businessFormat/dete
 import { parseBusinessFormat } from "../businessFormat/parser";
 import { mapBusinessToCanonical } from "../businessFormat/mapper";
 import { transformToCanonical } from "../adapter";
+import { validateUploadedFile, logSecurityEvent } from "@/lib/securityUtils";
 
+// =============================================================================
+// File Validation (must be called before parsing)
+// =============================================================================
+export function validateFileBeforeParse(file: File): { valid: boolean; errors: string[] } {
+  const validation = validateUploadedFile(file);
+  
+  if (!validation.valid) {
+    logSecurityEvent("file_rejected", { 
+      category: "upload", 
+      severity: "warn",
+    });
+  }
+  
+  return validation;
+}
+
+// =============================================================================
+// Main XLSX Parser
+// =============================================================================
 export async function parseXLSX(file: File): Promise<ParsedSheets> {
+  // Validate file before parsing
+  const validation = validateFileBeforeParse(file);
+  if (!validation.valid) {
+    throw new Error(`Datei ungültig: ${validation.errors.join(", ")}`);
+  }
+
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     
@@ -99,12 +125,27 @@ function normalizeValue(value: unknown, key: string): unknown {
     return isNaN(num) ? null : num;
   }
   
-  // String cleanup
-  return String(value).trim();
+  // String cleanup - sanitize potentially dangerous content
+  const strValue = String(value).trim();
+  
+  // Remove any potential formula injection (Excel/CSV formula injection)
+  if (strValue.startsWith("=") || strValue.startsWith("+") || 
+      strValue.startsWith("-") || strValue.startsWith("@")) {
+    // Prefix with single quote to neutralize formula
+    return "'" + strValue;
+  }
+  
+  return strValue;
 }
 
 // Get available sheet names from a workbook
 export async function getSheetNames(file: File): Promise<string[]> {
+  // Validate file before reading
+  const validation = validateFileBeforeParse(file);
+  if (!validation.valid) {
+    throw new Error(`Datei ungültig: ${validation.errors.join(", ")}`);
+  }
+
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     
@@ -134,6 +175,12 @@ export type UnifiedParseResult = {
 };
 
 export async function parseXLSXUnified(file: File): Promise<UnifiedParseResult> {
+  // Validate file before parsing
+  const validation = validateFileBeforeParse(file);
+  if (!validation.valid) {
+    throw new Error(`Datei ungültig: ${validation.errors.join(", ")}`);
+  }
+
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     

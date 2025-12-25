@@ -35,30 +35,9 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/auth" element={<Auth />} />
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <Home />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/calculator"
-              element={
-                <ProtectedRoute>
-                  <Index />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/bundles"
-              element={
-                <ProtectedRoute>
-                  <Bundles />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/" element={<Home />} />
+            <Route path="/calculator" element={<Index />} />
+            <Route path="/bundles" element={<Bundles />} />
             <Route
               path="/offers"
               element={

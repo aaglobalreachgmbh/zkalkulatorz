@@ -18,9 +18,6 @@ import {
   Copy,
   FolderInput,
   ChevronLeft,
-  Search,
-  Bell,
-  Calculator,
   Target,
   ArrowLeft,
   Download,
@@ -227,40 +224,21 @@ const Bundles = () => {
           </div>
         </div>
       
-        <div className="max-w-7xl mx-auto px-4 lg:px-6 py-6 animate-fade-in">
-          {/* Sub Header */}
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <button 
-                onClick={() => navigate("/")}
-                className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 mb-1 transition-colors"
-              >
-                <ArrowLeft className="w-3 h-3" />
-                ZURÜCK ZUM START
-              </button>
-              <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold text-foreground">
-                  Sales <span className="text-primary">Cockpit</span>
-                </h1>
-                <Badge variant="secondary" className="text-xs">v2.4.0</Badge>
-              </div>
-            </div>
-            
+        <div className="max-w-7xl mx-auto py-2 animate-fade-in">
+          {/* Sub Header - Simplified */}
+          <div className="mb-6">
+            <button 
+              onClick={() => navigate("/")}
+              className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 mb-1 transition-colors"
+            >
+              <ArrowLeft className="w-3 h-3" />
+              ZURÜCK ZUM START
+            </button>
             <div className="flex items-center gap-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input 
-                  placeholder="Suche..." 
-                  className="pl-9 w-48 h-9 bg-muted/50 border-0"
-                />
-              </div>
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="w-5 h-5" />
-                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-primary rounded-full" />
-              </Button>
-              <div className="w-10 h-10 bg-panel-dark rounded-full flex items-center justify-center">
-                <User className="w-5 h-5 text-panel-dark-foreground" />
-              </div>
+              <h1 className="text-2xl font-bold text-foreground">
+                Sales <span className="text-primary">Cockpit</span>
+              </h1>
+              <Badge variant="secondary" className="text-xs">v2.4.0</Badge>
             </div>
           </div>
 
@@ -414,6 +392,7 @@ const Bundles = () => {
                   <div className="flex w-full p-1 bg-muted/50 rounded-lg">
                     {(["private", "business", "enterprise"] as Sector[]).map((sector) => {
                       const Icon = SECTOR_ICON_MAP[sector];
+                      const isActive = selectedSector === sector;
                       const labels: Record<Sector, string> = {
                         private: "Privat",
                         business: "Gewerbe",
@@ -422,7 +401,12 @@ const Bundles = () => {
                       return (
                         <button
                           key={sector}
-                          className="flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground transition-all"
+                          onClick={() => setSelectedSector(sector)}
+                          className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${
+                            isActive 
+                              ? "bg-card shadow-sm text-foreground" 
+                              : "text-muted-foreground hover:text-foreground"
+                          }`}
                         >
                           <Icon className="w-4 h-4" />
                           <span className="hidden sm:inline">{labels[sector]}</span>

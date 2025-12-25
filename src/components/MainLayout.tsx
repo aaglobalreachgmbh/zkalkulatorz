@@ -22,7 +22,7 @@ export function MainLayout({ children }: MainLayoutProps) {
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
         <AppSidebar />
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           {/* Header */}
           <header className="h-14 border-b border-border bg-card/80 backdrop-blur-sm flex items-center justify-between px-4 sticky top-0 z-40">
             <div className="flex items-center gap-2">
@@ -52,9 +52,7 @@ export function MainLayout({ children }: MainLayoutProps) {
 
           {/* Main content */}
           <main className="flex-1 p-4 md:p-6 overflow-auto">
-            <div className="max-w-screen-2xl mx-auto w-full">
-              {children}
-            </div>
+            {children}
           </main>
         </div>
       </div>

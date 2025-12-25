@@ -19,6 +19,7 @@ import { AiConsultant } from "./components/AiConsultant";
 import { SaveDraftButton } from "./components/SaveDraftButton";
 import { DraftManager } from "./components/DraftManager";
 import { HistoryDropdown } from "./components/HistoryDropdown";
+import { CloudOfferManager } from "./components/CloudOfferManager";
 import { addToHistory } from "../storage/history";
 import { useToast } from "@/hooks/use-toast";
 
@@ -160,11 +161,16 @@ export function Wizard() {
             </h1>
           </div>
           
-          {/* Draft/History Controls */}
+          {/* Draft/History/Cloud Controls */}
           <div className="flex items-center gap-2">
             <HistoryDropdown onLoadHistory={handleLoadConfig} />
             <DraftManager onLoadDraft={handleLoadConfig} />
             <SaveDraftButton config={activeState} avgMonthly={avgMonthlyNet} />
+            <CloudOfferManager 
+              config={activeState} 
+              avgMonthly={avgMonthlyNet} 
+              onLoadOffer={handleLoadConfig}
+            />
             <span className="text-sm text-muted-foreground hidden lg:block ml-2">
               Vodafone Business Partner
             </span>

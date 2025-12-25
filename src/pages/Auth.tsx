@@ -6,9 +6,11 @@ import { SecureInput } from "@/components/ui/secure-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Turnstile, useTurnstile } from "@/components/ui/turnstile";
 import { Calculator, Loader2, Eye, EyeOff, AlertCircle, ShieldAlert } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   isLoginLocked, 
   recordFailedLoginAttempt, 
@@ -32,6 +34,10 @@ export default function Auth() {
   
   // Brute-force protection state
   const [lockoutSeconds, setLockoutSeconds] = useState<number | null>(null);
+
+  // Turnstile state
+  const loginTurnstile = useTurnstile();
+  const signupTurnstile = useTurnstile();
 
   // Login form
   const [loginEmail, setLoginEmail] = useState("");
@@ -91,6 +97,31 @@ export default function Auth() {
       return;
     }
 
+    // Check Turnstile verification
+    if (!loginTurnstile.isVerified || !loginTurnstile.token) {
+      toast.error("Bitte bestätige, dass du kein Roboter bist.");
+      return;
+    }
+
+    // Verify Turnstile token server-side
+    try {
+      const { data: verifyResult, error: verifyError } = await supabase.functions.invoke("verify-turnstile", {
+        body: { token: loginTurnstile.token },
+      });
+
+      if (verifyError || !verifyResult?.success) {
+        console.error("Turnstile verification failed:", verifyError || verifyResult);
+        toast.error("Sicherheitsüberprüfung fehlgeschlagen. Bitte lade die Seite neu.");
+        loginTurnstile.reset();
+        return;
+      }
+    } catch (err) {
+      console.error("Turnstile verification error:", err);
+      toast.error("Sicherheitsüberprüfung fehlgeschlagen.");
+      loginTurnstile.reset();
+      return;
+    }
+
     // Sanitize inputs
     const sanitizedEmail = sanitizeInput(loginEmail.toLowerCase(), 255);
     const sanitizedPassword = loginPassword; // Don't sanitize password, just validate
@@ -105,6 +136,7 @@ export default function Auth() {
 
     if (error) {
       setIsLoading(false);
+      loginTurnstile.reset();
       
       // Record failed attempt for brute-force protection
       const attemptResult = recordFailedLoginAttempt();
@@ -133,6 +165,31 @@ export default function Auth() {
     e.preventDefault();
     setErrors({});
 
+    // Check Turnstile verification
+    if (!signupTurnstile.isVerified || !signupTurnstile.token) {
+      toast.error("Bitte bestätige, dass du kein Roboter bist.");
+      return;
+    }
+
+    // Verify Turnstile token server-side
+    try {
+      const { data: verifyResult, error: verifyError } = await supabase.functions.invoke("verify-turnstile", {
+        body: { token: signupTurnstile.token },
+      });
+
+      if (verifyError || !verifyResult?.success) {
+        console.error("Turnstile verification failed:", verifyError || verifyResult);
+        toast.error("Sicherheitsüberprüfung fehlgeschlagen. Bitte lade die Seite neu.");
+        signupTurnstile.reset();
+        return;
+      }
+    } catch (err) {
+      console.error("Turnstile verification error:", err);
+      toast.error("Sicherheitsüberprüfung fehlgeschlagen.");
+      signupTurnstile.reset();
+      return;
+    }
+
     // Sanitize inputs
     const sanitizedEmail = sanitizeInput(signupEmail.toLowerCase(), 255);
     const sanitizedDisplayName = signupDisplayName ? sanitizeInput(signupDisplayName, 50) : "";
@@ -150,6 +207,7 @@ export default function Auth() {
 
     if (error) {
       setIsLoading(false);
+      signupTurnstile.reset();
       if (error.message.includes("already registered")) {
         toast.error("Diese E-Mail ist bereits registriert. Bitte melde dich an.");
       } else {
@@ -261,7 +319,11 @@ export default function Auth() {
                     </p>
                   )}
                 </div>
-                <Button type="submit" className="w-full" disabled={isLoading || isLockedOut}>
+                
+                {/* Turnstile Widget */}
+                <Turnstile {...loginTurnstile.turnstileProps} />
+                
+                <Button type="submit" className="w-full" disabled={isLoading || isLockedOut || !loginTurnstile.isVerified}>
                   {isLoading ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -354,7 +416,11 @@ export default function Auth() {
                     </p>
                   )}
                 </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                
+                {/* Turnstile Widget */}
+                <Turnstile {...signupTurnstile.turnstileProps} />
+                
+                <Button type="submit" className="w-full" disabled={isLoading || !signupTurnstile.isVerified}>
                   {isLoading ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />

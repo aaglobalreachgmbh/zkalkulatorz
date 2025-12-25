@@ -1,4 +1,4 @@
-import { Calculator, Users, BarChart3, Building2, FolderOpen, Shield, Database } from "lucide-react";
+import { Calculator, Users, BarChart3, Building2, FolderOpen, Shield, Database, Settings } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -22,9 +22,13 @@ const mainItems = [
   { title: "Reporting", url: "/reporting", icon: BarChart3 },
 ];
 
+const settingsItems = [
+  { title: "Sicherheit", url: "/settings/security", icon: Settings },
+];
+
 const adminItems = [
   { title: "Datenmanager", url: "/data-manager", icon: Database },
-  { title: "Sicherheit", url: "/security", icon: Shield },
+  { title: "Security Dashboard", url: "/security", icon: Shield },
 ];
 
 export function AppSidebar() {
@@ -63,6 +67,29 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {mainItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton 
+                    asChild 
+                    isActive={isActive(item.url)}
+                    tooltip={collapsed ? item.title : undefined}
+                  >
+                    <NavLink to={item.url}>
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Settings section */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Einstellungen</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {settingsItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton 
                     asChild 

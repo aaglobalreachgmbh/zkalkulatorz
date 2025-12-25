@@ -12,11 +12,9 @@ import {
   FolderOpen,
   Plus,
   Newspaper,
-  MoreVertical,
   Pencil,
   Trash2,
   Copy,
-  FolderInput,
   ChevronLeft,
   Target,
   ArrowLeft,
@@ -388,52 +386,47 @@ const Bundles = () => {
 
               {activeTab === "templates" && (
                 <div className="space-y-6">
-                  {/* Sector Switcher for templates */}
-                  <div className="flex w-full p-1 bg-muted/50 rounded-lg">
-                    {(["private", "business", "enterprise"] as Sector[]).map((sector) => {
-                      const Icon = SECTOR_ICON_MAP[sector];
-                      const isActive = selectedSector === sector;
-                      const labels: Record<Sector, string> = {
-                        private: "Privat",
-                        business: "Gewerbe",
-                        enterprise: "Konzern",
-                      };
-                      return (
-                        <button
-                          key={sector}
-                          onClick={() => setSelectedSector(sector)}
-                          className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${
-                            isActive 
-                              ? "bg-card shadow-sm text-foreground" 
-                              : "text-muted-foreground hover:text-foreground"
-                          }`}
-                        >
-                          <Icon className="w-4 h-4" />
-                          <span className="hidden sm:inline">{labels[sector]}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-
                   {/* Folder Navigation */}
                   <div className="flex items-center justify-between p-4 bg-card rounded-xl border border-border">
                     <div className="flex items-center gap-2">
-                      <HomeIcon className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm font-medium">Root</span>
+                      {currentFolderId ? (
+                        <>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => setCurrentFolderId(undefined)}
+                            className="h-8 gap-1 px-2"
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                            Zurück
+                          </Button>
+                          <span className="text-muted-foreground">/</span>
+                          <FolderOpen className="w-4 h-4 text-primary" />
+                          <span className="text-sm font-medium">{currentFolder?.name}</span>
+                        </>
+                      ) : (
+                        <>
+                          <HomeIcon className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-sm font-medium">Root</span>
+                        </>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <FolderInput className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <FolderOpen className="w-4 h-4" />
+                      <Button 
+                        variant="outline"
+                        size="sm"
+                        className="h-8 gap-2"
+                        onClick={() => setNewFolderDialogOpen(true)}
+                      >
+                        <Plus className="w-4 h-4" />
+                        Neuer Ordner
                       </Button>
                       <Button 
-                        onClick={() => setNewFolderDialogOpen(true)}
+                        onClick={() => navigate("/calculator")}
                         className="h-8 gap-2 bg-primary text-primary-foreground"
                       >
                         <Plus className="w-4 h-4" />
-                        Neues Bundle
+                        Neues Template
                       </Button>
                     </div>
                   </div>
@@ -460,7 +453,15 @@ const Bundles = () => {
                               </div>
                             </div>
                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openRenameFolderDialog(folder);
+                                }}
+                              >
                                 <Pencil className="w-4 h-4" />
                               </Button>
                               <Button 

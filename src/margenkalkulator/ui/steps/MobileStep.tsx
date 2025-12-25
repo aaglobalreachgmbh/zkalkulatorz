@@ -13,16 +13,21 @@ import {
   type MobileTariff,
   listMobileTariffs,
   listPromos,
+  listSubVariants,
   getMobileTariffFromCatalog,
   checkGKEligibility,
 } from "@/margenkalkulator";
 import { Signal, Tag, AlertTriangle, Minus, Plus } from "lucide-react";
+import { OMORateSelectorEnhanced, type OMORate } from "../components/OMORateSelectorEnhanced";
+import { SubVariantSelector } from "../components/SubVariantSelector";
+import { FHPartnerToggle } from "../components/FHPartnerToggle";
 
 interface MobileStepProps {
   value: MobileState;
   onChange: (value: MobileState) => void;
   datasetVersion: DatasetVersion;
   fixedNetEnabled?: boolean;
+  hardwareName?: string;
 }
 
 const FAMILY_LABELS: Record<TariffFamily, string> = {
@@ -39,7 +44,13 @@ const FAMILY_COLORS: Record<TariffFamily, string> = {
   teamdeal: "text-orange-600",
 };
 
-export function MobileStep({ value, onChange, datasetVersion, fixedNetEnabled = false }: MobileStepProps) {
+export function MobileStep({ 
+  value, 
+  onChange, 
+  datasetVersion, 
+  fixedNetEnabled = false,
+  hardwareName = "",
+}: MobileStepProps) {
   const updateField = <K extends keyof MobileState>(
     field: K,
     fieldValue: MobileState[K]
@@ -49,6 +60,7 @@ export function MobileStep({ value, onChange, datasetVersion, fixedNetEnabled = 
 
   const mobileTariffs = listMobileTariffs(datasetVersion);
   const promos = listPromos(datasetVersion);
+  const subVariants = listSubVariants(datasetVersion);
   
   const selectedTariff = getMobileTariffFromCatalog(datasetVersion, value.tariffId);
   const isGKEligible = checkGKEligibility(selectedTariff, fixedNetEnabled);
@@ -212,6 +224,37 @@ export function MobileStep({ value, onChange, datasetVersion, fixedNetEnabled = 
               </AlertDescription>
             </Alert>
           )}
+        </div>
+      )}
+
+      {/* SUB Variant Selection + OMO + FH-Partner Row */}
+      {selectedTariff && !isTeamDeal && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6 bg-card rounded-xl border border-border">
+          {/* SUB Variant Selector */}
+          <SubVariantSelector
+            value={value.subVariantId}
+            onChange={(id) => updateField("subVariantId", id)}
+            hardwareName={hardwareName}
+            allowedSubVariants={selectedTariff.allowedSubVariants}
+            subVariants={subVariants}
+          />
+
+          {/* OMO Rate Selector */}
+          <OMORateSelectorEnhanced
+            value={(value.omoRate ?? 0) as OMORate}
+            onChange={(rate) => updateField("omoRate", rate)}
+            tariff={selectedTariff}
+            contractType={value.contractType}
+          />
+
+          {/* FH Partner Toggle */}
+          <div className="flex items-end">
+            <FHPartnerToggle
+              checked={value.isFHPartner ?? false}
+              onChange={(checked) => updateField("isFHPartner", checked)}
+              fhPartnerProvision={selectedTariff.fhPartnerNet}
+            />
+          </div>
         </div>
       )}
 

@@ -328,8 +328,19 @@ export type MobileState = {
    * 
    * AUSWIRKUNG:
    * Reduziert die Provision um den angegebenen Prozentsatz.
+   * WICHTIG: Wenn Tarif eine OMO-Matrix hat, wird der absolute Wert verwendet.
    */
   omoRate?: number;
+  /**
+   * FH-Partner (Fachhändler) aktiviert?
+   * 
+   * GESCHÄFTSLOGIK:
+   * - true: Zusätzliche FH-Partner-Provision wird addiert
+   * - false: Standard-Provision
+   * 
+   * Wert kommt aus tariff.fhPartnerNet (falls vorhanden)
+   */
+  isFHPartner?: boolean;
 };
 
 /**

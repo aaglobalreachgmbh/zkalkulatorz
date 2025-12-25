@@ -220,6 +220,36 @@ const handler = async (req: Request): Promise<Response> => {
     const ipHash = hashString(forwardedFor);
     const userAgentHash = userAgent ? hashString(userAgent) : null;
 
+    // ==========================================================================
+    // VAULT SECURITY: IP Blocking Check
+    // ==========================================================================
+    const { data: blockedIP } = await supabase
+      .from("blocked_ips")
+      .select("blocked_until, reason")
+      .eq("ip_hash", ipHash)
+      .maybeSingle();
+
+    if (blockedIP) {
+      const isStillBlocked = !blockedIP.blocked_until || 
+        new Date(blockedIP.blocked_until) > new Date();
+      
+      if (isStillBlocked) {
+        console.warn(`[SECURITY] Blocked IP attempted access: ${ipHash}, reason: ${blockedIP.reason}`);
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: "Access denied",
+            blocked: true,
+            reason: blockedIP.reason 
+          }),
+          {
+            status: 403,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          }
+        );
+      }
+    }
+
     // Detect bots, phishing, and spam
     const isBot = detectBot(userAgent);
     const isPhishing = detectPhishing(event.details || {});

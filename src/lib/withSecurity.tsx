@@ -68,7 +68,7 @@ export function withSecurity<P extends object>(
     useEffect(() => {
       if (trackEvents && security) {
         security.logEvent({
-          type: "validation_failed", // Using existing type for component lifecycle
+          type: "component_lifecycle",
           details: {
             action: "component_mount",
             component: componentName,
@@ -78,7 +78,7 @@ export function withSecurity<P extends object>(
         return () => {
           const duration = Date.now() - mountTime.current;
           security.logEvent({
-            type: "validation_failed",
+            type: "component_lifecycle",
             details: {
               action: "component_unmount",
               component: componentName,

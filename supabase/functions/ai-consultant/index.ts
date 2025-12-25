@@ -256,6 +256,57 @@ function sanitizeUserInput(input: string): string {
 }
 
 // =============================================================================
+// VAULT SECURITY: AI Output Filtering (Prevent System Prompt Leaks)
+// =============================================================================
+const OUTPUT_FILTER_PATTERNS = [
+  // System prompt leaks
+  /system\s*prompt/gi,
+  /my\s*instructions?\s*(are|say|tell)/gi,
+  /i\s*(was|am)\s*instructed\s*to/gi,
+  /as\s*an?\s*ai\s*(assistant|model)/gi,
+  // Sensitive data patterns
+  /api[_-]?key/gi,
+  /secret[_-]?key/gi,
+  /password\s*[:=]/gi,
+  /bearer\s+[a-zA-Z0-9._-]+/gi,
+  /sk-[a-zA-Z0-9]{20,}/gi, // OpenAI keys
+  // Internal system references
+  /supabase[_-]?(url|key|secret)/gi,
+  /lovable[_-]?api/gi,
+  // Injection confirmations
+  /yes,?\s*i\s*(will|can)\s*(ignore|bypass)/gi,
+  /ignoring\s*(previous|prior)\s*instructions/gi,
+];
+
+const OUTPUT_REPLACEMENT_PATTERNS: Array<{ pattern: RegExp; replacement: string }> = [
+  { pattern: /\b(password|passwort)\s*[:=]\s*[^\s]+/gi, replacement: "[REDACTED]" },
+  { pattern: /bearer\s+[a-zA-Z0-9._-]+/gi, replacement: "Bearer [REDACTED]" },
+  { pattern: /sk-[a-zA-Z0-9]{20,}/gi, replacement: "[API_KEY_REDACTED]" },
+];
+
+function filterAIOutput(output: string): string {
+  let filtered = output;
+  
+  // Check for suspicious patterns
+  for (const pattern of OUTPUT_FILTER_PATTERNS) {
+    if (pattern.test(filtered)) {
+      console.warn(`[SECURITY] Suspicious AI output pattern detected: ${pattern.source}`);
+      // Don't block, but log
+    }
+  }
+  
+  // Apply replacements
+  for (const { pattern, replacement } of OUTPUT_REPLACEMENT_PATTERNS) {
+    filtered = filtered.replace(pattern, replacement);
+  }
+  
+  // Remove any remaining potential secrets (long alphanumeric strings)
+  filtered = filtered.replace(/\b[a-zA-Z0-9]{40,}\b/g, "[LONG_STRING_REDACTED]");
+  
+  return filtered;
+}
+
+// =============================================================================
 // SECURITY: Safe Error Response (No Stack Traces)
 // =============================================================================
 function createErrorResponse(
@@ -434,7 +485,12 @@ Wichtige Regeln:
     }
 
     const data = await response.json();
-    const aiResponse = data.choices?.[0]?.message?.content || "Keine Antwort erhalten.";
+    let aiResponse = data.choices?.[0]?.message?.content || "Keine Antwort erhalten.";
+
+    // ==========================================================================
+    // VAULT SECURITY: AI Output Filtering
+    // ==========================================================================
+    aiResponse = filterAIOutput(aiResponse);
 
     console.log(`[${requestId}] Success`);
 

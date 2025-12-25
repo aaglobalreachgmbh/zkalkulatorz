@@ -1,13 +1,20 @@
 import React, { createContext, useContext, useCallback, useEffect, useMemo, useState } from "react";
 import { checkAllThreats, sanitizeAll, escapeHtml, RATE_LIMITS } from "@/lib/securityPatterns";
-import { logSecurityEvent } from "@/lib/securityUtils";
+import { logSecurityEvent as logLocalSecurityEvent } from "@/lib/securityUtils";
+import { 
+  logSecurityEvent as logRemoteSecurityEvent, 
+  logThreat, 
+  logRateLimit,
+  type SecurityEventType,
+  type RiskLevel 
+} from "@/lib/securityLogger";
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
 interface SecurityEvent {
-  type: "threat_detected" | "rate_limited" | "validation_failed" | "sanitization_applied";
+  type: SecurityEventType;
   timestamp: number;
   details: Record<string, unknown>;
 }
@@ -95,11 +102,24 @@ export function SecurityProvider({ children }: { children: React.ReactNode }) {
     
     // Log wenn Änderungen vorgenommen wurden
     if (result !== input) {
-      logSecurityEvent("sanitization_applied", {
+      logLocalSecurityEvent("sanitization_applied", {
         originalLength: input.length,
         sanitizedLength: result.length,
         diff: input.length - result.length,
       });
+      
+      // Remote logging für signifikante Änderungen (>10% des Inputs)
+      const diffPercent = (input.length - result.length) / input.length;
+      if (diffPercent > 0.1) {
+        logRemoteSecurityEvent({
+          event_type: "sanitization_applied",
+          risk_level: diffPercent > 0.3 ? "medium" : "low",
+          details: {
+            originalLength: input.length,
+            sanitizedLength: result.length,
+          },
+        });
+      }
     }
     
     return result;
@@ -115,11 +135,19 @@ export function SecurityProvider({ children }: { children: React.ReactNode }) {
     const result = checkAllThreats(input);
     
     if (!result.isSafe) {
-      logSecurityEvent("threat_detected", {
+      // Local logging
+      logLocalSecurityEvent("threat_detected", {
         threats: result.threats,
         riskLevel: result.riskLevel,
         inputPreview: input.slice(0, 50),
       });
+      
+      // Remote logging to Edge Function
+      logThreat(
+        result.threats,
+        result.riskLevel as RiskLevel,
+        input.slice(0, 50)
+      );
       
       setRecentEvents((prev) => [
         {
@@ -142,7 +170,10 @@ export function SecurityProvider({ children }: { children: React.ReactNode }) {
     const allowed = canMakeRequestWithState(limiter);
     
     if (!allowed) {
-      logSecurityEvent("rate_limited", { category });
+      logLocalSecurityEvent("rate_limited", { category });
+      
+      // Remote logging
+      logRateLimit(category);
       
       setRecentEvents((prev) => [
         {

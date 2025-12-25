@@ -170,6 +170,39 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_offers: {
+        Row: {
+          config: Json
+          created_at: string
+          id: string
+          is_draft: boolean | null
+          name: string
+          preview: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          config: Json
+          created_at?: string
+          id?: string
+          is_draft?: boolean | null
+          name: string
+          preview?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          id?: string
+          is_draft?: boolean | null
+          name?: string
+          preview?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       security_events: {
         Row: {
           created_at: string

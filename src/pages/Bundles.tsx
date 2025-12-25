@@ -379,8 +379,8 @@ export default function Bundles() {
         {/* Ticker Bar - Full Width */}
         <TickerBar />
 
-        {/* Main Content - constrained width and centered */}
-        <div className="max-w-screen-2xl mx-auto px-4 md:px-6 py-4">
+        {/* Main Content - full available width */}
+        <div className="w-full px-4 md:px-6 py-4">
           {/* Header */}
           <PageHeader />
 

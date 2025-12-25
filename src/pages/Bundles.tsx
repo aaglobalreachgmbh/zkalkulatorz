@@ -224,7 +224,7 @@ const Bundles = () => {
           </div>
         </div>
       
-        <div className="max-w-7xl mx-auto py-2 animate-fade-in">
+        <div className="max-w-7xl mx-auto px-4 lg:px-6 py-4 animate-fade-in">
           {/* Sub Header - Simplified */}
           <div className="mb-6">
             <button 

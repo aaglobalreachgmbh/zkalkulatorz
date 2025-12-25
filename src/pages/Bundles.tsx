@@ -228,10 +228,10 @@ const Bundles = () => {
         {/* Dark Ticker Bar */}
         <div className="bg-panel-dark text-panel-dark-foreground overflow-hidden">
           <div className="flex items-center">
-            <div className="bg-primary px-3 py-2 flex items-center gap-1 shrink-0">
+            <div className="bg-primary px-3 py-1.5 flex items-center gap-1 shrink-0">
               <span className="text-xs font-bold text-primary-foreground">📢 SALES PUSH</span>
             </div>
-            <div className="flex-1 overflow-hidden whitespace-nowrap py-2">
+            <div className="flex-1 overflow-hidden whitespace-nowrap py-1.5">
               <div className="animate-marquee inline-block text-sm">
                 {TICKER_ITEMS.map((item, i) => (
                   <span key={i} className="mx-8">{item}</span>
@@ -244,7 +244,7 @@ const Bundles = () => {
           </div>
         </div>
       
-        <div className="container mx-auto px-6 py-6 animate-fade-in">
+        <div className="max-w-7xl mx-auto px-4 lg:px-6 py-6 animate-fade-in">
           {/* Sub Header */}
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -281,9 +281,9 @@ const Bundles = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="flex flex-col xl:flex-row gap-6">
             {/* Left Column: Bundles */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="flex-1 min-w-0 space-y-6">
               {/* Tabs */}
               <div className="flex items-center gap-8 border-b border-border">
                 <button
@@ -313,7 +313,7 @@ const Bundles = () => {
               {activeTab === "campaigns" && (
                 <div className="space-y-6">
                   {/* Sector Switcher */}
-                  <div className="grid grid-cols-3 gap-1 p-1 bg-muted rounded-lg">
+                  <div className="flex w-full p-1 bg-muted/50 rounded-lg">
                     {(Object.keys(SECTOR_LABELS) as Sector[]).map((sector) => {
                       const Icon = SECTOR_ICON_MAP[sector];
                       const isActive = selectedSector === sector;
@@ -326,14 +326,14 @@ const Bundles = () => {
                         <button
                           key={sector}
                           onClick={() => setSelectedSector(sector)}
-                          className={`flex items-center justify-center gap-2 py-2.5 rounded-md text-sm font-medium transition-all ${
+                          className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${
                             isActive 
                               ? "bg-card shadow-sm text-foreground" 
                               : "text-muted-foreground hover:text-foreground"
                           }`}
                         >
                           <Icon className="w-4 h-4" />
-                          {labels[sector]}
+                          <span className="hidden sm:inline">{labels[sector]}</span>
                         </button>
                       );
                     })}
@@ -554,7 +554,7 @@ const Bundles = () => {
             </div>
 
             {/* Right Column: News Feed */}
-            <div className="space-y-6">
+            <aside className="xl:w-80 shrink-0 space-y-6">
               {/* News Section */}
               <div>
                 <div className="flex items-center justify-between mb-4">
@@ -604,7 +604,7 @@ const Bundles = () => {
                   </Button>
                 </CardContent>
               </Card>
-            </div>
+            </aside>
           </div>
         </div>
 

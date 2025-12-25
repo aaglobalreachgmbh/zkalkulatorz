@@ -176,16 +176,19 @@ export function Wizard() {
 
   return (
     <div className="min-h-screen flex flex-col bg-muted/30">
-      {/* Header - Clean with Red Icon Box + Draft/History Controls */}
-      <header className="bg-background border-b border-border">
+      {/* Header - Enhanced with Gradient */}
+      <header className="bg-gradient-to-r from-background to-background/95 border-b border-border shadow-soft">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-sm">
-              <Calculator className="w-5 h-5 text-primary-foreground" />
+            <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center shadow-md">
+              <Calculator className="w-6 h-6 text-primary-foreground" />
             </div>
-            <h1 className="text-xl font-semibold text-foreground">
-              Margen<span className="text-primary">Kalkulator</span>
-            </h1>
+            <div>
+              <h1 className="text-xl font-bold text-foreground tracking-tight">
+                Margen<span className="text-primary">Kalkulator</span>
+              </h1>
+              <span className="text-xs text-muted-foreground">Vodafone Business Partner</span>
+            </div>
           </div>
           
           {/* Draft/History/Cloud/Template Controls */}
@@ -199,36 +202,68 @@ export function Wizard() {
               avgMonthly={avgMonthlyNet} 
               onLoadOffer={handleLoadConfig}
             />
-            <span className="text-sm text-muted-foreground hidden lg:block ml-2">
-              Vodafone Business Partner
-            </span>
           </div>
         </div>
       </header>
 
-      {/* Tab-Style Stepper */}
-      <nav className="bg-background border-b border-border">
+      {/* Progress Steps Navigation - Enhanced */}
+      <nav className="bg-card border-b border-border">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-center">
+          <div className="flex items-center justify-center gap-1">
             {STEPS.map((step, idx) => {
               const Icon = step.icon;
               const isActive = currentStep === step.id;
+              const isPast = currentStepIndex > idx;
+              const stepNumber = idx + 1;
               
               return (
                 <button
                   key={step.id}
                   onClick={() => goToStep(step.id)}
                   className={`
-                    flex items-center gap-2 px-6 py-4 text-sm font-medium
-                    border-b-2 transition-colors
+                    relative flex items-center gap-3 px-6 py-4 text-sm font-medium
+                    transition-all duration-200
                     ${isActive
-                      ? "border-primary text-primary"
-                      : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+                      ? "text-primary"
+                      : isPast
+                        ? "text-emerald-600"
+                        : "text-muted-foreground hover:text-foreground"
                     }
                   `}
                 >
-                  <Icon className="w-4 h-4" />
-                  <span className="hidden sm:inline">{step.label}</span>
+                  {/* Step indicator */}
+                  <div className={`
+                    flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold transition-all
+                    ${isActive 
+                      ? "bg-primary text-primary-foreground shadow-md" 
+                      : isPast
+                        ? "bg-emerald-500 text-white"
+                        : "bg-muted text-muted-foreground"
+                    }
+                  `}>
+                    {isPast ? (
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : (
+                      stepNumber
+                    )}
+                  </div>
+                  
+                  {/* Label */}
+                  <div className="hidden sm:flex flex-col items-start">
+                    <span className={`text-sm font-medium ${isActive ? "text-primary" : ""}`}>
+                      {step.label}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      Schritt {stepNumber}
+                    </span>
+                  </div>
+                  
+                  {/* Active indicator line */}
+                  {isActive && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+                  )}
                 </button>
               );
             })}
@@ -253,45 +288,65 @@ export function Wizard() {
         </div>
       </main>
 
-      {/* Footer with Live-KPI */}
-      <footer className="bg-background border-t border-border sticky bottom-0 z-40">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <Button
-            variant="outline"
-            onClick={goBack}
-            disabled={currentStepIndex === 0}
-          >
-            ← Zurück
-          </Button>
+      {/* Enhanced Sticky Footer with Live-KPI */}
+      <footer className="bg-gradient-to-r from-card to-card/95 border-t border-border sticky bottom-0 z-40 shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.1)]">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex justify-between items-center">
+            <Button
+              variant="outline"
+              onClick={goBack}
+              disabled={currentStepIndex === 0}
+              className="gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Zurück
+            </Button>
 
-          {/* Live KPI - Customer Average Monthly */}
-          <div className="flex flex-col items-center">
-            <span className="text-xs text-muted-foreground">Mtl. Ø (Kunde)</span>
-            <div className="flex items-center gap-1">
-              <span className="text-lg font-bold text-foreground">
-                {avgMonthlyNet.toFixed(2)} €
-              </span>
+            {/* Live KPI - Enhanced Design */}
+            <div className="flex items-center gap-4 px-6 py-2 bg-muted/50 rounded-xl border border-border/50">
+              <div className="flex flex-col items-center">
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Mtl. Ø Kunde</span>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-2xl font-bold text-foreground tabular-nums">
+                    {avgMonthlyNet.toFixed(2)}
+                  </span>
+                  <span className="text-sm text-muted-foreground">€</span>
+                </div>
+              </div>
+              
               {activeState.mobile.quantity > 1 && (
-                <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">
-                  x{activeState.mobile.quantity}
-                </span>
+                <>
+                  <div className="w-px h-8 bg-border" />
+                  <div className="flex flex-col items-center">
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Verträge</span>
+                    <span className="text-xl font-bold text-primary">
+                      x{activeState.mobile.quantity}
+                    </span>
+                  </div>
+                </>
               )}
             </div>
-          </div>
 
-          {currentStepIndex === STEPS.length - 1 ? (
-            <Button onClick={() => window.print()} className="gap-2">
-              <Printer className="w-4 h-4" />
-              Drucken
-            </Button>
-          ) : (
-            <Button
-              onClick={goNext}
-              disabled={!canProceed}
-            >
-              Weiter →
-            </Button>
-          )}
+            {currentStepIndex === STEPS.length - 1 ? (
+              <Button onClick={() => window.print()} className="gap-2 shadow-md">
+                <Printer className="w-4 h-4" />
+                Drucken
+              </Button>
+            ) : (
+              <Button
+                onClick={goNext}
+                disabled={!canProceed}
+                className="gap-2 shadow-md"
+              >
+                Weiter
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Button>
+            )}
+          </div>
         </div>
       </footer>
 

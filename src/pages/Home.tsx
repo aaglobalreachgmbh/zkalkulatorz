@@ -24,25 +24,25 @@ const Home = () => {
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 flex flex-col justify-center px-6 py-10">
+        <main className="flex-1 flex flex-col justify-center px-6 py-6">
           {/* Headline */}
-          <div className="text-center mb-10 animate-fade-in">
-            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-3">
+          <div className="text-center mb-6 animate-fade-in">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
               Wie möchten Sie{" "}
               <span className="text-primary italic">kalkulieren</span>?
             </h2>
-            <p className="text-muted-foreground text-base max-w-2xl mx-auto">
+            <p className="text-muted-foreground text-sm max-w-xl mx-auto">
               Wählen Sie zwischen der detaillierten Einzelkonfiguration oder unseren
               optimierten Best-Practice Lösungen für Geschäftskunden.
             </p>
           </div>
 
           {/* Option Cards */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-5xl mx-auto w-full mb-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 max-w-5xl mx-auto w-full mb-6 items-stretch">
             {/* Individual Configuration Card (White) */}
             <div
               onClick={() => navigate("/calculator")}
-              className="group relative bg-card rounded-2xl border border-border p-8 cursor-pointer transition-all duration-300 hover:shadow-xl hover:border-primary/20 animate-fade-in min-h-[320px] flex flex-col"
+              className="group relative bg-card rounded-2xl border border-border p-6 cursor-pointer transition-all duration-300 hover:shadow-xl hover:border-primary/20 animate-fade-in min-h-[280px] flex flex-col"
             >
               {/* Icon in gray circle */}
               <div className="w-14 h-14 bg-muted rounded-xl flex items-center justify-center mb-6">
@@ -92,7 +92,7 @@ const Home = () => {
             {/* Bundles Card (Dark) */}
             <div
               onClick={() => navigate("/bundles")}
-              className="group relative bg-panel-dark rounded-2xl p-8 cursor-pointer transition-all duration-300 hover:shadow-xl animate-fade-in overflow-hidden min-h-[320px] flex flex-col"
+              className="group relative bg-panel-dark rounded-2xl p-6 cursor-pointer transition-all duration-300 hover:shadow-xl animate-fade-in overflow-hidden min-h-[280px] flex flex-col"
             >
               {/* NEU Badge */}
               <div className="absolute top-6 right-6">
@@ -165,7 +165,7 @@ const Home = () => {
         </main>
 
         {/* System Status Footer */}
-        <footer className="border-t border-border py-6 shrink-0">
+        <footer className="border-t border-border py-4 shrink-0">
           <div className="text-center">
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-4">
               Aktueller Systemstatus

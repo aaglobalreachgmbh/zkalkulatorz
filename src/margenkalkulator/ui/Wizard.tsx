@@ -178,8 +178,8 @@ export function Wizard() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
-      <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
+      <header className="border-b border-border bg-card shrink-0">
+        <div className="container mx-auto px-4 lg:px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
               <Calculator className="w-5 h-5 text-primary-foreground" />
@@ -244,7 +244,7 @@ export function Wizard() {
       </nav>
 
       {/* Main Content */}
-      <main className="flex-1 container mx-auto px-6 py-8">
+      <main className="flex-1 container mx-auto px-4 lg:px-6 py-6">
         <div className="max-w-5xl mx-auto">
           {currentValidation && !currentValidation.valid && (
             <div className="mb-6 animate-fade-in">
@@ -258,8 +258,8 @@ export function Wizard() {
       </main>
 
       {/* Sticky Footer */}
-      <footer className="bg-card border-t border-border sticky bottom-0 z-40">
-        <div className="container mx-auto px-6 py-4">
+      <footer className="bg-card border-t border-border sticky bottom-0 z-40 shrink-0">
+        <div className="container mx-auto px-4 lg:px-6 py-3">
           <div className="flex items-center justify-between">
             <Button
               variant="ghost"

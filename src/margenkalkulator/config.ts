@@ -78,3 +78,74 @@ export const DATASETS = {
   /** Dummy-Version für Tests */
   DUMMY: "dummy-v0" as const,
 } as const;
+
+/**
+ * OMO-ABZUGSMATRIX
+ * Prozentuale Provisionsabzüge bei OMO-Rabatten
+ */
+export const OMO_MATRIX = {
+  /** Kein OMO-Rabatt */
+  NONE: 0,
+  /** OMO 5% */
+  OMO_5: 0.05,
+  /** OMO 10% */
+  OMO_10: 0.10,
+  /** OMO 15% */
+  OMO_15: 0.15,
+  /** OMO 17,5% */
+  OMO_17_5: 0.175,
+  /** OMO 20% */
+  OMO_20: 0.20,
+  /** OMO 25% */
+  OMO_25: 0.25,
+} as const;
+
+/**
+ * Mappt OMO-Rate (0-25) auf den Provisionsabzugsfaktor
+ */
+export function getOMODeductionFactor(omoRate: number): number {
+  return omoRate / 100;
+}
+
+/**
+ * FESTNETZ-PROVISIONEN
+ * Provision nach Produkt-Typ und Vertragsart
+ */
+export const FIXED_NET_PROVISIONS = {
+  // Cable-Produkte
+  RBI_CABLE: {
+    new: 100,
+    renewal: 50,
+  },
+  RBIP_CABLE: {
+    new: 120,
+    renewal: 60,
+  },
+  // DSL-Produkte
+  DSL: {
+    new: 80,
+    renewal: 40,
+  },
+  // Glasfaser
+  FIBER: {
+    new: 150,
+    renewal: 75,
+  },
+  // Komfort-Anschluss
+  KOMFORT: {
+    new: 100,
+    renewal: 50,
+  },
+} as const;
+
+/**
+ * MARGEN-SCHWELLENWERTE
+ * Für den diskreten Marge-Indikator
+ */
+export const MARGIN_THRESHOLDS = {
+  /** Marge gilt als gut (grün) */
+  GOOD: 100,
+  /** Marge gilt als neutral (gelb) bei >= 0 */
+  NEUTRAL: 0,
+  // Unter 0 = negativ (rot)
+} as const;

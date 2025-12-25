@@ -109,6 +109,12 @@ export type MobileTariffRow = {
   sort_order?: number;
   /** Aktiv (inaktive werden nicht importiert) */
   active: boolean;
+  /** FH-Partner-Preis (Phase 2.4) */
+  fh_partner_net?: number;
+  /** Push-Preis (Phase 2.4) */
+  push_net?: number;
+  /** OMO-Matrix (Phase 2.4) */
+  omo_matrix?: Record<number, number | null>;
 };
 
 /**

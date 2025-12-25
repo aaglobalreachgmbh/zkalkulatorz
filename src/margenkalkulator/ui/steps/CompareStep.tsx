@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import type { CalculationResult, ViewMode, OfferOptionState } from "../../engine/types";
-import { Eye, EyeOff, Printer, Link2Off, Smartphone, Signal } from "lucide-react";
+import { Eye, EyeOff, Printer, Link2Off, Smartphone, Signal, Wifi } from "lucide-react";
+import { DiscreteMarginIndicator } from "../components/DiscreteMarginIndicator";
 
 interface CompareStepProps {
   option1: OfferOptionState;
@@ -81,11 +82,17 @@ export function CompareStep({
             <div className="h-1 bg-gradient-to-r from-orange-400 to-orange-500" />
             
             <div className="p-6 space-y-6">
-              <div>
-                <h2 className="text-2xl font-bold text-foreground">Ihr Angebot</h2>
-                <p className="text-sm text-muted-foreground">
-                  Gültig bis {new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString('de-DE')}
-                </p>
+              <div className="flex items-start justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-foreground">Ihr Angebot</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Gültig bis {new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString('de-DE')}
+                  </p>
+                </div>
+                {/* Diskreter Marge-Indikator - nur für Mitarbeiter erkennbar */}
+                {isCustomerMode && (
+                  <DiscreteMarginIndicator margin={result1.dealer.margin} className="mt-2" />
+                )}
               </div>
 
               {/* Positions */}
@@ -118,6 +125,19 @@ export function CompareStep({
                     {result1.totals.avgTermNet.toFixed(2)} € /mtl.
                   </span>
                 </div>
+
+                {/* Fixed Net Position (if enabled) */}
+                {option1.fixedNet.enabled && (
+                  <div className="flex items-center justify-between py-3 border-b border-border">
+                    <div className="flex items-center gap-3">
+                      <Wifi className="w-5 h-5 text-muted-foreground" />
+                      <span>Festnetz</span>
+                    </div>
+                    <span className="font-medium">
+                      inkl. im Ø Monatspreis
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Average Monthly Cost */}
@@ -146,16 +166,26 @@ export function CompareStep({
               <h4 className="font-semibold">Händler-Kalkulation</h4>
               
               <div className="space-y-3">
+                {/* Mobile Provision */}
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Provision (brutto)</span>
+                  <span className="text-muted-foreground">Mobilfunk Provision</span>
                   <span className="font-medium">{result1.dealer.provisionBase.toFixed(2)} €</span>
                 </div>
+                
+                {/* Fixed Net Provision (if enabled) */}
+                {option1.fixedNet.enabled && result1.dealer.fixedNetProvision !== undefined && result1.dealer.fixedNetProvision > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Festnetz Provision</span>
+                    <span className="font-medium">+{result1.dealer.fixedNetProvision.toFixed(2)} €</span>
+                  </div>
+                )}
+                
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Hardware-EK</span>
                   <span className="font-medium">-{result1.dealer.hardwareEkNet.toFixed(2)} €</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Abzüge</span>
+                  <span className="text-muted-foreground">Abzüge (OMO)</span>
                   <span className="font-medium">-{result1.dealer.deductions.toFixed(2)} €</span>
                 </div>
                 <div className="border-t border-border pt-3 flex justify-between">

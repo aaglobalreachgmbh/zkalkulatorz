@@ -43,6 +43,8 @@ export {
 // Dealer economics
 export {
   getOMODeduction,
+  calculateOMOMatrixDeduction,
+  calculateFixedNetProvision,
   calculateDealerEconomics,
   calculateDealerEconomicsLegacy,
 } from "./dealer";

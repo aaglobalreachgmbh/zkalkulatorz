@@ -1,647 +1,477 @@
-import { useState, useMemo, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { 
-  Package, 
-  FileText, 
-  User, 
-  Building2, 
-  Building,
-  ArrowRight,
-  Star,
-  Folder,
-  FolderOpen,
-  Plus,
-  Newspaper,
-  Pencil,
-  Trash2,
-  Copy,
-  ChevronLeft,
-  Target,
-  ArrowLeft,
-  Download,
-  Calendar,
-  Home as HomeIcon,
-  Signal
-} from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+/**
+ * Sales Cockpit - Bundles Page
+ * 
+ * Zeigt vorkonfigurierte Bundles und persönliche Templates.
+ * Layout basiert auf Screenshot-Referenzen.
+ */
+
+import { useState, useMemo } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { MainLayout } from "@/components/MainLayout";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-} from "@/components/ui/dropdown-menu";
-import { MainLayout } from "@/components/MainLayout";
-import { useToast } from "@/hooks/use-toast";
+  Package,
+  Star,
+  User,
+  Building2,
+  Building,
+  ArrowLeft,
+  Search,
+  Bell,
+  Target,
+  ArrowRight,
+  FileText,
+  Download,
+  Calendar,
+  BarChart3,
+  Megaphone,
+} from "lucide-react";
+
 import { 
   DEMO_BUNDLES, 
-  loadTemplates, 
-  loadFolders,
-  createFolder,
-  renameFolder,
-  deleteFolder,
-  deleteTemplate,
-  duplicateTemplate,
-  moveTemplate,
-  getTemplatesInFolder,
   type Sector, 
   type CorporateBundle,
-  type PersonalTemplate,
-  type TemplateFolder,
-  SECTOR_LABELS 
 } from "@/margenkalkulator/storage/bundles";
-import { TICKER_ITEMS, MOCK_NEWS, NEWS_TYPE_CONFIG, STRATEGIC_FOCUS, QUICK_TOOLS, type NewsItem as NewsItemType } from "@/margenkalkulator/data/news";
+import { 
+  TICKER_ITEMS, 
+  MOCK_NEWS, 
+  NEWS_TYPE_CONFIG, 
+  STRATEGIC_FOCUS,
+  QUICK_TOOLS,
+  type NewsItem,
+} from "@/margenkalkulator/data/news";
 
-const SECTOR_ICON_MAP = {
-  private: User,
-  business: Building2,
-  enterprise: Building,
+// ============================================
+// Types
+// ============================================
+
+type TabType = "campaigns" | "templates";
+
+const SECTOR_DISPLAY: Record<Sector, { label: string; icon: typeof User }> = {
+  private: { label: "Privat", icon: User },
+  business: { label: "Gewerbe", icon: Building2 },
+  enterprise: { label: "Konzern", icon: Building },
 };
 
-// News Item Component matching screenshot
-const NewsItem = ({ title, description, date, time, type }: NewsItemType) => {
-  const config = NEWS_TYPE_CONFIG[type];
+// Demo bundle badges based on tags
+const getBundleBadge = (bundle: CorporateBundle): { label: string; color: string } | null => {
+  if (bundle.tags.includes("Einsteiger") || bundle.tags.includes("Günstig")) {
+    return { label: "PREISSIEGER", color: "border-orange-400" };
+  }
+  if (bundle.tags.includes("Premium") || bundle.tags.includes("KMU")) {
+    return { label: "BESTSELLER", color: "border-primary" };
+  }
+  return null;
+};
+
+// ============================================
+// Sub-Components
+// ============================================
+
+function TickerBar() {
   return (
-    <div className="border-l-4 border-primary/20 hover:border-primary transition-colors">
-      <div className="p-4 space-y-2">
-        <div className="flex items-center justify-between">
-          <span className={`text-xs font-bold px-2 py-0.5 rounded ${config.bgColor}`}>
-            {config.label}
-          </span>
-          <span className="text-xs text-muted-foreground">
-            {time ? `${date}, ${time}` : date}
-          </span>
+    <div className="bg-slate-900 text-white overflow-hidden">
+      <div className="flex items-center">
+        <div className="bg-primary px-3 py-1.5 flex items-center gap-1.5 shrink-0">
+          <Megaphone className="h-3.5 w-3.5 text-primary-foreground" />
+          <span className="text-xs font-bold text-primary-foreground">SALES PUSH</span>
         </div>
-        <h4 className="font-semibold text-foreground text-sm">{title}</h4>
-        <p className="text-xs text-muted-foreground leading-relaxed">{description}</p>
-        <button className="text-xs font-medium text-foreground hover:text-primary flex items-center gap-1 transition-colors">
-          Mehr lesen <ArrowRight className="w-3 h-3" />
-        </button>
+        <div className="flex-1 overflow-hidden whitespace-nowrap py-1.5">
+          <div className="animate-marquee inline-block text-sm">
+            {TICKER_ITEMS.map((item, i) => (
+              <span key={i} className="mx-8">{item}</span>
+            ))}
+            {TICKER_ITEMS.map((item, i) => (
+              <span key={`dup-${i}`} className="mx-8">{item}</span>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
-};
+}
 
-const Bundles = () => {
+function PageHeader() {
+  return (
+    <div className="flex items-center justify-between py-4">
+      <div>
+        <Link 
+          to="/" 
+          className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 mb-1"
+        >
+          <ArrowLeft className="h-3 w-3" />
+          ZURÜCK ZUM START
+        </Link>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold">
+            Sales <span className="text-primary">Cockpit</span>
+          </h1>
+          <Badge variant="outline" className="text-xs font-normal">
+            v2.4.0
+          </Badge>
+        </div>
+      </div>
+      
+      <div className="flex items-center gap-3">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input 
+            placeholder="Suche..." 
+            className="pl-9 w-48 bg-background"
+          />
+        </div>
+        <Button variant="ghost" size="icon" className="relative">
+          <Bell className="h-5 w-5" />
+          <span className="absolute top-1 right-1 h-2 w-2 bg-primary rounded-full" />
+        </Button>
+        <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+          <User className="h-5 w-5 text-muted-foreground" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface TabsProps {
+  activeTab: TabType;
+  onTabChange: (tab: TabType) => void;
+}
+
+function Tabs({ activeTab, onTabChange }: TabsProps) {
+  return (
+    <div className="flex items-center gap-6 border-b border-border">
+      <button
+        onClick={() => onTabChange("campaigns")}
+        className={`flex items-center gap-2 pb-3 px-1 border-b-2 transition-colors ${
+          activeTab === "campaigns"
+            ? "border-primary text-primary"
+            : "border-transparent text-muted-foreground hover:text-foreground"
+        }`}
+      >
+        <Package className="h-4 w-4" />
+        <span className="font-medium">Zentrale Kampagnen</span>
+      </button>
+      <button
+        onClick={() => onTabChange("templates")}
+        className={`flex items-center gap-2 pb-3 px-1 border-b-2 transition-colors ${
+          activeTab === "templates"
+            ? "border-primary text-primary"
+            : "border-transparent text-muted-foreground hover:text-foreground"
+        }`}
+      >
+        <Star className="h-4 w-4" />
+        <span className="font-medium">Meine Vorlagen</span>
+      </button>
+    </div>
+  );
+}
+
+interface SectorSwitcherProps {
+  activeSector: Sector;
+  onSectorChange: (sector: Sector) => void;
+}
+
+function SectorSwitcher({ activeSector, onSectorChange }: SectorSwitcherProps) {
+  const sectors: Sector[] = ["private", "business", "enterprise"];
+  
+  return (
+    <div className="flex rounded-lg border border-border bg-muted/30 p-1">
+      {sectors.map((sector) => {
+        const { label, icon: Icon } = SECTOR_DISPLAY[sector];
+        const isActive = activeSector === sector;
+        
+        return (
+          <button
+            key={sector}
+            onClick={() => onSectorChange(sector)}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-md text-sm font-medium transition-all ${
+              isActive
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Icon className="h-4 w-4" />
+            {label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function StrategicFocusCard() {
+  return (
+    <div className="bg-primary/5 border border-primary/20 rounded-xl p-5">
+      <div className="flex gap-4">
+        <div className="shrink-0 h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+          <Target className="h-6 w-6 text-primary" />
+        </div>
+        <div>
+          <p className="text-xs text-muted-foreground font-medium mb-1">
+            STRATEGISCHER FOKUS
+          </p>
+          <h3 className="text-lg font-semibold text-primary mb-1">
+            {STRATEGIC_FOCUS.title}
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            {STRATEGIC_FOCUS.description}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface BundleCardProps {
+  bundle: CorporateBundle;
+  badgeInfo: { label: string; color: string } | null;
+  onClick: () => void;
+}
+
+function BundleCard({ bundle, badgeInfo, onClick }: BundleCardProps) {
+  // Extract display info from config
+  const hardwareName = bundle.config.hardware?.name || "SIM Only";
+  const tariffId = bundle.config.mobile?.tariffId || "PRIME_S";
+  const tariffLabel = tariffId.replace("_", " ");
+  
+  return (
+    <div 
+      className={`bg-background border rounded-xl overflow-hidden hover:shadow-md transition-shadow ${
+        badgeInfo ? `border-t-4 ${badgeInfo.color}` : "border-border"
+      }`}
+    >
+      <div className="p-5">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-3">
+          <h3 className="font-semibold text-lg">{bundle.name}</h3>
+          {badgeInfo && (
+            <Badge variant="outline" className="text-xs shrink-0">
+              {badgeInfo.label}
+            </Badge>
+          )}
+        </div>
+        
+        {/* Description */}
+        <p className="text-sm text-muted-foreground mb-5">
+          {bundle.description}
+        </p>
+        
+        {/* Hardware Row */}
+        <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg mb-2">
+          <div className="h-10 w-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center text-white text-xs font-bold">
+            📱
+          </div>
+          <div>
+            <p className="font-medium text-sm">{hardwareName}</p>
+            <p className="text-xs text-muted-foreground">Hardware</p>
+          </div>
+        </div>
+        
+        {/* Tariff Row */}
+        <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
+          <div className="h-10 w-10 bg-primary/10 rounded-lg flex items-center justify-center">
+            <BarChart3 className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <p className="font-medium text-sm">Business {tariffLabel}</p>
+            <p className="text-xs text-muted-foreground">Tarif</p>
+          </div>
+        </div>
+      </div>
+      
+      {/* Footer */}
+      <button 
+        onClick={onClick}
+        className="w-full px-5 py-3 border-t border-border text-sm text-muted-foreground hover:text-primary hover:bg-muted/20 transition-colors flex items-center justify-between group"
+      >
+        Sofort übernehmen
+        <ArrowRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+      </button>
+    </div>
+  );
+}
+
+interface NewsCardProps {
+  news: NewsItem;
+}
+
+function NewsCard({ news }: NewsCardProps) {
+  const typeConfig = NEWS_TYPE_CONFIG[news.type];
+  
+  return (
+    <div className="p-4 border-l-2 border-primary/20 hover:border-primary transition-colors">
+      <div className="flex items-start justify-between mb-2">
+        <Badge className={`${typeConfig.bgColor} text-xs font-medium`}>
+          {typeConfig.label}
+        </Badge>
+        <span className="text-xs text-muted-foreground">
+          {news.time ? `${news.date}, ${news.time}` : news.date}
+        </span>
+      </div>
+      <h4 className="font-semibold text-sm mb-1">{news.title}</h4>
+      <p className="text-sm text-muted-foreground mb-2">{news.description}</p>
+      <button className="text-sm text-foreground hover:text-primary inline-flex items-center gap-1 transition-colors">
+        Mehr lesen <ArrowRight className="h-3 w-3" />
+      </button>
+    </div>
+  );
+}
+
+function QuickToolsCard() {
+  const icons: Record<string, typeof FileText> = {
+    FileText,
+    Download,
+    Calendar,
+  };
+  
+  return (
+    <div className="bg-slate-900 rounded-xl p-5">
+      <h3 className="text-white font-semibold mb-4">Quick Tools</h3>
+      <div className="space-y-2">
+        {QUICK_TOOLS.map((tool) => {
+          const Icon = icons[tool.icon] || FileText;
+          return (
+            <button
+              key={tool.id}
+              className="w-full flex items-center gap-3 px-4 py-3 bg-slate-800 hover:bg-slate-700 rounded-lg text-white text-sm transition-colors"
+            >
+              <Icon className="h-4 w-4 text-slate-400" />
+              {tool.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ============================================
+// Main Component
+// ============================================
+
+export default function Bundles() {
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<"campaigns" | "templates">("campaigns");
-  const [selectedSector, setSelectedSector] = useState<Sector>("business");
-  const [refreshKey, setRefreshKey] = useState(0);
-  
-  // Folder navigation
-  const [currentFolderId, setCurrentFolderId] = useState<string | undefined>(undefined);
-  
-  // Dialogs
-  const [newFolderDialogOpen, setNewFolderDialogOpen] = useState(false);
-  const [renameFolderDialogOpen, setRenameFolderDialogOpen] = useState(false);
-  const [folderToRename, setFolderToRename] = useState<TemplateFolder | null>(null);
-  const [newFolderName, setNewFolderName] = useState("");
-  
-  // Load data with refresh
-  const templates = useMemo(() => loadTemplates(), [refreshKey]);
-  const folders = useMemo(() => loadFolders(), [refreshKey]);
+  const [activeTab, setActiveTab] = useState<TabType>("campaigns");
+  const [activeSector, setActiveSector] = useState<Sector>("business");
 
-  const filteredBundles = useMemo(() => 
-    DEMO_BUNDLES.filter((b) => b.sector === selectedSector),
-    [selectedSector]
-  );
-  
-  // Current folder templates
-  const currentTemplates = useMemo(() => 
-    getTemplatesInFolder(currentFolderId),
-    [currentFolderId, refreshKey]
-  );
-  
-  const currentFolder = useMemo(() =>
-    currentFolderId ? folders.find(f => f.id === currentFolderId) : null,
-    [currentFolderId, folders]
-  );
+  // Filter bundles by sector
+  const filteredBundles = useMemo(() => {
+    return DEMO_BUNDLES.filter((b) => b.sector === activeSector);
+  }, [activeSector]);
 
-  const refresh = useCallback(() => setRefreshKey(k => k + 1), []);
+  // Get featured bundles (max 2)
+  const featuredBundles = useMemo(() => {
+    const featured = filteredBundles.filter((b) => b.featured);
+    return featured.length > 0 ? featured.slice(0, 2) : filteredBundles.slice(0, 2);
+  }, [filteredBundles]);
 
-  const handleSelectBundle = (bundle: CorporateBundle) => {
+  const handleBundleClick = (bundle: CorporateBundle) => {
+    // Navigate to calculator with bundle config
     navigate("/calculator", { state: { bundleConfig: bundle.config } });
-  };
-  
-  const handleSelectTemplate = (template: PersonalTemplate) => {
-    navigate("/calculator", { state: { templateConfig: template.config } });
-  };
-
-  // Folder Actions
-  const handleCreateFolder = () => {
-    if (!newFolderName.trim()) return;
-    createFolder(newFolderName.trim());
-    toast({ title: "Ordner erstellt", description: `"${newFolderName}" wurde erstellt.` });
-    setNewFolderName("");
-    setNewFolderDialogOpen(false);
-    refresh();
-  };
-  
-  const handleRenameFolder = () => {
-    if (!folderToRename || !newFolderName.trim()) return;
-    renameFolder(folderToRename.id, newFolderName.trim());
-    toast({ title: "Ordner umbenannt", description: `Ordner wurde in "${newFolderName}" umbenannt.` });
-    setNewFolderName("");
-    setRenameFolderDialogOpen(false);
-    setFolderToRename(null);
-    refresh();
-  };
-  
-  const handleDeleteFolder = (folder: TemplateFolder) => {
-    deleteFolder(folder.id);
-    toast({ title: "Ordner gelöscht", description: `"${folder.name}" wurde gelöscht.` });
-    if (currentFolderId === folder.id) setCurrentFolderId(undefined);
-    refresh();
-  };
-  
-  const openRenameFolderDialog = (folder: TemplateFolder) => {
-    setFolderToRename(folder);
-    setNewFolderName(folder.name);
-    setRenameFolderDialogOpen(true);
-  };
-
-  // Template Actions
-  const handleDeleteTemplate = (template: PersonalTemplate) => {
-    deleteTemplate(template.id);
-    toast({ title: "Template gelöscht", description: `"${template.name}" wurde gelöscht.` });
-    refresh();
-  };
-  
-  const handleDuplicateTemplate = (template: PersonalTemplate) => {
-    const duplicate = duplicateTemplate(template.id);
-    if (duplicate) {
-      toast({ title: "Template dupliziert", description: `"${duplicate.name}" wurde erstellt.` });
-      refresh();
-    }
-  };
-  
-  const handleMoveTemplate = (template: PersonalTemplate, targetFolderId: string | undefined) => {
-    moveTemplate(template.id, targetFolderId);
-    const targetName = targetFolderId 
-      ? folders.find(f => f.id === targetFolderId)?.name 
-      : "Root";
-    toast({ title: "Template verschoben", description: `Nach "${targetName}" verschoben.` });
-    refresh();
   };
 
   return (
     <MainLayout>
+      {/* Outer container - uses negative margin to escape MainLayout padding */}
       <div className="min-h-full bg-background -m-4 md:-m-6">
-        {/* Dark Ticker Bar */}
-        <div className="bg-panel-dark text-panel-dark-foreground overflow-hidden">
-          <div className="flex items-center">
-            <div className="bg-primary px-3 py-1.5 flex items-center gap-1 shrink-0">
-              <span className="text-xs font-bold text-primary-foreground">📢 SALES PUSH</span>
-            </div>
-            <div className="flex-1 overflow-hidden whitespace-nowrap py-1.5">
-              <div className="animate-marquee inline-block text-sm">
-                {TICKER_ITEMS.map((item, i) => (
-                  <span key={i} className="mx-8">{item}</span>
-                ))}
-                {TICKER_ITEMS.map((item, i) => (
-                  <span key={`dup-${i}`} className="mx-8">{item}</span>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      
-        <div className="max-w-7xl mx-auto px-4 lg:px-6 py-4 animate-fade-in">
-          {/* Sub Header - Simplified */}
+        {/* Ticker Bar - Full Width */}
+        <TickerBar />
+
+        {/* Main Content - re-add padding */}
+        <div className="px-4 md:px-6 lg:px-8 py-4">
+          {/* Header */}
+          <PageHeader />
+
+          {/* Tabs */}
           <div className="mb-6">
-            <button 
-              onClick={() => navigate("/")}
-              className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 mb-1 transition-colors"
-            >
-              <ArrowLeft className="w-3 h-3" />
-              ZURÜCK ZUM START
-            </button>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-foreground">
-                Sales <span className="text-primary">Cockpit</span>
-              </h1>
-              <Badge variant="secondary" className="text-xs">v2.4.0</Badge>
-            </div>
+            <Tabs activeTab={activeTab} onTabChange={setActiveTab} />
           </div>
 
+          {/* Two Column Layout */}
           <div className="flex flex-col lg:flex-row gap-6">
-            {/* Left Column: Bundles */}
-            <div className="w-full lg:flex-1 lg:min-w-0 space-y-6">
-              {/* Tabs */}
-              <div className="flex items-center gap-8 border-b border-border">
-                <button
-                  onClick={() => setActiveTab("campaigns")}
-                  className={`flex items-center gap-2 pb-3 text-sm font-medium border-b-2 transition-colors ${
-                    activeTab === "campaigns" 
-                      ? "border-primary text-primary" 
-                      : "border-transparent text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <Package className="w-4 h-4" />
-                  Zentrale Kampagnen
-                </button>
-                <button
-                  onClick={() => setActiveTab("templates")}
-                  className={`flex items-center gap-2 pb-3 text-sm font-medium border-b-2 transition-colors ${
-                    activeTab === "templates" 
-                      ? "border-primary text-primary" 
-                      : "border-transparent text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <Star className="w-4 h-4" />
-                  Meine Vorlagen
-                </button>
-              </div>
-
+            {/* Left Column: Main Content */}
+            <div className="flex-1 min-w-0 space-y-6">
               {activeTab === "campaigns" && (
-                <div className="space-y-6">
+                <>
                   {/* Sector Switcher */}
-                  <div className="flex w-full p-1 bg-muted/50 rounded-lg">
-                    {(Object.keys(SECTOR_LABELS) as Sector[]).map((sector) => {
-                      const Icon = SECTOR_ICON_MAP[sector];
-                      const isActive = selectedSector === sector;
-                      const labels: Record<Sector, string> = {
-                        private: "Privat",
-                        business: "Gewerbe",
-                        enterprise: "Konzern",
-                      };
-                      return (
-                        <button
-                          key={sector}
-                          onClick={() => setSelectedSector(sector)}
-                          className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${
-                            isActive 
-                              ? "bg-card shadow-sm text-foreground" 
-                              : "text-muted-foreground hover:text-foreground"
-                          }`}
-                        >
-                          <Icon className="w-4 h-4" />
-                          <span className="hidden sm:inline">{labels[sector]}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
+                  <SectorSwitcher 
+                    activeSector={activeSector} 
+                    onSectorChange={setActiveSector} 
+                  />
 
-                  {/* Strategic Focus Box */}
-                  <div className="p-4 border border-border rounded-xl bg-card">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center shrink-0">
-                        <Target className="w-5 h-5 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-muted-foreground tracking-wide mb-1">
-                          STRATEGISCHER FOKUS
-                        </p>
-                        <h3 className="font-semibold text-primary mb-1">{STRATEGIC_FOCUS.title}</h3>
-                        <p className="text-sm text-muted-foreground">{STRATEGIC_FOCUS.description}</p>
-                      </div>
-                    </div>
-                  </div>
+                  {/* Strategic Focus */}
+                  <StrategicFocusCard />
 
                   {/* Top Deals Section */}
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <Star className="w-4 h-4 text-amber-500" />
-                      <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wide">
-                        Top Deals: {selectedSector === "business" ? "Gewerbe" : selectedSector === "enterprise" ? "Konzern" : "Privat"}
-                      </h3>
+                  <div>
+                    <div className="flex items-center gap-2 mb-4">
+                      <Star className="h-4 w-4 text-amber-500" />
+                      <h2 className="font-semibold text-sm uppercase tracking-wide">
+                        Top Deals: {SECTOR_DISPLAY[activeSector].label}
+                      </h2>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {filteredBundles.slice(0, 2).map((bundle, idx) => (
-                        <div
-                          key={bundle.id}
-                          onClick={() => handleSelectBundle(bundle)}
-                          className="group cursor-pointer"
-                        >
-                          {/* Color bar on top */}
-                          <div className={`h-1 rounded-t-xl ${idx === 0 ? "bg-amber-400" : "bg-primary"}`} />
-                          
-                          <Card className="rounded-t-none border-t-0 hover:shadow-lg transition-shadow">
-                            <CardHeader className="pb-2">
-                              <div className="flex items-start justify-between">
-                                <CardTitle className="text-base font-semibold">
-                                  {bundle.name}
-                                </CardTitle>
-                                <Badge variant="outline" className="text-[10px] font-bold">
-                                  {idx === 0 ? "PREISSIEGER" : "BESTSELLER"}
-                                </Badge>
-                              </div>
-                              <p className="text-sm text-muted-foreground">
-                                {bundle.description}
-                              </p>
-                            </CardHeader>
-                            <CardContent className="space-y-3">
-                              {/* Hardware preview */}
-                              <div className="flex items-center gap-3 p-2 bg-muted/50 rounded-lg">
-                                <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-50 rounded-lg flex items-center justify-center">
-                                  <Package className="w-5 h-5 text-blue-600" />
-                                </div>
-                                <div>
-                                  <p className="text-sm font-medium">{bundle.config.hardware?.name || "SIM Only"}</p>
-                                  <p className="text-xs text-muted-foreground">Hardware</p>
-                                </div>
-                              </div>
-                              
-                              {/* Tariff preview */}
-                              <div className="flex items-center gap-3 p-2 bg-muted/50 rounded-lg">
-                                <div className="w-10 h-10 bg-gradient-to-br from-primary/20 to-primary/10 rounded-lg flex items-center justify-center">
-                                  <Signal className="w-5 h-5 text-primary" />
-                                </div>
-                                <div>
-                                  <p className="text-sm font-medium">
-                                    {bundle.config.mobile?.tariffId?.replace("_", " ") || "Tarif"}
-                                  </p>
-                                  <p className="text-xs text-muted-foreground">Tarif</p>
-                                </div>
-                              </div>
-
-                              <button className="text-sm text-muted-foreground hover:text-primary flex items-center gap-1 pt-2 transition-colors group-hover:text-primary">
-                                Sofort übernehmen <ArrowRight className="w-4 h-4" />
-                              </button>
-                            </CardContent>
-                          </Card>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Empty State */}
-                    {filteredBundles.length === 0 && (
+                    {featuredBundles.length > 0 ? (
+                      <div className="grid md:grid-cols-2 gap-4">
+                        {featuredBundles.map((bundle) => (
+                          <BundleCard
+                            key={bundle.id}
+                            bundle={bundle}
+                            badgeInfo={getBundleBadge(bundle)}
+                            onClick={() => handleBundleClick(bundle)}
+                          />
+                        ))}
+                      </div>
+                    ) : (
                       <div className="text-center py-12 text-muted-foreground bg-muted/30 rounded-xl">
                         <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
                         <p>Keine Bundles für diesen Sektor verfügbar</p>
                       </div>
                     )}
                   </div>
-                </div>
+                </>
               )}
 
               {activeTab === "templates" && (
-                <div className="space-y-6">
-                  {/* Folder Navigation */}
-                  <div className="flex items-center justify-between p-4 bg-card rounded-xl border border-border">
-                    <div className="flex items-center gap-2">
-                      {currentFolderId ? (
-                        <>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => setCurrentFolderId(undefined)}
-                            className="h-8 gap-1 px-2"
-                          >
-                            <ChevronLeft className="w-4 h-4" />
-                            Zurück
-                          </Button>
-                          <span className="text-muted-foreground">/</span>
-                          <FolderOpen className="w-4 h-4 text-primary" />
-                          <span className="text-sm font-medium">{currentFolder?.name}</span>
-                        </>
-                      ) : (
-                        <>
-                          <HomeIcon className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-sm font-medium">Root</span>
-                        </>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button 
-                        variant="outline"
-                        size="sm"
-                        className="h-8 gap-2"
-                        onClick={() => setNewFolderDialogOpen(true)}
-                      >
-                        <Plus className="w-4 h-4" />
-                        Neuer Ordner
-                      </Button>
-                      <Button 
-                        onClick={() => navigate("/calculator")}
-                        className="h-8 gap-2 bg-primary text-primary-foreground"
-                      >
-                        <Plus className="w-4 h-4" />
-                        Neues Template
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Folders */}
-                  {folders.length > 0 && (
-                    <div className="grid grid-cols-2 gap-4">
-                      {folders.map((folder) => (
-                        <Card 
-                          key={folder.id}
-                          className="cursor-pointer hover:shadow-md hover:border-primary/30 transition-all group"
-                          onClick={() => setCurrentFolderId(folder.id)}
-                        >
-                          <CardContent className="p-4 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                                <Folder className="w-5 h-5 text-blue-500" />
-                              </div>
-                              <div>
-                                <p className="font-medium text-sm">{folder.name}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  {getTemplatesInFolder(folder.id).length} Elemente
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-8 w-8"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  openRenameFolderDialog(folder);
-                                }}
-                              >
-                                <Pencil className="w-4 h-4" />
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-8 w-8 text-destructive hover:text-destructive"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteFolder(folder);
-                                }}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Templates */}
-                  {currentTemplates.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {currentTemplates.map((template) => (
-                        <Card 
-                          key={template.id}
-                          className="group cursor-pointer hover:shadow-lg hover:border-primary/30 transition-all"
-                          onClick={() => handleSelectTemplate(template)}
-                        >
-                          <CardHeader className="pb-2">
-                            <CardTitle className="text-base font-semibold">
-                              {template.name}
-                            </CardTitle>
-                            <p className="text-xs text-muted-foreground">
-                              Erstellt: {new Date(template.createdAt).toLocaleDateString("de-DE")}
-                            </p>
-                          </CardHeader>
-                          <CardContent>
-                            <button className="text-sm text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors group-hover:text-primary">
-                              Template laden <ArrowRight className="w-4 h-4" />
-                            </button>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  ) : folders.length === 0 && (
-                    <div className="text-center py-12 text-muted-foreground bg-muted/30 rounded-xl">
-                      <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p className="mb-4">Noch keine Templates erstellt</p>
-                      <Button variant="outline" onClick={() => navigate("/calculator")} className="gap-2">
-                        <Plus className="h-4 w-4" />
-                        Neues Template erstellen
-                      </Button>
-                    </div>
-                  )}
+                <div className="text-center py-16 text-muted-foreground bg-muted/20 rounded-xl">
+                  <Star className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p className="font-medium mb-2">Keine Vorlagen vorhanden</p>
+                  <p className="text-sm">
+                    Erstelle Vorlagen im Kalkulator mit "Als Vorlage speichern"
+                  </p>
                 </div>
               )}
             </div>
 
-            {/* Right Column: News Feed */}
+            {/* Right Column: Sidebar */}
             <aside className="w-full lg:w-80 shrink-0 space-y-6">
               {/* News Section */}
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
-                    <Newspaper className="w-5 h-5 text-muted-foreground" />
-                    <h3 className="font-semibold">Salesworld News</h3>
+                    <Megaphone className="h-4 w-4 text-muted-foreground" />
+                    <h2 className="font-semibold">Salesworld News</h2>
                   </div>
-                  <button className="text-xs text-primary font-medium hover:underline">
+                  <button className="text-sm text-primary hover:underline">
                     Alle anzeigen
                   </button>
                 </div>
-                <div className="space-y-4">
+
+                <div className="bg-background border border-border rounded-xl overflow-hidden divide-y divide-border">
                   {MOCK_NEWS.slice(0, 3).map((news) => (
-                    <Card key={news.id} className="overflow-hidden">
-                      <NewsItem {...news} />
-                    </Card>
+                    <NewsCard key={news.id} news={news} />
                   ))}
                 </div>
               </div>
 
               {/* Quick Tools */}
-              <Card className="bg-panel-dark text-panel-dark-foreground overflow-hidden">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base font-semibold">Quick Tools</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <Button 
-                    variant="ghost" 
-                    className="w-full justify-start gap-3 h-12 text-panel-dark-foreground hover:bg-panel-dark-foreground/10"
-                  >
-                    <FileText className="w-5 h-5" />
-                    Provisions-Tabelle (PDF)
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    className="w-full justify-start gap-3 h-12 text-panel-dark-foreground hover:bg-panel-dark-foreground/10"
-                  >
-                    <Download className="w-5 h-5" />
-                    Marketing-Material
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    className="w-full justify-start gap-3 h-12 text-panel-dark-foreground hover:bg-panel-dark-foreground/10"
-                  >
-                    <Calendar className="w-5 h-5" />
-                    Schulungstermine
-                  </Button>
-                </CardContent>
-              </Card>
+              <QuickToolsCard />
             </aside>
           </div>
         </div>
-
-        {/* Create Folder Dialog */}
-        <Dialog open={newFolderDialogOpen} onOpenChange={setNewFolderDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Neuer Ordner</DialogTitle>
-              <DialogDescription>
-                Erstelle einen neuen Ordner für deine Templates.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="py-4">
-              <Input
-                placeholder="Ordnername"
-                value={newFolderName}
-                onChange={(e) => setNewFolderName(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleCreateFolder()}
-              />
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setNewFolderDialogOpen(false)}>
-                Abbrechen
-              </Button>
-              <Button onClick={handleCreateFolder} disabled={!newFolderName.trim()}>
-                Erstellen
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Rename Folder Dialog */}
-        <Dialog open={renameFolderDialogOpen} onOpenChange={setRenameFolderDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Ordner umbenennen</DialogTitle>
-              <DialogDescription>
-                Gib einen neuen Namen für den Ordner ein.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="py-4">
-              <Input
-                placeholder="Neuer Name"
-                value={newFolderName}
-                onChange={(e) => setNewFolderName(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleRenameFolder()}
-              />
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setRenameFolderDialogOpen(false)}>
-                Abbrechen
-              </Button>
-              <Button onClick={handleRenameFolder} disabled={!newFolderName.trim()}>
-                Speichern
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </div>
     </MainLayout>
   );
-};
-
-export default Bundles;
+}

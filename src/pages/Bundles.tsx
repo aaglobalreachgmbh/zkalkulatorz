@@ -202,7 +202,7 @@ const Bundles = () => {
 
   return (
     <MainLayout>
-      <div className="min-h-full bg-background">
+      <div className="min-h-full bg-background -m-4 md:-m-6">
         {/* Dark Ticker Bar */}
         <div className="bg-panel-dark text-panel-dark-foreground overflow-hidden">
           <div className="flex items-center">

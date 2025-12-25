@@ -55,9 +55,11 @@ import { de } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function Offers() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { offers, isLoading, deleteOffer, renameOffer } = useCloudOffers();
   const { customers } = useCustomers();
   const { teams } = useTeams();
@@ -71,7 +73,7 @@ export default function Offers() {
   const filteredOffers = offers.filter(
     (offer) =>
       offer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (offer.preview?.tariffName?.toLowerCase() || "").includes(searchQuery.toLowerCase())
+      (offer.preview?.tariff?.toLowerCase() || "").includes(searchQuery.toLowerCase())
   );
 
   const handleDelete = async (offer: CloudOffer) => {
@@ -104,6 +106,7 @@ export default function Offers() {
 
       if (error) throw error;
       toast.success("Angebot mit Team geteilt");
+      queryClient.invalidateQueries({ queryKey: ["cloudOffers"] });
       setIsShareDialogOpen(false);
       setSelectedOffer(null);
       setShareTeamId("");
@@ -266,10 +269,10 @@ export default function Offers() {
                     <TableRow key={offer.id} className="cursor-pointer" onClick={() => handleLoad(offer)}>
                       <TableCell className="font-medium">{offer.name}</TableCell>
                       <TableCell>
-                        {offer.preview?.tariffName || "-"}
-                        {offer.preview?.hardwareName && (
+                        {offer.preview?.tariff || "-"}
+                        {offer.preview?.hardware && offer.preview.hardware !== "SIM Only" && (
                           <span className="text-muted-foreground text-xs block">
-                            + {offer.preview.hardwareName}
+                            + {offer.preview.hardware}
                           </span>
                         )}
                       </TableCell>
@@ -291,8 +294,8 @@ export default function Offers() {
                         {format(new Date(offer.created_at), "dd.MM.yyyy", { locale: de })}
                       </TableCell>
                       <TableCell>
-                        {offer.preview?.avgMonthlyNet
-                          ? `${offer.preview.avgMonthlyNet.toFixed(2)} €`
+                        {offer.preview?.avgMonthly
+                          ? `${offer.preview.avgMonthly.toFixed(2)} €`
                           : "-"}
                       </TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>

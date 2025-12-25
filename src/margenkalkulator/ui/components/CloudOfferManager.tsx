@@ -30,7 +30,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import type { OfferOptionState } from "../../engine/types";
-import type { OfferDraft } from "../../storage/types";
+import type { CloudOffer } from "../../storage/types";
 import { useCloudOffers } from "../../hooks/useCloudOffers";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -52,7 +52,6 @@ export function CloudOfferManager({
     refetch,
     createOffer,
     deleteOffer,
-    isCreating,
   } = useCloudOffers();
 
   const [open, setOpen] = useState(false);
@@ -82,7 +81,7 @@ export function CloudOfferManager({
   const handleSave = async () => {
     if (!saveName.trim()) return;
     try {
-      await createOffer({ name: saveName.trim(), config, avgMonthly });
+      await createOffer.mutateAsync({ name: saveName.trim(), config, avgMonthly });
       setSaveName("");
       setTab("load");
     } catch {
@@ -90,14 +89,14 @@ export function CloudOfferManager({
     }
   };
 
-  const handleLoad = (offer: OfferDraft) => {
+  const handleLoad = (offer: CloudOffer) => {
     onLoadOffer(offer.config);
     setOpen(false);
   };
 
   const handleDelete = async (id: string) => {
     try {
-      await deleteOffer(id);
+      await deleteOffer.mutateAsync(id);
     } catch {
       // Error handled in hook
     }
@@ -203,23 +202,23 @@ export function CloudOfferManager({
                           <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <Smartphone className="w-3 h-3" />
-                              {offer.preview.hardware}
+                              {offer.preview?.hardware || "SIM Only"}
                             </span>
                             <span className="flex items-center gap-1">
                               <Signal className="w-3 h-3" />
-                              {offer.preview.tariff}
+                              {offer.preview?.tariff || "Kein Tarif"}
                             </span>
                             <span className="flex items-center gap-1">
                               <Clock className="w-3 h-3" />
-                              {formatDate(offer.updatedAt)}
+                              {formatDate(offer.updated_at)}
                             </span>
                           </div>
                           <div className="mt-1 text-sm font-medium text-primary">
-                            {offer.preview.avgMonthly.toFixed(2)} € /mtl.
-                            {offer.preview.quantity > 1 && (
+                            {(offer.preview?.avgMonthly || 0).toFixed(2)} € /mtl.
+                            {(offer.preview?.quantity || 1) > 1 && (
                               <span className="text-muted-foreground">
                                 {" "}
-                                (×{offer.preview.quantity})
+                                (×{offer.preview?.quantity})
                               </span>
                             )}
                           </div>
@@ -267,15 +266,15 @@ export function CloudOfferManager({
               </Button>
               <Button
                 onClick={handleSave}
-                disabled={!saveName.trim() || isCreating}
+                disabled={!saveName.trim() || createOffer.isPending}
                 className="gap-2"
               >
-                {isCreating ? (
+                {createOffer.isPending ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <Cloud className="w-4 h-4" />
                 )}
-                {isCreating ? "Speichern..." : "In Cloud speichern"}
+                {createOffer.isPending ? "Speichern..." : "In Cloud speichern"}
               </Button>
             </DialogFooter>
           </TabsContent>

@@ -14,6 +14,10 @@ import DataManager from "./pages/DataManager";
 import HardwareManager from "./pages/HardwareManager";
 import Auth from "./pages/Auth";
 import SecurityDashboard from "./pages/SecurityDashboard";
+import Customers from "./pages/Customers";
+import Team from "./pages/Team";
+import Offers from "./pages/Offers";
+import Reporting from "./pages/Reporting";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +37,38 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Index />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/offers"
+              element={
+                <ProtectedRoute>
+                  <Offers />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/customers"
+              element={
+                <ProtectedRoute>
+                  <Customers />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/team"
+              element={
+                <ProtectedRoute>
+                  <Team />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/reporting"
+              element={
+                <ProtectedRoute>
+                  <Reporting />
                 </ProtectedRoute>
               }
             />

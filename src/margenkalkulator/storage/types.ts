@@ -5,7 +5,17 @@
 import type { OfferOptionState } from "../engine/types";
 
 /**
- * Gespeicherter Angebots-Entwurf
+ * Preview data for offer list
+ */
+export interface OfferPreview {
+  hardware: string;
+  tariff: string;
+  avgMonthly: number;
+  quantity: number;
+}
+
+/**
+ * Gespeicherter Angebots-Entwurf (lokale Version)
  */
 export interface OfferDraft {
   /** Eindeutige ID */
@@ -19,12 +29,24 @@ export interface OfferDraft {
   /** Vollständige Konfiguration */
   config: OfferOptionState;
   /** Vorschau-Daten für Liste */
-  preview: {
-    hardware: string;
-    tariff: string;
-    avgMonthly: number;
-    quantity: number;
-  };
+  preview: OfferPreview;
+}
+
+/**
+ * Cloud-gespeichertes Angebot (mit DB-Feldern)
+ */
+export interface CloudOffer {
+  id: string;
+  user_id: string;
+  name: string;
+  config: OfferOptionState;
+  preview: OfferPreview | null;
+  is_draft: boolean;
+  created_at: string;
+  updated_at: string;
+  customer_id: string | null;
+  team_id: string | null;
+  visibility: "private" | "team";
 }
 
 /**

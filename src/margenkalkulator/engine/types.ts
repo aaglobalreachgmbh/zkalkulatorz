@@ -320,6 +320,16 @@ export type MobileState = {
    * - false: Fallback auf Smart Business Plus
    */
   primeOnAccount?: boolean;
+  /**
+   * OMO-Rabattstufe in Prozent (0-25%).
+   * 
+   * STUFEN:
+   * 0, 5, 10, 15, 17.5, 20, 25
+   * 
+   * AUSWIRKUNG:
+   * Reduziert die Provision um den angegebenen Prozentsatz.
+   */
+  omoRate?: number;
 };
 
 /**
@@ -416,11 +426,11 @@ export type OfferOptionState = {
  * - margin: 450€ (volle Marge)
  */
 export type DealerEconomics = {
-  /** Brutto-Provision vom Netzbetreiber */
+  /** Brutto-Provision vom Netzbetreiber (Mobilfunk) */
   provisionBase: number;
   /** Abzüge (z.B. OMO25 = -50€ pauschal) */
   deductions: number;
-  /** Netto-Provision nach Abzügen */
+  /** Netto-Provision nach Abzügen (Mobilfunk) */
   provisionAfter: number;
   /** Hardware-Einkaufspreis netto */
   hardwareEkNet: number;
@@ -429,6 +439,10 @@ export type DealerEconomics = {
    * Negativ = Händler subventioniert das Gerät.
    */
   margin: number;
+  /** Festnetz-Provision (optional, Phase 2.3) */
+  fixedNetProvision?: number;
+  /** OMO-Rabattstufe in Prozent (0-25) */
+  omoRate?: number;
 };
 
 /**
@@ -685,6 +699,30 @@ export type MobileTariff = {
   gigaDepot?: GigaDepotStatus;
   /** Erlaubte SUB-Varianten (für UI-Filterung) */
   allowedSubVariants?: SubVariantId[];
+  /**
+   * FH-Partner-Preis (Vertriebskanal).
+   * 
+   * ZWECK:
+   * Spezialpreis für FH-Partner (Fachhändler-Partner).
+   * Falls vorhanden, wird dieser statt baseNet verwendet.
+   */
+  fhPartnerNet?: number;
+  /**
+   * Push-Preis (Aktions-Preis).
+   * 
+   * ZWECK:
+   * Temporärer Aktionspreis bei speziellen Kampagnen.
+   * Falls vorhanden, kann dieser statt baseNet verwendet werden.
+   */
+  pushNet?: number;
+  /**
+   * OMO-Matrix: Provisionswerte nach Rabattstufe.
+   * 
+   * STRUKTUR:
+   * Key = Prozentsatz (0, 5, 10, 15, 17.5, 20, 25)
+   * Value = Provision nach diesem Abzug
+   */
+  omoMatrix?: Record<number, number | null>;
 };
 
 /**

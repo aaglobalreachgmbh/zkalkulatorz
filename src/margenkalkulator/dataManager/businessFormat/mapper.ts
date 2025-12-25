@@ -50,6 +50,11 @@ function mapTariffRow(row: BusinessTariffRow, minTerm: number): MobileTariffRow 
     eu_note: "wie in DE",
     sort_order: row.sourceRow,
     active: true,
+    // Phase 2.4: FH-Partner/Push values from XLSX
+    fh_partner_net: row.fhPartnerNet ?? undefined,
+    push_net: row.pushNet ?? undefined,
+    // OMO-Matrix from parsed values
+    omo_matrix: row.omo ?? undefined,
   };
 }
 

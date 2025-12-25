@@ -62,6 +62,9 @@ export default {
           foreground: "hsl(var(--panel-dark-foreground))",
           muted: "hsl(var(--panel-dark-muted))",
         },
+        success: "hsl(var(--success))",
+        warning: "hsl(var(--warning))",
+        info: "hsl(var(--info))",
       },
       borderRadius: {
         lg: "var(--radius)",

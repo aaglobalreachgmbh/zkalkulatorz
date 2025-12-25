@@ -2,3 +2,6 @@ project_id = "mexrgeafzvcestcccmiy"
 
 [functions.ai-consultant]
 verify_jwt = true
+
+[functions.security-log]
+verify_jwt = false

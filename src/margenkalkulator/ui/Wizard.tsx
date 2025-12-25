@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Smartphone, Signal, Router, LayoutGrid, Printer, Calculator } from "lucide-react";
 import {
@@ -16,6 +16,10 @@ import { CompareStep } from "./steps/CompareStep";
 import { GlobalControls } from "./components/GlobalControls";
 import { ValidationWarning } from "./components/ValidationWarning";
 import { AiConsultant } from "./components/AiConsultant";
+import { SaveDraftButton } from "./components/SaveDraftButton";
+import { DraftManager } from "./components/DraftManager";
+import { HistoryDropdown } from "./components/HistoryDropdown";
+import { addToHistory } from "../storage/history";
 import { useToast } from "@/hooks/use-toast";
 
 const STEPS: { id: WizardStep; label: string; icon: typeof Smartphone }[] = [
@@ -44,6 +48,22 @@ export function Wizard() {
 
   // Validation
   const validation = useWizardValidation(activeState);
+
+  // Auto-save to history on step change
+  useEffect(() => {
+    if (activeState.mobile.tariffId) {
+      addToHistory(activeState);
+    }
+  }, [currentStep, activeState]);
+
+  // Load draft/history handler
+  const handleLoadConfig = useCallback((config: OfferOptionState) => {
+    if (activeOption === 1) {
+      setOption1(config);
+    } else {
+      setOption2(config);
+    }
+  }, [activeOption]);
 
   // Navigation
   const goToStep = (step: WizardStep) => {
@@ -128,7 +148,7 @@ export function Wizard() {
 
   return (
     <div className="min-h-screen flex flex-col bg-muted/30">
-      {/* Header - Clean with Red Icon Box */}
+      {/* Header - Clean with Red Icon Box + Draft/History Controls */}
       <header className="bg-background border-b border-border">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -139,9 +159,16 @@ export function Wizard() {
               Margen<span className="text-primary">Kalkulator</span>
             </h1>
           </div>
-          <span className="text-sm text-muted-foreground hidden sm:block">
-            Vodafone Business Partner
-          </span>
+          
+          {/* Draft/History Controls */}
+          <div className="flex items-center gap-2">
+            <HistoryDropdown onLoadHistory={handleLoadConfig} />
+            <DraftManager onLoadDraft={handleLoadConfig} />
+            <SaveDraftButton config={activeState} avgMonthly={avgMonthlyNet} />
+            <span className="text-sm text-muted-foreground hidden lg:block ml-2">
+              Vodafone Business Partner
+            </span>
+          </div>
         </div>
       </header>
 

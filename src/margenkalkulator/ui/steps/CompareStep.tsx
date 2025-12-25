@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import type { CalculationResult, ViewMode, OfferOptionState } from "../../engine/types";
-import { Eye, EyeOff, Printer, Link2Off, Smartphone, Signal, Wifi } from "lucide-react";
+import { Eye, EyeOff, Printer, Link2Off, Smartphone, Signal, Wifi, FileText } from "lucide-react";
 import { DiscreteMarginIndicator } from "../components/DiscreteMarginIndicator";
+import { PdfDownloadButton } from "../components/PdfDownloadButton";
 
 interface CompareStepProps {
   option1: OfferOptionState;
@@ -61,6 +62,11 @@ export function CompareStep({
           >
             Modus wechseln
           </Button>
+          <PdfDownloadButton 
+            option={option1} 
+            result={result1} 
+            variant="secondary"
+          />
           <Button
             variant="outline"
             size="sm"

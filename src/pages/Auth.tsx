@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { SecureInput } from "@/components/ui/secure-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -210,12 +210,12 @@ export default function Auth() {
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="login-email">E-Mail</Label>
-                  <Input
+                  <SecureInput
                     id="login-email"
                     type="email"
                     placeholder="name@firma.de"
                     value={loginEmail}
-                    onChange={(e) => setLoginEmail(e.target.value)}
+                    onChange={(e, sanitized) => setLoginEmail(sanitized)}
                     disabled={isLoading || isLockedOut}
                     autoComplete="email"
                     maxLength={255}
@@ -231,7 +231,7 @@ export default function Auth() {
                 <div className="space-y-2">
                   <Label htmlFor="login-password">Passwort</Label>
                   <div className="relative">
-                    <Input
+                    <SecureInput
                       id="login-password"
                       type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
@@ -241,6 +241,7 @@ export default function Auth() {
                       autoComplete="current-password"
                       maxLength={128}
                       className={errors.loginPassword ? "border-destructive" : ""}
+                      detectThreats={false}
                     />
                     <Button
                       type="button"
@@ -283,12 +284,12 @@ export default function Auth() {
               <form onSubmit={handleSignup} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="signup-name">Name (optional)</Label>
-                  <Input
+                  <SecureInput
                     id="signup-name"
                     type="text"
                     placeholder="Max Mustermann"
                     value={signupDisplayName}
-                    onChange={(e) => setSignupDisplayName(e.target.value)}
+                    onChange={(e, sanitized) => setSignupDisplayName(sanitized)}
                     disabled={isLoading}
                     autoComplete="name"
                     maxLength={50}
@@ -303,12 +304,12 @@ export default function Auth() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-email">E-Mail</Label>
-                  <Input
+                  <SecureInput
                     id="signup-email"
                     type="email"
                     placeholder="name@firma.de"
                     value={signupEmail}
-                    onChange={(e) => setSignupEmail(e.target.value)}
+                    onChange={(e, sanitized) => setSignupEmail(sanitized)}
                     disabled={isLoading}
                     autoComplete="email"
                     maxLength={255}
@@ -324,7 +325,7 @@ export default function Auth() {
                 <div className="space-y-2">
                   <Label htmlFor="signup-password">Passwort</Label>
                   <div className="relative">
-                    <Input
+                    <SecureInput
                       id="signup-password"
                       type={showPassword ? "text" : "password"}
                       placeholder="Mindestens 6 Zeichen"
@@ -334,6 +335,7 @@ export default function Auth() {
                       autoComplete="new-password"
                       maxLength={128}
                       className={errors.signupPassword ? "border-destructive" : ""}
+                      detectThreats={false}
                     />
                     <Button
                       type="button"

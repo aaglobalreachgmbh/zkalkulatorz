@@ -15,4 +15,39 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  // Security Build Configuration
+  build: {
+    // Disable source maps in production
+    sourcemap: mode === "development",
+    // Use terser for better minification and code removal
+    minify: "terser",
+    terserOptions: {
+      compress: {
+        // Remove console.* in production
+        drop_console: mode === "production",
+        // Remove debugger statements
+        drop_debugger: true,
+        // Remove dead code
+        dead_code: true,
+      },
+      mangle: {
+        // Mangle property names in production for obfuscation
+        properties: mode === "production" ? { regex: /^_/ } : false,
+      },
+    },
+    // Chunk splitting for better caching
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ["react", "react-dom"],
+          router: ["react-router-dom"],
+          ui: ["@radix-ui/react-dialog", "@radix-ui/react-tabs"],
+        },
+      },
+    },
+  },
+  // Prevent sensitive info in error messages
+  esbuild: {
+    drop: mode === "production" ? ["console", "debugger"] : [],
+  },
 }));

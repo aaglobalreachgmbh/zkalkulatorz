@@ -52,4 +52,12 @@ export { calculateGigaKombi } from "./engine/benefitsEngine";
 export { 
   listFixedNetByAccessType,
   getActiveDatasetVersion,
+  listSubVariants,
 } from "./engine/catalogResolver";
+
+// === SUB VARIANT INFERENCE ===
+export { 
+  inferSubVariantFromHardware,
+  isSubVariantAllowed,
+  getBestAllowedSubVariant,
+} from "./lib/subVariantInference";

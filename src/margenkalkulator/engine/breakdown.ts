@@ -270,6 +270,17 @@ export function generateBreakdown(
     ruleId: "provision_after",
   });
   
+  // Fixed Net Provision (separate line for clarity)
+  if (dealer.fixedNetProvision && dealer.fixedNetProvision > 0) {
+    breakdown.push({
+      key: "dealer_fixednet_provision",
+      label: "Festnetz-Provision",
+      appliesTo: "dealer",
+      net: dealer.fixedNetProvision,
+      ruleId: "fixednet_provision",
+    });
+  }
+  
   if (state.hardware.ekNet > 0) {
     breakdown.push({
       key: "dealer_hardware_ek",

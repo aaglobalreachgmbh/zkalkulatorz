@@ -1,7 +1,7 @@
 // ============================================
 // Dealer Economics Module
 // Handles provision and margin calculations
-// Phase 2: OMO-Matrix (0-25%) + Fixed Net Provisions
+// Phase 2: OMO-Matrix (0-25%) + Fixed Net Provisions + FH-Partner
 // ============================================
 
 import type { MobileTariff, DealerEconomics, ContractType, FixedNetProduct } from "../types";
@@ -36,6 +36,67 @@ export function calculateOMOMatrixDeduction(
 ): number {
   const factor = getOMODeductionFactor(omoRate);
   return Math.round(provisionBase * factor * 100) / 100;
+}
+
+/**
+ * Get provision from OMO-Matrix (Source-of-Truth)
+ * 
+ * REGEL: XLSX ist Source-of-Truth
+ * - Wenn Matrix vorhanden und Wert existiert → absoluter Wert
+ * - Wenn null oder undefined → Stufe ist gesperrt (return undefined)
+ * - Wenn keine Matrix → prozentuale Berechnung (Fallback)
+ */
+export function getProvisionFromOMOMatrix(
+  tariff: MobileTariff | undefined,
+  omoRate: number,
+  contractType: ContractType
+): { provision: number; source: "matrix" | "calculated" } | undefined {
+  if (!tariff) return undefined;
+
+  // Base provision (new vs renewal)
+  const baseProvision = contractType === "renewal" && tariff.provisionRenewal !== undefined
+    ? tariff.provisionRenewal
+    : tariff.provisionBase;
+
+  // Check for OMO-Matrix in tariff
+  if (tariff.omoMatrix) {
+    const matrixValue = tariff.omoMatrix[omoRate];
+    
+    // Null or undefined in Matrix = locked/invalid
+    if (matrixValue === null || matrixValue === undefined) {
+      return undefined;
+    }
+    
+    // Value from Matrix (Source-of-Truth)
+    return { provision: matrixValue, source: "matrix" };
+  }
+  
+  // No Matrix → Fallback to percentage calculation
+  if (omoRate === 0) {
+    return { provision: baseProvision, source: "calculated" };
+  }
+  
+  const calculatedProvision = Math.round(baseProvision * (1 - omoRate / 100) * 100) / 100;
+  return { provision: calculatedProvision, source: "calculated" };
+}
+
+// ============================================
+// FH-Partner Bonus Calculator
+// ============================================
+
+/**
+ * Get FH-Partner (Fachhändler) bonus provision
+ * 
+ * GESCHÄFTSLOGIK:
+ * FH-Partner erhalten eine zusätzliche Provision (tariff.fhPartnerNet)
+ * die zur Standard-Provision addiert wird.
+ */
+export function getFHPartnerBonus(
+  tariff: MobileTariff | undefined,
+  isFHPartner: boolean
+): number {
+  if (!tariff || !isFHPartner) return 0;
+  return tariff.fhPartnerNet ?? 0;
 }
 
 // ============================================
@@ -103,7 +164,7 @@ export function calculateFixedNetProvision(
 
 /**
  * Calculate dealer economics (provision, deductions, margin)
- * Phase 2: Supports OMO-Matrix (0-25%), Fixed Net Provisions
+ * Phase 2: Supports OMO-Matrix (0-25%), Fixed Net Provisions, FH-Partner
  */
 export function calculateDealerEconomics(
   tariff: MobileTariff | undefined,
@@ -114,10 +175,12 @@ export function calculateDealerEconomics(
   options?: {
     omoRate?: number;
     fixedNetProduct?: FixedNetProduct;
+    isFHPartner?: boolean;
   }
 ): DealerEconomics {
   const omoRate = options?.omoRate ?? 0;
   const fixedNetProduct = options?.fixedNetProduct;
+  const isFHPartner = options?.isFHPartner ?? false;
   
   if (!tariff) {
     const fixedNetProvision = calculateFixedNetProvision(fixedNetProduct, contractType);
@@ -132,11 +195,17 @@ export function calculateDealerEconomics(
     };
   }
   
+  // Try OMO-Matrix first (Source-of-Truth), fallback to base provision
+  const omoResult = getProvisionFromOMOMatrix(tariff, omoRate, contractType);
+  
   // Use renewal provision if available and contract is renewal
   const baseProvision = contractType === "renewal" && tariff.provisionRenewal !== undefined
     ? tariff.provisionRenewal
     : tariff.provisionBase;
   
+  // Add FH-Partner bonus
+  const fhBonus = getFHPartnerBonus(tariff, isFHPartner);
+
   const provisionBase = baseProvision * quantity;
   
   // Calculate deductions

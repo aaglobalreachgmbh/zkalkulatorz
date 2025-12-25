@@ -2,13 +2,25 @@ import { useNavigate } from "react-router-dom";
 import { Calculator, Package, ArrowRight, Sparkles, Grid3X3 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { MainLayout } from "@/components/MainLayout";
+import { TICKER_ITEMS } from "@/margenkalkulator/data/news";
 
 const Home = () => {
   const navigate = useNavigate();
 
+  const tickerText = TICKER_ITEMS.join("   •   ");
+
   return (
     <MainLayout>
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-8rem)] px-4 py-8 animate-fade-in">
+      {/* News Ticker */}
+      <div className="w-full bg-primary text-primary-foreground py-2 overflow-hidden">
+        <div className="animate-marquee whitespace-nowrap inline-block">
+          <span className="text-sm font-medium px-4">
+            {tickerText}   •   {tickerText}
+          </span>
+        </div>
+      </div>
+
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] px-4 py-8 animate-fade-in">
         {/* Header */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary mb-6">

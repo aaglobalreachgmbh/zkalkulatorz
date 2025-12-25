@@ -169,3 +169,8 @@
 .animate-pulse-dot {
   animation: pulse-dot 2s ease-in-out infinite;
 }
+
+/* Ticker animation optimization */
+.animate-marquee {
+  will-change: transform;
+}

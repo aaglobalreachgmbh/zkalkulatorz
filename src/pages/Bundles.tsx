@@ -207,24 +207,7 @@ const Bundles = () => {
 
   return (
     <MainLayout>
-      <div className="min-h-screen bg-background">
-        {/* Header */}
-        <header className="border-b border-border bg-card">
-          <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-                <Calculator className="w-5 h-5 text-primary-foreground" />
-              </div>
-              <span className="text-lg font-bold text-foreground">
-                Margen<span className="text-primary">Kalkulator</span>
-              </span>
-            </div>
-            <button onClick={() => navigate("/")} className="text-muted-foreground hover:text-foreground">
-              ✕
-            </button>
-          </div>
-        </header>
-
+      <div className="min-h-full bg-background">
         {/* Dark Ticker Bar */}
         <div className="bg-panel-dark text-panel-dark-foreground overflow-hidden">
           <div className="flex items-center">
@@ -428,7 +411,7 @@ const Bundles = () => {
               {activeTab === "templates" && (
                 <div className="space-y-6">
                   {/* Sector Switcher for templates */}
-                  <div className="grid grid-cols-3 gap-1 p-1 bg-muted rounded-lg">
+                  <div className="flex w-full p-1 bg-muted/50 rounded-lg">
                     {(["private", "business", "enterprise"] as Sector[]).map((sector) => {
                       const Icon = SECTOR_ICON_MAP[sector];
                       const labels: Record<Sector, string> = {
@@ -439,10 +422,10 @@ const Bundles = () => {
                       return (
                         <button
                           key={sector}
-                          className="flex items-center justify-center gap-2 py-2.5 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground transition-all"
+                          className="flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground transition-all"
                         >
                           <Icon className="w-4 h-4" />
-                          {labels[sector]}
+                          <span className="hidden sm:inline">{labels[sector]}</span>
                         </button>
                       );
                     })}

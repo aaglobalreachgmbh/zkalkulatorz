@@ -240,9 +240,9 @@ const Bundles = () => {
             </div>
           </div>
 
-          <div className="flex flex-col xl:flex-row gap-6">
+          <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Column: Bundles */}
-            <div className="flex-1 min-w-0 space-y-6">
+            <div className="w-full lg:flex-1 lg:min-w-0 space-y-6">
               {/* Tabs */}
               <div className="flex items-center gap-8 border-b border-border">
                 <button
@@ -380,6 +380,14 @@ const Bundles = () => {
                         </div>
                       ))}
                     </div>
+
+                    {/* Empty State */}
+                    {filteredBundles.length === 0 && (
+                      <div className="text-center py-12 text-muted-foreground bg-muted/30 rounded-xl">
+                        <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>Keine Bundles für diesen Sektor verfügbar</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -522,7 +530,7 @@ const Bundles = () => {
             </div>
 
             {/* Right Column: News Feed */}
-            <aside className="xl:w-80 shrink-0 space-y-6">
+            <aside className="w-full lg:w-80 shrink-0 space-y-6">
               {/* News Section */}
               <div>
                 <div className="flex items-center justify-between mb-4">

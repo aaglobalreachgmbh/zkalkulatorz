@@ -1,4 +1,4 @@
-import { Input } from "@/components/ui/input";
+import { SecureInput } from "@/components/ui/secure-input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -169,7 +169,7 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <Label htmlFor="amort-months" className="text-sm">Monate:</Label>
-              <Input
+              <SecureInput
                 id="amort-months"
                 type="number"
                 min={1}
@@ -177,6 +177,7 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
                 value={value.amortMonths}
                 onChange={(e) => updateField("amortMonths", Math.max(1, parseInt(e.target.value) || 24))}
                 className="w-20"
+                detectThreats={false}
               />
             </div>
             <div className="text-right">

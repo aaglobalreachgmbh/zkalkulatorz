@@ -1,8 +1,27 @@
+/**
+ * SECURITY: Default Input Export
+ * 
+ * Dieser Export leitet automatisch auf SecureInput um.
+ * Alle zukünftigen `import { Input }` erhalten automatisch Sicherheitsschutz.
+ * 
+ * Für Dateieingaben oder spezielle Fälle: import { RawInput } from "./input"
+ */
 import * as React from "react";
-
 import { cn } from "@/lib/utils";
 
-const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
+// Re-export SecureInput as default Input for automatic protection
+export { SecureInput as Input, type SecureInputProps as InputProps } from "./secure-input";
+
+/**
+ * RawInput - Unsichere Input-Komponente für spezielle Anwendungsfälle
+ * 
+ * WARNUNG: Nur verwenden für:
+ * - File-Inputs (type="file")
+ * - Spezielle Integrationen die keine Sanitization vertragen
+ * 
+ * Für alle anderen Fälle: import { Input } from "@/components/ui/input"
+ */
+export const RawInput = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
   ({ className, type, ...props }, ref) => {
     return (
       <input
@@ -17,6 +36,4 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
     );
   },
 );
-Input.displayName = "Input";
-
-export { Input };
+RawInput.displayName = "RawInput";

@@ -219,3 +219,92 @@ Bei Hinzufügen neuer Dateien:
 5. Bei neuen Threat-Patterns: In `securityPatterns.ts` hinzufügen
 
 Das Sicherheitssystem erweitert sich automatisch auf alle Komponenten innerhalb des `SecurityProvider`.
+
+---
+
+## Entwickler-Guidelines
+
+### ⚠️ KRITISCHE REGELN
+
+1. **NIEMALS** raw `<input>` oder `<textarea>` verwenden
+   ```tsx
+   // ❌ FALSCH
+   <input type="text" value={value} onChange={...} />
+   
+   // ✅ RICHTIG
+   import { Input } from "@/components/ui/input";
+   <Input type="text" value={value} onChange={...} />
+   ```
+
+2. **IMMER** von `@/components/ui` importieren
+   ```tsx
+   // ❌ FALSCH - Direkter HTML-Element
+   <input type="text" ... />
+   
+   // ✅ RICHTIG - Automatisch SecureInput
+   import { Input } from "@/components/ui";
+   <Input type="text" ... />
+   ```
+
+3. **Ausnahme: File-Inputs** - Nur für Datei-Uploads
+   ```tsx
+   import { RawInput } from "@/components/ui/input";
+   <RawInput type="file" accept=".xlsx,.csv" ... />
+   ```
+
+### Automatischer Schutz für neue Dateien
+
+Durch die Kombination von:
+
+| Mechanismus | Schutz | Automatisch? |
+|-------------|--------|--------------|
+| **Input-Alias** | `import { Input }` = SecureInput | ✅ JA |
+| **ESLint Rules** | `no-eval`, `no-implied-eval`, `no-script-url` | ✅ JA |
+| **Zod Validation** | Runtime-Typprüfung | ✅ JA |
+| **CSP Headers** | Externe Script-Blockierung | ✅ JA |
+| **SecurityProvider** | Globale Threat Detection | ✅ JA |
+| **RLS Policies** | Deny-by-Default auf DB-Ebene | ✅ JA |
+| **Vite Build** | Console-Removal, Minification | ✅ JA |
+
+...wird **jede neue Datei automatisch** den Sicherheitsstandards unterworfen.
+
+### Code-Review Checkliste
+
+Vor dem Merge prüfen:
+
+- [ ] Alle `<input>` sind `Input` oder `SecureInput`?
+- [ ] Alle `<textarea>` sind `Textarea` oder `SecureTextarea`?
+- [ ] Keine `dangerouslySetInnerHTML` mit User-Input?
+- [ ] Keine `eval()`, `new Function()`, `setTimeout(string)`?
+- [ ] API-Keys nur in Edge Functions, nicht im Frontend?
+- [ ] Rate Limiting für externe API-Calls implementiert?
+- [ ] Zod-Schemas für komplexe Validierung verwendet?
+
+### Barrel-Exports
+
+Zentrale Imports für sichere Komponenten:
+
+```tsx
+// Empfohlen: Zentrale Imports
+import { 
+  Input,           // = SecureInput
+  Textarea,        // = SecureTextarea  
+  Button, 
+  Card 
+} from "@/components/ui";
+
+// Auch erlaubt: Einzelne Imports
+import { Input } from "@/components/ui/input";  // = SecureInput
+```
+
+### Passwort-Felder
+
+Für Passwort-Felder Threat-Detection deaktivieren (Passwörter können false-positives auslösen):
+
+```tsx
+<SecureInput
+  type="password"
+  enableThreatDetection={false}  // Wichtig!
+  ...
+/>
+```

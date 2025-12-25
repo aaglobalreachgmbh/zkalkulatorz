@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { Sparkles, Send, X, Bot, User, Loader2, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SecureInput } from "@/components/ui/secure-input";
 import { supabase } from "@/integrations/supabase/client";
 import type { OfferOptionState, CalculationResult } from "@/margenkalkulator/engine/types";
 import { 
@@ -293,22 +294,22 @@ export function AiConsultant({ config, result }: AiConsultantProps) {
         {/* Input */}
         <div className="p-4 border-t border-border/50 bg-card/50">
           <div className="relative flex items-center">
-            <input
+            <SecureInput
               type="text"
               value={input}
-              onChange={(e) => setInput(e.target.value.slice(0, 1000))}
+              onChange={(e, sanitized) => setInput(sanitized.slice(0, 1000))}
               onKeyDown={handleKeyDown}
               placeholder="Frage z.B.: 'Wie kann ich die Marge verbessern?'"
               disabled={isLoading || isRateLimited}
               maxLength={1000}
-              className="
-                w-full pl-4 pr-12 py-3
-                bg-background border border-border rounded-xl
-                focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary
-                text-sm text-foreground placeholder:text-muted-foreground
-                disabled:opacity-50
-                transition-all
-              "
+              className="w-full pl-4 pr-12 py-3 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm text-foreground placeholder:text-muted-foreground disabled:opacity-50 transition-all"
+              onThreatDetected={(threats) => {
+                setMessages((prev) => [
+                  ...prev,
+                  { role: "assistant", content: "Deine Nachricht enthält ungültige Muster." }
+                ]);
+                setInput("");
+              }}
             />
             <Button
               size="icon"

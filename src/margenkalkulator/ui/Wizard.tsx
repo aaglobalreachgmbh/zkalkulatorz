@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
+import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Smartphone, Signal, Router, LayoutGrid, Printer, Calculator } from "lucide-react";
 import {
@@ -17,6 +18,7 @@ import { GlobalControls } from "./components/GlobalControls";
 import { ValidationWarning } from "./components/ValidationWarning";
 import { AiConsultant } from "./components/AiConsultant";
 import { SaveDraftButton } from "./components/SaveDraftButton";
+import { SaveTemplateButton } from "./components/SaveTemplateButton";
 import { DraftManager } from "./components/DraftManager";
 import { HistoryDropdown } from "./components/HistoryDropdown";
 import { CloudOfferManager } from "./components/CloudOfferManager";
@@ -32,12 +34,37 @@ const STEPS: { id: WizardStep; label: string; icon: typeof Smartphone }[] = [
 
 export function Wizard() {
   const { toast } = useToast();
+  const location = useLocation();
   const [currentStep, setCurrentStep] = useState<WizardStep>("hardware");
   const [activeOption, setActiveOption] = useState<1 | 2>(1);
   const [viewMode, setViewMode] = useState<ViewMode>("dealer");
   
   const [option1, setOption1] = useState<OfferOptionState>(createDefaultOptionState);
   const [option2, setOption2] = useState<OfferOptionState>(createDefaultOptionState);
+
+  // Load bundle or template config from route state
+  useEffect(() => {
+    const state = location.state as { 
+      bundleConfig?: Partial<OfferOptionState>; 
+      templateConfig?: OfferOptionState;
+    } | null;
+    
+    if (state?.bundleConfig) {
+      const merged = { ...createDefaultOptionState(), ...state.bundleConfig };
+      setOption1(merged);
+      toast({
+        title: "Bundle geladen",
+        description: "Die Bundle-Konfiguration wurde übernommen.",
+      });
+    } else if (state?.templateConfig) {
+      setOption1(state.templateConfig);
+      toast({
+        title: "Template geladen",
+        description: "Die Template-Konfiguration wurde übernommen.",
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const currentStepIndex = STEPS.findIndex((s) => s.id === currentStep);
   const activeState = activeOption === 1 ? option1 : option2;
@@ -161,11 +188,12 @@ export function Wizard() {
             </h1>
           </div>
           
-          {/* Draft/History/Cloud Controls */}
+          {/* Draft/History/Cloud/Template Controls */}
           <div className="flex items-center gap-2">
             <HistoryDropdown onLoadHistory={handleLoadConfig} />
             <DraftManager onLoadDraft={handleLoadConfig} />
             <SaveDraftButton config={activeState} avgMonthly={avgMonthlyNet} />
+            <SaveTemplateButton config={activeState} />
             <CloudOfferManager 
               config={activeState} 
               avgMonthly={avgMonthlyNet} 

@@ -18,6 +18,7 @@ import Customers from "./pages/Customers";
 import Team from "./pages/Team";
 import Offers from "./pages/Offers";
 import Reporting from "./pages/Reporting";
+import SecuritySettings from "./pages/SecuritySettings";
 
 const queryClient = new QueryClient();
 
@@ -69,6 +70,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Reporting />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings/security"
+              element={
+                <ProtectedRoute>
+                  <SecuritySettings />
                 </ProtectedRoute>
               }
             />

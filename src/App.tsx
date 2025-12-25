@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { AdminRoute } from "@/components/AdminRoute";
 import { SecurityProvider } from "@/providers/SecurityProvider";
 import { SecurityErrorBoundary } from "@/components/SecurityErrorBoundary";
 import Index from "./pages/Index";
@@ -12,6 +13,7 @@ import NotFound from "./pages/NotFound";
 import DataManager from "./pages/DataManager";
 import HardwareManager from "./pages/HardwareManager";
 import Auth from "./pages/Auth";
+import SecurityDashboard from "./pages/SecurityDashboard";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +34,14 @@ const App = () => (
                 <ProtectedRoute>
                   <Index />
                 </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/security"
+              element={
+                <AdminRoute>
+                  <SecurityDashboard />
+                </AdminRoute>
               }
             />
             <Route

@@ -17,7 +17,16 @@ import {
   Trash2,
   Copy,
   FolderInput,
-  ChevronLeft
+  ChevronLeft,
+  Search,
+  Bell,
+  Calculator,
+  Target,
+  ArrowLeft,
+  Download,
+  Calendar,
+  Home as HomeIcon,
+  Signal
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -61,12 +70,36 @@ import {
   type TemplateFolder,
   SECTOR_LABELS 
 } from "@/margenkalkulator/storage/bundles";
-import { TICKER_ITEMS, MOCK_NEWS, NEWS_TYPE_CONFIG, type NewsItem as NewsItemType } from "@/margenkalkulator/data/news";
+import { TICKER_ITEMS, MOCK_NEWS, NEWS_TYPE_CONFIG, STRATEGIC_FOCUS, QUICK_TOOLS, type NewsItem as NewsItemType } from "@/margenkalkulator/data/news";
 
 const SECTOR_ICON_MAP = {
   private: User,
   business: Building2,
   enterprise: Building,
+};
+
+// News Item Component matching screenshot
+const NewsItem = ({ title, description, date, time, type }: NewsItemType) => {
+  const config = NEWS_TYPE_CONFIG[type];
+  return (
+    <div className="border-l-4 border-primary/20 hover:border-primary transition-colors">
+      <div className="p-4 space-y-2">
+        <div className="flex items-center justify-between">
+          <span className={`text-xs font-bold px-2 py-0.5 rounded ${config.bgColor}`}>
+            {config.label}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            {time ? `${date}, ${time}` : date}
+          </span>
+        </div>
+        <h4 className="font-semibold text-foreground text-sm">{title}</h4>
+        <p className="text-xs text-muted-foreground leading-relaxed">{description}</p>
+        <button className="text-xs font-medium text-foreground hover:text-primary flex items-center gap-1 transition-colors">
+          Mehr lesen <ArrowRight className="w-3 h-3" />
+        </button>
+      </div>
+    </div>
+  );
 };
 
 const Bundles = () => {
@@ -174,433 +207,464 @@ const Bundles = () => {
 
   return (
     <MainLayout>
-      {/* News Ticker */}
-      <div className="bg-primary text-primary-foreground overflow-hidden whitespace-nowrap">
-        <div className="animate-marquee inline-block py-2 text-sm font-medium">
-          {TICKER_ITEMS.map((item, i) => (
-            <span key={i} className="mx-8">{item}</span>
-          ))}
-          {/* Duplicate for seamless loop */}
-          {TICKER_ITEMS.map((item, i) => (
-            <span key={`dup-${i}`} className="mx-8">{item}</span>
-          ))}
-        </div>
-      </div>
-      
-      <div className="p-6 max-w-7xl mx-auto animate-fade-in">
-        {/* Header with Gradient */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-soft">
-              <Package className="h-5 w-5 text-primary-foreground" />
+      <div className="min-h-screen bg-background">
+        {/* Header */}
+        <header className="border-b border-border bg-card">
+          <div className="container mx-auto px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                <Calculator className="w-5 h-5 text-primary-foreground" />
+              </div>
+              <span className="text-lg font-bold text-foreground">
+                Margen<span className="text-primary">Kalkulator</span>
+              </span>
             </div>
-            <h1 className="text-2xl font-bold text-foreground">
-              Bundle Selector
-            </h1>
+            <button onClick={() => navigate("/")} className="text-muted-foreground hover:text-foreground">
+              ✕
+            </button>
           </div>
-          <p className="text-muted-foreground ml-13">
-            Wähle vorkonfigurierte Angebote oder nutze deine persönlichen Templates
-          </p>
+        </header>
+
+        {/* Dark Ticker Bar */}
+        <div className="bg-panel-dark text-panel-dark-foreground overflow-hidden">
+          <div className="flex items-center">
+            <div className="bg-primary px-3 py-2 flex items-center gap-1 shrink-0">
+              <span className="text-xs font-bold text-primary-foreground">📢 SALES PUSH</span>
+            </div>
+            <div className="flex-1 overflow-hidden whitespace-nowrap py-2">
+              <div className="animate-marquee inline-block text-sm">
+                {TICKER_ITEMS.map((item, i) => (
+                  <span key={i} className="mx-8">{item}</span>
+                ))}
+                {TICKER_ITEMS.map((item, i) => (
+                  <span key={`dup-${i}`} className="mx-8">{item}</span>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
+      
+        <div className="container mx-auto px-6 py-6 animate-fade-in">
+          {/* Sub Header */}
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <button 
+                onClick={() => navigate("/")}
+                className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 mb-1 transition-colors"
+              >
+                <ArrowLeft className="w-3 h-3" />
+                ZURÜCK ZUM START
+              </button>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl font-bold text-foreground">
+                  Sales <span className="text-primary">Cockpit</span>
+                </h1>
+                <Badge variant="secondary" className="text-xs">v2.4.0</Badge>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input 
+                  placeholder="Suche..." 
+                  className="pl-9 w-48 h-9 bg-muted/50 border-0"
+                />
+              </div>
+              <Button variant="ghost" size="icon" className="relative">
+                <Bell className="w-5 h-5" />
+                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-primary rounded-full" />
+              </Button>
+              <div className="w-10 h-10 bg-panel-dark rounded-full flex items-center justify-center">
+                <User className="w-5 h-5 text-panel-dark-foreground" />
+              </div>
+            </div>
+          </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column: Bundles */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Tabs */}
-            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "campaigns" | "templates")}>
-              <TabsList className="grid w-full max-w-md grid-cols-2 bg-muted/50">
-                <TabsTrigger value="campaigns" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  <Package className="h-4 w-4" />
-                  Corporate Campaigns
-                </TabsTrigger>
-                <TabsTrigger value="templates" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  <FileText className="h-4 w-4" />
-                  Meine Templates
-                </TabsTrigger>
-              </TabsList>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left Column: Bundles */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Tabs */}
+              <div className="flex items-center gap-8 border-b border-border">
+                <button
+                  onClick={() => setActiveTab("campaigns")}
+                  className={`flex items-center gap-2 pb-3 text-sm font-medium border-b-2 transition-colors ${
+                    activeTab === "campaigns" 
+                      ? "border-primary text-primary" 
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Package className="w-4 h-4" />
+                  Zentrale Kampagnen
+                </button>
+                <button
+                  onClick={() => setActiveTab("templates")}
+                  className={`flex items-center gap-2 pb-3 text-sm font-medium border-b-2 transition-colors ${
+                    activeTab === "templates" 
+                      ? "border-primary text-primary" 
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Star className="w-4 h-4" />
+                  Meine Vorlagen
+                </button>
+              </div>
 
-              {/* Campaigns Tab */}
-              <TabsContent value="campaigns" className="mt-6 space-y-6">
-                {/* Sector Switcher - Enhanced Design */}
-                <div className="p-4 bg-card rounded-xl border border-border shadow-soft">
-                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3 block">Zielgruppe</span>
-                  <div className="flex flex-wrap gap-2">
+              {activeTab === "campaigns" && (
+                <div className="space-y-6">
+                  {/* Sector Switcher */}
+                  <div className="grid grid-cols-3 gap-1 p-1 bg-muted rounded-lg">
                     {(Object.keys(SECTOR_LABELS) as Sector[]).map((sector) => {
                       const Icon = SECTOR_ICON_MAP[sector];
                       const isActive = selectedSector === sector;
+                      const labels: Record<Sector, string> = {
+                        private: "Privat",
+                        business: "Gewerbe",
+                        enterprise: "Konzern",
+                      };
                       return (
-                        <Button
+                        <button
                           key={sector}
-                          variant={isActive ? "default" : "outline"}
-                          size="sm"
                           onClick={() => setSelectedSector(sector)}
-                          className={`gap-2 transition-all ${isActive ? "shadow-md" : "hover:bg-muted"}`}
+                          className={`flex items-center justify-center gap-2 py-2.5 rounded-md text-sm font-medium transition-all ${
+                            isActive 
+                              ? "bg-card shadow-sm text-foreground" 
+                              : "text-muted-foreground hover:text-foreground"
+                          }`}
                         >
-                          <Icon className="h-4 w-4" />
-                          {SECTOR_LABELS[sector]}
-                        </Button>
+                          <Icon className="w-4 h-4" />
+                          {labels[sector]}
+                        </button>
                       );
                     })}
                   </div>
-                </div>
 
-                {/* Bundles Grid - Enhanced Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {filteredBundles.map((bundle) => (
-                    <Card 
-                      key={bundle.id}
-                      className="group cursor-pointer hover:shadow-elevated hover:border-primary/30 transition-all duration-300 hover:scale-[1.01] overflow-hidden relative"
-                      onClick={() => handleSelectBundle(bundle)}
-                    >
-                      {/* Featured indicator */}
-                      {bundle.featured && (
-                        <div className="absolute top-0 right-0 w-16 h-16 overflow-hidden">
-                          <div className="absolute top-2 right-[-20px] bg-gradient-to-r from-amber-500 to-amber-400 text-white text-xs font-bold px-6 py-0.5 transform rotate-45 shadow-sm">
-                            TOP
-                          </div>
-                        </div>
-                      )}
-                      
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between">
-                          <CardTitle className="text-base font-semibold">
-                            {bundle.name}
-                          </CardTitle>
-                          {bundle.featured && (
-                            <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          {bundle.description}
+                  {/* Strategic Focus Box */}
+                  <div className="p-4 border border-border rounded-xl bg-card">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center shrink-0">
+                        <Target className="w-5 h-5 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-muted-foreground tracking-wide mb-1">
+                          STRATEGISCHER FOKUS
                         </p>
-                      </CardHeader>
-                      <CardContent className="pt-0">
-                        <div className="flex flex-wrap gap-1.5 mb-4">
-                          {bundle.tags.map((tag) => (
-                            <Badge 
-                              key={tag} 
-                              variant="secondary" 
-                              className="text-xs bg-gradient-to-r from-secondary to-secondary/80"
-                            >
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-                        <div className="flex items-center text-primary text-sm font-medium group-hover:gap-2 gap-1 transition-all">
-                          Konfiguration öffnen
-                          <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-
-                {filteredBundles.length === 0 && (
-                  <div className="text-center py-12 text-muted-foreground bg-muted/30 rounded-xl">
-                    <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>Keine Bundles für diesen Sektor verfügbar</p>
+                        <h3 className="font-semibold text-primary mb-1">{STRATEGIC_FOCUS.title}</h3>
+                        <p className="text-sm text-muted-foreground">{STRATEGIC_FOCUS.description}</p>
+                      </div>
+                    </div>
                   </div>
-                )}
-              </TabsContent>
 
-              {/* Templates Tab */}
-              <TabsContent value="templates" className="mt-6 space-y-6">
-                {/* Folder Navigation */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    {currentFolderId && (
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => setCurrentFolderId(undefined)}
-                        className="gap-1"
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                        Zurück
+                  {/* Top Deals Section */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Star className="w-4 h-4 text-amber-500" />
+                      <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wide">
+                        Top Deals: {selectedSector === "business" ? "Gewerbe" : selectedSector === "enterprise" ? "Konzern" : "Privat"}
+                      </h3>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {filteredBundles.slice(0, 2).map((bundle, idx) => (
+                        <div
+                          key={bundle.id}
+                          onClick={() => handleSelectBundle(bundle)}
+                          className="group cursor-pointer"
+                        >
+                          {/* Color bar on top */}
+                          <div className={`h-1 rounded-t-xl ${idx === 0 ? "bg-amber-400" : "bg-primary"}`} />
+                          
+                          <Card className="rounded-t-none border-t-0 hover:shadow-lg transition-shadow">
+                            <CardHeader className="pb-2">
+                              <div className="flex items-start justify-between">
+                                <CardTitle className="text-base font-semibold">
+                                  {bundle.name}
+                                </CardTitle>
+                                <Badge variant="outline" className="text-[10px] font-bold">
+                                  {idx === 0 ? "PREISSIEGER" : "BESTSELLER"}
+                                </Badge>
+                              </div>
+                              <p className="text-sm text-muted-foreground">
+                                {bundle.description}
+                              </p>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                              {/* Hardware preview */}
+                              <div className="flex items-center gap-3 p-2 bg-muted/50 rounded-lg">
+                                <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-50 rounded-lg flex items-center justify-center">
+                                  <Package className="w-5 h-5 text-blue-600" />
+                                </div>
+                                <div>
+                                  <p className="text-sm font-medium">{bundle.config.hardware?.name || "SIM Only"}</p>
+                                  <p className="text-xs text-muted-foreground">Hardware</p>
+                                </div>
+                              </div>
+                              
+                              {/* Tariff preview */}
+                              <div className="flex items-center gap-3 p-2 bg-muted/50 rounded-lg">
+                                <div className="w-10 h-10 bg-gradient-to-br from-primary/20 to-primary/10 rounded-lg flex items-center justify-center">
+                                  <Signal className="w-5 h-5 text-primary" />
+                                </div>
+                                <div>
+                                  <p className="text-sm font-medium">
+                                    {bundle.config.mobile?.tariffId?.replace("_", " ") || "Tarif"}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">Tarif</p>
+                                </div>
+                              </div>
+
+                              <button className="text-sm text-muted-foreground hover:text-primary flex items-center gap-1 pt-2 transition-colors group-hover:text-primary">
+                                Sofort übernehmen <ArrowRight className="w-4 h-4" />
+                              </button>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === "templates" && (
+                <div className="space-y-6">
+                  {/* Sector Switcher for templates */}
+                  <div className="grid grid-cols-3 gap-1 p-1 bg-muted rounded-lg">
+                    {(["private", "business", "enterprise"] as Sector[]).map((sector) => {
+                      const Icon = SECTOR_ICON_MAP[sector];
+                      const labels: Record<Sector, string> = {
+                        private: "Privat",
+                        business: "Gewerbe",
+                        enterprise: "Konzern",
+                      };
+                      return (
+                        <button
+                          key={sector}
+                          className="flex items-center justify-center gap-2 py-2.5 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground transition-all"
+                        >
+                          <Icon className="w-4 h-4" />
+                          {labels[sector]}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Folder Navigation */}
+                  <div className="flex items-center justify-between p-4 bg-card rounded-xl border border-border">
+                    <div className="flex items-center gap-2">
+                      <HomeIcon className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">Root</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <FolderInput className="w-4 h-4" />
                       </Button>
-                    )}
-                    <span className="text-sm text-muted-foreground">
-                      {currentFolder ? currentFolder.name : "Alle Templates"}
-                    </span>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <FolderOpen className="w-4 h-4" />
+                      </Button>
+                      <Button 
+                        onClick={() => setNewFolderDialogOpen(true)}
+                        className="h-8 gap-2 bg-primary text-primary-foreground"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Neues Bundle
+                      </Button>
+                    </div>
                   </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => setNewFolderDialogOpen(true)}
-                    className="gap-2"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Neuer Ordner
-                  </Button>
-                </div>
 
-                {/* Folders (only show at root) */}
-                {!currentFolderId && folders.length > 0 && (
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-medium text-muted-foreground">Ordner</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {/* Folders */}
+                  {folders.length > 0 && (
+                    <div className="grid grid-cols-2 gap-4">
                       {folders.map((folder) => (
                         <Card 
                           key={folder.id}
                           className="cursor-pointer hover:shadow-md hover:border-primary/30 transition-all group"
+                          onClick={() => setCurrentFolderId(folder.id)}
                         >
                           <CardContent className="p-4 flex items-center justify-between">
-                            <div 
-                              className="flex items-center gap-3 flex-1 min-w-0"
-                              onClick={() => setCurrentFolderId(folder.id)}
-                            >
-                              <FolderOpen className="h-5 w-5 text-muted-foreground shrink-0" />
-                              <span className="text-sm font-medium truncate">{folder.name}</span>
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                                <Folder className="w-5 h-5 text-blue-500" />
+                              </div>
+                              <div>
+                                <p className="font-medium text-sm">{folder.name}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {getTemplatesInFolder(folder.id).length} Elemente
+                                </p>
+                              </div>
                             </div>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
-                                  className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => openRenameFolderDialog(folder)}>
-                                  <Pencil className="h-4 w-4 mr-2" />
-                                  Umbenennen
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem 
-                                  onClick={() => handleDeleteFolder(folder)}
-                                  className="text-destructive focus:text-destructive"
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Löschen
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 text-destructive hover:text-destructive"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteFolder(folder);
+                                }}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
                           </CardContent>
                         </Card>
                       ))}
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* Templates */}
-                {currentTemplates.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {currentTemplates.map((template) => (
-                      <Card 
-                        key={template.id}
-                        className="group cursor-pointer hover:shadow-lg hover:border-primary/30 transition-all duration-200"
-                      >
-                        <CardHeader className="pb-3">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1" onClick={() => handleSelectTemplate(template)}>
-                              <CardTitle className="text-base font-semibold">
-                                {template.name}
-                              </CardTitle>
-                              <p className="text-xs text-muted-foreground">
-                                Erstellt: {new Date(template.createdAt).toLocaleDateString("de-DE")}
-                              </p>
-                            </div>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
-                                  className="h-8 w-8"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => handleDuplicateTemplate(template)}>
-                                  <Copy className="h-4 w-4 mr-2" />
-                                  Duplizieren
-                                </DropdownMenuItem>
-                                <DropdownMenuSub>
-                                  <DropdownMenuSubTrigger>
-                                    <FolderInput className="h-4 w-4 mr-2" />
-                                    Verschieben
-                                  </DropdownMenuSubTrigger>
-                                  <DropdownMenuSubContent>
-                                    <DropdownMenuItem 
-                                      onClick={() => handleMoveTemplate(template, undefined)}
-                                      disabled={!template.folderId}
-                                    >
-                                      <Folder className="h-4 w-4 mr-2" />
-                                      Root
-                                    </DropdownMenuItem>
-                                    {folders.map((folder) => (
-                                      <DropdownMenuItem 
-                                        key={folder.id}
-                                        onClick={() => handleMoveTemplate(template, folder.id)}
-                                        disabled={template.folderId === folder.id}
-                                      >
-                                        <FolderOpen className="h-4 w-4 mr-2" />
-                                        {folder.name}
-                                      </DropdownMenuItem>
-                                    ))}
-                                  </DropdownMenuSubContent>
-                                </DropdownMenuSub>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem 
-                                  onClick={() => handleDeleteTemplate(template)}
-                                  className="text-destructive focus:text-destructive"
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Löschen
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="pt-0" onClick={() => handleSelectTemplate(template)}>
-                          <div className="flex items-center text-primary text-sm font-medium group-hover:gap-2 gap-1 transition-all">
-                            Template laden
-                            <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p className="mb-4">
-                      {currentFolderId ? "Keine Templates in diesem Ordner" : "Noch keine Templates erstellt"}
-                    </p>
-                    <Button variant="outline" onClick={() => navigate("/calculator")} className="gap-2">
-                      <Plus className="h-4 w-4" />
-                      Neues Template erstellen
-                    </Button>
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
-          </div>
+                  {/* Templates */}
+                  {currentTemplates.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {currentTemplates.map((template) => (
+                        <Card 
+                          key={template.id}
+                          className="group cursor-pointer hover:shadow-lg hover:border-primary/30 transition-all"
+                          onClick={() => handleSelectTemplate(template)}
+                        >
+                          <CardHeader className="pb-2">
+                            <CardTitle className="text-base font-semibold">
+                              {template.name}
+                            </CardTitle>
+                            <p className="text-xs text-muted-foreground">
+                              Erstellt: {new Date(template.createdAt).toLocaleDateString("de-DE")}
+                            </p>
+                          </CardHeader>
+                          <CardContent>
+                            <button className="text-sm text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors group-hover:text-primary">
+                              Template laden <ArrowRight className="w-4 h-4" />
+                            </button>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  ) : folders.length === 0 && (
+                    <div className="text-center py-12 text-muted-foreground bg-muted/30 rounded-xl">
+                      <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p className="mb-4">Noch keine Templates erstellt</p>
+                      <Button variant="outline" onClick={() => navigate("/calculator")} className="gap-2">
+                        <Plus className="h-4 w-4" />
+                        Neues Template erstellen
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
-          {/* Right Column: News Feed */}
-          <div className="space-y-4">
-            <Card className="bg-card/50 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Newspaper className="h-5 w-5 text-primary" />
-                  Salesworld News
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {MOCK_NEWS.map((news) => (
-                  <NewsItem key={news.id} {...news} />
-                ))}
-              </CardContent>
-            </Card>
+            {/* Right Column: News Feed */}
+            <div className="space-y-6">
+              {/* News Section */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Newspaper className="w-5 h-5 text-muted-foreground" />
+                    <h3 className="font-semibold">Salesworld News</h3>
+                  </div>
+                  <button className="text-xs text-primary font-medium hover:underline">
+                    Alle anzeigen
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  {MOCK_NEWS.slice(0, 3).map((news) => (
+                    <Card key={news.id} className="overflow-hidden">
+                      <NewsItem {...news} />
+                    </Card>
+                  ))}
+                </div>
+              </div>
 
-            {/* Quick Actions */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Schnellaktionen
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start gap-2"
-                  onClick={() => navigate("/calculator")}
-                >
-                  <Plus className="h-4 w-4" />
-                  Neue Konfiguration
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start gap-2"
-                  onClick={() => navigate("/offers")}
-                >
-                  <FileText className="h-4 w-4" />
-                  Meine Angebote
-                </Button>
-              </CardContent>
-            </Card>
+              {/* Quick Tools */}
+              <Card className="bg-panel-dark text-panel-dark-foreground overflow-hidden">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base font-semibold">Quick Tools</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start gap-3 h-12 text-panel-dark-foreground hover:bg-panel-dark-foreground/10"
+                  >
+                    <FileText className="w-5 h-5" />
+                    Provisions-Tabelle (PDF)
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start gap-3 h-12 text-panel-dark-foreground hover:bg-panel-dark-foreground/10"
+                  >
+                    <Download className="w-5 h-5" />
+                    Marketing-Material
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start gap-3 h-12 text-panel-dark-foreground hover:bg-panel-dark-foreground/10"
+                  >
+                    <Calendar className="w-5 h-5" />
+                    Schulungstermine
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
+
+        {/* Create Folder Dialog */}
+        <Dialog open={newFolderDialogOpen} onOpenChange={setNewFolderDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Neuer Ordner</DialogTitle>
+              <DialogDescription>
+                Erstelle einen neuen Ordner für deine Templates.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <Input
+                placeholder="Ordnername"
+                value={newFolderName}
+                onChange={(e) => setNewFolderName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleCreateFolder()}
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setNewFolderDialogOpen(false)}>
+                Abbrechen
+              </Button>
+              <Button onClick={handleCreateFolder} disabled={!newFolderName.trim()}>
+                Erstellen
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Rename Folder Dialog */}
+        <Dialog open={renameFolderDialogOpen} onOpenChange={setRenameFolderDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Ordner umbenennen</DialogTitle>
+              <DialogDescription>
+                Gib einen neuen Namen für den Ordner ein.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <Input
+                placeholder="Neuer Name"
+                value={newFolderName}
+                onChange={(e) => setNewFolderName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleRenameFolder()}
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setRenameFolderDialogOpen(false)}>
+                Abbrechen
+              </Button>
+              <Button onClick={handleRenameFolder} disabled={!newFolderName.trim()}>
+                Speichern
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
-
-      {/* Create Folder Dialog */}
-      <Dialog open={newFolderDialogOpen} onOpenChange={setNewFolderDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Neuer Ordner</DialogTitle>
-            <DialogDescription>
-              Erstelle einen neuen Ordner für deine Templates.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <Input
-              placeholder="Ordnername"
-              value={newFolderName}
-              onChange={(e) => setNewFolderName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleCreateFolder()}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setNewFolderDialogOpen(false)}>
-              Abbrechen
-            </Button>
-            <Button onClick={handleCreateFolder} disabled={!newFolderName.trim()}>
-              Erstellen
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Rename Folder Dialog */}
-      <Dialog open={renameFolderDialogOpen} onOpenChange={setRenameFolderDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Ordner umbenennen</DialogTitle>
-            <DialogDescription>
-              Gib einen neuen Namen für den Ordner ein.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <Input
-              placeholder="Neuer Name"
-              value={newFolderName}
-              onChange={(e) => setNewFolderName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleRenameFolder()}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setRenameFolderDialogOpen(false)}>
-              Abbrechen
-            </Button>
-            <Button onClick={handleRenameFolder} disabled={!newFolderName.trim()}>
-              Speichern
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </MainLayout>
-  );
-};
-
-// News Item Component
-const NewsItem = ({ title, description, date, type }: NewsItemType) => {
-  const config = NEWS_TYPE_CONFIG[type];
-
-  return (
-    <div className="border-b border-border pb-3 last:border-0 last:pb-0">
-      <div className="flex items-start justify-between gap-2 mb-1">
-        <h4 className="text-sm font-medium text-foreground">{title}</h4>
-        <Badge variant="secondary" className={`text-xs ${config.color}`}>
-          {config.label}
-        </Badge>
-      </div>
-      <p className="text-xs text-muted-foreground mb-1">{description}</p>
-      <span className="text-xs text-muted-foreground/70">{date}</span>
-    </div>
   );
 };
 

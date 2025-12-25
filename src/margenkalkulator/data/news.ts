@@ -4,13 +4,14 @@
  * Mock-Daten für Entwicklung – später durch API ersetzt
  */
 
-export type NewsType = "promo" | "stock" | "info" | "training" | "urgent";
+export type NewsType = "alert" | "info" | "training" | "promo" | "stock" | "urgent";
 
 export interface NewsItem {
   id: string;
   title: string;
   description: string;
   date: string;
+  time?: string;
   type: NewsType;
   link?: string;
 }
@@ -18,24 +19,25 @@ export interface NewsItem {
 export const MOCK_NEWS: NewsItem[] = [
   {
     id: "1",
-    title: "Provisions-Booster Q1",
-    description: "Prime XL Neuverträge +75€ Extra-Provision",
+    title: "Provisions-Booster: Cable Max",
+    description: "Bis zum 31.10. erhalten Sie doppelte Provision auf alle Cable 1000 Abschlüsse.",
     date: "Heute",
-    type: "promo",
+    time: "09:41",
+    type: "alert",
   },
   {
     id: "2",
-    title: "iPhone 16 Pro verfügbar",
-    description: "Alle Farben wieder lieferbar, Lieferzeit 2-3 Tage",
+    title: "iPhone 16 Pro Lagerbestand",
+    description: "Die Modelle in Titanium Desert sind wieder voll verfügbar.",
     date: "Gestern",
-    type: "stock",
+    type: "info",
   },
   {
     id: "3",
-    title: "⚠️ OMO-Rate-Änderung",
-    description: "Neue Staffelung ab 01.02.2025 – bitte Angebote prüfen",
-    date: "20.12.2024",
-    type: "urgent",
+    title: "Sales Guideline Q4/2024",
+    description: "Der neue Leitfaden für die Geschäftskunden-Akquise verfügbar.",
+    date: "23.10.2024",
+    type: "training",
   },
   {
     id: "4",
@@ -54,23 +56,64 @@ export const MOCK_NEWS: NewsItem[] = [
 ];
 
 /**
- * Ticker-Nachrichten für Marquee-Animation
+ * Ticker-Nachrichten für Marquee-Animation (Dark Bar Style)
  */
 export const TICKER_ITEMS: string[] = [
-  "🔥 Prime XL +75€ Bonus",
-  "📱 iPhone 16 Pro lieferbar",
-  "🎓 Schulung am 08.01.",
-  "⚠️ OMO-Rate-Änderung ab 01.02.",
-  "📊 TeamDeal ab 5 Verträgen",
+  "+++ Doppelte Provision auf GigaKombi Abschlüsse bis Freitag +++",
+  "+++ Wartungsarbeiten im ePOS System heute Nacht 03:00 - 05:00 Uhr +++",
+  "+++ iPhone 16 Pro Max in allen Farben lieferbar +++",
+  "+++ Neue TeamDeal Staffelung ab 01.02.2025 +++",
 ];
 
 /**
  * News-Typ Farben und Labels
  */
-export const NEWS_TYPE_CONFIG: Record<NewsType, { color: string; label: string }> = {
-  promo: { color: "bg-green-500/10 text-green-700 dark:text-green-400", label: "Aktion" },
-  stock: { color: "bg-blue-500/10 text-blue-700 dark:text-blue-400", label: "Lager" },
-  info: { color: "bg-amber-500/10 text-amber-700 dark:text-amber-400", label: "Info" },
-  training: { color: "bg-purple-500/10 text-purple-700 dark:text-purple-400", label: "Schulung" },
-  urgent: { color: "bg-red-500/10 text-red-700 dark:text-red-400", label: "Dringend" },
+export const NEWS_TYPE_CONFIG: Record<NewsType, { color: string; bgColor: string; label: string }> = {
+  alert: { 
+    color: "text-red-600", 
+    bgColor: "bg-red-100 text-red-700", 
+    label: "ALERT" 
+  },
+  info: { 
+    color: "text-muted-foreground", 
+    bgColor: "bg-muted text-muted-foreground", 
+    label: "INFO" 
+  },
+  training: { 
+    color: "text-muted-foreground", 
+    bgColor: "bg-muted text-muted-foreground", 
+    label: "TRAINING" 
+  },
+  promo: { 
+    color: "text-green-600", 
+    bgColor: "bg-green-100 text-green-700", 
+    label: "AKTION" 
+  },
+  stock: { 
+    color: "text-blue-600", 
+    bgColor: "bg-blue-100 text-blue-700", 
+    label: "LAGER" 
+  },
+  urgent: { 
+    color: "text-red-600", 
+    bgColor: "bg-red-100 text-red-700", 
+    label: "DRINGEND" 
+  },
 };
+
+/**
+ * Strategic Focus Data
+ */
+export const STRATEGIC_FOCUS = {
+  title: "Fokus Q4: Digitalisierungsoffensive",
+  description: 'Positionieren Sie "Business Professional" bei allen Neugründungen. Extra Bonus bei Buchung von Microsoft 365 Lizenzen.',
+};
+
+/**
+ * Quick Tools Links
+ */
+export const QUICK_TOOLS = [
+  { id: "provisions", label: "Provisions-Tabelle (PDF)", icon: "FileText" },
+  { id: "marketing", label: "Marketing-Material", icon: "Download" },
+  { id: "schulungen", label: "Schulungstermine", icon: "Calendar" },
+];

@@ -27,6 +27,7 @@ interface MobileStepProps {
   datasetVersion: DatasetVersion;
   fixedNetEnabled?: boolean;
   hardwareName?: string;
+  viewMode?: "customer" | "dealer";
 }
 
 const FAMILY_LABELS: Record<TariffFamily, string> = {
@@ -49,7 +50,9 @@ export function MobileStep({
   datasetVersion, 
   fixedNetEnabled = false,
   hardwareName = "",
+  viewMode = "dealer",
 }: MobileStepProps) {
+  const isCustomerMode = viewMode === "customer";
   const [selectedFamily, setSelectedFamily] = useState<TariffFamily | "all">("all");
 
   const updateField = <K extends keyof MobileState>(
@@ -277,10 +280,10 @@ export function MobileStep({
         </div>
       )}
 
-      {/* SUB Variant Selection + OMO + FH-Partner Row */}
+      {/* SUB Variant Selection + OMO + FH-Partner Row - Händler-Optionen teilweise versteckt */}
       {selectedTariff && !isTeamDeal && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6 bg-card rounded-xl border border-border">
-          {/* SUB Variant Selector */}
+        <div className={`grid grid-cols-1 ${isCustomerMode ? "" : "md:grid-cols-2 lg:grid-cols-3"} gap-6 p-6 bg-card rounded-xl border border-border`}>
+          {/* SUB Variant Selector - immer sichtbar */}
           <SubVariantSelector
             value={value.subVariantId}
             onChange={(id) => updateField("subVariantId", id)}
@@ -289,22 +292,26 @@ export function MobileStep({
             subVariants={subVariants}
           />
 
-          {/* OMO Rate Selector */}
-          <OMORateSelectorEnhanced
-            value={(value.omoRate ?? 0) as OMORate}
-            onChange={(rate) => updateField("omoRate", rate)}
-            tariff={selectedTariff}
-            contractType={value.contractType}
-          />
-
-          {/* FH Partner Toggle */}
-          <div className="flex items-end">
-            <FHPartnerToggle
-              checked={value.isFHPartner ?? false}
-              onChange={(checked) => updateField("isFHPartner", checked)}
-              fhPartnerProvision={selectedTariff.fhPartnerNet}
+          {/* OMO Rate Selector - nur Händler */}
+          {!isCustomerMode && (
+            <OMORateSelectorEnhanced
+              value={(value.omoRate ?? 0) as OMORate}
+              onChange={(rate) => updateField("omoRate", rate)}
+              tariff={selectedTariff}
+              contractType={value.contractType}
             />
-          </div>
+          )}
+
+          {/* FH Partner Toggle - nur Händler */}
+          {!isCustomerMode && (
+            <div className="flex items-end">
+              <FHPartnerToggle
+                checked={value.isFHPartner ?? false}
+                onChange={(checked) => updateField("isFHPartner", checked)}
+                fhPartnerProvision={selectedTariff.fhPartnerNet}
+              />
+            </div>
+          )}
         </div>
       )}
 

@@ -13,6 +13,7 @@ interface HardwareStepProps {
   value: HardwareState;
   onChange: (value: HardwareState) => void;
   datasetVersion?: DatasetVersion;
+  viewMode?: "customer" | "dealer";
 }
 
 // Placeholder images for hardware (using picsum for demo)
@@ -31,7 +32,8 @@ function getHardwareImage(id: string): string {
 
 type CategoryFilter = "all" | "smartphone" | "tablet";
 
-export function HardwareStep({ value, onChange, datasetVersion = "business-2025-09" }: HardwareStepProps) {
+export function HardwareStep({ value, onChange, datasetVersion = "business-2025-09", viewMode = "dealer" }: HardwareStepProps) {
+  const isCustomerMode = viewMode === "customer";
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedBrand, setSelectedBrand] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>("all");
@@ -121,21 +123,24 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
           <Smartphone className="w-5 h-5 text-muted-foreground" />
           <h2 className="text-xl font-semibold">Hardware wählen</h2>
         </div>
-        <div className="flex items-center gap-4">
-          <Link to="/hardware-manager">
-            <Button variant="outline" size="sm" className="gap-2">
-              <Upload className="w-4 h-4" />
-              Hardware-Manager (CSV)
-            </Button>
-          </Link>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Monatlich amortisieren</span>
-            <Switch
-              checked={value.amortize}
-              onCheckedChange={(checked) => updateField("amortize", checked)}
-            />
+        {/* Händler-Optionen - nur im Dealer-Modus */}
+        {!isCustomerMode && (
+          <div className="flex items-center gap-4">
+            <Link to="/hardware-manager">
+              <Button variant="outline" size="sm" className="gap-2">
+                <Upload className="w-4 h-4" />
+                Hardware-Manager (CSV)
+              </Button>
+            </Link>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Monatlich amortisieren</span>
+              <Switch
+                checked={value.amortize}
+                onCheckedChange={(checked) => updateField("amortize", checked)}
+              />
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Filter Section */}
@@ -281,12 +286,14 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
                 {displayBrand}
               </p>
               
-              {/* EK Badge */}
-              <div className="flex justify-center mt-2">
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-muted text-xs font-mono">
-                  EK: {item.ekNet} €
-                </span>
-              </div>
+              {/* EK Badge - nur im Händler-Modus */}
+              {!isCustomerMode && (
+                <div className="flex justify-center mt-2">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-muted text-xs font-mono">
+                    EK: {item.ekNet} €
+                  </span>
+                </div>
+              )}
             </button>
           );
         })}
@@ -301,8 +308,8 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
         </div>
       )}
 
-      {/* Amortization Details */}
-      {value.amortize && value.ekNet > 0 && (
+      {/* Amortization Details - nur im Händler-Modus */}
+      {!isCustomerMode && value.amortize && value.ekNet > 0 && (
         <div className="p-4 bg-muted/50 rounded-lg flex items-center justify-between">
           <div>
             <p className="text-sm font-medium">Amortisierung über {value.amortMonths} Monate</p>

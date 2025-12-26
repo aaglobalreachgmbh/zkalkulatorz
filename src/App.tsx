@@ -30,6 +30,7 @@ import Admin from "./pages/Admin";
 import License from "./pages/License";
 import SecurityReport from "./pages/SecurityReport";
 import ThreatIntelligence from "./pages/ThreatIntelligence";
+import SecurityStatusDashboard from "./pages/SecurityStatusDashboard";
 
 const queryClient = new QueryClient();
 
@@ -119,6 +120,16 @@ const App = () => (
                           <FeatureRoute feature="adminSecurityAccess">
                             <AdminRoute>
                               <ThreatIntelligence />
+                            </AdminRoute>
+                          </FeatureRoute>
+                        }
+                      />
+                      <Route
+                        path="/security/status"
+                        element={
+                          <FeatureRoute feature="adminSecurityAccess">
+                            <AdminRoute>
+                              <SecurityStatusDashboard />
                             </AdminRoute>
                           </FeatureRoute>
                         }

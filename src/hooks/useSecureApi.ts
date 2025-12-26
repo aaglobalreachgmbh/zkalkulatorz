@@ -153,7 +153,7 @@ export function useSecureApi<T = unknown>(
       });
       
       // LLM-specific output processing
-      let processedResponse = response;
+      let processedResponse: Awaited<T> = response;
       if (opts.isLlmRequest && opts.filterLlmResponse && response) {
         // Check and filter LLM output
         if (typeof response === "object" && response !== null) {
@@ -167,21 +167,25 @@ export function useSecureApi<T = unknown>(
               
               // Filter the response
               const filteredChoices = responseObj.choices.map((choice: unknown) => {
-                  if (typeof choice === "object" && choice !== null) {
-                    const typedChoice = choice as { message?: { content?: string } };
-                    if (typedChoice.message?.content) {
-                      return {
-                        ...typedChoice,
-                        message: {
-                          ...typedChoice.message,
-                          content: filterLlmOutput(typedChoice.message.content),
-                        },
-                      };
-                    }
+                if (typeof choice === "object" && choice !== null) {
+                  const typedChoice = choice as { message?: { content?: string } };
+                  if (typedChoice.message?.content) {
+                    return {
+                      ...typedChoice,
+                      message: {
+                        ...typedChoice.message,
+                        content: filterLlmOutput(typedChoice.message.content),
+                      },
+                    };
                   }
-                  return choice;
-                }),
-              } as T;
+                }
+                return choice;
+              });
+              
+              processedResponse = {
+                ...responseObj,
+                choices: filteredChoices,
+              } as Awaited<T>;
             }
           }
         }

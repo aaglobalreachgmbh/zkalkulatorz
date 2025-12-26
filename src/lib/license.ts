@@ -46,6 +46,15 @@ export interface LicenseFeatures {
   adminSecurityAccess: boolean;
   /** Admin-Only: Datenbank-Import ohne Approval */
   adminBypassApproval: boolean;
+  
+  // ============================================
+  // Multi-Device Features (Plan-based)
+  // ============================================
+  
+  /** Mobile/Tablet Zugang aktiviert */
+  mobileAccess: boolean;
+  /** Offline-Modus mit Sync */
+  offlineSync: boolean;
 }
 
 /**
@@ -88,6 +97,9 @@ export const PLAN_FEATURES: Record<LicensePlan, LicenseFeatures> = {
     adminFeatureControl: true,
     adminSecurityAccess: true,
     adminBypassApproval: true,
+    // Multi-Device Features
+    mobileAccess: true,
+    offlineSync: true,
   },
   pro: {
     dataGovernance: true,
@@ -104,6 +116,9 @@ export const PLAN_FEATURES: Record<LicensePlan, LicenseFeatures> = {
     adminFeatureControl: false,
     adminSecurityAccess: false,
     adminBypassApproval: false,
+    // Limited mobile
+    mobileAccess: false,
+    offlineSync: false,
   },
   enterprise: {
     dataGovernance: true,
@@ -120,6 +135,9 @@ export const PLAN_FEATURES: Record<LicensePlan, LicenseFeatures> = {
     adminFeatureControl: false,
     adminSecurityAccess: false,
     adminBypassApproval: false,
+    // Full mobile access for enterprise
+    mobileAccess: true,
+    offlineSync: true,
   },
 };
 

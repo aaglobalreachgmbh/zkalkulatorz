@@ -29,7 +29,9 @@ import {
   Eye,
   Settings2,
   ShieldAlert,
-  KeyRound
+  KeyRound,
+  Smartphone,
+  CloudOff
 } from "lucide-react";
 import { useLicense } from "@/hooks/useLicense";
 import { type LicenseFeatures, type LicensePlan, PLAN_FEATURES, PLAN_SEAT_LIMITS } from "@/lib/license";
@@ -113,6 +115,17 @@ const FEATURE_META: Record<keyof LicenseFeatures, {
     description: "Datenbank-Import ohne Genehmigung",
     icon: KeyRound,
     isAdminOnly: true,
+  },
+  // Multi-Device Features
+  mobileAccess: {
+    name: "Mobile/Tablet Zugang",
+    description: "App auch auf Mobilgeräten nutzen",
+    icon: Smartphone,
+  },
+  offlineSync: {
+    name: "Offline-Synchronisation",
+    description: "Offline arbeiten und später synchronisieren",
+    icon: CloudOff,
   },
 };
 

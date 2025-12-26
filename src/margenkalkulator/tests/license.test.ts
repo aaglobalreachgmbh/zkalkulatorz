@@ -72,6 +72,8 @@ describe("License System", () => {
           adminFeatureControl: false,
           adminSecurityAccess: false,
           adminBypassApproval: false,
+          mobileAccess: false,
+          offlineSync: false,
         },
         updatedAt: new Date().toISOString(),
       };

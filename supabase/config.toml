@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.notify-admin-registration]
 verify_jwt = true
+
+[functions.gdpr-cleanup]
+verify_jwt = false

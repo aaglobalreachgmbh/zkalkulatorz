@@ -599,6 +599,8 @@ function LicenseTab() {
     adminFeatureControl: "Feature-Steuerung",
     adminSecurityAccess: "Security-Zugang",
     adminBypassApproval: "Approval überspringen",
+    mobileAccess: "Mobile/Tablet Zugang",
+    offlineSync: "Offline-Synchronisation",
   };
 
   const featureDescriptions: Partial<Record<keyof LicenseFeatures, string>> = {

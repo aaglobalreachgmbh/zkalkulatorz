@@ -68,6 +68,10 @@ describe("License System", () => {
           advancedReporting: false,
           apiAccess: false,
           customBranding: false,
+          adminFullVisibility: false,
+          adminFeatureControl: false,
+          adminSecurityAccess: false,
+          adminBypassApproval: false,
         },
         updatedAt: new Date().toISOString(),
       };

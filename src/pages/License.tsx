@@ -25,7 +25,11 @@ import {
   ClipboardList,
   BarChart3,
   Plug,
-  Palette
+  Palette,
+  Eye,
+  Settings2,
+  ShieldAlert,
+  KeyRound
 } from "lucide-react";
 import { useLicense } from "@/hooks/useLicense";
 import { type LicenseFeatures, type LicensePlan, PLAN_FEATURES, PLAN_SEAT_LIMITS } from "@/lib/license";
@@ -38,6 +42,7 @@ const FEATURE_META: Record<keyof LicenseFeatures, {
   name: string; 
   description: string; 
   icon: typeof Check;
+  isAdminOnly?: boolean;
 }> = {
   dataGovernance: {
     name: "Daten-Governance",
@@ -84,13 +89,38 @@ const FEATURE_META: Record<keyof LicenseFeatures, {
     description: "Logo, Farben, Badge entfernen",
     icon: Palette,
   },
+  // Admin-Only Features
+  adminFullVisibility: {
+    name: "Vollständige Sichtbarkeit",
+    description: "Alle Margen-Details für alle Nutzer sichtbar",
+    icon: Eye,
+    isAdminOnly: true,
+  },
+  adminFeatureControl: {
+    name: "Feature-Steuerung",
+    description: "Feature-Flags für andere Nutzer steuern",
+    icon: Settings2,
+    isAdminOnly: true,
+  },
+  adminSecurityAccess: {
+    name: "Security-Zugang",
+    description: "Zugang zu allen Security-Dashboards",
+    icon: ShieldAlert,
+    isAdminOnly: true,
+  },
+  adminBypassApproval: {
+    name: "Approval überspringen",
+    description: "Datenbank-Import ohne Genehmigung",
+    icon: KeyRound,
+    isAdminOnly: true,
+  },
 };
 
 /**
  * Plan display names
  */
 const PLAN_NAMES: Record<LicensePlan, string> = {
-  internal: "Internal",
+  internal: "allenetze.de Partner",
   pro: "Pro",
   enterprise: "Enterprise",
 };
@@ -188,6 +218,20 @@ export default function License() {
                 const meta = FEATURE_META[key];
                 const enabled = license.features[key];
                 const Icon = meta.icon;
+                const isAdminOnly = meta.isAdminOnly;
+                
+                // Determine styling based on feature type
+                const enabledStyles = isAdminOnly
+                  ? "bg-amber-50 border-amber-300 dark:bg-amber-950/20 dark:border-amber-700"
+                  : "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-800";
+                
+                const iconBgStyles = isAdminOnly
+                  ? "bg-amber-100 dark:bg-amber-900/50"
+                  : "bg-emerald-100 dark:bg-emerald-900/50";
+                
+                const iconStyles = isAdminOnly
+                  ? "text-amber-600 dark:text-amber-400"
+                  : "text-emerald-600 dark:text-emerald-400";
                 
                 return (
                   <div 
@@ -195,17 +239,17 @@ export default function License() {
                     className={cn(
                       "flex items-start gap-3 p-3 rounded-lg border",
                       enabled 
-                        ? "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-800"
+                        ? enabledStyles
                         : "bg-muted/50 border-border opacity-60"
                     )}
                   >
                     <div className={cn(
                       "p-2 rounded-lg",
-                      enabled ? "bg-emerald-100 dark:bg-emerald-900/50" : "bg-muted"
+                      enabled ? iconBgStyles : "bg-muted"
                     )}>
                       <Icon className={cn(
                         "h-4 w-4",
-                        enabled ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"
+                        enabled ? iconStyles : "text-muted-foreground"
                       )} />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -216,8 +260,13 @@ export default function License() {
                         )}>
                           {meta.name}
                         </span>
+                        {isAdminOnly && enabled && (
+                          <Badge className="text-[10px] bg-amber-500 hover:bg-amber-600">
+                            Admin
+                          </Badge>
+                        )}
                         {enabled ? (
-                          <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                          <Check className={cn("h-4 w-4", iconStyles)} />
                         ) : (
                           <X className="h-4 w-4 text-muted-foreground" />
                         )}
@@ -227,7 +276,7 @@ export default function License() {
                       </p>
                       {!enabled && (
                         <Badge variant="outline" className="mt-1 text-[10px]">
-                          Enterprise erforderlich
+                          {isAdminOnly ? "Nur allenetze.de Partner" : "Enterprise erforderlich"}
                         </Badge>
                       )}
                     </div>

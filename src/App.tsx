@@ -8,6 +8,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminRoute } from "@/components/AdminRoute";
 import { SecurityProvider } from "@/providers/SecurityProvider";
 import { SecurityErrorBoundary } from "@/components/SecurityErrorBoundary";
+import { OfflineBoundary } from "@/components/OfflineBoundary";
 import { IdentityProvider } from "@/contexts/IdentityContext";
 import { CustomerSessionProvider } from "@/contexts/CustomerSessionContext";
 import Home from "./pages/Home";
@@ -31,13 +32,14 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <SecurityErrorBoundary>
       <SecurityProvider>
-        <TooltipProvider>
-          <AuthProvider>
-            <IdentityProvider>
-              <CustomerSessionProvider>
-                <Toaster />
-                <Sonner />
-                <BrowserRouter>
+        <OfflineBoundary>
+          <TooltipProvider>
+            <AuthProvider>
+              <IdentityProvider>
+                <CustomerSessionProvider>
+                  <Toaster />
+                  <Sonner />
+                  <BrowserRouter>
                   <Routes>
                     <Route path="/auth" element={<Auth />} />
                     <Route path="/" element={<Home />} />
@@ -111,11 +113,12 @@ const App = () => (
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>
-                </BrowserRouter>
-              </CustomerSessionProvider>
-            </IdentityProvider>
-          </AuthProvider>
-        </TooltipProvider>
+                  </BrowserRouter>
+                </CustomerSessionProvider>
+              </IdentityProvider>
+            </AuthProvider>
+          </TooltipProvider>
+        </OfflineBoundary>
       </SecurityProvider>
     </SecurityErrorBoundary>
   </QueryClientProvider>

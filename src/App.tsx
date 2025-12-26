@@ -31,6 +31,7 @@ import License from "./pages/License";
 import SecurityReport from "./pages/SecurityReport";
 import ThreatIntelligence from "./pages/ThreatIntelligence";
 import SecurityStatusDashboard from "./pages/SecurityStatusDashboard";
+import Privacy from "./pages/Privacy";
 
 const queryClient = new QueryClient();
 
@@ -150,10 +151,11 @@ const App = () => (
                           <FeatureRoute feature="dataGovernance">
                             <ProtectedRoute>
                               <HardwareManager />
-                            </ProtectedRoute>
+                        </ProtectedRoute>
                           </FeatureRoute>
                         }
                       />
+                      <Route path="/datenschutz" element={<Privacy />} />
                       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                       <Route path="*" element={<NotFound />} />
                     </Routes>

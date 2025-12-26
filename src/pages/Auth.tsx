@@ -430,6 +430,12 @@ export default function Auth() {
                     "Konto erstellen"
                   )}
                 </Button>
+                <p className="text-xs text-center text-muted-foreground">
+                  Mit der Registrierung akzeptieren Sie unsere{" "}
+                  <a href="/datenschutz" className="underline hover:text-primary">
+                    Datenschutzhinweise
+                  </a>
+                </p>
               </form>
             </TabsContent>
           </Tabs>

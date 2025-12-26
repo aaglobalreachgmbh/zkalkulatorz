@@ -3,11 +3,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import type { HardwareState, DatasetVersion } from "../../engine/types";
 import { listHardwareItems } from "../../engine/catalogResolver";
-import { Smartphone, Upload, Check, Search, Tablet } from "lucide-react";
+import { Smartphone, Upload, Check, Search, Tablet, ChevronDown } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { groupHardwareItems, findGroupAndVariant, type HardwareGroup, type HardwareVariant } from "../../lib/hardwareGrouping";
 
 interface HardwareStepProps {
   value: HardwareState;
@@ -19,15 +25,12 @@ interface HardwareStepProps {
 // Placeholder images for hardware (using picsum for demo)
 const HARDWARE_IMAGES: Record<string, string> = {
   no_hardware: "https://picsum.photos/seed/simonly/200/200",
-  iphone_16_128: "https://picsum.photos/seed/iphone16/200/200",
-  iphone_16_pro_128: "https://picsum.photos/seed/iphone16pro/200/200",
-  samsung_s24_128: "https://picsum.photos/seed/samsungs24/200/200",
-  pixel_9_128: "https://picsum.photos/seed/pixel9/200/200",
   default: "https://picsum.photos/seed/phone/200/200",
 };
 
-function getHardwareImage(id: string): string {
-  return HARDWARE_IMAGES[id] || HARDWARE_IMAGES.default;
+function getHardwareImage(baseId: string): string {
+  // Generiere konsistentes Bild basierend auf baseId
+  return `https://picsum.photos/seed/${baseId}/200/200`;
 }
 
 type CategoryFilter = "all" | "smartphone" | "tablet";
@@ -37,29 +40,31 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedBrand, setSelectedBrand] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>("all");
+  const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
 
   const hardwareItems = useMemo(() => listHardwareItems(datasetVersion), [datasetVersion]);
+  
+  // Find the SIM-Only item
+  const simOnlyItem = useMemo(() => 
+    hardwareItems.find(item => item.id === "no_hardware"),
+    [hardwareItems]
+  );
   
   // Extract unique brands from hardware items
   const brands = useMemo(() => {
     const uniqueBrands = new Set(
       hardwareItems
-        .filter(item => item.category !== "custom" && item.category !== "none")
+        .filter(item => item.category !== "custom" && item.category !== "none" && item.id !== "no_hardware")
         .map(item => item.brand)
     );
     return Array.from(uniqueBrands).sort();
   }, [hardwareItems]);
 
-  // Filter hardware items based on search, brand, and category
-  const filteredItems = useMemo(() => {
-    return hardwareItems.filter(item => {
-      // Always exclude custom entries
-      if (item.category === "custom") return false;
-      
-      // Handle "no_hardware" / SIM Only separately - show only in "all" brand filter
-      if (item.id === "no_hardware") {
-        return selectedBrand === "all" || selectedBrand === "sim_only";
-      }
+  // Filter and group hardware items
+  const groupedItems = useMemo(() => {
+    const filtered = hardwareItems.filter(item => {
+      // Exclude custom, none, and no_hardware (handled separately)
+      if (item.category === "custom" || item.id === "no_hardware") return false;
       
       // Search filter
       const searchLower = searchQuery.toLowerCase();
@@ -68,44 +73,58 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
         item.model.toLowerCase().includes(searchLower);
       
       // Brand filter
-      const matchesBrand = selectedBrand === "all" || item.brand === selectedBrand;
+      const matchesBrand = selectedBrand === "all" || selectedBrand === "sim_only" || item.brand === selectedBrand;
       
       // Category filter
       const matchesCategory = selectedCategory === "all" || item.category === selectedCategory;
       
       return matchesSearch && matchesBrand && matchesCategory;
     });
+
+    return groupHardwareItems(filtered);
   }, [hardwareItems, searchQuery, selectedBrand, selectedCategory]);
 
-  // Find selected hardware item
-  const selectedHardwareId = useMemo(() => {
+  // Check if SIM-Only should be shown
+  const showSimOnly = selectedBrand === "all" || selectedBrand === "sim_only";
+
+  // Find currently selected hardware
+  const selectedInfo = useMemo(() => {
     const found = hardwareItems.find(h => 
       h.category !== "custom" && 
       h.category !== "none" &&
       `${h.brand} ${h.model}` === value.name
     );
-    if (found) return found.id;
-    if (!value.name || value.name === "KEINE HARDWARE") return "no_hardware";
-    return "";
-  }, [value.name, hardwareItems]);
-
-  const handleHardwareSelect = (hardwareId: string) => {
-    const item = hardwareItems.find(h => h.id === hardwareId);
-    if (!item) return;
-    
-    if (item.id === "no_hardware") {
-      onChange({
-        ...value,
-        name: "KEINE HARDWARE",
-        ekNet: 0,
-      });
-    } else {
-      onChange({
-        ...value,
-        name: `${item.brand} ${item.model}`,
-        ekNet: item.ekNet,
-      });
+    if (found) {
+      if (found.id === "no_hardware") {
+        return { type: "simOnly" as const };
+      }
+      const groupInfo = findGroupAndVariant(groupedItems, found.id);
+      if (groupInfo) {
+        return { type: "variant" as const, ...groupInfo };
+      }
     }
+    if (!value.name || value.name === "KEINE HARDWARE") {
+      return { type: "simOnly" as const };
+    }
+    return null;
+  }, [value.name, hardwareItems, groupedItems]);
+
+  const handleSimOnlySelect = () => {
+    onChange({
+      ...value,
+      name: "KEINE HARDWARE",
+      ekNet: 0,
+    });
+    setOpenPopoverId(null);
+  };
+
+  const handleVariantSelect = (variant: HardwareVariant, brand: string) => {
+    onChange({
+      ...value,
+      name: `${brand} ${variant.fullModel}`,
+      ekNet: variant.ekNet,
+    });
+    setOpenPopoverId(null);
   };
 
   const updateField = <K extends keyof HardwareState>(
@@ -234,73 +253,180 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
 
         {/* Results Count */}
         <div className="text-sm text-muted-foreground">
-          {filteredItems.length} Gerät{filteredItems.length !== 1 ? "e" : ""} gefunden
+          {groupedItems.length} Modell{groupedItems.length !== 1 ? "e" : ""} gefunden
+          {showSimOnly && " + SIM Only"}
         </div>
       </div>
 
       {/* Hardware Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {filteredItems.map((item) => {
-          const isSelected = selectedHardwareId === item.id;
-          const displayName = item.id === "no_hardware" 
-            ? "SIM Only" 
-            : item.model;
-          const displayBrand = item.id === "no_hardware" 
-            ? "Vodafone" 
-            : item.brand;
+        {/* SIM Only Card */}
+        {showSimOnly && simOnlyItem && (
+          <button
+            onClick={handleSimOnlySelect}
+            className={`
+              relative p-5 rounded-xl border-2 bg-card text-left transition-all
+              hover:shadow-md hover:border-primary/50
+              ${selectedInfo?.type === "simOnly"
+                ? "border-primary ring-2 ring-primary/20" 
+                : "border-border"
+              }
+            `}
+          >
+            {selectedInfo?.type === "simOnly" && (
+              <div className="absolute top-3 right-3 w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                <Check className="w-4 h-4 text-primary-foreground" />
+              </div>
+            )}
+            
+            <div className="flex justify-center mb-3">
+              <img 
+                src={HARDWARE_IMAGES.no_hardware}
+                alt="SIM Only"
+                className="w-20 h-20 object-cover rounded-lg"
+              />
+            </div>
+            
+            <h3 className="font-semibold text-foreground text-center text-sm">
+              SIM Only
+            </h3>
+            <p className="text-xs text-muted-foreground text-center mt-1">
+              Nur Tarif
+            </p>
+            
+            {!isCustomerMode && (
+              <div className="flex justify-center mt-2">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 text-xs font-medium">
+                  Maximale Marge
+                </span>
+              </div>
+            )}
+          </button>
+        )}
+
+        {/* Grouped Hardware Cards */}
+        {groupedItems.map((group) => {
+          const isSelected = selectedInfo?.type === "variant" && selectedInfo.group.baseId === group.baseId;
+          const selectedVariant = isSelected ? selectedInfo.variant : null;
+          const hasMultipleVariants = group.variants.length > 1;
           
           return (
-            <button
-              key={item.id}
-              onClick={() => handleHardwareSelect(item.id)}
-              className={`
-                relative p-5 rounded-xl border-2 bg-card text-left transition-all
-                hover:shadow-md hover:border-primary/50
-                ${isSelected 
-                  ? "border-primary ring-2 ring-primary/20" 
-                  : "border-border"
-                }
-              `}
+            <Popover 
+              key={group.baseId} 
+              open={openPopoverId === group.baseId}
+              onOpenChange={(open) => setOpenPopoverId(open ? group.baseId : null)}
             >
-              {/* Selected indicator */}
-              {isSelected && (
-                <div className="absolute top-3 right-3 w-6 h-6 bg-primary rounded-full flex items-center justify-center">
-                  <Check className="w-4 h-4 text-primary-foreground" />
+              <PopoverTrigger asChild>
+                <button
+                  className={`
+                    relative p-5 rounded-xl border-2 bg-card text-left transition-all w-full
+                    hover:shadow-md hover:border-primary/50
+                    ${isSelected 
+                      ? "border-primary ring-2 ring-primary/20" 
+                      : "border-border"
+                    }
+                  `}
+                >
+                  {/* Selected indicator */}
+                  {isSelected && (
+                    <div className="absolute top-3 right-3 w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                      <Check className="w-4 h-4 text-primary-foreground" />
+                    </div>
+                  )}
+                  
+                  {/* Variants Badge */}
+                  {hasMultipleVariants && (
+                    <div className="absolute top-3 left-3">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted text-xs font-medium">
+                        {group.variants.length} Varianten
+                        <ChevronDown className="w-3 h-3" />
+                      </span>
+                    </div>
+                  )}
+                  
+                  {/* Image */}
+                  <div className="flex justify-center mb-3 mt-2">
+                    <img 
+                      src={getHardwareImage(group.baseId)}
+                      alt={group.baseName}
+                      className="w-20 h-20 object-cover rounded-lg"
+                    />
+                  </div>
+                  
+                  {/* Name & Brand */}
+                  <h3 className="font-semibold text-foreground text-center text-sm">
+                    {group.baseName}
+                  </h3>
+                  <p className="text-xs text-muted-foreground text-center mt-1">
+                    {group.brand}
+                  </p>
+                  
+                  {/* Selected Variant Info */}
+                  {selectedVariant && (
+                    <p className="text-xs text-primary text-center mt-1 font-medium">
+                      {selectedVariant.storage}
+                    </p>
+                  )}
+                  
+                  {/* Price Badge - nur im Händler-Modus */}
+                  {!isCustomerMode && (
+                    <div className="flex justify-center mt-2">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-muted text-xs font-mono">
+                        {hasMultipleVariants 
+                          ? `ab ${group.lowestPrice} € EK`
+                          : `EK: ${group.lowestPrice} €`
+                        }
+                      </span>
+                    </div>
+                  )}
+                </button>
+              </PopoverTrigger>
+              
+              <PopoverContent className="w-72 p-0 bg-popover" align="start">
+                <div className="p-4 border-b border-border">
+                  <h4 className="font-semibold">{group.brand} {group.baseName}</h4>
+                  <p className="text-sm text-muted-foreground">Speicheroption wählen</p>
                 </div>
-              )}
-              
-              {/* Image */}
-              <div className="flex justify-center mb-3">
-                <img 
-                  src={getHardwareImage(item.id)}
-                  alt={displayName}
-                  className="w-20 h-20 object-cover rounded-lg"
-                />
-              </div>
-              
-              {/* Name & Brand */}
-              <h3 className="font-semibold text-foreground text-center text-sm">
-                {displayName}
-              </h3>
-              <p className="text-xs text-muted-foreground text-center mt-1">
-                {displayBrand}
-              </p>
-              
-              {/* EK Badge - nur im Händler-Modus */}
-              {!isCustomerMode && (
-                <div className="flex justify-center mt-2">
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-muted text-xs font-mono">
-                    EK: {item.ekNet} €
-                  </span>
+                <div className="p-2 space-y-1 max-h-64 overflow-y-auto">
+                  {group.variants.map((variant) => {
+                    const isVariantSelected = selectedVariant?.id === variant.id;
+                    return (
+                      <button
+                        key={variant.id}
+                        onClick={() => handleVariantSelect(variant, group.brand)}
+                        className={`
+                          w-full flex items-center justify-between p-3 rounded-lg transition-colors
+                          ${isVariantSelected 
+                            ? "bg-primary/10 text-primary" 
+                            : "hover:bg-muted"
+                          }
+                        `}
+                      >
+                        <div className="flex items-center gap-3">
+                          {isVariantSelected && (
+                            <Check className="w-4 h-4 text-primary" />
+                          )}
+                          <span className={`font-medium ${isVariantSelected ? "" : "ml-7"}`}>
+                            {variant.storage}
+                          </span>
+                        </div>
+                        {!isCustomerMode && (
+                          <span className="text-sm font-mono text-muted-foreground">
+                            {variant.ekNet} € EK
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
-              )}
-            </button>
+              </PopoverContent>
+            </Popover>
           );
         })}
       </div>
 
       {/* Empty State */}
-      {filteredItems.length === 0 && (
+      {groupedItems.length === 0 && !showSimOnly && (
         <div className="text-center py-12 text-muted-foreground">
           <Smartphone className="w-12 h-12 mx-auto mb-4 opacity-50" />
           <p>Keine Geräte gefunden</p>

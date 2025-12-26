@@ -1,9 +1,9 @@
 // ============================================
-// Admin Panel - Phase 3A Skeleton
-// Organisation, Policies, Daten
+// Admin Panel - Phase 3B Complete
+// Organisation, Policies, Daten, Protokoll
 // ============================================
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { MainLayout } from "@/components/MainLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,122 +12,157 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import { useIdentity, MOCK_IDENTITIES, type IdentityState } from "@/contexts/IdentityContext";
-import { Building2, Settings, Database, Plus, Trash2, Users } from "lucide-react";
+import { Building2, Settings, Database, Plus, Trash2, Users, FileText, Clock, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
-// Storage keys for admin data
-const ADMIN_STORAGE_KEYS = {
-  DEPARTMENTS: "margenkalkulator_admin_departments",
-  POLICIES: "margenkalkulator_admin_policies",
-};
+// Organisation imports
+import { 
+  loadDepartments, 
+  createDepartment, 
+  deleteDepartment,
+  type Department 
+} from "@/lib/organisation";
 
-interface Department {
-  id: string;
-  name: string;
-  description: string;
-}
+// Policies imports
+import { 
+  getEffectivePolicy,
+  updateTenantPolicyField,
+  updateDeptPolicyField,
+  loadDeptPolicy,
+  clearDeptPolicy,
+  type Policy,
+  DEFAULT_POLICY
+} from "@/lib/policies";
 
-interface AdminPolicies {
-  defaultViewMode: "dealer" | "customer";
-  showCustomerSessionToggle: boolean;
-  marginWarningThreshold: number;
-  allowCustomerMode: boolean;
-}
+// Audit imports
+import { 
+  getRecentAuditEvents, 
+  formatAuditAction,
+  logDepartmentAction,
+  logPolicyChange,
+  type AuditEvent 
+} from "@/lib/auditLog";
 
-const DEFAULT_POLICIES: AdminPolicies = {
-  defaultViewMode: "dealer",
-  showCustomerSessionToggle: true,
-  marginWarningThreshold: 0,
-  allowCustomerMode: true,
-};
-
-const DEFAULT_DEPARTMENTS: Department[] = [
-  { id: "hq", name: "Hauptverwaltung", description: "Zentrale Administration" },
-  { id: "store_berlin", name: "Store Berlin", description: "Filiale Berlin Mitte" },
-  { id: "store_munich", name: "Store München", description: "Filiale München Zentrum" },
-];
-
-function loadDepartments(): Department[] {
-  try {
-    const json = localStorage.getItem(ADMIN_STORAGE_KEYS.DEPARTMENTS);
-    return json ? JSON.parse(json) : DEFAULT_DEPARTMENTS;
-  } catch {
-    return DEFAULT_DEPARTMENTS;
-  }
-}
-
-function saveDepartments(departments: Department[]): void {
-  localStorage.setItem(ADMIN_STORAGE_KEYS.DEPARTMENTS, JSON.stringify(departments));
-}
-
-function loadPolicies(): AdminPolicies {
-  try {
-    const json = localStorage.getItem(ADMIN_STORAGE_KEYS.POLICIES);
-    return json ? { ...DEFAULT_POLICIES, ...JSON.parse(json) } : DEFAULT_POLICIES;
-  } catch {
-    return DEFAULT_POLICIES;
-  }
-}
-
-function savePolicies(policies: AdminPolicies): void {
-  localStorage.setItem(ADMIN_STORAGE_KEYS.POLICIES, JSON.stringify(policies));
-}
+import { formatDistanceToNow } from "date-fns";
+import { de } from "date-fns/locale";
 
 export default function Admin() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { identity, setMockIdentity, canAccessAdmin } = useIdentity();
   
-  const [departments, setDepartments] = useState<Department[]>(loadDepartments);
-  const [policies, setPolicies] = useState<AdminPolicies>(loadPolicies);
+  // State
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [policy, setPolicy] = useState<Policy>(DEFAULT_POLICY);
   const [newDeptName, setNewDeptName] = useState("");
+  const [auditLog, setAuditLog] = useState<AuditEvent[]>([]);
+  const [selectedDeptForPolicy, setSelectedDeptForPolicy] = useState<string | null>(null);
 
-  // Redirect non-admin users
+  // Load data on mount and identity change
   useEffect(() => {
     if (!canAccessAdmin) {
       navigate("/");
+      return;
     }
-  }, [canAccessAdmin, navigate]);
+    
+    // Load departments
+    const depts = loadDepartments(identity.tenantId);
+    setDepartments(depts);
+    
+    // Load effective policy
+    const eff = getEffectivePolicy(identity.tenantId, identity.departmentId);
+    setPolicy(eff);
+    
+    // Load audit log
+    const log = getRecentAuditEvents(identity.tenantId, identity.departmentId, 50);
+    setAuditLog(log);
+  }, [canAccessAdmin, identity.tenantId, identity.departmentId, navigate]);
 
-  // Save on change
-  useEffect(() => {
-    saveDepartments(departments);
-  }, [departments]);
-
-  useEffect(() => {
-    savePolicies(policies);
-  }, [policies]);
-
-  const addDepartment = () => {
+  // Department CRUD
+  const handleAddDepartment = useCallback(() => {
     if (!newDeptName.trim()) return;
-    const newDept: Department = {
-      id: `dept_${Date.now()}`,
-      name: newDeptName.trim(),
-      description: "",
-    };
-    setDepartments([...departments, newDept]);
+    
+    const newDept = createDepartment(identity.tenantId, newDeptName.trim());
+    setDepartments(prev => [...prev, newDept]);
     setNewDeptName("");
+    
+    // Audit log
+    logDepartmentAction(
+      identity.tenantId,
+      identity.departmentId,
+      identity.userId,
+      identity.displayName,
+      identity.role,
+      "department_create",
+      newDept.id,
+      { name: newDept.name }
+    );
+    
     toast({ title: "Abteilung hinzugefügt", description: newDept.name });
-  };
+  }, [identity, newDeptName, toast]);
 
-  const deleteDepartment = (id: string) => {
-    setDepartments(departments.filter((d) => d.id !== id));
+  const handleDeleteDepartment = useCallback((id: string) => {
+    const dept = departments.find(d => d.id === id);
+    if (!dept) return;
+    
+    deleteDepartment(identity.tenantId, id);
+    setDepartments(prev => prev.filter(d => d.id !== id));
+    
+    // Audit log
+    logDepartmentAction(
+      identity.tenantId,
+      identity.departmentId,
+      identity.userId,
+      identity.displayName,
+      identity.role,
+      "department_delete",
+      id,
+      { name: dept.name }
+    );
+    
     toast({ title: "Abteilung gelöscht" });
-  };
+  }, [identity, departments, toast]);
 
-  const updatePolicy = <K extends keyof AdminPolicies>(key: K, value: AdminPolicies[K]) => {
-    setPolicies((prev) => ({ ...prev, [key]: value }));
-  };
+  // Policy updates
+  const handlePolicyChange = useCallback(<K extends keyof Policy>(key: K, value: Policy[K]) => {
+    const oldValue = policy[key];
+    
+    if (selectedDeptForPolicy) {
+      updateDeptPolicyField(identity.tenantId, selectedDeptForPolicy, key, value);
+    } else {
+      updateTenantPolicyField(identity.tenantId, key, value);
+    }
+    
+    // Audit log
+    logPolicyChange(
+      identity.tenantId,
+      identity.departmentId,
+      identity.userId,
+      identity.displayName,
+      identity.role,
+      selectedDeptForPolicy ? "department" : "tenant",
+      { [key]: { from: oldValue, to: value } }
+    );
+    
+    // Refresh policy
+    const newPolicy = getEffectivePolicy(
+      identity.tenantId, 
+      selectedDeptForPolicy || identity.departmentId
+    );
+    setPolicy(newPolicy);
+  }, [identity, policy, selectedDeptForPolicy]);
 
-  const switchToIdentity = (id: IdentityState) => {
+  const switchToIdentity = useCallback((id: IdentityState) => {
     setMockIdentity(id);
     toast({ 
       title: "Benutzer gewechselt", 
       description: `Angemeldet als ${id.displayName} (${id.role})` 
     });
-  };
+  }, [setMockIdentity, toast]);
 
   if (!canAccessAdmin) {
     return null;
@@ -144,7 +179,7 @@ export default function Admin() {
         </div>
 
         <Tabs defaultValue="organisation" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="organisation" className="gap-2">
               <Building2 className="w-4 h-4" />
               Organisation
@@ -157,6 +192,10 @@ export default function Admin() {
               <Database className="w-4 h-4" />
               Daten
             </TabsTrigger>
+            <TabsTrigger value="protokoll" className="gap-2">
+              <FileText className="w-4 h-4" />
+              Protokoll
+            </TabsTrigger>
           </TabsList>
 
           {/* Organisation Tab */}
@@ -166,7 +205,7 @@ export default function Admin() {
               <CardHeader>
                 <CardTitle>Abteilungen</CardTitle>
                 <CardDescription>
-                  Verwalten Sie die Abteilungsstruktur für Scoping von Angeboten und Daten
+                  Verwalten Sie die Abteilungsstruktur (Tenant: {identity.tenantId})
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -175,9 +214,9 @@ export default function Admin() {
                     placeholder="Neue Abteilung..."
                     value={newDeptName}
                     onChange={(e) => setNewDeptName(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && addDepartment()}
+                    onKeyDown={(e) => e.key === "Enter" && handleAddDepartment()}
                   />
-                  <Button onClick={addDepartment} className="gap-2">
+                  <Button onClick={handleAddDepartment} className="gap-2">
                     <Plus className="w-4 h-4" />
                     Hinzufügen
                   </Button>
@@ -193,7 +232,7 @@ export default function Admin() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => deleteDepartment(dept.id)}
+                        onClick={() => handleDeleteDepartment(dept.id)}
                         className="text-destructive hover:text-destructive"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -204,7 +243,7 @@ export default function Admin() {
               </CardContent>
             </Card>
 
-            {/* Mock User Switcher (Dev) */}
+            {/* Mock User Switcher */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -247,9 +286,62 @@ export default function Admin() {
           <TabsContent value="policies" className="space-y-6">
             <Card>
               <CardHeader>
+                <CardTitle>Richtlinien-Scope</CardTitle>
+                <CardDescription>
+                  Wählen Sie, ob Sie Tenant-weite oder Abteilungs-spezifische Richtlinien bearbeiten
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-2 flex-wrap">
+                  <Button
+                    variant={selectedDeptForPolicy === null ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => {
+                      setSelectedDeptForPolicy(null);
+                      setPolicy(getEffectivePolicy(identity.tenantId, identity.departmentId));
+                    }}
+                  >
+                    Tenant-weit
+                  </Button>
+                  {departments.map(dept => (
+                    <Button
+                      key={dept.id}
+                      variant={selectedDeptForPolicy === dept.id ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => {
+                        setSelectedDeptForPolicy(dept.id);
+                        setPolicy(getEffectivePolicy(identity.tenantId, dept.id));
+                      }}
+                    >
+                      {dept.name}
+                    </Button>
+                  ))}
+                </div>
+                {selectedDeptForPolicy && (
+                  <div className="mt-4">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => {
+                        clearDeptPolicy(identity.tenantId, selectedDeptForPolicy);
+                        setPolicy(getEffectivePolicy(identity.tenantId, selectedDeptForPolicy));
+                        toast({ title: "Abteilungs-Overrides entfernt" });
+                      }}
+                    >
+                      Abteilungs-Overrides löschen
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
                 <CardTitle>Anzeigerichtlinien</CardTitle>
                 <CardDescription>
-                  Steuern Sie das Standardverhalten der Anwendung
+                  {selectedDeptForPolicy 
+                    ? `Overrides für ${departments.find(d => d.id === selectedDeptForPolicy)?.name}` 
+                    : "Tenant-weite Standardeinstellungen"}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -263,21 +355,23 @@ export default function Admin() {
                   </div>
                   <div className="flex gap-2">
                     <Button
-                      variant={policies.defaultViewMode === "dealer" ? "default" : "outline"}
+                      variant={policy.defaultViewMode === "dealer" ? "default" : "outline"}
                       size="sm"
-                      onClick={() => updatePolicy("defaultViewMode", "dealer")}
+                      onClick={() => handlePolicyChange("defaultViewMode", "dealer")}
                     >
                       Händler
                     </Button>
                     <Button
-                      variant={policies.defaultViewMode === "customer" ? "default" : "outline"}
+                      variant={policy.defaultViewMode === "customer" ? "default" : "outline"}
                       size="sm"
-                      onClick={() => updatePolicy("defaultViewMode", "customer")}
+                      onClick={() => handlePolicyChange("defaultViewMode", "customer")}
                     >
                       Kunde
                     </Button>
                   </div>
                 </div>
+
+                <Separator />
 
                 {/* Allow Customer Mode */}
                 <div className="flex items-center justify-between">
@@ -288,8 +382,8 @@ export default function Admin() {
                     </p>
                   </div>
                   <Switch
-                    checked={policies.allowCustomerMode}
-                    onCheckedChange={(checked) => updatePolicy("allowCustomerMode", checked)}
+                    checked={policy.allowCustomerMode}
+                    onCheckedChange={(checked) => handlePolicyChange("allowCustomerMode", checked)}
                   />
                 </div>
 
@@ -298,14 +392,44 @@ export default function Admin() {
                   <div>
                     <Label>Kundensitzung-Toggle anzeigen</Label>
                     <p className="text-sm text-muted-foreground">
-                      Soll der "Kundensitzung"-Schalter im Kalkulator sichtbar sein?
+                      Soll der "Kundensitzung"-Schalter sichtbar sein?
                     </p>
                   </div>
                   <Switch
-                    checked={policies.showCustomerSessionToggle}
-                    onCheckedChange={(checked) => updatePolicy("showCustomerSessionToggle", checked)}
+                    checked={policy.showCustomerSessionToggle}
+                    onCheckedChange={(checked) => handlePolicyChange("showCustomerSessionToggle", checked)}
                   />
                 </div>
+
+                {/* Require Customer Session When Customer Mode */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Kundensitzung bei Kunden-Modus erzwingen</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Automatisch Kundensitzung aktivieren wenn Kunden-Modus gewählt wird
+                    </p>
+                  </div>
+                  <Switch
+                    checked={policy.requireCustomerSessionWhenCustomerMode}
+                    onCheckedChange={(checked) => handlePolicyChange("requireCustomerSessionWhenCustomerMode", checked)}
+                  />
+                </div>
+
+                {/* Require Confirm on Dealer Switch */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Bestätigung beim Dealer-Wechsel</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Warnung anzeigen beim Wechsel von Kunde zu Händler
+                    </p>
+                  </div>
+                  <Switch
+                    checked={policy.requireConfirmOnDealerSwitch}
+                    onCheckedChange={(checked) => handlePolicyChange("requireConfirmOnDealerSwitch", checked)}
+                  />
+                </div>
+
+                <Separator />
 
                 {/* Margin Warning Threshold */}
                 <div className="flex items-center justify-between">
@@ -317,8 +441,8 @@ export default function Admin() {
                   </div>
                   <Input
                     type="number"
-                    value={policies.marginWarningThreshold}
-                    onChange={(e) => updatePolicy("marginWarningThreshold", Number(e.target.value))}
+                    value={policy.marginWarningThreshold}
+                    onChange={(e) => handlePolicyChange("marginWarningThreshold", Number(e.target.value))}
                     className="w-24 text-right"
                   />
                 </div>
@@ -332,7 +456,7 @@ export default function Admin() {
               <CardHeader>
                 <CardTitle>Datenverwaltung</CardTitle>
                 <CardDescription>
-                  Verwalten Sie Tarife, Hardware und andere Stammdaten
+                  Verwalten Sie Tarife, Hardware und andere Stammdaten mit Governance-Workflow
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -347,6 +471,57 @@ export default function Admin() {
                 >
                   Hardware verwalten
                 </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Protokoll Tab */}
+          <TabsContent value="protokoll" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Änderungsprotokoll</CardTitle>
+                <CardDescription>
+                  Letzte 50 Aktionen für {identity.tenantId} / {identity.departmentId}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[400px] pr-4">
+                  {auditLog.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-8">
+                      Keine Protokolleinträge vorhanden
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      {auditLog.map((event) => (
+                        <div key={event.id} className="p-3 rounded-lg border bg-card">
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <Badge variant="outline" className="mb-1">
+                                {formatAuditAction(event.action)}
+                              </Badge>
+                              <p className="text-sm font-medium">{event.target}</p>
+                              {event.meta && (
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {JSON.stringify(event.meta).slice(0, 100)}
+                                </p>
+                              )}
+                            </div>
+                            <div className="text-right text-xs text-muted-foreground">
+                              <div className="flex items-center gap-1 justify-end">
+                                <User className="w-3 h-3" />
+                                {event.actorDisplayName}
+                              </div>
+                              <div className="flex items-center gap-1 justify-end mt-1">
+                                <Clock className="w-3 h-3" />
+                                {formatDistanceToNow(new Date(event.ts), { addSuffix: true, locale: de })}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </ScrollArea>
               </CardContent>
             </Card>
           </TabsContent>

@@ -8,6 +8,8 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminRoute } from "@/components/AdminRoute";
 import { SecurityProvider } from "@/providers/SecurityProvider";
 import { SecurityErrorBoundary } from "@/components/SecurityErrorBoundary";
+import { IdentityProvider } from "@/contexts/IdentityContext";
+import { CustomerSessionProvider } from "@/contexts/CustomerSessionContext";
 import Home from "./pages/Home";
 import Index from "./pages/Index";
 import Bundles from "./pages/Bundles";
@@ -21,6 +23,7 @@ import Team from "./pages/Team";
 import Offers from "./pages/Offers";
 import Reporting from "./pages/Reporting";
 import SecuritySettings from "./pages/SecuritySettings";
+import Admin from "./pages/Admin";
 
 const queryClient = new QueryClient();
 
@@ -30,84 +33,89 @@ const App = () => (
       <SecurityProvider>
         <TooltipProvider>
           <AuthProvider>
-            <Toaster />
-            <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/" element={<Home />} />
-            <Route path="/calculator" element={<Index />} />
-            <Route path="/bundles" element={<Bundles />} />
-            <Route
-              path="/offers"
-              element={
-                <ProtectedRoute>
-                  <Offers />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/customers"
-              element={
-                <ProtectedRoute>
-                  <Customers />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/team"
-              element={
-                <ProtectedRoute>
-                  <Team />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/reporting"
-              element={
-                <ProtectedRoute>
-                  <Reporting />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/settings/security"
-              element={
-                <ProtectedRoute>
-                  <SecuritySettings />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/security"
-              element={
-                <AdminRoute>
-                  <SecurityDashboard />
-                </AdminRoute>
-              }
-            />
-            <Route
-              path="/data-manager"
-              element={
-                <ProtectedRoute>
-                  <DataManager />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/data-manager/hardware"
-              element={
-                <ProtectedRoute>
-                  <HardwareManager />
-                </ProtectedRoute>
-              }
-            />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </AuthProvider>
-    </TooltipProvider>
+            <IdentityProvider>
+              <CustomerSessionProvider>
+                <Toaster />
+                <Sonner />
+                <BrowserRouter>
+                  <Routes>
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/" element={<Home />} />
+                    <Route path="/calculator" element={<Index />} />
+                    <Route path="/bundles" element={<Bundles />} />
+                    <Route path="/admin" element={<Admin />} />
+                    <Route
+                      path="/offers"
+                      element={
+                        <ProtectedRoute>
+                          <Offers />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/customers"
+                      element={
+                        <ProtectedRoute>
+                          <Customers />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/team"
+                      element={
+                        <ProtectedRoute>
+                          <Team />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/reporting"
+                      element={
+                        <ProtectedRoute>
+                          <Reporting />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/settings/security"
+                      element={
+                        <ProtectedRoute>
+                          <SecuritySettings />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/security"
+                      element={
+                        <AdminRoute>
+                          <SecurityDashboard />
+                        </AdminRoute>
+                      }
+                    />
+                    <Route
+                      path="/data-manager"
+                      element={
+                        <ProtectedRoute>
+                          <DataManager />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/data-manager/hardware"
+                      element={
+                        <ProtectedRoute>
+                          <HardwareManager />
+                        </ProtectedRoute>
+                      }
+                    />
+                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </BrowserRouter>
+              </CustomerSessionProvider>
+            </IdentityProvider>
+          </AuthProvider>
+        </TooltipProvider>
       </SecurityProvider>
     </SecurityErrorBoundary>
   </QueryClientProvider>

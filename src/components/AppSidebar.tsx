@@ -1,7 +1,8 @@
-import { Calculator, Users, BarChart3, Building2, FolderOpen, Shield, Database, Settings, Home, Package } from "lucide-react";
+import { Calculator, Users, BarChart3, Building2, FolderOpen, Shield, Database, Settings, Home, Package, ShieldCheck } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useIdentity } from "@/contexts/IdentityContext";
 import {
   Sidebar,
   SidebarContent,
@@ -29,6 +30,7 @@ const settingsItems = [
 ];
 
 const adminItems = [
+  { title: "Administration", url: "/admin", icon: ShieldCheck },
   { title: "Datenmanager", url: "/data-manager", icon: Database },
   { title: "Security Dashboard", url: "/security", icon: Shield },
 ];
@@ -38,6 +40,10 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const location = useLocation();
   const { isAdmin } = useUserRole();
+  const { canAccessAdmin } = useIdentity();
+  
+  // Show admin section if user has admin role OR can access admin via identity
+  const showAdminSection = isAdmin || canAccessAdmin;
 
   const isActive = (path: string) => {
     if (path === "/") return location.pathname === "/";
@@ -110,7 +116,7 @@ export function AppSidebar() {
         </SidebarGroup>
 
         {/* Admin section */}
-        {isAdmin && (
+        {showAdminSection && (
           <SidebarGroup>
             <SidebarGroupLabel>Administration</SidebarGroupLabel>
             <SidebarGroupContent>

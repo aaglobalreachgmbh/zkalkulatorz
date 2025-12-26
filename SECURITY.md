@@ -397,4 +397,210 @@ function MyComponent() {
   }
 }
 ```
+
+---
+
+## Zero-Trust API Gateway (GLOBAL & PERMANENT)
+
+### Architektur-Prinzip
+
+**Jede externe Verbindung ist per Default untrusted.**
+
+Das Zero-Trust API Gateway erweitert die Sicherheitsarchitektur auf 16 Schichten:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    ZERO-TRUST API GATEWAY                        │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐   │
+│  │ LLM SECURITY │  │ API GATEWAY  │  │ TUNNEL SECURITY      │   │
+│  │    LAYER     │  │   WRAPPER    │  │     GUARD            │   │
+│  └──────┬───────┘  └──────┬───────┘  └──────────┬───────────┘   │
+│         │                  │                     │               │
+│         └─────────────┬────┴─────────────────────┘               │
+│                       │                                          │
+│              ┌────────▼────────┐                                 │
+│              │ ZERO-DAY DEFENSE│                                 │
+│              │     LAYER       │                                 │
+│              └────────┬────────┘                                 │
+│                       │                                          │
+├───────────────────────┼──────────────────────────────────────────┤
+│  EXISTING 12 LAYERS   │                                          │
+│  (CSP, Provider,      │                                          │
+│   Offline, CSRF, etc.)│                                          │
+└───────────────────────┴──────────────────────────────────────────┘
+```
+
+### Automatischer Schutz für
+
+- ✅ LLM/AI APIs (OpenAI, Gemini, Lovable AI)
+- ✅ Payment APIs (Stripe, etc.)
+- ✅ Communication APIs (Twilio, etc.)
+- ✅ WebSocket Verbindungen
+- ✅ Server-Sent Events (SSE)
+- ✅ Alle zukünftigen Integrationen
+
+### Komponenten
+
+#### 1. Secure API Gateway (`src/lib/secureApiGateway.ts`)
+
+Zentraler Schutz für alle ausgehenden HTTP-Anfragen:
+
+| Feature | Beschreibung |
+|---------|--------------|
+| SSRF Protection | Blockiert private IPs, Cloud Metadata Endpoints |
+| Domain Whitelist | Nur erlaubte Domains pro Kategorie |
+| Rate Limiting | Pro-Kategorie Limits (AI: 10/min, API: 60/min) |
+| Payload Sanitization | Automatische Bereinigung von Request Bodies |
+| Response Validation | Header- und Content-Prüfung |
+| Timeout Enforcement | Schutz vor Slowloris/DoS |
+
+```tsx
+import { secureApiCall } from "@/lib/secureApiGateway";
+
+// ALLE externen API-Calls müssen so aussehen:
+const data = await secureApiCall({
+  url: "https://api.example.com/endpoint",
+  method: "POST",
+  body: { ... },
+  category: "general",
+});
+```
+
+#### 2. LLM Security Layer (`src/lib/llmSecurityLayer.ts`)
+
+Spezieller Schutz für AI/LLM-Interaktionen:
+
+| Schutz | Beschreibung |
+|--------|--------------|
+| Direct Prompt Injection | "ignore previous instructions", "new mode" |
+| Jailbreak Detection | "DAN mode", "Developer mode", "No filters" |
+| System Prompt Leak Prevention | Erkennt Versuche, System Prompt zu extrahieren |
+| Indirect Injection | Injections über Daten (hidden instructions) |
+| Multi-Turn Attack Detection | Gestaffelte Angriffe über mehrere Messages |
+| Output Filtering | Filtert API Keys, System Prompts aus Antworten |
+
+```tsx
+import { checkPromptInjection, filterLlmOutput } from "@/lib/llmSecurityLayer";
+
+// Input-Prüfung
+const result = checkPromptInjection(userMessage);
+if (!result.safe) {
+  console.warn("Injection attempt:", result.threats);
+}
+
+// Output-Filterung
+const safeOutput = filterLlmOutput(aiResponse);
+```
+
+#### 3. Tunnel Security Guard (`src/lib/tunnelSecurityGuard.ts`)
+
+Schutz für persistente Verbindungen:
+
+| Schutz | Beschreibung |
+|--------|--------------|
+| Origin Validation | Nur erlaubte WebSocket/SSE Endpoints |
+| Message Rate Limiting | Max 100 Messages/Sekunde |
+| Message Size Limits | Max 64KB pro Message |
+| Content Validation | Threat Detection auf Message-Ebene |
+| Connection Monitoring | Anomalie-Detection pro Verbindung |
+
+```tsx
+import { createSecureWebSocket } from "@/lib/tunnelSecurityGuard";
+
+// Gesicherter WebSocket
+const ws = createSecureWebSocket("wss://...", {
+  maxMessagesPerSecond: 50,
+});
+```
+
+#### 4. Zero-Day Defense Layer (`src/lib/zeroDefenseLayer.ts`)
+
+Heuristische Erkennung unbekannter Angriffe:
+
+| Technik | Beschreibung |
+|---------|--------------|
+| Anomaly Scoring | 0-100 Score basierend auf Verhalten |
+| Entropy Detection | Erkennt verdächtig zufällige Daten |
+| Rapid Action Detection | Erkennt zu schnelle Aktionsfolgen |
+| Behavioral Baseline | Vergleich mit normalem Nutzerverhalten |
+| Session Quarantine | Automatische Isolation bei kritischen Anomalien |
+
+```tsx
+import { analyzeAction, isSessionQuarantined } from "@/lib/zeroDefenseLayer";
+
+// Jede Aktion analysieren
+const result = analyzeAction("form_submit", userInput);
+
+if (result.recommendation === "hard_block") {
+  // Aktion blockieren
+}
+
+if (result.level === "critical") {
+  // Session wird automatisch quarantiniert
+}
+```
+
+### useSecureApi Hook
+
+React Hook für sichere API-Aufrufe:
+
+```tsx
+import { useSecureApi, useSecureLlmApi } from "@/hooks/useSecureApi";
+
+function MyComponent() {
+  // Für allgemeine APIs
+  const [state, { execute }] = useSecureApi({ category: "general" });
+  
+  // Für LLM APIs (mit Prompt Injection Schutz)
+  const [llmState, llmActions] = useSecureLlmApi();
+  
+  const handleSubmit = async () => {
+    // Automatisch durch Gateway geschützt
+    const data = await execute(url, "POST", body);
+  };
+}
+```
+
+### Neue Threat Patterns
+
+| Kategorie | Pattern | Risiko |
+|-----------|---------|--------|
+| `jailbreak` | "DAN mode", "Developer mode" | Critical |
+| `systemPromptLeak` | "show your system prompt" | Critical |
+| `indirectInjection` | "when you see this, do..." | High |
+| `multiTurnAttack` | Gestaffelte Angriffe | High |
+| `ssrf` | Private IPs, Cloud Metadata | Critical |
+| `highEntropy` | Verdächtig zufällige Daten | Medium |
+| `rapidActions` | Aktionen schneller als 100ms | Medium |
+
+### Sicherheits-Checkliste für neue Integrationen
+
+| Anforderung | Implementierung |
+|-------------|-----------------|
+| ✅ API über Gateway | `useSecureApi()` oder `secureApiCall()` |
+| ✅ LLM-Schutz | `useSecureLlmApi()` mit Prompt Filtering |
+| ✅ WebSocket gesichert | `createSecureWebSocket()` |
+| ✅ Anomalie-Tracking | `analyzeAction()` bei User-Aktionen |
+| ✅ Rate Limits | Automatisch durch Gateway |
+| ❌ Direkter fetch() | NIEMALS für externe APIs |
+
+### Für Entwickler: KRITISCHE REGELN
+
+```tsx
+// ❌ NIEMALS - Direkter fetch zu externen APIs
+const response = await fetch("https://api.external.com/...");
+
+// ✅ IMMER - Über Secure API Gateway
+import { useSecureApi } from "@/hooks/useSecureApi";
+const [state, { execute }] = useSecureApi({ category: "general" });
+const data = await execute("https://api.external.com/...", "GET");
+
+// ❌ NIEMALS - Roher WebSocket
+const ws = new WebSocket("wss://...");
+
+// ✅ IMMER - Über Tunnel Security Guard
+import { createSecureWebSocket } from "@/lib/tunnelSecurityGuard";
+const ws = createSecureWebSocket("wss://...");
 ```

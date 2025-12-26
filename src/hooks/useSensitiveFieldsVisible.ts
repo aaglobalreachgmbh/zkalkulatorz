@@ -1,11 +1,13 @@
 // ============================================
 // Sensitive Fields Visibility Hook
 // Phase 3A: Combines role, session, viewMode
+// Phase 3C: Added adminFullVisibility support
 // ============================================
 
 import { useMemo } from "react";
 import { useIdentity, type AppRole } from "@/contexts/IdentityContext";
 import { useCustomerSession } from "@/contexts/CustomerSessionContext";
+import { useFeature } from "@/hooks/useFeature";
 import type { ViewMode } from "@/margenkalkulator/engine/types";
 
 export interface SensitiveFieldsVisibility {
@@ -23,6 +25,8 @@ export interface SensitiveFieldsVisibility {
   isCustomerSessionActive: boolean;
   /** Current effective mode for display */
   effectiveMode: "customer" | "dealer";
+  /** Is admin full visibility enabled (overrides customer view for admins) */
+  hasAdminFullVisibility: boolean;
 }
 
 /**
@@ -30,10 +34,12 @@ export interface SensitiveFieldsVisibility {
  * 1. User role (admin, manager, sales)
  * 2. Customer session state (safety lock)
  * 3. Current view mode (customer/dealer)
+ * 4. adminFullVisibility feature flag (ADMIN OVERRIDE)
  * 
  * Priority:
- * - If customerSession.isActive → always hide sensitive fields (HIGHEST PRIORITY)
- * - If viewMode === "customer" → hide sensitive fields
+ * - If adminFullVisibility enabled → admins ALWAYS see everything (except in customer session)
+ * - If customerSession.isActive → always hide sensitive fields (HIGHEST PRIORITY for customer safety)
+ * - If viewMode === "customer" → hide sensitive fields (unless admin override)
  * - Otherwise → show based on role
  * 
  * This is the SINGLE SOURCE OF TRUTH for sensitive field visibility.
@@ -42,13 +48,20 @@ export interface SensitiveFieldsVisibility {
 export function useSensitiveFieldsVisible(viewMode: ViewMode): SensitiveFieldsVisibility {
   const { identity, canAccessAdmin } = useIdentity();
   const { session } = useCustomerSession();
+  const { enabled: adminFullVisibility } = useFeature("adminFullVisibility");
 
   return useMemo(() => {
     const isCustomerSessionActive = session.isActive;
     const isCustomerView = viewMode === "customer";
     const role: AppRole = identity?.role ?? "sales";
+    const isAdmin = role === "admin";
+
+    // Admin Full Visibility: Admins can see everything even in customer view
+    // BUT still respect customer session for safety (customer is physically present)
+    const hasAdminOverride = adminFullVisibility && isAdmin && !isCustomerSessionActive;
 
     // Safety lock: Customer session overrides everything (HIGHEST PRIORITY)
+    // This is the "customer is physically present" scenario
     if (isCustomerSessionActive) {
       return {
         showDealerEconomics: false,
@@ -58,6 +71,21 @@ export function useSensitiveFieldsVisible(viewMode: ViewMode): SensitiveFieldsVi
         canAccessAdmin,
         isCustomerSessionActive: true,
         effectiveMode: "customer",
+        hasAdminFullVisibility: false, // Disabled during customer session
+      };
+    }
+
+    // Admin override: Can see everything even in customer view mode
+    if (hasAdminOverride) {
+      return {
+        showDealerEconomics: true,
+        showHardwareEk: true,
+        showOmoSelector: true,
+        showFhPartnerToggle: true,
+        canAccessAdmin,
+        isCustomerSessionActive: false,
+        effectiveMode: isCustomerView ? "customer" : "dealer",
+        hasAdminFullVisibility: true,
       };
     }
 
@@ -71,6 +99,7 @@ export function useSensitiveFieldsVisible(viewMode: ViewMode): SensitiveFieldsVi
         canAccessAdmin,
         isCustomerSessionActive: false,
         effectiveMode: "customer",
+        hasAdminFullVisibility: false,
       };
     }
 
@@ -86,8 +115,9 @@ export function useSensitiveFieldsVisible(viewMode: ViewMode): SensitiveFieldsVi
       canAccessAdmin,
       isCustomerSessionActive: false,
       effectiveMode: "dealer",
+      hasAdminFullVisibility: adminFullVisibility && isAdmin,
     };
-  }, [identity?.role, session.isActive, viewMode, canAccessAdmin]);
+  }, [identity?.role, session.isActive, viewMode, canAccessAdmin, adminFullVisibility]);
 }
 
 /**
@@ -97,8 +127,12 @@ export function useSensitiveFieldsVisible(viewMode: ViewMode): SensitiveFieldsVi
 export function computeSensitiveFieldsVisibility(
   role: AppRole,
   isCustomerSessionActive: boolean,
-  viewMode: ViewMode
+  viewMode: ViewMode,
+  adminFullVisibility: boolean = false
 ): Omit<SensitiveFieldsVisibility, "canAccessAdmin"> {
+  const isAdmin = role === "admin";
+  const hasAdminOverride = adminFullVisibility && isAdmin && !isCustomerSessionActive;
+
   // Safety lock: Customer session overrides everything
   if (isCustomerSessionActive) {
     return {
@@ -108,6 +142,20 @@ export function computeSensitiveFieldsVisibility(
       showFhPartnerToggle: false,
       isCustomerSessionActive: true,
       effectiveMode: "customer",
+      hasAdminFullVisibility: false,
+    };
+  }
+
+  // Admin override: Can see everything
+  if (hasAdminOverride) {
+    return {
+      showDealerEconomics: true,
+      showHardwareEk: true,
+      showOmoSelector: true,
+      showFhPartnerToggle: true,
+      isCustomerSessionActive: false,
+      effectiveMode: viewMode === "customer" ? "customer" : "dealer",
+      hasAdminFullVisibility: true,
     };
   }
 
@@ -120,6 +168,7 @@ export function computeSensitiveFieldsVisibility(
       showFhPartnerToggle: false,
       isCustomerSessionActive: false,
       effectiveMode: "customer",
+      hasAdminFullVisibility: false,
     };
   }
 
@@ -131,5 +180,6 @@ export function computeSensitiveFieldsVisibility(
     showFhPartnerToggle: true,
     isCustomerSessionActive: false,
     effectiveMode: "dealer",
+    hasAdminFullVisibility: adminFullVisibility && isAdmin,
   };
 }

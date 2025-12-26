@@ -27,6 +27,12 @@ export interface LicenseFeatures {
   auditLog: boolean;
   /** AI Consultant feature */
   aiConsultant: boolean;
+  /** Advanced Reporting & Analytics (Enterprise) */
+  advancedReporting: boolean;
+  /** REST API access for external systems (Enterprise) */
+  apiAccess: boolean;
+  /** Custom logo, colors, branding (Enterprise) */
+  customBranding: boolean;
 }
 
 /**
@@ -60,6 +66,9 @@ export const PLAN_FEATURES: Record<LicensePlan, LicenseFeatures> = {
     exportPdf: false, // Not built yet
     auditLog: true,
     aiConsultant: true,
+    advancedReporting: false,
+    apiAccess: false,
+    customBranding: false,
   },
   pro: {
     dataGovernance: true,
@@ -68,6 +77,9 @@ export const PLAN_FEATURES: Record<LicensePlan, LicenseFeatures> = {
     exportPdf: false,
     auditLog: true,
     aiConsultant: true,
+    advancedReporting: false,
+    apiAccess: false,
+    customBranding: false,
   },
   enterprise: {
     dataGovernance: true,
@@ -76,6 +88,9 @@ export const PLAN_FEATURES: Record<LicensePlan, LicenseFeatures> = {
     exportPdf: true,
     auditLog: true,
     aiConsultant: true,
+    advancedReporting: true,
+    apiAccess: true,
+    customBranding: true,
   },
 };
 

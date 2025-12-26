@@ -65,6 +65,9 @@ describe("License System", () => {
           exportPdf: false,
           auditLog: true,
           aiConsultant: true,
+          advancedReporting: false,
+          apiAccess: false,
+          customBranding: false,
         },
         updatedAt: new Date().toISOString(),
       };
@@ -155,6 +158,47 @@ describe("License System", () => {
       };
       expect(isSeatLimitExceeded(license)).toBe(false);
     });
+  });
+});
+
+describe("Enterprise Features", () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it("advancedReporting is false for internal plan", () => {
+    const license = getDefaultLicense("test");
+    expect(license.plan).toBe("internal");
+    expect(isFeatureEnabled(license, "advancedReporting")).toBe(false);
+  });
+
+  it("advancedReporting is false for pro plan", () => {
+    const license = changePlan("test", "pro");
+    expect(isFeatureEnabled(license, "advancedReporting")).toBe(false);
+  });
+
+  it("advancedReporting is true for enterprise plan", () => {
+    const license = changePlan("test", "enterprise");
+    expect(isFeatureEnabled(license, "advancedReporting")).toBe(true);
+  });
+
+  it("apiAccess requires enterprise plan", () => {
+    expect(isFeatureEnabled(getDefaultLicense("t"), "apiAccess")).toBe(false);
+    expect(isFeatureEnabled(changePlan("t", "pro"), "apiAccess")).toBe(false);
+    clearLicense("t");
+    expect(isFeatureEnabled(changePlan("t", "enterprise"), "apiAccess")).toBe(true);
+  });
+
+  it("customBranding requires enterprise plan", () => {
+    expect(isFeatureEnabled(getDefaultLicense("t2"), "customBranding")).toBe(false);
+    expect(isFeatureEnabled(changePlan("t2", "pro"), "customBranding")).toBe(false);
+    clearLicense("t2");
+    expect(isFeatureEnabled(changePlan("t2", "enterprise"), "customBranding")).toBe(true);
+  });
+
+  it("exportPdf is only available in enterprise", () => {
+    expect(isFeatureEnabled(getDefaultLicense("t3"), "exportPdf")).toBe(false);
+    expect(isFeatureEnabled(changePlan("t3", "enterprise"), "exportPdf")).toBe(true);
   });
 });
 

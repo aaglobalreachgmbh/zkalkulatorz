@@ -568,6 +568,9 @@ function LicenseTab() {
     "exportPdf",
     "auditLog",
     "aiConsultant",
+    "advancedReporting",
+    "apiAccess",
+    "customBranding",
   ];
 
   const featureLabels: Record<keyof LicenseFeatures, string> = {
@@ -577,6 +580,9 @@ function LicenseTab() {
     exportPdf: "PDF Export",
     auditLog: "Audit-Protokoll",
     aiConsultant: "AI Berater",
+    advancedReporting: "Erweitertes Reporting",
+    apiAccess: "API-Zugang",
+    customBranding: "Eigenes Branding",
   };
 
   const handleAssignSeat = (userId: string, userName: string) => {

@@ -1,10 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   type MobileState,
   type ContractType,
@@ -51,6 +50,8 @@ export function MobileStep({
   fixedNetEnabled = false,
   hardwareName = "",
 }: MobileStepProps) {
+  const [selectedFamily, setSelectedFamily] = useState<TariffFamily | "all">("all");
+
   const updateField = <K extends keyof MobileState>(
     field: K,
     fieldValue: MobileState[K]
@@ -68,6 +69,18 @@ export function MobileStep({
   const isTeamDeal = selectedTariff?.family === "teamdeal";
   const showTeamDealWarning = isTeamDeal && !value.primeOnAccount;
 
+  // Extract unique families from tariffs
+  const families = useMemo(() => {
+    const uniqueFamilies = new Set(mobileTariffs.map(t => t.family).filter(Boolean));
+    return Array.from(uniqueFamilies) as TariffFamily[];
+  }, [mobileTariffs]);
+
+  // Filter tariffs by selected family
+  const filteredTariffs = useMemo(() => {
+    if (selectedFamily === "all") return mobileTariffs;
+    return mobileTariffs.filter(t => t.family === selectedFamily);
+  }, [mobileTariffs, selectedFamily]);
+
   // Format data volume display
   const formatDataVolume = (volume: number | "unlimited" | undefined) => {
     if (volume === "unlimited") return "∞ GB";
@@ -75,9 +88,6 @@ export function MobileStep({
     if (volume < 1) return `${volume * 1000} MB`;
     return `${volume} GB`;
   };
-
-  // Get display tariffs (group by family for visual display)
-  const displayTariffs = mobileTariffs.slice(0, 6); // Show first 6 tariffs
 
   return (
     <div className="space-y-8">
@@ -145,8 +155,40 @@ export function MobileStep({
           <h3 className="text-lg font-semibold">Tarif wählen</h3>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {displayTariffs.map((tariff) => {
+        {/* Family Filter Tabs */}
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setSelectedFamily("all")}
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+              selectedFamily === "all"
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground hover:bg-muted/80"
+            }`}
+          >
+            Alle Tarife
+          </button>
+          {families.map((family) => (
+            <button
+              key={family}
+              onClick={() => setSelectedFamily(family)}
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                selectedFamily === family
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+              }`}
+            >
+              {FAMILY_LABELS[family]}
+            </button>
+          ))}
+        </div>
+
+        {/* Results Count */}
+        <div className="text-sm text-muted-foreground">
+          {filteredTariffs.length} Tarif{filteredTariffs.length !== 1 ? "e" : ""} verfügbar
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {filteredTariffs.map((tariff) => {
             const isSelected = value.tariffId === tariff.id;
             const familyLabel = FAMILY_LABELS[tariff.family || "prime"];
             const familyColor = FAMILY_COLORS[tariff.family || "prime"];
@@ -201,6 +243,14 @@ export function MobileStep({
             );
           })}
         </div>
+
+        {/* Empty State */}
+        {filteredTariffs.length === 0 && (
+          <div className="text-center py-12 text-muted-foreground">
+            <Signal className="w-12 h-12 mx-auto mb-4 opacity-50" />
+            <p>Keine Tarife gefunden</p>
+          </div>
+        )}
       </div>
 
       {/* TeamDeal Prime Requirement */}
@@ -266,7 +316,7 @@ export function MobileStep({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {promos.slice(0, 3).map((promo) => {
+          {promos.map((promo) => {
             const isSelected = value.promoId === promo.id;
             
             return (

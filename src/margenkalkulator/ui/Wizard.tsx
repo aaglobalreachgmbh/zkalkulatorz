@@ -134,6 +134,7 @@ export function Wizard() {
           <HardwareStep
             value={activeState.hardware}
             onChange={(hardware) => setActiveState({ ...activeState, hardware })}
+            viewMode={viewMode}
           />
         );
       case "mobile":
@@ -143,6 +144,7 @@ export function Wizard() {
             onChange={(mobile) => setActiveState({ ...activeState, mobile })}
             datasetVersion={activeState.meta.datasetVersion}
             fixedNetEnabled={activeState.fixedNet.enabled}
+            viewMode={viewMode}
           />
         );
       case "fixedNet":

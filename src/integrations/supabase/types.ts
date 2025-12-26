@@ -122,6 +122,48 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_security_reports: {
+        Row: {
+          blocked_ips: number | null
+          created_at: string
+          critical_events: number | null
+          email_sent: boolean | null
+          id: string
+          report_data: Json | null
+          report_date: string
+          security_score: number | null
+          top_attackers: Json | null
+          top_threats: Json | null
+          total_events: number | null
+        }
+        Insert: {
+          blocked_ips?: number | null
+          created_at?: string
+          critical_events?: number | null
+          email_sent?: boolean | null
+          id?: string
+          report_data?: Json | null
+          report_date: string
+          security_score?: number | null
+          top_attackers?: Json | null
+          top_threats?: Json | null
+          total_events?: number | null
+        }
+        Update: {
+          blocked_ips?: number | null
+          created_at?: string
+          critical_events?: number | null
+          email_sent?: boolean | null
+          id?: string
+          report_data?: Json | null
+          report_date?: string
+          security_score?: number | null
+          top_attackers?: Json | null
+          top_threats?: Json | null
+          total_events?: number | null
+        }
+        Relationships: []
+      }
       honeypot_submissions: {
         Row: {
           created_at: string
@@ -436,6 +478,86 @@ export type Database = {
           description?: string | null
           id?: string
           name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      threat_feed_entries: {
+        Row: {
+          auto_blocked: boolean | null
+          confidence_score: number | null
+          feed_id: string
+          first_seen_at: string
+          id: string
+          ip_hash: string
+          last_seen_at: string
+          metadata: Json | null
+          threat_type: string | null
+        }
+        Insert: {
+          auto_blocked?: boolean | null
+          confidence_score?: number | null
+          feed_id: string
+          first_seen_at?: string
+          id?: string
+          ip_hash: string
+          last_seen_at?: string
+          metadata?: Json | null
+          threat_type?: string | null
+        }
+        Update: {
+          auto_blocked?: boolean | null
+          confidence_score?: number | null
+          feed_id?: string
+          first_seen_at?: string
+          id?: string
+          ip_hash?: string
+          last_seen_at?: string
+          metadata?: Json | null
+          threat_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "threat_feed_entries_feed_id_fkey"
+            columns: ["feed_id"]
+            isOneToOne: false
+            referencedRelation: "threat_feeds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      threat_feeds: {
+        Row: {
+          created_at: string
+          enabled: boolean | null
+          feed_name: string
+          feed_url: string
+          id: string
+          last_sync_at: string | null
+          sync_status: string
+          total_entries: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean | null
+          feed_name: string
+          feed_url: string
+          id?: string
+          last_sync_at?: string | null
+          sync_status?: string
+          total_entries?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean | null
+          feed_name?: string
+          feed_url?: string
+          id?: string
+          last_sync_at?: string | null
+          sync_status?: string
+          total_entries?: number | null
           updated_at?: string
         }
         Relationships: []

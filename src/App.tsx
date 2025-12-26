@@ -33,6 +33,7 @@ import SecurityReport from "./pages/SecurityReport";
 import ThreatIntelligence from "./pages/ThreatIntelligence";
 import SecurityStatusDashboard from "./pages/SecurityStatusDashboard";
 import Privacy from "./pages/Privacy";
+import GDPRDashboard from "./pages/GDPRDashboard";
 
 const queryClient = new QueryClient();
 
@@ -136,6 +137,16 @@ const App = () => (
                           <FeatureRoute feature="adminSecurityAccess">
                             <AdminRoute>
                               <SecurityStatusDashboard />
+                            </AdminRoute>
+                          </FeatureRoute>
+                        }
+                      />
+                      <Route
+                        path="/security/gdpr"
+                        element={
+                          <FeatureRoute feature="adminSecurityAccess">
+                            <AdminRoute>
+                              <GDPRDashboard />
                             </AdminRoute>
                           </FeatureRoute>
                         }

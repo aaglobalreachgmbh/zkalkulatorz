@@ -24,8 +24,10 @@ import {
   ArrowRight,
   Clock,
   User,
+  Zap,
 } from "lucide-react";
 import { useIdentity } from "@/contexts/IdentityContext";
+import { useFeature } from "@/hooks/useFeature";
 import {
   type ManagedDataset,
   type DatasetStatus,
@@ -91,11 +93,15 @@ interface DatasetCardProps {
 
 export function DatasetCard({ dataset, isActive, onTransition, onPreview }: DatasetCardProps) {
   const { identity } = useIdentity();
+  const { enabled: canBypassApproval } = useFeature("adminBypassApproval");
   
   const canReview = canSetReview(identity.role) && dataset.status === "draft";
   const canPub = canPublish(identity.role) && dataset.status === "review";
   const canReject = canPublish(identity.role) && dataset.status === "review";
   const canArchive = canPublish(identity.role) && dataset.status === "published";
+  
+  // Admin bypass: can publish directly from draft
+  const canBypassToPublish = canBypassApproval && dataset.status === "draft";
   
   const createdAgo = formatDistanceToNow(new Date(dataset.createdAt), { 
     addSuffix: true, 
@@ -138,7 +144,7 @@ export function DatasetCard({ dataset, isActive, onTransition, onPreview }: Data
             Vorschau
           </Button>
           
-          {canReview && (
+          {canReview && !canBypassToPublish && (
             <Button 
               variant="outline" 
               size="sm"
@@ -147,6 +153,35 @@ export function DatasetCard({ dataset, isActive, onTransition, onPreview }: Data
               <ArrowRight className="w-3 h-3 mr-1" />
               Zur Prüfung
             </Button>
+          )}
+          
+          {canBypassToPublish && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="default" size="sm" className="bg-amber-600 hover:bg-amber-700">
+                  <Zap className="w-3 h-3 mr-1" />
+                  Direkt freigeben
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Direkt freigeben (Admin-Bypass)?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Sie überspringen den normalen Approval-Workflow. Dieses Dataset wird sofort 
+                    für alle Berechnungen aktiv. Nur für Notfälle empfohlen.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                  <AlertDialogAction 
+                    onClick={() => onTransition(dataset.datasetId, "published")}
+                    className="bg-amber-600 hover:bg-amber-700"
+                  >
+                    Direkt freigeben
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           )}
           
           {canPub && (
@@ -207,6 +242,7 @@ export function DatasetCard({ dataset, isActive, onTransition, onPreview }: Data
 
 export function WorkflowLegend() {
   const { identity } = useIdentity();
+  const { enabled: canBypassApproval } = useFeature("adminBypassApproval");
   
   return (
     <div className="flex items-center gap-4 text-xs text-muted-foreground p-3 bg-muted/50 rounded-lg">
@@ -219,6 +255,12 @@ export function WorkflowLegend() {
         <StatusBadge status="published" />
       </div>
       <span className="ml-auto">
+        {canBypassApproval && (
+          <Badge variant="outline" className="mr-2 text-amber-600 border-amber-600">
+            <Zap className="w-3 h-3 mr-1" />
+            Bypass aktiv
+          </Badge>
+        )}
         {identity.role === "admin" && "Sie können: Prüfen, Freigeben, Archivieren"}
         {identity.role === "manager" && "Sie können: Zur Prüfung senden"}
         {identity.role === "sales" && "Sie können: Importieren (als Entwurf)"}

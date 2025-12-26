@@ -31,6 +31,7 @@ import { setHistoryScope, resetHistoryScope, migrateLegacyHistory } from "../sto
 import { useToast } from "@/hooks/use-toast";
 import { useIdentity } from "@/contexts/IdentityContext";
 import { useCustomerSession } from "@/contexts/CustomerSessionContext";
+import { useEffectivePolicy } from "@/hooks/useEffectivePolicy";
 import { cn } from "@/lib/utils";
 
 const STEPS: { id: WizardStep; label: string; icon: typeof Smartphone }[] = [
@@ -45,10 +46,12 @@ export function Wizard() {
   const location = useLocation();
   const navigate = useNavigate();
   const { identity } = useIdentity();
-  const { session: customerSession } = useCustomerSession();
+  const { session: customerSession, toggleSession } = useCustomerSession();
+  const policy = useEffectivePolicy();
+  
   const [currentStep, setCurrentStep] = useState<WizardStep>("hardware");
   const [activeOption, setActiveOption] = useState<1 | 2>(1);
-  const [viewMode, setViewMode] = useState<ViewMode>("dealer");
+  const [viewMode, setViewMode] = useState<ViewMode>(policy.defaultViewMode);
   
   const [option1, setOption1] = useState<OfferOptionState>(createDefaultOptionState);
   const [option2, setOption2] = useState<OfferOptionState>(createDefaultOptionState);
@@ -116,6 +119,24 @@ export function Wizard() {
       setOption2(config);
     }
   }, [activeOption]);
+
+  // Handle view mode change with policy checks
+  const handleViewModeChange = useCallback((newMode: ViewMode) => {
+    // requireConfirmOnDealerSwitch: confirm when switching from customer to dealer
+    if (newMode === "dealer" && viewMode === "customer" && policy.requireConfirmOnDealerSwitch) {
+      if (!window.confirm("Wechsel in den Händler-Modus?")) {
+        return;
+      }
+    }
+    
+    // requireCustomerSessionWhenCustomerMode: auto-activate session when switching to customer
+    if (newMode === "customer" && policy.requireCustomerSessionWhenCustomerMode && !customerSession.isActive) {
+      toggleSession();
+      toast({ title: "Kundensitzung aktiviert", description: "Sensible Daten werden ausgeblendet." });
+    }
+    
+    setViewMode(newMode);
+  }, [viewMode, policy, customerSession.isActive, toggleSession, toast]);
 
   // Navigation
   const goToStep = (step: WizardStep) => {
@@ -226,11 +247,15 @@ export function Wizard() {
             
             <div className="h-6 w-px bg-border" />
             
-            {/* Customer Session Toggle - Safety Lock */}
-            <CustomerSessionToggle />
+            {/* Customer Session Toggle - Safety Lock (conditional) */}
+            {policy.showCustomerSessionToggle && <CustomerSessionToggle />}
             
-            {/* View Mode Toggle */}
-            <ViewModeToggle value={viewMode} onChange={setViewMode} />
+            {/* View Mode Toggle with policy */}
+            <ViewModeToggle 
+              value={viewMode} 
+              onChange={handleViewModeChange}
+              allowCustomerMode={policy.allowCustomerMode}
+            />
             
             {customerSession.isActive && (
               <span className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 px-2 py-1 rounded text-xs font-medium">

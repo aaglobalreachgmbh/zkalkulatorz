@@ -5,6 +5,7 @@ import { SecureInput } from "@/components/ui/secure-input";
 import { supabase } from "@/integrations/supabase/client";
 import type { OfferOptionState, CalculationResult } from "@/margenkalkulator/engine/types";
 import { createRateLimiter, logSecurityEvent } from "@/lib/securityUtils";
+import { useFeature } from "@/hooks/useFeature";
 
 // LLM Security Layer imports
 import {
@@ -39,7 +40,13 @@ interface Message {
  * 5. Output filtering
  */
 export function AiConsultant({ config, result }: AiConsultantProps) {
+  const { enabled: aiEnabled } = useFeature("aiConsultant");
   const [isOpen, setIsOpen] = useState(false);
+
+  // Feature disabled - don't render anything
+  if (!aiEnabled) {
+    return null;
+  }
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",

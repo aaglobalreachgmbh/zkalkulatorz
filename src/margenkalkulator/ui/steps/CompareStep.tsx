@@ -1,10 +1,11 @@
 import { Button } from "@/components/ui/button";
 import type { CalculationResult, ViewMode, OfferOptionState } from "../../engine/types";
-import { Eye, EyeOff, Printer, Link2Off, Smartphone, Signal, Wifi, Lock } from "lucide-react";
+import { Eye, EyeOff, Printer, Link2Off, Smartphone, Signal, Wifi, Lock, LockKeyhole } from "lucide-react";
 import { DiscreteMarginIndicator } from "../components/DiscreteMarginIndicator";
 import { PdfDownloadButton } from "../components/PdfDownloadButton";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
-
+import { useFeature } from "@/hooks/useFeature";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 interface CompareStepProps {
   option1: OfferOptionState;
   option2: OfferOptionState;

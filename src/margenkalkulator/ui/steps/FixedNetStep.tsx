@@ -16,7 +16,8 @@ import {
   listFixedNetByAccessType,
   getFixedNetProductFromCatalog,
 } from "@/margenkalkulator";
-import { Router, Phone } from "lucide-react";
+import { Router, Phone, Lock } from "lucide-react";
+import { useFeature } from "@/hooks/useFeature";
 
 interface FixedNetStepProps {
   value: FixedNetState;
@@ -25,9 +26,36 @@ interface FixedNetStepProps {
 }
 
 export function FixedNetStep({ value, onChange, datasetVersion }: FixedNetStepProps) {
+  const { enabled: fixedNetEnabled, reason: fixedNetReason } = useFeature("fixedNetModule");
   const [selectedAccessType, setSelectedAccessType] = useState<FixedNetAccessType>(
     value.accessType || "CABLE"
   );
+
+  // Feature disabled - show locked state
+  if (!fixedNetEnabled) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-card rounded-xl border border-border p-6 opacity-60">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-muted rounded-xl flex items-center justify-center">
+                <Lock className="w-6 h-6 text-muted-foreground" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">
+                  Festnetz & Internet
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {fixedNetReason || "Dieses Feature ist in Ihrer Lizenz nicht verfügbar."}
+                </p>
+              </div>
+            </div>
+            <Switch checked={false} disabled />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const updateField = <K extends keyof FixedNetState>(
     field: K,

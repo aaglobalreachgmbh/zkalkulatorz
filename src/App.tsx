@@ -13,6 +13,7 @@ import { IdentityProvider } from "@/contexts/IdentityContext";
 import { CustomerSessionProvider } from "@/contexts/CustomerSessionContext";
 import { SeatLimitGate } from "@/components/SeatLimitGate";
 import { FeatureRoute } from "@/components/FeatureRoute";
+import { MobileAccessGate } from "@/components/MobileAccessGate";
 import Home from "./pages/Home";
 import Index from "./pages/Index";
 import Bundles from "./pages/Bundles";
@@ -35,6 +36,9 @@ import Privacy from "./pages/Privacy";
 
 const queryClient = new QueryClient();
 
+// Seiten die immer auf allen Geräten erlaubt sind
+const ALWAYS_ALLOWED_PATHS = ["/auth", "/datenschutz", "/license"];
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <SecurityErrorBoundary>
@@ -45,9 +49,10 @@ const App = () => (
               <IdentityProvider>
                 <CustomerSessionProvider>
                   <SeatLimitGate>
-                    <Toaster />
-                    <Sonner />
-                    <BrowserRouter>
+                    <MobileAccessGate allowedPaths={ALWAYS_ALLOWED_PATHS}>
+                      <Toaster />
+                      <Sonner />
+                      <BrowserRouter>
                     <Routes>
                       <Route path="/auth" element={<Auth />} />
                       <Route path="/" element={<Home />} />
@@ -160,6 +165,7 @@ const App = () => (
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                     </BrowserRouter>
+                    </MobileAccessGate>
                   </SeatLimitGate>
                 </CustomerSessionProvider>
               </IdentityProvider>

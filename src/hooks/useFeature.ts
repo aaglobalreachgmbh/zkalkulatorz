@@ -34,6 +34,9 @@ const FEATURE_NAMES: Record<keyof LicenseFeatures, string> = {
   adminFeatureControl: "Admin: Feature-Steuerung",
   adminSecurityAccess: "Admin: Security-Zugang",
   adminBypassApproval: "Admin: Approval überspringen",
+  // Multi-Device Features
+  mobileAccess: "Mobile/Tablet Zugang",
+  offlineSync: "Offline-Synchronisation",
 };
 
 /**

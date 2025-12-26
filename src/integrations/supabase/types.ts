@@ -164,6 +164,36 @@ export type Database = {
         }
         Relationships: []
       }
+      gdpr_deletion_log: {
+        Row: {
+          deleted_at: string
+          deleted_tables: Json | null
+          deletion_reason: string
+          deletion_requested_by: string | null
+          email_hash: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          deleted_at?: string
+          deleted_tables?: Json | null
+          deletion_reason?: string
+          deletion_requested_by?: string | null
+          email_hash?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          deleted_at?: string
+          deleted_tables?: Json | null
+          deletion_reason?: string
+          deletion_requested_by?: string | null
+          email_hash?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       honeypot_submissions: {
         Row: {
           created_at: string
@@ -296,6 +326,7 @@ export type Database = {
           display_name: string | null
           email: string | null
           id: string
+          last_activity_at: string | null
           updated_at: string
         }
         Insert: {
@@ -304,6 +335,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id: string
+          last_activity_at?: string | null
           updated_at?: string
         }
         Update: {
@@ -312,6 +344,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id?: string
+          last_activity_at?: string | null
           updated_at?: string
         }
         Relationships: [

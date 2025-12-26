@@ -107,16 +107,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = async (email: string, password: string, displayName?: string) => {
     const redirectUrl = `${window.location.origin}/`;
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: redirectUrl,
         data: {
-          display_name: displayName || email.split("@")[ 0],
+          display_name: displayName || email.split("@")[0],
         },
       },
     });
+    
+    // Notify admin about new registration (fire and forget)
+    if (!error && data.user) {
+      supabase.functions.invoke("notify-admin-registration", {
+        body: {
+          userId: data.user.id,
+          email: data.user.email,
+          displayName: displayName || email.split("@")[0],
+        },
+      }).catch((err) => {
+        console.error("Failed to notify admin about registration:", err);
+      });
+    }
+    
     return { error: error as Error | null };
   };
 

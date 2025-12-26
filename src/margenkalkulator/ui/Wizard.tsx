@@ -22,6 +22,7 @@ import { SaveTemplateButton } from "./components/SaveTemplateButton";
 import { DraftManager } from "./components/DraftManager";
 import { HistoryDropdown } from "./components/HistoryDropdown";
 import { CloudOfferManager } from "./components/CloudOfferManager";
+import { ViewModeToggle } from "./components/ViewModeToggle";
 import { addToHistory } from "../storage/history";
 import { useToast } from "@/hooks/use-toast";
 
@@ -193,6 +194,17 @@ export function Wizard() {
           </div>
           
           <div className="flex items-center gap-4">
+            {/* View Mode Toggle - immer sichtbar */}
+            <ViewModeToggle value={viewMode} onChange={setViewMode} />
+            
+            {viewMode === "customer" && (
+              <span className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-1 rounded text-xs font-medium">
+                Kundenansicht
+              </span>
+            )}
+            
+            <div className="h-6 w-px bg-border" />
+            
             <HistoryDropdown onLoadHistory={handleLoadConfig} />
             <DraftManager onLoadDraft={handleLoadConfig} />
             <SaveDraftButton config={activeState} avgMonthly={avgMonthlyNet} />

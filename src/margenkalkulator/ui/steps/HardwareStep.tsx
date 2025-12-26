@@ -1,5 +1,4 @@
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import {
@@ -7,12 +6,24 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import type { HardwareState, DatasetVersion, ViewMode } from "../../engine/types";
 import { listHardwareItems } from "../../engine/catalogResolver";
 import { Smartphone, Upload, Check, Search, Tablet, ChevronDown } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { groupHardwareItems, findGroupAndVariant, type HardwareGroup, type HardwareVariant } from "../../lib/hardwareGrouping";
+import { 
+  groupHardwareFamilies, 
+  findFamilyAndConfig, 
+  type HardwareFamily, 
+  type HardwareSubModel,
+  type HardwareConfig 
+} from "../../lib/hardwareGrouping";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
 
 interface HardwareStepProps {
@@ -28,15 +39,13 @@ const HARDWARE_IMAGES: Record<string, string> = {
   default: "https://picsum.photos/seed/phone/200/200",
 };
 
-function getHardwareImage(baseId: string): string {
-  // Generiere konsistentes Bild basierend auf baseId
-  return `https://picsum.photos/seed/${baseId}/200/200`;
+function getHardwareImage(familyId: string): string {
+  return `https://picsum.photos/seed/${familyId}/200/200`;
 }
 
 type CategoryFilter = "all" | "smartphone" | "tablet";
 
 export function HardwareStep({ value, onChange, datasetVersion = "business-2025-09", viewMode = "dealer" }: HardwareStepProps) {
-  // Use centralized visibility hook instead of direct viewMode check
   const visibility = useSensitiveFieldsVisible(viewMode);
   const showHardwareEk = visibility.showHardwareEk;
   const showDealerOptions = visibility.showDealerEconomics;
@@ -64,28 +73,23 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
     return Array.from(uniqueBrands).sort();
   }, [hardwareItems]);
 
-  // Filter and group hardware items
-  const groupedItems = useMemo(() => {
+  // Filter and group hardware items using new 3-level hierarchy
+  const families = useMemo(() => {
     const filtered = hardwareItems.filter(item => {
-      // Exclude custom, none, and no_hardware (handled separately)
       if (item.category === "custom" || item.id === "no_hardware") return false;
       
-      // Search filter
       const searchLower = searchQuery.toLowerCase();
       const matchesSearch = searchQuery === "" || 
         item.brand.toLowerCase().includes(searchLower) ||
         item.model.toLowerCase().includes(searchLower);
       
-      // Brand filter
       const matchesBrand = selectedBrand === "all" || selectedBrand === "sim_only" || item.brand === selectedBrand;
-      
-      // Category filter
       const matchesCategory = selectedCategory === "all" || item.category === selectedCategory;
       
       return matchesSearch && matchesBrand && matchesCategory;
     });
 
-    return groupHardwareItems(filtered);
+    return groupHardwareFamilies(filtered);
   }, [hardwareItems, searchQuery, selectedBrand, selectedCategory]);
 
   // Check if SIM-Only should be shown
@@ -102,16 +106,16 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
       if (found.id === "no_hardware") {
         return { type: "simOnly" as const };
       }
-      const groupInfo = findGroupAndVariant(groupedItems, found.id);
-      if (groupInfo) {
-        return { type: "variant" as const, ...groupInfo };
+      const familyInfo = findFamilyAndConfig(families, found.id);
+      if (familyInfo) {
+        return { type: "config" as const, ...familyInfo };
       }
     }
     if (!value.name || value.name === "KEINE HARDWARE") {
       return { type: "simOnly" as const };
     }
     return null;
-  }, [value.name, hardwareItems, groupedItems]);
+  }, [value.name, hardwareItems, families]);
 
   const handleSimOnlySelect = () => {
     onChange({
@@ -122,11 +126,11 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
     setOpenPopoverId(null);
   };
 
-  const handleVariantSelect = (variant: HardwareVariant, brand: string) => {
+  const handleConfigSelect = (config: HardwareConfig, brand: string) => {
     onChange({
       ...value,
-      name: `${brand} ${variant.fullModel}`,
-      ekNet: variant.ekNet,
+      name: `${brand} ${config.fullModel}`,
+      ekNet: config.ekNet,
     });
     setOpenPopoverId(null);
   };
@@ -138,6 +142,12 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
     onChange({ ...value, [field]: fieldValue });
   };
 
+  // Count total configs across all families
+  const totalConfigs = useMemo(() => 
+    families.reduce((sum, f) => sum + f.totalConfigs, 0),
+    [families]
+  );
+
   return (
     <div className="space-y-6">
       {/* Header Row */}
@@ -146,7 +156,6 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
           <Smartphone className="w-5 h-5 text-muted-foreground" />
           <h2 className="text-xl font-semibold">Hardware wählen</h2>
         </div>
-        {/* Händler-Optionen - nur wenn showDealerOptions true */}
         {showDealerOptions && (
           <div className="flex items-center gap-4">
             <Link to="/hardware-manager">
@@ -170,7 +179,6 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
       <div className="bg-card rounded-xl border border-border p-4 space-y-4">
         {/* Search and Category Row */}
         <div className="flex flex-wrap items-center gap-4">
-          {/* Search Input */}
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -181,7 +189,6 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
             />
           </div>
 
-          {/* Category Toggle */}
           <div className="flex bg-muted rounded-lg p-1">
             <button
               onClick={() => setSelectedCategory("all")}
@@ -257,12 +264,12 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
 
         {/* Results Count */}
         <div className="text-sm text-muted-foreground">
-          {groupedItems.length} Modell{groupedItems.length !== 1 ? "e" : ""} gefunden
+          {families.length} Produktfamilie{families.length !== 1 ? "n" : ""} ({totalConfigs} Varianten)
           {showSimOnly && " + SIM Only"}
         </div>
       </div>
 
-      {/* Hardware Grid */}
+      {/* Hardware Grid - Family Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {/* SIM Only Card */}
         {showSimOnly && simOnlyItem && (
@@ -298,7 +305,6 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
               Nur Tarif
             </p>
             
-            {/* Maximale Marge Badge - nur wenn showDealerOptions */}
             {showDealerOptions && (
               <div className="flex justify-center mt-2">
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 text-xs font-medium">
@@ -309,17 +315,18 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
           </button>
         )}
 
-        {/* Grouped Hardware Cards */}
-        {groupedItems.map((group) => {
-          const isSelected = selectedInfo?.type === "variant" && selectedInfo.group.baseId === group.baseId;
-          const selectedVariant = isSelected ? selectedInfo.variant : null;
-          const hasMultipleVariants = group.variants.length > 1;
+        {/* Family Cards with SubModel/Config Selection */}
+        {families.map((family) => {
+          const isSelected = selectedInfo?.type === "config" && selectedInfo.family.familyId === family.familyId;
+          const selectedConfig = isSelected ? selectedInfo.config : null;
+          const selectedSubModel = isSelected ? selectedInfo.subModel : null;
+          const hasMultipleOptions = family.totalConfigs > 1;
           
           return (
             <Popover 
-              key={group.baseId} 
-              open={openPopoverId === group.baseId}
-              onOpenChange={(open) => setOpenPopoverId(open ? group.baseId : null)}
+              key={family.familyId} 
+              open={openPopoverId === family.familyId}
+              onOpenChange={(open) => setOpenPopoverId(open ? family.familyId : null)}
             >
               <PopoverTrigger asChild>
                 <button
@@ -332,54 +339,51 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
                     }
                   `}
                 >
-                  {/* Selected indicator */}
                   {isSelected && (
                     <div className="absolute top-3 right-3 w-6 h-6 bg-primary rounded-full flex items-center justify-center">
                       <Check className="w-4 h-4 text-primary-foreground" />
                     </div>
                   )}
                   
-                  {/* Variants Badge */}
-                  {hasMultipleVariants && (
+                  {/* Family Stats Badge */}
+                  {hasMultipleOptions && (
                     <div className="absolute top-3 left-3">
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted text-xs font-medium">
-                        {group.variants.length} Varianten
+                        {family.subModels.length} Modell{family.subModels.length > 1 ? "e" : ""}
                         <ChevronDown className="w-3 h-3" />
                       </span>
                     </div>
                   )}
                   
-                  {/* Image */}
                   <div className="flex justify-center mb-3 mt-2">
                     <img 
-                      src={getHardwareImage(group.baseId)}
-                      alt={group.baseName}
+                      src={getHardwareImage(family.familyId)}
+                      alt={family.familyName}
                       className="w-20 h-20 object-cover rounded-lg"
                     />
                   </div>
                   
-                  {/* Name & Brand */}
                   <h3 className="font-semibold text-foreground text-center text-sm">
-                    {group.baseName}
+                    {family.familyName}
                   </h3>
                   <p className="text-xs text-muted-foreground text-center mt-1">
-                    {group.brand}
+                    {family.brand}
                   </p>
                   
-                  {/* Selected Variant Info */}
-                  {selectedVariant && (
+                  {/* Selected SubModel + Config Info */}
+                  {selectedSubModel && selectedConfig && (
                     <p className="text-xs text-primary text-center mt-1 font-medium">
-                      {selectedVariant.storage}
+                      {selectedSubModel.subModelName ? `${selectedSubModel.subModelName} · ` : ""}
+                      {selectedConfig.storage}
                     </p>
                   )}
                   
-                  {/* Price Badge - nur wenn showHardwareEk true */}
                   {showHardwareEk && (
                     <div className="flex justify-center mt-2">
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-muted text-xs font-mono">
-                        {hasMultipleVariants 
-                          ? `ab ${group.lowestPrice} € EK`
-                          : `EK: ${group.lowestPrice} €`
+                        {hasMultipleOptions 
+                          ? `ab ${family.lowestPrice} € EK`
+                          : `EK: ${family.lowestPrice} €`
                         }
                       </span>
                     </div>
@@ -387,43 +391,83 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
                 </button>
               </PopoverTrigger>
               
-              <PopoverContent className="w-72 p-0 bg-popover" align="start">
+              <PopoverContent className="w-80 p-0 bg-popover" align="start">
                 <div className="p-4 border-b border-border">
-                  <h4 className="font-semibold">{group.brand} {group.baseName}</h4>
-                  <p className="text-sm text-muted-foreground">Speicheroption wählen</p>
+                  <h4 className="font-semibold">{family.brand} {family.familyName}</h4>
+                  <p className="text-sm text-muted-foreground">
+                    {family.subModels.length} Modell{family.subModels.length > 1 ? "e" : ""} · {family.totalConfigs} Variante{family.totalConfigs > 1 ? "n" : ""}
+                  </p>
                 </div>
-                <div className="p-2 space-y-1 max-h-64 overflow-y-auto">
-                  {group.variants.map((variant) => {
-                    const isVariantSelected = selectedVariant?.id === variant.id;
-                    return (
-                      <button
-                        key={variant.id}
-                        onClick={() => handleVariantSelect(variant, group.brand)}
-                        className={`
-                          w-full flex items-center justify-between p-3 rounded-lg transition-colors
-                          ${isVariantSelected 
-                            ? "bg-primary/10 text-primary" 
-                            : "hover:bg-muted"
-                          }
-                        `}
-                      >
-                        <div className="flex items-center gap-3">
-                          {isVariantSelected && (
-                            <Check className="w-4 h-4 text-primary" />
-                          )}
-                          <span className={`font-medium ${isVariantSelected ? "" : "ml-7"}`}>
-                            {variant.storage}
-                          </span>
-                        </div>
-                        {/* EK nur wenn showHardwareEk true */}
-                        {showHardwareEk && (
-                          <span className="text-sm font-mono text-muted-foreground">
-                            {variant.ekNet} € EK
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
+                
+                {/* SubModel Accordion with Configs */}
+                <div className="max-h-80 overflow-y-auto">
+                  <Accordion 
+                    type="single" 
+                    collapsible 
+                    defaultValue={selectedSubModel?.subModelId || family.subModels[0]?.subModelId}
+                    className="w-full"
+                  >
+                    {family.subModels.map((subModel) => {
+                      const isSubModelSelected = selectedSubModel?.subModelId === subModel.subModelId;
+                      
+                      return (
+                        <AccordionItem key={subModel.subModelId} value={subModel.subModelId} className="border-b border-border last:border-0">
+                          <AccordionTrigger className="px-4 py-3 hover:bg-muted/50 hover:no-underline">
+                            <div className="flex items-center gap-2 text-left">
+                              {isSubModelSelected && (
+                                <Check className="w-4 h-4 text-primary shrink-0" />
+                              )}
+                              <span className={`font-medium ${isSubModelSelected ? "text-primary" : ""}`}>
+                                {subModel.subModelName || family.familyName}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                ({subModel.configs.length})
+                              </span>
+                            </div>
+                          </AccordionTrigger>
+                          <AccordionContent className="pb-0">
+                            <div className="px-2 pb-2 space-y-1">
+                              {subModel.configs.map((config) => {
+                                const isConfigSelected = selectedConfig?.id === config.id;
+                                return (
+                                  <button
+                                    key={config.id}
+                                    onClick={() => handleConfigSelect(config, family.brand)}
+                                    className={`
+                                      w-full flex items-center justify-between p-3 rounded-lg transition-colors
+                                      ${isConfigSelected 
+                                        ? "bg-primary/10 text-primary" 
+                                        : "hover:bg-muted"
+                                      }
+                                    `}
+                                  >
+                                    <div className="flex items-center gap-3">
+                                      {isConfigSelected && (
+                                        <Check className="w-4 h-4 text-primary" />
+                                      )}
+                                      <div className={isConfigSelected ? "" : "ml-7"}>
+                                        <span className="font-medium">{config.storage}</span>
+                                        {config.connectivity && (
+                                          <span className="text-xs text-muted-foreground ml-2">
+                                            {config.connectivity}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                    {showHardwareEk && (
+                                      <span className="text-sm font-mono text-muted-foreground">
+                                        {config.ekNet} € EK
+                                      </span>
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+                      );
+                    })}
+                  </Accordion>
                 </div>
               </PopoverContent>
             </Popover>
@@ -432,7 +476,7 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
       </div>
 
       {/* Empty State */}
-      {groupedItems.length === 0 && !showSimOnly && (
+      {families.length === 0 && !showSimOnly && (
         <div className="text-center py-12 text-muted-foreground">
           <Smartphone className="w-12 h-12 mx-auto mb-4 opacity-50" />
           <p>Keine Geräte gefunden</p>
@@ -440,31 +484,20 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
         </div>
       )}
 
-      {/* Amortization Details - nur wenn showDealerOptions true */}
+      {/* Amortization Details */}
       {showDealerOptions && value.amortize && value.ekNet > 0 && (
         <div className="p-4 bg-muted/50 rounded-lg flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium">Amortisierung über {value.amortMonths} Monate</p>
-            <p className="text-xs text-muted-foreground">Hardware-Kosten werden auf Monatsraten verteilt</p>
+            <p className="text-sm font-medium">Hardware-Amortisation</p>
+            <p className="text-xs text-muted-foreground">
+              {value.ekNet} € EK über {value.amortMonths || 24} Monate
+            </p>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Label htmlFor="amortMonths" className="text-sm text-muted-foreground">Monate:</Label>
-              <Input
-                id="amortMonths"
-                type="number"
-                min={1}
-                max={36}
-                value={value.amortMonths}
-                onChange={(e) => updateField("amortMonths", parseInt(e.target.value) || 24)}
-                className="w-20"
-              />
-            </div>
-            <div className="text-right">
-              <p className="text-sm font-mono">
-                {(value.ekNet / (value.amortMonths || 24)).toFixed(2)} €/mtl.
-              </p>
-            </div>
+          <div className="text-right">
+            <p className="text-lg font-semibold font-mono">
+              {((value.ekNet || 0) / (value.amortMonths || 24)).toFixed(2)} €
+            </p>
+            <p className="text-xs text-muted-foreground">pro Monat</p>
           </div>
         </div>
       )}

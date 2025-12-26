@@ -35,6 +35,17 @@ function getCorsHeaders(origin: string | null): Record<string, string> {
 }
 
 // =============================================================================
+// SECURITY: Additional Security Headers (Hardening)
+// =============================================================================
+const SECURITY_HEADERS = {
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "X-XSS-Protection": "1; mode=block",
+  "Cache-Control": "no-store, no-cache, must-revalidate",
+};
+
+// =============================================================================
 // SECURITY: JWT Authentication
 // =============================================================================
 async function authenticateRequest(req: Request): Promise<{ userId: string } | null> {
@@ -64,6 +75,48 @@ async function authenticateRequest(req: Request): Promise<{ userId: string } | n
   }
 
   return { userId: user.id };
+}
+
+// =============================================================================
+// SECURITY: IP Blocklist Check (Hardening)
+// =============================================================================
+async function checkBlockedIP(hashedIP: string): Promise<boolean> {
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return false; // Fail open if not configured
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    
+    const { data, error } = await supabase
+      .from("blocked_ips")
+      .select("id, blocked_until")
+      .eq("ip_hash", hashedIP)
+      .maybeSingle();
+    
+    if (error || !data) return false;
+    
+    // Check if block is still active
+    if (data.blocked_until) {
+      const blockedUntil = new Date(data.blocked_until);
+      if (blockedUntil > new Date()) {
+        console.warn(`[SECURITY] Blocked IP attempted access: ${hashedIP}`);
+        return true;
+      }
+    } else {
+      // Permanent block
+      console.warn(`[SECURITY] Permanently blocked IP attempted access: ${hashedIP}`);
+      return true;
+    }
+    
+    return false;
+  } catch (error) {
+    console.error("[SECURITY] Error checking blocked IPs:", error);
+    return false; // Fail open
+  }
 }
 
 // =============================================================================
@@ -307,6 +360,19 @@ function filterAIOutput(output: string): string {
 }
 
 // =============================================================================
+// SECURITY: Response Size Limit (Hardening)
+// =============================================================================
+const MAX_RESPONSE_SIZE = 10240; // 10KB max response
+
+function limitResponseSize(response: string): string {
+  if (response.length > MAX_RESPONSE_SIZE) {
+    console.warn(`[SECURITY] Response truncated: ${response.length} -> ${MAX_RESPONSE_SIZE}`);
+    return response.slice(0, MAX_RESPONSE_SIZE) + "... [Antwort gekürzt]";
+  }
+  return response;
+}
+
+// =============================================================================
 // SECURITY: Safe Error Response (No Stack Traces)
 // =============================================================================
 function createErrorResponse(
@@ -321,9 +387,11 @@ function createErrorResponse(
   const clientMessages: Record<number, string> = {
     400: "Ungültige Anfrage. Bitte überprüfe deine Eingabe.",
     403: "Anfrage blockiert. Verdächtige Inhalte erkannt.",
+    415: "Ungültiger Content-Type. Nur JSON erlaubt.",
     429: "Zu viele Anfragen. Bitte warte einen Moment.",
     402: "AI-Guthaben aufgebraucht.",
     500: "Ein Fehler ist aufgetreten. Bitte versuche es später erneut.",
+    504: "Zeitüberschreitung. Bitte versuche es erneut.",
   };
 
   return new Response(
@@ -333,10 +401,15 @@ function createErrorResponse(
     }),
     { 
       status, 
-      headers: { ...corsHeaders, "Content-Type": "application/json" } 
+      headers: { ...corsHeaders, ...SECURITY_HEADERS, "Content-Type": "application/json" } 
     }
   );
 }
+
+// =============================================================================
+// SECURITY: Request Timeout (Hardening)
+// =============================================================================
+const AI_REQUEST_TIMEOUT_MS = 15000; // 15 seconds
 
 // =============================================================================
 // Main Handler
@@ -350,7 +423,7 @@ serve(async (req) => {
 
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: { ...corsHeaders, ...SECURITY_HEADERS } });
   }
 
   // Only allow POST
@@ -359,13 +432,26 @@ serve(async (req) => {
   }
 
   try {
+    // SECURITY (Hardening): Validate Content-Type
+    const contentType = req.headers.get("content-type");
+    if (!contentType?.includes("application/json")) {
+      console.warn(`[${requestId}] Invalid content-type: ${contentType}`);
+      return createErrorResponse("Invalid content type", 415, corsHeaders, requestId);
+    }
+
+    // SECURITY (Hardening): Check IP blocklist FIRST
+    const isBlocked = await checkBlockedIP(hashedIP);
+    if (isBlocked) {
+      return createErrorResponse("Access denied", 403, corsHeaders, requestId);
+    }
+
     // SECURITY: Authenticate user (JWT validation)
     const authResult = await authenticateRequest(req);
     if (!authResult) {
       console.warn(`[${requestId}] Unauthorized request from IP: ${hashedIP}`);
       return new Response(
         JSON.stringify({ error: "Nicht autorisiert. Bitte melde dich an.", requestId }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 401, headers: { ...corsHeaders, ...SECURITY_HEADERS, "Content-Type": "application/json" } }
       );
     }
 
@@ -382,6 +468,7 @@ serve(async (req) => {
           status: 429, 
           headers: { 
             ...corsHeaders, 
+            ...SECURITY_HEADERS,
             "Content-Type": "application/json",
             "Retry-After": String(rateCheck.retryAfter || 60)
           } 
@@ -484,21 +571,38 @@ ${context}
 
     console.log(`[${requestId}] Calling AI Gateway with Gemini 3 Pro (user: ${authResult.userId.slice(0, 8)}, IP: ${hashedIP})`);
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-pro-preview",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: sanitizedMessage },
-        ],
-        max_tokens: 800,
-      }),
-    });
+    // SECURITY (Hardening): Request with timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), AI_REQUEST_TIMEOUT_MS);
+
+    let response: Response;
+    try {
+      response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-3-pro-preview",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: sanitizedMessage },
+          ],
+          max_tokens: 800,
+        }),
+        signal: controller.signal,
+      });
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error instanceof Error && error.name === "AbortError") {
+        console.error(`[${requestId}] AI request timed out after ${AI_REQUEST_TIMEOUT_MS}ms`);
+        return createErrorResponse("Request timeout", 504, corsHeaders, requestId);
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!response.ok) {
       const status = response.status;
@@ -520,12 +624,15 @@ ${context}
     // VAULT SECURITY: AI Output Filtering
     // ==========================================================================
     aiResponse = filterAIOutput(aiResponse);
+    
+    // SECURITY (Hardening): Limit response size
+    aiResponse = limitResponseSize(aiResponse);
 
     console.log(`[${requestId}] Success`);
 
     return new Response(
       JSON.stringify({ response: aiResponse, requestId }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { headers: { ...corsHeaders, ...SECURITY_HEADERS, "Content-Type": "application/json" } }
     );
   } catch (error) {
     console.error(`[${requestId}] Unhandled error:`, error instanceof Error ? error.message : "Unknown");

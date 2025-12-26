@@ -308,3 +308,93 @@ Für Passwort-Felder Threat-Detection deaktivieren (Passwörter können false-po
   ...
 />
 ```
+
+---
+
+## Offline Security (GLOBAL & PERMANENT)
+
+### Architektur-Entscheidung
+
+Die Offline-Fallback-Seite ist eine **permanente, globale** Sicherheitsmaßnahme, 
+die in der Anwendungsarchitektur fest verankert ist.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    OFFLINE SECURITY LAYER                        │
+├─────────────────────────────────────────────────────────────────┤
+│  1. NETWORK DETECTOR       │ Online/Offline Status überwachen   │
+│  2. OFFLINE BOUNDARY       │ Isoliert App von Offline-Zustand   │
+│  3. SECURE OFFLINE PAGE    │ Minimale, sichere Fallback-UI      │
+│  4. SESSION PRESERVATION   │ Auth-Status wird geschützt         │
+│  5. DATA PROTECTION        │ Keine sensiblen Ops offline        │
+│  6. INPUT BLOCKING         │ Keine Formular-Eingaben möglich    │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Sicherheits-Garantien im Offline-Modus
+
+| Garantie | Beschreibung |
+|----------|--------------|
+| **Keine sensiblen Daten exponiert** | Keine Margen, Provisionen, EK-Preise sichtbar |
+| **Keine Formular-Eingaben** | Verhindert Offline-Injection-Angriffe |
+| **Session bleibt geschützt** | Auth-Token wird nicht gelöscht |
+| **CSP Headers aktiv** | Browser-Schutz bleibt bestehen |
+| **Rate Limiter blockiert** | Keine API-Calls im Offline-Modus |
+| **Audit-Log** | Offline-Events werden geloggt |
+| **Keyboard-Blocking** | Paste & Submit-Shortcuts blockiert |
+
+### Warum Global?
+
+- **Konsistentes Verhalten** über alle Routen
+- **Keine Sicherheitslücken** durch vergessene Route-Handler
+- **Zentrale Kontrolle** über Offline-Verhalten
+- **Automatischer Schutz** für neue Seiten/Komponenten
+
+### Warum Permanent?
+
+- **Offline-Angriffe sind real** (Man-in-the-Middle, Netzwerk-Spoofing)
+- **Benutzer können keine manipulierten Offline-Daten einschleusen**
+- **Schützt vor "Offline-then-sync"-Angriffen**
+- **Verhindert Daten-Exfiltration bei Netzwerkproblemen**
+
+### Sicherheits-Checkliste gegen Offline-Bedrohungen
+
+| Bedrohung | Schutzmaßnahme | Status |
+|-----------|----------------|--------|
+| XSS im Offline-Modus | Keine User-Inputs möglich | ✅ |
+| Session Hijacking | Token bleibt geschützt, keine Übertragung | ✅ |
+| LocalStorage Manipulation | Kein Zugriff auf sensible Keys | ✅ |
+| CSRF Offline | Keine Formulare, keine Actions | ✅ |
+| Netzwerk-Spoofing | CSP blockiert externe Ressourcen | ✅ |
+| Data Exfiltration | Keine API-Calls, Rate Limiter aktiv | ✅ |
+| Keyboard Injection | Paste & Submit blockiert | ✅ |
+| Cache Poisoning | Keine lokale Datenspeicherung im Offline-Modus | ✅ |
+
+### Verwendung
+
+Die Offline-Security ist automatisch aktiv durch `OfflineBoundary` in `App.tsx`:
+
+```tsx
+<SecurityProvider>
+  <OfflineBoundary>
+    <TooltipProvider>
+      {/* Gesamte App ist automatisch geschützt */}
+    </TooltipProvider>
+  </OfflineBoundary>
+</SecurityProvider>
+```
+
+### Netzwerk-Status Hook
+
+```tsx
+import { useNetworkStatus } from "@/hooks/useNetworkStatus";
+
+function MyComponent() {
+  const { isOnline, wasOffline, retry } = useNetworkStatus();
+  
+  if (!isOnline) {
+    // Wird automatisch durch OfflineBoundary behandelt
+  }
+}
+```
+```

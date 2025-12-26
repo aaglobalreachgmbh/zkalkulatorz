@@ -21,7 +21,23 @@ export type SecurityEventType =
   | "sanitization_applied"
   | "phishing_detected"
   | "brute_force"
-  | "component_lifecycle";
+  | "component_lifecycle"
+  // Extended Event Types (Security Layer Integration)
+  | "ssrf_blocked"
+  | "domain_blocked"
+  | "payload_threat"
+  | "api_gateway_block"
+  | "prompt_injection_blocked"
+  | "jailbreak_detected"
+  | "output_filtered"
+  | "llm_security_violation"
+  | "session_quarantined"
+  | "zero_day_detected"
+  | "trust_score_degraded"
+  | "websocket_violation"
+  | "tunnel_blocked"
+  | "message_rate_limited"
+  | "protocol_violation";
 
 export type RiskLevel = "low" | "medium" | "high" | "critical";
 

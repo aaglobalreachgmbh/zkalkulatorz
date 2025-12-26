@@ -13,6 +13,7 @@
  */
 
 import { hashForLogging } from "./securityPatterns";
+import { logSecurityEvent } from "./securityLogger";
 
 // ============================================================================
 // TYPES
@@ -472,7 +473,7 @@ export function calculateTrustScore(): number {
 }
 
 // ============================================================================
-// AUDIT LOGGING
+// AUDIT LOGGING WITH REMOTE LOGGING
 // ============================================================================
 
 function logAnomalyEvent(
@@ -492,7 +493,30 @@ function logAnomalyEvent(
     console.log("[ZeroDefenseLayer]", logEntry);
   }
   
-  // In production: Could trigger alert for critical level
+  // Remote logging for suspicious and higher levels
+  if (level !== "normal") {
+    const riskLevelMap: Record<AnomalyResult["level"], "low" | "medium" | "high" | "critical"> = {
+      "normal": "low",
+      "suspicious": "medium",
+      "anomalous": "high",
+      "critical": "critical",
+    };
+    
+    const eventType = level === "critical" ? "zero_day_detected" 
+      : level === "anomalous" ? "anomaly_detected"
+      : "trust_score_degraded";
+    
+    logSecurityEvent({
+      event_type: eventType,
+      risk_level: riskLevelMap[level],
+      details: {
+        anomaly_level: level,
+        score,
+        factors: factors.map(f => f.name),
+        session_hash: hashForLogging(getSessionId()),
+      },
+    });
+  }
 }
 
 // ============================================================================

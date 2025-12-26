@@ -15,6 +15,7 @@
  */
 
 import { hashForLogging } from "./securityPatterns";
+import { logSecurityEvent } from "./securityLogger";
 
 // ============================================================================
 // TYPES
@@ -356,11 +357,11 @@ ${content}
 }
 
 // ============================================================================
-// AUDIT LOGGING
+// AUDIT LOGGING WITH REMOTE LOGGING
 // ============================================================================
 
 export function logLlmSecurityEvent(
-  event: "input_blocked" | "output_filtered" | "injection_detected",
+  event: "input_blocked" | "output_filtered" | "injection_detected" | "jailbreak_detected",
   details: Record<string, unknown>
 ): void {
   const logEntry = {
@@ -377,6 +378,33 @@ export function logLlmSecurityEvent(
   if (import.meta.env.DEV) {
     console.log("[LlmSecurityLayer]", logEntry);
   }
+  
+  // Remote logging for security events
+  const eventTypeMap: Record<string, "prompt_injection_blocked" | "jailbreak_detected" | "output_filtered" | "llm_security_violation"> = {
+    "input_blocked": "prompt_injection_blocked",
+    "output_filtered": "output_filtered",
+    "injection_detected": "prompt_injection_blocked",
+    "jailbreak_detected": "jailbreak_detected",
+  };
+  
+  const riskLevelMap: Record<string, "low" | "medium" | "high" | "critical"> = {
+    "input_blocked": "critical",
+    "output_filtered": "medium",
+    "injection_detected": "high",
+    "jailbreak_detected": "critical",
+  };
+  
+  logSecurityEvent({
+    event_type: eventTypeMap[event] || "llm_security_violation",
+    risk_level: riskLevelMap[event] || "high",
+    details: {
+      event,
+      threats: details.threats,
+      content_hash: typeof details.content === "string" 
+        ? hashForLogging(details.content)
+        : undefined,
+    },
+  });
 }
 
 // ============================================================================

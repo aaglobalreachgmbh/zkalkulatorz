@@ -561,7 +561,11 @@ function LicenseTab() {
     refresh,
   } = useLicense();
 
-  const featureKeys: (keyof LicenseFeatures)[] = [
+  // Check if admin can control features for others
+  const canControlFeatures = isFeatureEnabled("adminFeatureControl");
+
+  // Standard features that can be controlled
+  const standardFeatureKeys: (keyof LicenseFeatures)[] = [
     "dataGovernance",
     "compareOption2",
     "fixedNetModule",
@@ -571,6 +575,14 @@ function LicenseTab() {
     "advancedReporting",
     "apiAccess",
     "customBranding",
+  ];
+
+  // Admin-only features
+  const adminFeatureKeys: (keyof LicenseFeatures)[] = [
+    "adminFullVisibility",
+    "adminFeatureControl",
+    "adminSecurityAccess",
+    "adminBypassApproval",
   ];
 
   const featureLabels: Record<keyof LicenseFeatures, string> = {
@@ -583,10 +595,18 @@ function LicenseTab() {
     advancedReporting: "Erweitertes Reporting",
     apiAccess: "API-Zugang",
     customBranding: "Eigenes Branding",
-    adminFullVisibility: "Admin: Vollständige Sichtbarkeit",
-    adminFeatureControl: "Admin: Feature-Steuerung",
-    adminSecurityAccess: "Admin: Security-Zugang",
-    adminBypassApproval: "Admin: Approval überspringen",
+    adminFullVisibility: "Vollständige Sichtbarkeit",
+    adminFeatureControl: "Feature-Steuerung",
+    adminSecurityAccess: "Security-Zugang",
+    adminBypassApproval: "Approval überspringen",
+  };
+
+  const featureDescriptions: Partial<Record<keyof LicenseFeatures, string>> = {
+    adminFullVisibility: "Margen auch in Kundenansicht sichtbar",
+    adminFeatureControl: "Feature-Flags für andere Nutzer steuern",
+    adminSecurityAccess: "Zugang zu Security-Dashboards",
+    adminBypassApproval: "Dataset-Import ohne Genehmigung",
+    exportPdf: "Noch nicht implementiert",
   };
 
   const handleAssignSeat = (userId: string, userName: string) => {
@@ -602,6 +622,26 @@ function LicenseTab() {
     if (revokeUserSeat(userId)) {
       toast({ title: "Seat entzogen" });
     }
+  };
+
+  const handleFeatureChange = (key: keyof LicenseFeatures, checked: boolean) => {
+    // For admin features, always allow (self-control)
+    if (adminFeatureKeys.includes(key)) {
+      setFeatureEnabled(key, checked);
+      return;
+    }
+    
+    // For standard features, check if admin has control permission
+    if (!canControlFeatures) {
+      toast({
+        title: "Keine Berechtigung",
+        description: "Feature-Steuerung erfordert 'adminFeatureControl' Berechtigung.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setFeatureEnabled(key, checked);
   };
 
   return (
@@ -634,7 +674,7 @@ function LicenseTab() {
                   size="sm"
                   onClick={() => setPlan(plan)}
                 >
-                  {plan.toUpperCase()}
+                  {plan === "internal" ? "allenetze.de" : plan.toUpperCase()}
                 </Button>
               ))}
             </div>
@@ -739,28 +779,76 @@ function LicenseTab() {
         </CardContent>
       </Card>
 
-      {/* Features */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Feature-Flags</CardTitle>
+      {/* Admin-Only Features */}
+      <Card className="border-amber-200 dark:border-amber-800">
+        <CardHeader className="bg-amber-50 dark:bg-amber-950/20 rounded-t-lg">
+          <CardTitle className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
+            <Key className="w-5 h-5" />
+            Admin-Only Features
+          </CardTitle>
           <CardDescription>
-            Aktivieren oder deaktivieren Sie Features für diesen Tenant
+            Diese Features sind nur für allenetze.de Partner verfügbar
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {featureKeys.map((key) => (
+        <CardContent className="space-y-4 pt-4">
+          {adminFeatureKeys.map((key) => (
             <div key={key} className="flex items-center justify-between">
               <div>
-                <Label>{featureLabels[key]}</Label>
-                {key === "exportPdf" && (
+                <Label className="flex items-center gap-2">
+                  {featureLabels[key]}
+                  {isFeatureEnabled(key) && (
+                    <Badge className="bg-amber-500 text-white text-[10px]">Aktiv</Badge>
+                  )}
+                </Label>
+                {featureDescriptions[key] && (
                   <p className="text-xs text-muted-foreground">
-                    Noch nicht implementiert
+                    {featureDescriptions[key]}
                   </p>
                 )}
               </div>
               <Switch
                 checked={isFeatureEnabled(key)}
-                onCheckedChange={(checked) => setFeatureEnabled(key, checked)}
+                onCheckedChange={(checked) => handleFeatureChange(key, checked)}
+              />
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      {/* Standard Features */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Settings className="w-5 h-5" />
+            Feature-Flags
+            {!canControlFeatures && (
+              <Badge variant="outline" className="text-muted-foreground text-[10px]">
+                Nur Ansicht
+              </Badge>
+            )}
+          </CardTitle>
+          <CardDescription>
+            {canControlFeatures 
+              ? "Aktivieren oder deaktivieren Sie Features für diesen Tenant"
+              : "Feature-Steuerung erfordert 'adminFeatureControl' Berechtigung"
+            }
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {standardFeatureKeys.map((key) => (
+            <div key={key} className="flex items-center justify-between">
+              <div>
+                <Label>{featureLabels[key]}</Label>
+                {featureDescriptions[key] && (
+                  <p className="text-xs text-muted-foreground">
+                    {featureDescriptions[key]}
+                  </p>
+                )}
+              </div>
+              <Switch
+                checked={isFeatureEnabled(key)}
+                onCheckedChange={(checked) => handleFeatureChange(key, checked)}
+                disabled={!canControlFeatures}
               />
             </div>
           ))}

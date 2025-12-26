@@ -4,6 +4,7 @@ import { useAuth } from "./useAuth";
 
 export type AdminAction =
   | "role_change"
+  | "license_change"
   | "mfa_disable"
   | "mfa_enable"
   | "policy_change"
@@ -147,6 +148,7 @@ export function useAdminAuditLog() {
 export function formatAdminAction(action: AdminAction): string {
   const descriptions: Record<AdminAction, string> = {
     role_change: "Benutzerrolle geändert",
+    license_change: "Lizenz geändert",
     mfa_disable: "MFA deaktiviert",
     mfa_enable: "MFA aktiviert",
     policy_change: "Richtlinie geändert",

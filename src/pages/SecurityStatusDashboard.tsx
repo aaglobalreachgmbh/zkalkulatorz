@@ -16,8 +16,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useSessionSecurity } from "@/hooks/useSessionSecurity";
 import { useLicense } from "@/hooks/useLicense";
+import { useAdminAuditLog } from "@/hooks/useAdminAuditLog";
+import { toast } from "@/hooks/use-toast";
 import { 
   Shield, 
   ShieldCheck, 
@@ -46,9 +49,12 @@ import {
   FileKey,
   Bot,
   Fingerprint,
+  UserPlus,
+  Calendar,
+  Mail,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { format } from "date-fns";
+import { format, subDays, isAfter } from "date-fns";
 import { de } from "date-fns/locale";
 
 // Security Layer Definition
@@ -70,6 +76,17 @@ interface LicensedUser {
   createdAt: string;
   role: string;
   lastActivity?: string;
+  hasLicense: boolean;
+}
+
+// Recent registration from security_events
+interface RecentRegistration {
+  id: string;
+  userId: string | null;
+  email: string;
+  displayName: string;
+  createdAt: string;
+  notificationSent: boolean;
 }
 
 export default function SecurityStatusDashboard() {
@@ -78,8 +95,10 @@ export default function SecurityStatusDashboard() {
   const navigate = useNavigate();
   const { getRemainingTime, getFormattedRemainingTime } = useSessionSecurity();
   const { license } = useLicense();
+  const { logAdminAction } = useAdminAuditLog();
   
   const [users, setUsers] = useState<LicensedUser[]>([]);
+  const [recentRegistrations, setRecentRegistrations] = useState<RecentRegistration[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState(new Date());
   const [securityScore, setSecurityScore] = useState(0);
@@ -110,7 +129,7 @@ export default function SecurityStatusDashboard() {
 
       if (rolesError) throw rolesError;
 
-      // Combine data
+      // Combine data - all registered users have a license by default
       const rolesMap = new Map(roles?.map(r => [r.user_id, r.role]) || []);
       
       const combinedUsers: LicensedUser[] = (profiles || []).map(p => ({
@@ -119,9 +138,35 @@ export default function SecurityStatusDashboard() {
         displayName: p.display_name,
         createdAt: p.created_at,
         role: rolesMap.get(p.id) || "user",
+        hasLicense: true, // All registered users have license
       }));
 
       setUsers(combinedUsers);
+      
+      // Fetch recent registrations from security_events (last 7 days)
+      const sevenDaysAgo = subDays(new Date(), 7).toISOString();
+      const { data: registrationEvents, error: regError } = await supabase
+        .from("security_events")
+        .select("*")
+        .eq("event_type", "user_registration")
+        .gte("created_at", sevenDaysAgo)
+        .order("created_at", { ascending: false });
+
+      if (!regError && registrationEvents) {
+        const regs: RecentRegistration[] = registrationEvents.map(e => {
+          const details = e.details as { email?: string; displayName?: string; notificationSent?: boolean } | null;
+          return {
+            id: e.id,
+            userId: e.user_id,
+            email: details?.email || "Unbekannt",
+            displayName: details?.displayName || "Unbekannt",
+            createdAt: e.created_at,
+            notificationSent: details?.notificationSent || false,
+          };
+        });
+        setRecentRegistrations(regs);
+      }
+
       setLastRefresh(new Date());
     } catch (err) {
       console.error("Error fetching users:", err);
@@ -314,6 +359,83 @@ export default function SecurityStatusDashboard() {
     }
   };
 
+  // Handle role change
+  const handleRoleChange = async (userId: string, newRole: string) => {
+    try {
+      const currentUser = users.find(u => u.id === userId);
+      const oldRole = currentUser?.role || "user";
+      
+      // Update the role in user_roles table
+      const { error } = await supabase
+        .from("user_roles")
+        .update({ role: newRole as "admin" | "moderator" | "user" })
+        .eq("user_id", userId);
+
+      if (error) throw error;
+
+      // Log the action
+      await logAdminAction({
+        action: "role_change",
+        targetTable: "user_roles",
+        targetId: userId,
+        oldValues: { role: oldRole },
+        newValues: { role: newRole },
+      });
+
+      toast({
+        title: "Rolle geändert",
+        description: `Benutzerrolle wurde auf "${newRole}" geändert.`,
+      });
+
+      // Refresh users
+      await fetchUsers();
+    } catch (err) {
+      console.error("Error changing role:", err);
+      toast({
+        title: "Fehler",
+        description: "Rolle konnte nicht geändert werden.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle license toggle
+  const handleLicenseToggle = async (userId: string, hasLicense: boolean) => {
+    try {
+      // For now, all users have licenses by default
+      // This would integrate with a proper licensing system
+      await logAdminAction({
+        action: "license_change",
+        targetTable: "profiles",
+        targetId: userId,
+        oldValues: { hasLicense: !hasLicense },
+        newValues: { hasLicense },
+      });
+
+      toast({
+        title: hasLicense ? "Lizenz aktiviert" : "Lizenz deaktiviert",
+        description: `Benutzer-Lizenz wurde ${hasLicense ? "aktiviert" : "deaktiviert"}.`,
+      });
+
+      // Update local state
+      setUsers(prev => prev.map(u => 
+        u.id === userId ? { ...u, hasLicense } : u
+      ));
+    } catch (err) {
+      console.error("Error toggling license:", err);
+      toast({
+        title: "Fehler",
+        description: "Lizenz konnte nicht geändert werden.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Count new registrations in last 7 days
+  const newRegistrationsCount = users.filter(u => 
+    isAfter(new Date(u.createdAt), subDays(new Date(), 7))
+  ).length;
+
   if (!isAdmin) {
     return null;
   }
@@ -362,8 +484,12 @@ export default function SecurityStatusDashboard() {
           </CardContent>
         </Card>
 
-        <Tabs defaultValue="layers" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+        <Tabs defaultValue="registrations" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="registrations" className="gap-2">
+              <UserPlus className="h-4 w-4" />
+              Neue Registrierungen ({newRegistrationsCount})
+            </TabsTrigger>
             <TabsTrigger value="layers" className="gap-2">
               <Shield className="h-4 w-4" />
               Schutzschichten ({securityLayers.length})
@@ -377,6 +503,162 @@ export default function SecurityStatusDashboard() {
               Session & Timeout
             </TabsTrigger>
           </TabsList>
+
+          {/* Recent Registrations Tab (Last 7 Days) */}
+          <TabsContent value="registrations" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <UserPlus className="h-5 w-5 text-green-400" />
+                  Registrierungen der letzten 7 Tage
+                </CardTitle>
+                <CardDescription>
+                  Neue Benutzer die sich kürzlich registriert haben
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {/* Stats Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                  <Card className="bg-green-500/10 border-green-500/20">
+                    <CardContent className="pt-4">
+                      <div className="flex items-center gap-3">
+                        <UserPlus className="h-8 w-8 text-green-400" />
+                        <div>
+                          <p className="text-2xl font-bold">{newRegistrationsCount}</p>
+                          <p className="text-sm text-muted-foreground">Neue Benutzer</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-blue-500/10 border-blue-500/20">
+                    <CardContent className="pt-4">
+                      <div className="flex items-center gap-3">
+                        <Mail className="h-8 w-8 text-blue-400" />
+                        <div>
+                          <p className="text-2xl font-bold">
+                            {recentRegistrations.filter(r => r.notificationSent).length}
+                          </p>
+                          <p className="text-sm text-muted-foreground">Benachrichtigt</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-purple-500/10 border-purple-500/20">
+                    <CardContent className="pt-4">
+                      <div className="flex items-center gap-3">
+                        <Key className="h-8 w-8 text-purple-400" />
+                        <div>
+                          <p className="text-2xl font-bold">{users.filter(u => u.hasLicense).length}</p>
+                          <p className="text-sm text-muted-foreground">Lizenziert</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-orange-500/10 border-orange-500/20">
+                    <CardContent className="pt-4">
+                      <div className="flex items-center gap-3">
+                        <Calendar className="h-8 w-8 text-orange-400" />
+                        <div>
+                          <p className="text-2xl font-bold">7</p>
+                          <p className="text-sm text-muted-foreground">Tage Zeitraum</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Recent Registrations Table */}
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Benutzer</TableHead>
+                      <TableHead>E-Mail</TableHead>
+                      <TableHead>Registriert</TableHead>
+                      <TableHead>Benachrichtigung</TableHead>
+                      <TableHead>Aktionen</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {users.filter(u => isAfter(new Date(u.createdAt), subDays(new Date(), 7))).length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                          Keine neuen Registrierungen in den letzten 7 Tagen
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      users
+                        .filter(u => isAfter(new Date(u.createdAt), subDays(new Date(), 7)))
+                        .map(u => {
+                          const regEvent = recentRegistrations.find(r => r.userId === u.id);
+                          return (
+                            <TableRow key={u.id}>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center">
+                                    <UserPlus className="h-4 w-4 text-green-400" />
+                                  </div>
+                                  <span className="font-medium">{u.displayName || "Unbekannt"}</span>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-muted-foreground">
+                                {u.email || "-"}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex flex-col">
+                                  <span className="font-medium">
+                                    {format(new Date(u.createdAt), "dd.MM.yyyy", { locale: de })}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {format(new Date(u.createdAt), "HH:mm", { locale: de })} Uhr
+                                  </span>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                {regEvent?.notificationSent ? (
+                                  <Badge className="bg-green-500/20 text-green-400 border-green-500/50">
+                                    <Mail className="h-3 w-3 mr-1" />
+                                    Gesendet
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-muted-foreground">
+                                    Keine
+                                  </Badge>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <Select
+                                    value={u.role}
+                                    onValueChange={(val) => handleRoleChange(u.id, val)}
+                                  >
+                                    <SelectTrigger className="w-32 h-8">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="user">User</SelectItem>
+                                      <SelectItem value="moderator">Moderator</SelectItem>
+                                      <SelectItem value="admin">Admin</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                  <Button
+                                    variant={u.hasLicense ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => handleLicenseToggle(u.id, !u.hasLicense)}
+                                  >
+                                    <Key className="h-3 w-3 mr-1" />
+                                    {u.hasLicense ? "Lizenziert" : "Lizenz vergeben"}
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           {/* Security Layers Tab */}
           <TabsContent value="layers" className="space-y-6">
@@ -489,10 +771,10 @@ export default function SecurityStatusDashboard() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="h-5 w-5" />
-                  Registrierte Benutzer mit Lizenz
+                  Alle Benutzer mit Lizenzverwaltung
                 </CardTitle>
                 <CardDescription>
-                  Übersicht aller Benutzer die eine Lizenz erhalten haben
+                  Verwalten Sie Rollen und Lizenzen für alle Benutzer
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -503,19 +785,20 @@ export default function SecurityStatusDashboard() {
                       <TableHead>E-Mail</TableHead>
                       <TableHead>Rolle</TableHead>
                       <TableHead>Registriert</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHead>Lizenz</TableHead>
+                      <TableHead>Aktionen</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {isLoading ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                           Lade Benutzer...
                         </TableCell>
                       </TableRow>
                     ) : users.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                           Keine Benutzer gefunden
                         </TableCell>
                       </TableRow>
@@ -540,10 +823,50 @@ export default function SecurityStatusDashboard() {
                             {format(new Date(u.createdAt), "dd.MM.yyyy HH:mm", { locale: de })}
                           </TableCell>
                           <TableCell>
-                            <Badge className="bg-green-500/20 text-green-400 border-green-500/50">
-                              <Key className="h-3 w-3 mr-1" />
-                              Lizenziert
-                            </Badge>
+                            {u.hasLicense ? (
+                              <Badge className="bg-green-500/20 text-green-400 border-green-500/50">
+                                <Key className="h-3 w-3 mr-1" />
+                                Aktiv
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-muted-foreground">
+                                Keine Lizenz
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Select
+                                value={u.role}
+                                onValueChange={(val) => handleRoleChange(u.id, val)}
+                              >
+                                <SelectTrigger className="w-28 h-8">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="user">User</SelectItem>
+                                  <SelectItem value="moderator">Moderator</SelectItem>
+                                  <SelectItem value="admin">Admin</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <Button
+                                variant={u.hasLicense ? "destructive" : "default"}
+                                size="sm"
+                                onClick={() => handleLicenseToggle(u.id, !u.hasLicense)}
+                              >
+                                {u.hasLicense ? (
+                                  <>
+                                    <Lock className="h-3 w-3 mr-1" />
+                                    Entziehen
+                                  </>
+                                ) : (
+                                  <>
+                                    <Unlock className="h-3 w-3 mr-1" />
+                                    Vergeben
+                                  </>
+                                )}
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))

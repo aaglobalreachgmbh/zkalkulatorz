@@ -1,6 +1,6 @@
 // ============================================
-// Admin Panel - Phase 3B Complete
-// Organisation, Policies, Daten, Protokoll
+// Admin Panel - Phase 3C Complete
+// Organisation, Policies, Daten, Protokoll, Lizenz
 // ============================================
 
 import { useState, useEffect, useCallback } from "react";
@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useIdentity, MOCK_IDENTITIES, type IdentityState } from "@/contexts/IdentityContext";
-import { Building2, Settings, Database, Plus, Trash2, Users, FileText, Clock, User } from "lucide-react";
+import { Building2, Settings, Database, Plus, Trash2, Users, FileText, Clock, User, Key, Check, X, Crown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
@@ -46,6 +46,10 @@ import {
   logPolicyChange,
   type AuditEvent 
 } from "@/lib/auditLog";
+
+// License imports
+import { useLicense } from "@/hooks/useLicense";
+import type { LicenseFeatures, LicensePlan } from "@/lib/license";
 
 import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
@@ -179,7 +183,7 @@ export default function Admin() {
         </div>
 
         <Tabs defaultValue="organisation" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="organisation" className="gap-2">
               <Building2 className="w-4 h-4" />
               Organisation
@@ -195,6 +199,10 @@ export default function Admin() {
             <TabsTrigger value="protokoll" className="gap-2">
               <FileText className="w-4 h-4" />
               Protokoll
+            </TabsTrigger>
+            <TabsTrigger value="lizenz" className="gap-2">
+              <Key className="w-4 h-4" />
+              Lizenz
             </TabsTrigger>
           </TabsList>
 
@@ -525,8 +533,229 @@ export default function Admin() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Lizenz Tab */}
+          <LicenseTab />
         </Tabs>
       </div>
     </MainLayout>
+  );
+}
+
+// ============================================
+// License Tab Component
+// ============================================
+
+function LicenseTab() {
+  const { identity } = useIdentity();
+  const { toast } = useToast();
+  const {
+    license,
+    seatUsage,
+    seatedUsers,
+    isFeatureEnabled,
+    setFeatureEnabled,
+    setPlan,
+    assignUserSeat,
+    revokeUserSeat,
+    refresh,
+  } = useLicense();
+
+  const featureKeys: (keyof LicenseFeatures)[] = [
+    "dataGovernance",
+    "compareOption2",
+    "fixedNetModule",
+    "exportPdf",
+    "auditLog",
+    "aiConsultant",
+  ];
+
+  const featureLabels: Record<keyof LicenseFeatures, string> = {
+    dataGovernance: "Daten-Governance",
+    compareOption2: "Option 2 Vergleich",
+    fixedNetModule: "Festnetz-Modul",
+    exportPdf: "PDF Export",
+    auditLog: "Audit-Protokoll",
+    aiConsultant: "AI Berater",
+  };
+
+  const handleAssignSeat = (userId: string, userName: string) => {
+    const result = assignUserSeat(userId, userName);
+    if (result.success) {
+      toast({ title: "Seat zugewiesen", description: userName });
+    } else {
+      toast({ title: "Fehler", description: result.error, variant: "destructive" });
+    }
+  };
+
+  const handleRevokeSeat = (userId: string) => {
+    if (revokeUserSeat(userId)) {
+      toast({ title: "Seat entzogen" });
+    }
+  };
+
+  return (
+    <TabsContent value="lizenz" className="space-y-6">
+      {/* Plan & Overview */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Crown className="w-5 h-5 text-amber-500" />
+            Lizenz-Übersicht
+          </CardTitle>
+          <CardDescription>
+            Tenant: {license.tenantId}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Plan Selector */}
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>Aktueller Plan</Label>
+              <p className="text-sm text-muted-foreground">
+                Wählen Sie den Lizenzplan
+              </p>
+            </div>
+            <div className="flex gap-2">
+              {(["internal", "pro", "enterprise"] as LicensePlan[]).map((plan) => (
+                <Button
+                  key={plan}
+                  variant={license.plan === plan ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setPlan(plan)}
+                >
+                  {plan.toUpperCase()}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Seat Usage */}
+          <div className="bg-muted/50 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="font-medium flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                Seat-Nutzung
+              </h4>
+              <Badge variant={seatUsage.available > 0 ? "default" : "destructive"}>
+                {seatUsage.used} / {seatUsage.limit}
+              </Badge>
+            </div>
+            
+            {/* Progress bar */}
+            <div className="w-full bg-muted rounded-full h-2 mb-2">
+              <div 
+                className={`h-2 rounded-full transition-all ${
+                  seatUsage.available > 0 ? "bg-primary" : "bg-destructive"
+                }`}
+                style={{ width: `${Math.min(100, (seatUsage.used / seatUsage.limit) * 100)}%` }}
+              />
+            </div>
+            
+            <p className="text-sm text-muted-foreground">
+              {seatUsage.available > 0 
+                ? `${seatUsage.available} Seats verfügbar`
+                : "Keine Seats verfügbar - Limit erreicht"
+              }
+            </p>
+          </div>
+
+          {license.validUntil && (
+            <div className="text-sm text-muted-foreground">
+              Gültig bis: {new Date(license.validUntil).toLocaleDateString("de-DE")}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Seat Assignments */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Seat-Zuweisung</CardTitle>
+          <CardDescription>
+            Weisen Sie Benutzern Seats zu
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {/* Mock users for assignment */}
+            {MOCK_IDENTITIES.map((mockUser) => {
+              const hasSeact = seatedUsers.some(s => s.userId === mockUser.userId);
+              
+              return (
+                <div 
+                  key={mockUser.userId}
+                  className="flex items-center justify-between py-3 border-b last:border-0"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                      <User className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="font-medium">{mockUser.displayName}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {mockUser.role} • {mockUser.departmentId}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {hasSeact ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRevokeSeat(mockUser.userId)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <X className="w-4 h-4 mr-1" />
+                      Entziehen
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleAssignSeat(mockUser.userId, mockUser.displayName)}
+                      disabled={seatUsage.available === 0}
+                    >
+                      <Check className="w-4 h-4 mr-1" />
+                      Zuweisen
+                    </Button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Features */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Feature-Flags</CardTitle>
+          <CardDescription>
+            Aktivieren oder deaktivieren Sie Features für diesen Tenant
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {featureKeys.map((key) => (
+            <div key={key} className="flex items-center justify-between">
+              <div>
+                <Label>{featureLabels[key]}</Label>
+                {key === "exportPdf" && (
+                  <p className="text-xs text-muted-foreground">
+                    Noch nicht implementiert
+                  </p>
+                )}
+              </div>
+              <Switch
+                checked={isFeatureEnabled(key)}
+                onCheckedChange={(checked) => setFeatureEnabled(key, checked)}
+              />
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    </TabsContent>
   );
 }

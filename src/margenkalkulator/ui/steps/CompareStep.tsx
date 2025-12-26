@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import type { CalculationResult, ViewMode, OfferOptionState } from "../../engine/types";
-import { Eye, EyeOff, Printer, Link2Off, Smartphone, Signal, Wifi, FileText } from "lucide-react";
+import { Eye, EyeOff, Printer, Link2Off, Smartphone, Signal, Wifi, Lock } from "lucide-react";
 import { DiscreteMarginIndicator } from "../components/DiscreteMarginIndicator";
 import { PdfDownloadButton } from "../components/PdfDownloadButton";
+import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
 
 interface CompareStepProps {
   option1: OfferOptionState;
@@ -27,7 +28,10 @@ export function CompareStep({
   onViewModeChange,
   onCopyOption,
 }: CompareStepProps) {
-  const isCustomerMode = viewMode === "customer";
+  // Use centralized visibility hook instead of direct viewMode check
+  const visibility = useSensitiveFieldsVisible(viewMode);
+  const isCustomerMode = visibility.effectiveMode === "customer";
+  const showDealerEconomics = visibility.showDealerEconomics;
   
   return (
     <div className="space-y-6">
@@ -36,7 +40,11 @@ export function CompareStep({
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-slate-700 rounded-lg flex items-center justify-center">
             {isCustomerMode ? (
-              <Eye className="w-5 h-5 text-slate-300" />
+              visibility.isCustomerSessionActive ? (
+                <Lock className="w-5 h-5 text-amber-400" />
+              ) : (
+                <Eye className="w-5 h-5 text-slate-300" />
+              )
             ) : (
               <EyeOff className="w-5 h-5 text-emerald-400" />
             )}
@@ -46,9 +54,11 @@ export function CompareStep({
               {isCustomerMode ? "Customer Presentation" : "Dealer Dashboard"}
             </h3>
             <p className="text-sm text-slate-400">
-              {isCustomerMode 
-                ? "Kundenansicht: Nur Verkaufspreise" 
-                : "Händleransicht: Marge & Provision sichtbar"
+              {visibility.isCustomerSessionActive 
+                ? "Kundensitzung aktiv: Alle Händlerdaten gesperrt" 
+                : isCustomerMode 
+                  ? "Kundenansicht: Nur Verkaufspreise" 
+                  : "Händleransicht: Marge & Provision sichtbar"
               }
             </p>
           </div>
@@ -59,8 +69,9 @@ export function CompareStep({
             size="sm"
             onClick={() => onViewModeChange(isCustomerMode ? "dealer" : "customer")}
             className="bg-slate-700 hover:bg-slate-600 text-white border-0"
+            disabled={visibility.isCustomerSessionActive}
           >
-            Modus wechseln
+            {visibility.isCustomerSessionActive ? "Gesperrt" : "Modus wechseln"}
           </Button>
           <PdfDownloadButton 
             option={option1} 
@@ -95,8 +106,8 @@ export function CompareStep({
                     Gültig bis {new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString('de-DE')}
                   </p>
                 </div>
-                {/* Diskreter Marge-Indikator - nur für Mitarbeiter erkennbar */}
-                {isCustomerMode && (
+                {/* Diskreter Marge-Indikator - nur für Mitarbeiter erkennbar, nicht bei Kundensitzung */}
+                {isCustomerMode && !visibility.isCustomerSessionActive && (
                   <DiscreteMarginIndicator margin={result1.dealer.margin} className="mt-2" />
                 )}
               </div>
@@ -157,15 +168,27 @@ export function CompareStep({
           </div>
         </div>
 
-        {/* Dealer Info Sidebar */}
+        {/* Dealer Info Sidebar - controlled by visibility hook */}
         <div className="lg:col-span-1">
-          {isCustomerMode ? (
+          {!showDealerEconomics ? (
             <div className="bg-card rounded-xl border border-border p-6 flex flex-col items-center justify-center h-full text-center">
-              <Link2Off className="w-12 h-12 text-muted-foreground/30 mb-4" />
-              <h4 className="font-medium text-muted-foreground">Händler-Daten verborgen</h4>
-              <p className="text-sm text-muted-foreground mt-2">
-                Wechseln Sie in den Dealer-Modus um Margen zu sehen.
-              </p>
+              {visibility.isCustomerSessionActive ? (
+                <>
+                  <Lock className="w-12 h-12 text-amber-500/50 mb-4" />
+                  <h4 className="font-medium text-muted-foreground">Kundensitzung aktiv</h4>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Händler-Daten sind während der Kundensitzung gesperrt.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <Link2Off className="w-12 h-12 text-muted-foreground/30 mb-4" />
+                  <h4 className="font-medium text-muted-foreground">Händler-Daten verborgen</h4>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Wechseln Sie in den Dealer-Modus um Margen zu sehen.
+                  </p>
+                </>
+              )}
             </div>
           ) : (
             <div className="bg-card rounded-xl border border-border p-6 space-y-4">

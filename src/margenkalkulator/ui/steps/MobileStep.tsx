@@ -10,6 +10,7 @@ import {
   type DatasetVersion,
   type TariffFamily,
   type MobileTariff,
+  type ViewMode,
   listMobileTariffs,
   listPromos,
   listSubVariants,
@@ -20,6 +21,7 @@ import { Signal, Tag, AlertTriangle, Minus, Plus } from "lucide-react";
 import { OMORateSelectorEnhanced, type OMORate } from "../components/OMORateSelectorEnhanced";
 import { SubVariantSelector } from "../components/SubVariantSelector";
 import { FHPartnerToggle } from "../components/FHPartnerToggle";
+import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
 
 interface MobileStepProps {
   value: MobileState;
@@ -27,7 +29,7 @@ interface MobileStepProps {
   datasetVersion: DatasetVersion;
   fixedNetEnabled?: boolean;
   hardwareName?: string;
-  viewMode?: "customer" | "dealer";
+  viewMode?: ViewMode;
 }
 
 const FAMILY_LABELS: Record<TariffFamily, string> = {
@@ -52,7 +54,11 @@ export function MobileStep({
   hardwareName = "",
   viewMode = "dealer",
 }: MobileStepProps) {
-  const isCustomerMode = viewMode === "customer";
+  // Use centralized visibility hook instead of direct viewMode check
+  const visibility = useSensitiveFieldsVisible(viewMode);
+  const showOmoSelector = visibility.showOmoSelector;
+  const showFhPartnerToggle = visibility.showFhPartnerToggle;
+  
   const [selectedFamily, setSelectedFamily] = useState<TariffFamily | "all">("all");
 
   const updateField = <K extends keyof MobileState>(
@@ -280,9 +286,9 @@ export function MobileStep({
         </div>
       )}
 
-      {/* SUB Variant Selection + OMO + FH-Partner Row - Händler-Optionen teilweise versteckt */}
+      {/* SUB Variant Selection + OMO + FH-Partner Row - Händler-Optionen basierend auf Visibility */}
       {selectedTariff && !isTeamDeal && (
-        <div className={`grid grid-cols-1 ${isCustomerMode ? "" : "md:grid-cols-2 lg:grid-cols-3"} gap-6 p-6 bg-card rounded-xl border border-border`}>
+        <div className={`grid grid-cols-1 ${(showOmoSelector || showFhPartnerToggle) ? "md:grid-cols-2 lg:grid-cols-3" : ""} gap-6 p-6 bg-card rounded-xl border border-border`}>
           {/* SUB Variant Selector - immer sichtbar */}
           <SubVariantSelector
             value={value.subVariantId}
@@ -292,8 +298,8 @@ export function MobileStep({
             subVariants={subVariants}
           />
 
-          {/* OMO Rate Selector - nur Händler */}
-          {!isCustomerMode && (
+          {/* OMO Rate Selector - nur wenn showOmoSelector */}
+          {showOmoSelector && (
             <OMORateSelectorEnhanced
               value={(value.omoRate ?? 0) as OMORate}
               onChange={(rate) => updateField("omoRate", rate)}
@@ -302,8 +308,8 @@ export function MobileStep({
             />
           )}
 
-          {/* FH Partner Toggle - nur Händler */}
-          {!isCustomerMode && (
+          {/* FH Partner Toggle - nur wenn showFhPartnerToggle */}
+          {showFhPartnerToggle && (
             <div className="flex items-end">
               <FHPartnerToggle
                 checked={value.isFHPartner ?? false}

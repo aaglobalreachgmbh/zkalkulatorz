@@ -1,4 +1,3 @@
-import { SecureInput } from "@/components/ui/secure-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -8,18 +7,19 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import type { HardwareState, DatasetVersion } from "../../engine/types";
+import type { HardwareState, DatasetVersion, ViewMode } from "../../engine/types";
 import { listHardwareItems } from "../../engine/catalogResolver";
 import { Smartphone, Upload, Check, Search, Tablet, ChevronDown } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { groupHardwareItems, findGroupAndVariant, type HardwareGroup, type HardwareVariant } from "../../lib/hardwareGrouping";
+import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
 
 interface HardwareStepProps {
   value: HardwareState;
   onChange: (value: HardwareState) => void;
   datasetVersion?: DatasetVersion;
-  viewMode?: "customer" | "dealer";
+  viewMode?: ViewMode;
 }
 
 // Placeholder images for hardware (using picsum for demo)
@@ -36,7 +36,11 @@ function getHardwareImage(baseId: string): string {
 type CategoryFilter = "all" | "smartphone" | "tablet";
 
 export function HardwareStep({ value, onChange, datasetVersion = "business-2025-09", viewMode = "dealer" }: HardwareStepProps) {
-  const isCustomerMode = viewMode === "customer";
+  // Use centralized visibility hook instead of direct viewMode check
+  const visibility = useSensitiveFieldsVisible(viewMode);
+  const showHardwareEk = visibility.showHardwareEk;
+  const showDealerOptions = visibility.showDealerEconomics;
+  
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedBrand, setSelectedBrand] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>("all");
@@ -142,8 +146,8 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
           <Smartphone className="w-5 h-5 text-muted-foreground" />
           <h2 className="text-xl font-semibold">Hardware wählen</h2>
         </div>
-        {/* Händler-Optionen - nur im Dealer-Modus */}
-        {!isCustomerMode && (
+        {/* Händler-Optionen - nur wenn showDealerOptions true */}
+        {showDealerOptions && (
           <div className="flex items-center gap-4">
             <Link to="/hardware-manager">
               <Button variant="outline" size="sm" className="gap-2">
@@ -294,7 +298,8 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
               Nur Tarif
             </p>
             
-            {!isCustomerMode && (
+            {/* Maximale Marge Badge - nur wenn showDealerOptions */}
+            {showDealerOptions && (
               <div className="flex justify-center mt-2">
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 text-xs font-medium">
                   Maximale Marge
@@ -368,8 +373,8 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
                     </p>
                   )}
                   
-                  {/* Price Badge - nur im Händler-Modus */}
-                  {!isCustomerMode && (
+                  {/* Price Badge - nur wenn showHardwareEk true */}
+                  {showHardwareEk && (
                     <div className="flex justify-center mt-2">
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-muted text-xs font-mono">
                         {hasMultipleVariants 
@@ -410,7 +415,8 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
                             {variant.storage}
                           </span>
                         </div>
-                        {!isCustomerMode && (
+                        {/* EK nur wenn showHardwareEk true */}
+                        {showHardwareEk && (
                           <span className="text-sm font-mono text-muted-foreground">
                             {variant.ekNet} € EK
                           </span>
@@ -434,8 +440,8 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
         </div>
       )}
 
-      {/* Amortization Details - nur im Händler-Modus */}
-      {!isCustomerMode && value.amortize && value.ekNet > 0 && (
+      {/* Amortization Details - nur wenn showDealerOptions true */}
+      {showDealerOptions && value.amortize && value.ekNet > 0 && (
         <div className="p-4 bg-muted/50 rounded-lg flex items-center justify-between">
           <div>
             <p className="text-sm font-medium">Amortisierung über {value.amortMonths} Monate</p>
@@ -443,20 +449,21 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <Label htmlFor="amort-months" className="text-sm">Monate:</Label>
-              <SecureInput
-                id="amort-months"
+              <Label htmlFor="amortMonths" className="text-sm text-muted-foreground">Monate:</Label>
+              <Input
+                id="amortMonths"
                 type="number"
                 min={1}
-                max={48}
+                max={36}
                 value={value.amortMonths}
-                onChange={(e) => updateField("amortMonths", Math.max(1, parseInt(e.target.value) || 24))}
+                onChange={(e) => updateField("amortMonths", parseInt(e.target.value) || 24)}
                 className="w-20"
-                detectThreats={false}
               />
             </div>
             <div className="text-right">
-              <p className="text-lg font-bold">{(value.ekNet / value.amortMonths).toFixed(2)} €/Mo</p>
+              <p className="text-sm font-mono">
+                {(value.ekNet / (value.amortMonths || 24)).toFixed(2)} €/mtl.
+              </p>
             </div>
           </div>
         </div>

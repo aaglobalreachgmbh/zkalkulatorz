@@ -168,8 +168,9 @@ const schema = VALIDATION_SCHEMAS.email;
 
 ## Session Security
 
-- **Timeout**: 30 Minuten Inaktivität
-- **Warnung**: 5 Minuten vor Timeout
+- **Timeout**: 5 Minuten Inaktivität (automatische Abmeldung)
+- **Warnung**: 1 Minute vor Timeout
+- **Check-Intervall**: Alle 15 Sekunden
 - **Activity Events**: Maus, Tastatur, Scroll, Touch, Klick
 
 ## CSP Headers

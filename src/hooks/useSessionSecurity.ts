@@ -6,9 +6,9 @@ import { toast } from "sonner";
 // Session Security Hook - Timeout & Activity Tracking
 // =============================================================================
 
-const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
-const WARNING_BEFORE_MS = 5 * 60 * 1000; // Warn 5 minutes before
-const CHECK_INTERVAL_MS = 60 * 1000; // Check every minute
+const SESSION_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes inactivity timeout
+const WARNING_BEFORE_MS = 1 * 60 * 1000; // Warn 1 minute before
+const CHECK_INTERVAL_MS = 15 * 1000; // Check every 15 seconds for faster response
 const ACTIVITY_EVENTS = ["mousemove", "keydown", "click", "scroll", "touchstart"];
 
 interface SessionSecurityState {
@@ -46,7 +46,7 @@ export function useSessionSecurity() {
   const showTimeoutWarning = useCallback(() => {
     if (!warningShownRef.current && user) {
       warningShownRef.current = true;
-      toast.info("Deine Session läuft in 5 Minuten ab. Bleibe aktiv um angemeldet zu bleiben.", {
+      toast.info("Deine Session läuft in 1 Minute ab. Bleibe aktiv um angemeldet zu bleiben.", {
         duration: 10000,
         action: {
           label: "OK",

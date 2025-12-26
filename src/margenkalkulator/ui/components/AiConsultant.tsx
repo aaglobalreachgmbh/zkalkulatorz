@@ -1,15 +1,22 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { Sparkles, Send, X, Bot, User, Loader2, ShieldAlert } from "lucide-react";
+import { Sparkles, Send, X, Bot, User, Loader2, ShieldAlert, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SecureInput } from "@/components/ui/secure-input";
 import { supabase } from "@/integrations/supabase/client";
 import type { OfferOptionState, CalculationResult } from "@/margenkalkulator/engine/types";
-import { 
-  detectThreatPatterns, 
-  sanitizeInput, 
-  createRateLimiter,
-  logSecurityEvent 
-} from "@/lib/securityUtils";
+import { createRateLimiter, logSecurityEvent } from "@/lib/securityUtils";
+
+// LLM Security Layer imports
+import {
+  checkPromptInjection,
+  sanitizeLlmInput,
+  checkLlmOutput,
+  filterLlmOutput,
+  logLlmSecurityEvent,
+} from "@/lib/llmSecurityLayer";
+
+// Zero Defense Layer imports
+import zeroDefenseLayer from "@/lib/zeroDefenseLayer";
 
 interface AiConsultantProps {
   config: OfferOptionState;
@@ -21,6 +28,16 @@ interface Message {
   content: string;
 }
 
+/**
+ * AI Consultant Component with Zero-Trust Security Integration
+ * 
+ * Security Layers:
+ * 1. Client-side rate limiting
+ * 2. Zero Defense Layer (anomaly detection)
+ * 3. LLM Security Layer (prompt injection detection)
+ * 4. Input sanitization
+ * 5. Output filtering
+ */
 export function AiConsultant({ config, result }: AiConsultantProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
@@ -33,6 +50,7 @@ export function AiConsultant({ config, result }: AiConsultantProps) {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isRateLimited, setIsRateLimited] = useState(false);
+  const [securityBlocked, setSecurityBlocked] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Rate limiter: 5 requests per minute (client-side)
@@ -54,53 +72,129 @@ export function AiConsultant({ config, result }: AiConsultantProps) {
     }
   }, [isRateLimited]);
 
+  // Reset security block after delay
+  useEffect(() => {
+    if (securityBlocked) {
+      const timeout = setTimeout(() => setSecurityBlocked(false), 30000);
+      return () => clearTimeout(timeout);
+    }
+  }, [securityBlocked]);
+
   const handleSend = async () => {
     const trimmed = input.trim();
 
     // Client-side validation
     if (!trimmed || isLoading) return;
 
-    // Rate limit check (client-side)
+    // =========================================================================
+    // SECURITY LAYER 1: Check session quarantine status
+    // =========================================================================
+    const quarantineStatus = zeroDefenseLayer.isSessionQuarantined();
+    if (quarantineStatus.quarantined) {
+      setSecurityBlocked(true);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "Deine Sitzung wurde aus Sicherheitsgründen temporär eingeschränkt. Bitte warte einen Moment.",
+        },
+      ]);
+      console.warn("[Security] Session quarantined:", quarantineStatus.reason);
+      return;
+    }
+
+    // =========================================================================
+    // SECURITY LAYER 2: Client-side rate limiting
+    // =========================================================================
     if (!rateLimiter.canMakeRequest()) {
       setIsRateLimited(true);
       const retryAfter = Math.ceil(rateLimiter.getRetryAfterMs() / 1000);
       setMessages((prev) => [
         ...prev,
-        { 
-          role: "assistant", 
-          content: `Zu viele Anfragen. Bitte warte ${retryAfter} Sekunden.` 
+        {
+          role: "assistant",
+          content: `Zu viele Anfragen. Bitte warte ${retryAfter} Sekunden.`,
         },
       ]);
       logSecurityEvent("rate_limited", { category: "ai", severity: "warn" });
       return;
     }
 
-    // Threat detection (client-side warning, server does final check)
-    const threatResult = detectThreatPatterns(trimmed);
-    if (!threatResult.isSafe) {
-      logSecurityEvent("threat_detected", { 
-        category: "ai", 
-        severity: threatResult.riskLevel,
+    // =========================================================================
+    // SECURITY LAYER 3: Zero Defense Layer - Behavioral anomaly detection
+    // =========================================================================
+    const anomalyResult = zeroDefenseLayer.analyzeAction("ai_chat", trimmed);
+    
+    if (anomalyResult.recommendation === "hard_block") {
+      setSecurityBlocked(true);
+      zeroDefenseLayer.quarantineSession("Critical anomaly detected in AI chat");
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "Ungewöhnliches Verhalten erkannt. Anfrage blockiert.",
+        },
+      ]);
+      console.warn("[Security] Anomaly hard block:", {
+        score: anomalyResult.score,
+        level: anomalyResult.level,
+        factors: anomalyResult.factors.map((f) => f.name),
       });
-      
-      // High risk: Block entirely
-      if (threatResult.riskLevel === "high") {
+      setInput("");
+      return;
+    }
+
+    if (anomalyResult.recommendation === "soft_block") {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "Bitte verlangsame deine Anfragen etwas.",
+        },
+      ]);
+      console.warn("[Security] Anomaly soft block:", {
+        score: anomalyResult.score,
+        level: anomalyResult.level,
+      });
+      return;
+    }
+
+    // =========================================================================
+    // SECURITY LAYER 4: LLM Security - Prompt Injection Detection
+    // =========================================================================
+    const injectionCheck = checkPromptInjection(trimmed);
+    
+    if (!injectionCheck.safe) {
+      logLlmSecurityEvent("injection_detected", {
+        threats: injectionCheck.threats,
+        riskLevel: injectionCheck.riskLevel,
+      });
+
+      // Critical/High risk: Block entirely
+      if (injectionCheck.riskLevel === "critical" || injectionCheck.riskLevel === "high") {
+        setSecurityBlocked(true);
         setMessages((prev) => [
           ...prev,
-          { 
-            role: "assistant", 
-            content: "Deine Nachricht enthält ungültige Muster und kann nicht verarbeitet werden." 
+          {
+            role: "assistant",
+            content: "Deine Nachricht enthält ungültige Muster und kann nicht verarbeitet werden.",
           },
         ]);
         setInput("");
         return;
       }
-      // Medium risk: Sanitize and continue with warning
+
+      // Medium risk: Warn but continue with sanitized input
+      if (injectionCheck.riskLevel === "medium") {
+        console.warn("[Security] Injection warning:", injectionCheck.threats);
+      }
     }
 
-    // Sanitize input
-    const sanitized = sanitizeInput(trimmed, 1000);
-    
+    // =========================================================================
+    // SECURITY LAYER 5: Input Sanitization
+    // =========================================================================
+    const sanitized = sanitizeLlmInput(trimmed, 1000);
+
     if (sanitized.length === 0) {
       setMessages((prev) => [
         ...prev,
@@ -122,6 +216,9 @@ export function AiConsultant({ config, result }: AiConsultantProps) {
     setIsLoading(true);
 
     try {
+      // =========================================================================
+      // API CALL: Edge Function handles server-side security
+      // =========================================================================
       const response = await supabase.functions.invoke("ai-consultant", {
         body: {
           message: sanitized,
@@ -142,7 +239,24 @@ export function AiConsultant({ config, result }: AiConsultantProps) {
         throw new Error(response.error.message || "Fehler");
       }
 
-      const aiResponse = response.data?.response || "Es ist ein Fehler aufgetreten.";
+      // =========================================================================
+      // SECURITY LAYER 6: Output Security Check & Filtering
+      // =========================================================================
+      let aiResponse = response.data?.response || "Es ist ein Fehler aufgetreten.";
+      
+      // Check AI output for security issues
+      const outputCheck = checkLlmOutput(aiResponse);
+      
+      if (!outputCheck.safe) {
+        logLlmSecurityEvent("output_filtered", {
+          threats: outputCheck.threats,
+          riskLevel: outputCheck.riskLevel,
+        });
+        
+        // Filter the response to remove sensitive content
+        aiResponse = filterLlmOutput(aiResponse);
+      }
+
       setMessages((prev) => [...prev, { role: "assistant", content: aiResponse }]);
     } catch (error) {
       // Generic error logging (no sensitive data)
@@ -171,6 +285,9 @@ export function AiConsultant({ config, result }: AiConsultantProps) {
       handleSend();
     }
   };
+
+  // Calculate trust score for UI indicator
+  const trustScore = useMemo(() => zeroDefenseLayer.calculateTrustScore(), [messages.length]);
 
   return (
     <>
@@ -216,6 +333,20 @@ export function AiConsultant({ config, result }: AiConsultantProps) {
                 <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-600 dark:text-purple-400 font-medium border border-purple-500/30">
                   Thinking Mode
                 </span>
+                {/* Security Trust Indicator */}
+                <span 
+                  className={`px-1.5 py-0.5 text-[10px] rounded-full font-medium flex items-center gap-1 ${
+                    trustScore >= 80 
+                      ? "bg-green-500/20 text-green-600 border border-green-500/30" 
+                      : trustScore >= 50 
+                        ? "bg-amber-500/20 text-amber-600 border border-amber-500/30"
+                        : "bg-red-500/20 text-red-600 border border-red-500/30"
+                  }`}
+                  title={`Vertrauensscore: ${trustScore}%`}
+                >
+                  <Shield className="w-2.5 h-2.5" />
+                  {trustScore}
+                </span>
               </div>
             </div>
           </div>
@@ -237,6 +368,14 @@ export function AiConsultant({ config, result }: AiConsultantProps) {
           </div>
         )}
 
+        {/* Security Block Warning */}
+        {securityBlocked && (
+          <div className="px-4 py-2 bg-red-500/10 border-b border-red-500/30 flex items-center gap-2 text-sm text-red-600">
+            <Shield className="w-4 h-4" />
+            <span>Sicherheitsüberprüfung aktiv. Einige Anfragen sind eingeschränkt.</span>
+          </div>
+        )}
+
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[200px] max-h-[400px]">
           {messages.map((msg, idx) => (
@@ -249,8 +388,8 @@ export function AiConsultant({ config, result }: AiConsultantProps) {
               <div
                 className={`
                   w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center
-                  ${msg.role === "user" 
-                    ? "bg-primary text-primary-foreground" 
+                  ${msg.role === "user"
+                    ? "bg-primary text-primary-foreground"
                     : "bg-gradient-to-r from-primary/20 to-purple-600/20 text-primary"
                   }
                 `}
@@ -305,13 +444,13 @@ export function AiConsultant({ config, result }: AiConsultantProps) {
               onChange={(e, sanitized) => setInput(sanitized.slice(0, 1000))}
               onKeyDown={handleKeyDown}
               placeholder="Frage z.B.: 'Wie kann ich die Marge verbessern?'"
-              disabled={isLoading || isRateLimited}
+              disabled={isLoading || isRateLimited || securityBlocked}
               maxLength={1000}
               className="w-full pl-4 pr-12 py-3 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm text-foreground placeholder:text-muted-foreground disabled:opacity-50 transition-all"
               onThreatDetected={(threats) => {
                 setMessages((prev) => [
                   ...prev,
-                  { role: "assistant", content: "Deine Nachricht enthält ungültige Muster." }
+                  { role: "assistant", content: "Deine Nachricht enthält ungültige Muster." },
                 ]);
                 setInput("");
               }}
@@ -319,14 +458,14 @@ export function AiConsultant({ config, result }: AiConsultantProps) {
             <Button
               size="icon"
               onClick={handleSend}
-              disabled={isLoading || !input.trim() || isRateLimited}
+              disabled={isLoading || !input.trim() || isRateLimited || securityBlocked}
               className="absolute right-2 rounded-lg w-8 h-8"
             >
               <Send className="w-4 h-4" />
             </Button>
           </div>
           <p className="text-xs text-center text-muted-foreground mt-2">
-            Gemini 3 Pro • Thinking Mode • Tiefe Margen-Analyse
+            Gemini 3 Pro • Thinking Mode • Zero-Trust Security
           </p>
         </div>
       </div>

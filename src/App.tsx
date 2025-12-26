@@ -29,6 +29,7 @@ import SecuritySettings from "./pages/SecuritySettings";
 import Admin from "./pages/Admin";
 import License from "./pages/License";
 import SecurityReport from "./pages/SecurityReport";
+import ThreatIntelligence from "./pages/ThreatIntelligence";
 
 const queryClient = new QueryClient();
 
@@ -105,6 +106,14 @@ const App = () => (
                         element={
                           <AdminRoute>
                             <SecurityReport />
+                          </AdminRoute>
+                        }
+                      />
+                      <Route
+                        path="/security/threat-intel"
+                        element={
+                          <AdminRoute>
+                            <ThreatIntelligence />
                           </AdminRoute>
                         }
                       />

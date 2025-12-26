@@ -1,4 +1,4 @@
-import { Calculator, Users, BarChart3, Building2, FolderOpen, Shield, Database, Settings, Home, Package, ShieldCheck, CreditCard, FileText } from "lucide-react";
+import { Calculator, Users, BarChart3, Building2, FolderOpen, Shield, Database, Settings, Home, Package, ShieldCheck, CreditCard, FileText, Radar } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -35,6 +35,7 @@ const adminItems = [
   { title: "Datenmanager", url: "/data-manager", icon: Database },
   { title: "Security Dashboard", url: "/security", icon: Shield },
   { title: "Security Report", url: "/security/report", icon: FileText },
+  { title: "Threat Intelligence", url: "/security/threat-intel", icon: Radar },
 ];
 
 export function AppSidebar() {

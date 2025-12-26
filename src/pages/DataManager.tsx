@@ -16,6 +16,7 @@ import {
   FileSpreadsheet,
   ArrowLeft,
   Info,
+  Zap,
 } from "lucide-react";
 import { 
   validateDataset,
@@ -31,6 +32,7 @@ import {
 } from "@/margenkalkulator";
 import { toast } from "@/hooks/use-toast";
 import { useIdentity } from "@/contexts/IdentityContext";
+import { useFeature } from "@/hooks/useFeature";
 import { 
   StatusBadge, 
   DatasetCard, 
@@ -51,6 +53,7 @@ import { logDatasetImport, logDatasetStatusChange } from "@/lib/auditLog";
 
 export default function DataManager() {
   const { identity } = useIdentity();
+  const { enabled: canBypassApproval } = useFeature("adminBypassApproval");
   const [file, setFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<CanonicalDataset | null>(null);
   const [validation, setValidation] = useState<ValidationResult | null>(null);
@@ -116,8 +119,8 @@ export default function DataManager() {
     }
   }, [activeDataset]);
 
-  // Create draft instead of direct apply
-  const handleCreateDraft = useCallback(() => {
+  // Create draft instead of direct apply (or bypass if admin feature enabled)
+  const handleCreateDraft = useCallback((publishImmediately: boolean = false) => {
     if (!parsedData || !validation?.isValid) return;
     if (!canImport(identity.role)) {
       toast({ title: "Keine Berechtigung", variant: "destructive" });
@@ -144,6 +147,40 @@ export default function DataManager() {
         newDataset.datasetVersion
       );
       
+      // If bypass enabled and requested, immediately publish
+      if (publishImmediately && canBypassApproval) {
+        // Skip draft → review → published, go directly to published
+        transitionDatasetStatus(
+          identity.tenantId,
+          identity.departmentId,
+          newDataset.datasetId,
+          "published",
+          identity.userId,
+          identity.displayName
+        );
+        
+        logDatasetStatusChange(
+          identity.tenantId,
+          identity.departmentId,
+          identity.userId,
+          identity.displayName,
+          identity.role,
+          newDataset.datasetId,
+          "draft",
+          "published"
+        );
+        
+        toast({
+          title: "Direkt veröffentlicht",
+          description: `Version "${newDataset.datasetVersion}" ist jetzt aktiv (Approval übersprungen).`,
+        });
+      } else {
+        toast({
+          title: "Entwurf erstellt",
+          description: `Version "${newDataset.datasetVersion}" als Entwurf gespeichert.`,
+        });
+      }
+      
       refreshDatasets();
       
       // Reset form
@@ -153,10 +190,6 @@ export default function DataManager() {
       setDiff(null);
       setDetection(null);
       
-      toast({
-        title: "Entwurf erstellt",
-        description: `Version "${newDataset.datasetVersion}" als Entwurf gespeichert.`,
-      });
     } catch (err) {
       toast({
         title: "Fehler",
@@ -164,7 +197,7 @@ export default function DataManager() {
         variant: "destructive",
       });
     }
-  }, [parsedData, validation, identity, refreshDatasets]);
+  }, [parsedData, validation, identity, refreshDatasets, canBypassApproval]);
 
   const handleTransition = useCallback((datasetId: string, newStatus: DatasetStatus) => {
     const dataset = datasets.find(d => d.datasetId === datasetId);
@@ -480,28 +513,57 @@ export default function DataManager() {
 
           {/* Create Draft Button */}
           {parsedData && validation?.isValid && (
-            <Button 
-              onClick={handleCreateDraft} 
-              className="w-full" 
-              size="lg"
-              disabled={diff?.breakingRisk && diff.summary.totalRemoved > 0}
-            >
-              <Upload className="h-4 w-4 mr-2" />
-              Als Entwurf speichern
-              {parsedData.meta.datasetVersion && (
-                <Badge variant="secondary" className="ml-2">
-                  {parsedData.meta.datasetVersion}
-                </Badge>
+            <div className="flex gap-3">
+              <Button 
+                onClick={() => handleCreateDraft(false)} 
+                className="flex-1" 
+                size="lg"
+                variant={canBypassApproval ? "outline" : "default"}
+                disabled={diff?.breakingRisk && diff.summary.totalRemoved > 0}
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Als Entwurf speichern
+                {parsedData.meta.datasetVersion && (
+                  <Badge variant="secondary" className="ml-2">
+                    {parsedData.meta.datasetVersion}
+                  </Badge>
+                )}
+              </Button>
+              
+              {canBypassApproval && (
+                <Button 
+                  onClick={() => handleCreateDraft(true)} 
+                  className="flex-1 bg-amber-600 hover:bg-amber-700" 
+                  size="lg"
+                  disabled={diff?.breakingRisk && diff.summary.totalRemoved > 0}
+                >
+                  <Zap className="h-4 w-4 mr-2" />
+                  Direkt veröffentlichen
+                  <Badge variant="secondary" className="ml-2 bg-amber-500/20">
+                    Admin
+                  </Badge>
+                </Button>
               )}
-            </Button>
+            </div>
           )}
 
           <Alert>
             <Info className="h-4 w-4" />
             <AlertTitle>Governance-Workflow</AlertTitle>
             <AlertDescription>
-              Importierte Datasets werden als Entwurf gespeichert. Ein Manager muss sie zur Prüfung freigeben, 
-              und ein Admin muss sie veröffentlichen, bevor sie für Berechnungen aktiv werden.
+              {canBypassApproval ? (
+                <>
+                  Als Admin können Sie den Approval-Workflow überspringen und Datasets direkt veröffentlichen.
+                  <Badge variant="outline" className="ml-2 text-amber-600 border-amber-600">
+                    adminBypassApproval aktiv
+                  </Badge>
+                </>
+              ) : (
+                <>
+                  Importierte Datasets werden als Entwurf gespeichert. Ein Manager muss sie zur Prüfung freigeben, 
+                  und ein Admin muss sie veröffentlichen, bevor sie für Berechnungen aktiv werden.
+                </>
+              )}
             </AlertDescription>
           </Alert>
         </TabsContent>

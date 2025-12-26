@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.daily-security-scan]
 verify_jwt = false
+
+[functions.notify-admin-registration]
+verify_jwt = true

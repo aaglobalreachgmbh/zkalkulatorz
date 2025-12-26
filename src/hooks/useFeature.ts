@@ -29,6 +29,11 @@ const FEATURE_NAMES: Record<keyof LicenseFeatures, string> = {
   advancedReporting: "Erweitertes Reporting",
   apiAccess: "API-Zugang",
   customBranding: "Eigenes Branding",
+  // Admin-Only Features
+  adminFullVisibility: "Admin: Vollständige Sichtbarkeit",
+  adminFeatureControl: "Admin: Feature-Steuerung",
+  adminSecurityAccess: "Admin: Security-Zugang",
+  adminBypassApproval: "Admin: Approval überspringen",
 };
 
 /**

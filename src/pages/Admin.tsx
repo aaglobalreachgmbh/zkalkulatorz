@@ -583,6 +583,10 @@ function LicenseTab() {
     advancedReporting: "Erweitertes Reporting",
     apiAccess: "API-Zugang",
     customBranding: "Eigenes Branding",
+    adminFullVisibility: "Admin: Vollständige Sichtbarkeit",
+    adminFeatureControl: "Admin: Feature-Steuerung",
+    adminSecurityAccess: "Admin: Security-Zugang",
+    adminBypassApproval: "Admin: Approval überspringen",
   };
 
   const handleAssignSeat = (userId: string, userName: string) => {

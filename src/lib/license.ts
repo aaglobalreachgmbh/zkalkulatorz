@@ -33,6 +33,19 @@ export interface LicenseFeatures {
   apiAccess: boolean;
   /** Custom logo, colors, branding (Enterprise) */
   customBranding: boolean;
+  
+  // ============================================
+  // Admin-Only Features (Internal Plan only)
+  // ============================================
+  
+  /** Admin-Only: Alle Margen-Details sichtbar (auch für andere Nutzer) */
+  adminFullVisibility: boolean;
+  /** Admin-Only: Feature-Flags für andere Nutzer steuern */
+  adminFeatureControl: boolean;
+  /** Admin-Only: Zugang zu allen Security-Dashboards */
+  adminSecurityAccess: boolean;
+  /** Admin-Only: Datenbank-Import ohne Approval */
+  adminBypassApproval: boolean;
 }
 
 /**
@@ -59,16 +72,22 @@ export interface LicenseState {
  * Default features for each plan
  */
 export const PLAN_FEATURES: Record<LicensePlan, LicenseFeatures> = {
+  // Internal = allenetze.de Partner: ALLE Features + Admin-Only
   internal: {
     dataGovernance: true,
     compareOption2: true,
     fixedNetModule: true,
-    exportPdf: false, // Not built yet
+    exportPdf: true,
     auditLog: true,
     aiConsultant: true,
-    advancedReporting: false,
-    apiAccess: false,
-    customBranding: false,
+    advancedReporting: true,
+    apiAccess: true,
+    customBranding: true,
+    // Admin-Only Features
+    adminFullVisibility: true,
+    adminFeatureControl: true,
+    adminSecurityAccess: true,
+    adminBypassApproval: true,
   },
   pro: {
     dataGovernance: true,
@@ -80,6 +99,11 @@ export const PLAN_FEATURES: Record<LicensePlan, LicenseFeatures> = {
     advancedReporting: false,
     apiAccess: false,
     customBranding: false,
+    // No admin features
+    adminFullVisibility: false,
+    adminFeatureControl: false,
+    adminSecurityAccess: false,
+    adminBypassApproval: false,
   },
   enterprise: {
     dataGovernance: true,
@@ -91,6 +115,11 @@ export const PLAN_FEATURES: Record<LicensePlan, LicenseFeatures> = {
     advancedReporting: true,
     apiAccess: true,
     customBranding: true,
+    // No admin features
+    adminFullVisibility: false,
+    adminFeatureControl: false,
+    adminSecurityAccess: false,
+    adminBypassApproval: false,
   },
 };
 

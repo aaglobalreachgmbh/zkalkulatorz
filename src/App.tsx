@@ -96,25 +96,31 @@ const App = () => (
                       <Route
                         path="/security"
                         element={
-                          <AdminRoute>
-                            <SecurityDashboard />
-                          </AdminRoute>
+                          <FeatureRoute feature="adminSecurityAccess">
+                            <AdminRoute>
+                              <SecurityDashboard />
+                            </AdminRoute>
+                          </FeatureRoute>
                         }
                       />
                       <Route
                         path="/security/report"
                         element={
-                          <AdminRoute>
-                            <SecurityReport />
-                          </AdminRoute>
+                          <FeatureRoute feature="adminSecurityAccess">
+                            <AdminRoute>
+                              <SecurityReport />
+                            </AdminRoute>
+                          </FeatureRoute>
                         }
                       />
                       <Route
                         path="/security/threat-intel"
                         element={
-                          <AdminRoute>
-                            <ThreatIntelligence />
-                          </AdminRoute>
+                          <FeatureRoute feature="adminSecurityAccess">
+                            <AdminRoute>
+                              <ThreatIntelligence />
+                            </AdminRoute>
+                          </FeatureRoute>
                         }
                       />
                       <Route

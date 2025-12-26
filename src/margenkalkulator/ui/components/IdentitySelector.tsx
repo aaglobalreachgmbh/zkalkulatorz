@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { useIdentity, MOCK_IDENTITIES } from "@/contexts/IdentityContext";
 
 export function IdentitySelector() {
-  const { identity, setMockIdentity, clearIdentity } = useIdentity();
+  const { identity, setMockIdentity, clearMockIdentity } = useIdentity();
 
   const roleColors: Record<string, string> = {
     admin: "bg-primary text-primary-foreground",
@@ -65,7 +65,7 @@ export function IdentitySelector() {
           </DropdownMenuItem>
         ))}
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={clearIdentity} className="text-muted-foreground">
+        <DropdownMenuItem onClick={clearMockIdentity} className="text-muted-foreground">
           Abmelden (Gast)
         </DropdownMenuItem>
       </DropdownMenuContent>

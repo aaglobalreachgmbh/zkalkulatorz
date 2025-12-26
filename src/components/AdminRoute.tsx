@@ -6,6 +6,8 @@
 import { Navigate } from "react-router-dom";
 import { useIdentity } from "@/contexts/IdentityContext";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdminMFAEnforcement } from "@/hooks/useAdminMFAEnforcement";
+import { MFAEnforcementDialog } from "@/components/mfa/MFAEnforcementDialog";
 import { Loader2, ShieldX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -26,9 +28,10 @@ interface AdminRouteProps {
 export function AdminRoute({ children }: AdminRouteProps) {
   const { isLoading: authLoading } = useAuth();
   const { identity, canAccessAdmin, isSupabaseAuth, isAuthenticated } = useIdentity();
+  const { requiresMFASetup, isCheckingMFA } = useAdminMFAEnforcement();
 
-  // Show loading while checking auth
-  if (authLoading) {
+  // Show loading while checking auth or MFA
+  if (authLoading || isCheckingMFA) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
@@ -66,6 +69,11 @@ export function AdminRoute({ children }: AdminRouteProps) {
         </div>
       );
     }
+  }
+
+  // Force MFA setup for admins without MFA
+  if (requiresMFASetup) {
+    return <MFAEnforcementDialog />;
   }
 
   // Check role-based access

@@ -5,10 +5,29 @@
  */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+// Allowed origins for CORS - restrict to known application domains
+const ALLOWED_ORIGINS = [
+  "https://lovable.dev",
+  "https://www.lovable.dev",
+  /^https:\/\/.*\.lovable\.app$/,
+  "http://localhost:5173",
+  "http://localhost:8080",
+];
+
+function isOriginAllowed(origin: string | null): boolean {
+  if (!origin) return false;
+  return ALLOWED_ORIGINS.some(allowed =>
+    allowed instanceof RegExp ? allowed.test(origin) : allowed === origin
+  );
+}
+
+function getCorsHeaders(origin: string | null): Record<string, string> {
+  const allowedOrigin = isOriginAllowed(origin) ? origin : "https://lovable.dev";
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin!,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  };
+}
 
 interface TurnstileVerifyResponse {
   success: boolean;
@@ -20,6 +39,9 @@ interface TurnstileVerifyResponse {
 }
 
 serve(async (req: Request) => {
+  const origin = req.headers.get("origin");
+  const corsHeaders = getCorsHeaders(origin);
+
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });

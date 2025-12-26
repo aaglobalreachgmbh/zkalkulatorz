@@ -64,7 +64,7 @@ export interface HistoryEntry {
 }
 
 /**
- * Storage Keys
+ * Storage Keys (base keys, will be scoped by identity)
  */
 export const STORAGE_KEYS = {
   DRAFTS: "margenkalkulator_drafts",
@@ -78,3 +78,8 @@ export const STORAGE_LIMITS = {
   MAX_DRAFTS: 20,
   MAX_HISTORY: 10,
 } as const;
+
+/**
+ * Legacy storage key (for migration of unscoped data)
+ */
+export const LEGACY_STORAGE_PREFIX = "margenkalkulator_" as const;

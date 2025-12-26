@@ -1,10 +1,35 @@
 // ============================================
-// History Storage - Auto-Save Last 10
+// History Storage - Auto-Save Last 10 (Scoped)
+// Phase 3A: Storage scoped by identity
 // ============================================
 
 import type { OfferOptionState } from "../engine/types";
 import type { HistoryEntry } from "./types";
 import { STORAGE_KEYS, STORAGE_LIMITS } from "./types";
+
+// Current scope (set by identity context)
+let currentScope: string = "guest";
+
+/**
+ * Set the current storage scope based on identity
+ */
+export function setHistoryScope(tenantId: string, departmentId: string, userId: string): void {
+  currentScope = `${tenantId}_${departmentId}_${userId}`;
+}
+
+/**
+ * Reset to guest scope
+ */
+export function resetHistoryScope(): void {
+  currentScope = "guest";
+}
+
+/**
+ * Get scoped storage key
+ */
+function getScopedKey(): string {
+  return `${STORAGE_KEYS.HISTORY}_${currentScope}`;
+}
 
 /**
  * Generiert eine eindeutige ID
@@ -37,11 +62,42 @@ function createSummary(config: OfferOptionState): string {
 }
 
 /**
- * Lädt History aus localStorage
+ * Migrate legacy unscoped history to current scope
+ */
+export function migrateLegacyHistory(): void {
+  try {
+    const legacyKey = STORAGE_KEYS.HISTORY;
+    const legacyJson = localStorage.getItem(legacyKey);
+    if (!legacyJson) return;
+
+    const legacyHistory = JSON.parse(legacyJson) as HistoryEntry[];
+    if (legacyHistory.length === 0) return;
+
+    // Load current scoped history
+    const currentHistory = loadHistory();
+    
+    // Merge legacy into current (avoiding duplicates by id)
+    const existingIds = new Set(currentHistory.map(h => h.id));
+    const newHistory = legacyHistory.filter(h => !existingIds.has(h.id));
+    
+    if (newHistory.length > 0) {
+      const merged = [...currentHistory, ...newHistory].slice(0, STORAGE_LIMITS.MAX_HISTORY);
+      saveHistory(merged);
+    }
+
+    // Remove legacy key to prevent re-migration
+    localStorage.removeItem(legacyKey);
+  } catch (e) {
+    console.warn("Failed to migrate legacy history:", e);
+  }
+}
+
+/**
+ * Lädt History aus localStorage (scoped)
  */
 export function loadHistory(): HistoryEntry[] {
   try {
-    const json = localStorage.getItem(STORAGE_KEYS.HISTORY);
+    const json = localStorage.getItem(getScopedKey());
     if (!json) return [];
     return JSON.parse(json) as HistoryEntry[];
   } catch (e) {
@@ -51,11 +107,11 @@ export function loadHistory(): HistoryEntry[] {
 }
 
 /**
- * Speichert History-Array
+ * Speichert History-Array (scoped)
  */
 function saveHistory(history: HistoryEntry[]): void {
   try {
-    localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(history));
+    localStorage.setItem(getScopedKey(), JSON.stringify(history));
   } catch (e) {
     console.error("Failed to save history:", e);
   }
@@ -103,10 +159,10 @@ export function getLastHistoryEntry(): HistoryEntry | null {
 }
 
 /**
- * Löscht Verlauf
+ * Löscht Verlauf (scoped)
  */
 export function clearHistory(): void {
-  localStorage.removeItem(STORAGE_KEYS.HISTORY);
+  localStorage.removeItem(getScopedKey());
 }
 
 /**

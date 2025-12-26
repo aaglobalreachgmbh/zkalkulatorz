@@ -23,8 +23,15 @@ import { DraftManager } from "./components/DraftManager";
 import { HistoryDropdown } from "./components/HistoryDropdown";
 import { CloudOfferManager } from "./components/CloudOfferManager";
 import { ViewModeToggle } from "./components/ViewModeToggle";
+import { CustomerSessionToggle } from "./components/CustomerSessionToggle";
+import { IdentitySelector } from "./components/IdentitySelector";
 import { addToHistory } from "../storage/history";
+import { setDraftScope, resetDraftScope, migrateLegacyDrafts } from "../storage/drafts";
+import { setHistoryScope, resetHistoryScope, migrateLegacyHistory } from "../storage/history";
 import { useToast } from "@/hooks/use-toast";
+import { useIdentity } from "@/contexts/IdentityContext";
+import { useCustomerSession } from "@/contexts/CustomerSessionContext";
+import { cn } from "@/lib/utils";
 
 const STEPS: { id: WizardStep; label: string; icon: typeof Smartphone }[] = [
   { id: "hardware", label: "Hardware", icon: Smartphone },
@@ -37,12 +44,27 @@ export function Wizard() {
   const { toast } = useToast();
   const location = useLocation();
   const navigate = useNavigate();
+  const { identity } = useIdentity();
+  const { session: customerSession } = useCustomerSession();
   const [currentStep, setCurrentStep] = useState<WizardStep>("hardware");
   const [activeOption, setActiveOption] = useState<1 | 2>(1);
   const [viewMode, setViewMode] = useState<ViewMode>("dealer");
   
   const [option1, setOption1] = useState<OfferOptionState>(createDefaultOptionState);
   const [option2, setOption2] = useState<OfferOptionState>(createDefaultOptionState);
+
+  // Sync storage scope with identity
+  useEffect(() => {
+    if (identity) {
+      setDraftScope(identity.tenantId, identity.departmentId, identity.userId);
+      setHistoryScope(identity.tenantId, identity.departmentId, identity.userId);
+      migrateLegacyDrafts();
+      migrateLegacyHistory();
+    } else {
+      resetDraftScope();
+      resetHistoryScope();
+    }
+  }, [identity]);
 
   // Load bundle or template config from route state
   useEffect(() => {
@@ -179,7 +201,10 @@ export function Wizard() {
   const avgMonthlyNet = activeResult.totals.avgTermNet;
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className={cn(
+      "min-h-screen flex flex-col bg-background",
+      customerSession.isActive && "ring-4 ring-amber-400 ring-inset"
+    )}>
       {/* Header */}
       <header className="border-b border-border bg-card shrink-0">
         <div className="container mx-auto px-4 lg:px-6 py-3 flex items-center justify-between">
@@ -195,13 +220,21 @@ export function Wizard() {
             </div>
           </div>
           
-          <div className="flex items-center gap-4">
-            {/* View Mode Toggle - immer sichtbar */}
+          <div className="flex items-center gap-3">
+            {/* Identity Selector (Dev) */}
+            <IdentitySelector />
+            
+            <div className="h-6 w-px bg-border" />
+            
+            {/* Customer Session Toggle - Safety Lock */}
+            <CustomerSessionToggle />
+            
+            {/* View Mode Toggle */}
             <ViewModeToggle value={viewMode} onChange={setViewMode} />
             
-            {viewMode === "customer" && (
-              <span className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-1 rounded text-xs font-medium">
-                Kundenansicht
+            {customerSession.isActive && (
+              <span className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 px-2 py-1 rounded text-xs font-medium">
+                🔒 Gesperrt
               </span>
             )}
             

@@ -15,6 +15,7 @@
  */
 
 import { checkAllThreats, sanitizeAll, hashForLogging } from "./securityPatterns";
+import { logSecurityEvent } from "./securityLogger";
 
 // ============================================================================
 // TYPES
@@ -423,7 +424,7 @@ export function cleanupConnectionState(url: string): void {
 }
 
 // ============================================================================
-// AUDIT LOGGING
+// AUDIT LOGGING WITH REMOTE LOGGING
 // ============================================================================
 
 function logTunnelEvent(
@@ -440,6 +441,28 @@ function logTunnelEvent(
   
   if (import.meta.env.DEV) {
     console.log("[TunnelSecurityGuard]", logEntry);
+  }
+  
+  // Remote logging for blocked events
+  if (event.includes("blocked") || event.includes("error")) {
+    const eventTypeMap: Record<string, "websocket_violation" | "tunnel_blocked" | "message_rate_limited" | "protocol_violation"> = {
+      "connection_blocked": "tunnel_blocked",
+      "message_blocked": "websocket_violation",
+      "connection_error": "websocket_violation",
+      "sse_error": "websocket_violation",
+    };
+    
+    const riskLevel = event === "connection_blocked" ? "high" : "medium";
+    
+    logSecurityEvent({
+      event_type: eventTypeMap[event] || "websocket_violation",
+      risk_level: riskLevel,
+      details: {
+        tunnel_event: event,
+        url_hash: hashForLogging(url),
+        reason,
+      },
+    });
   }
 }
 

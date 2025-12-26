@@ -13,6 +13,7 @@
  */
 
 import { checkAllThreats, sanitizeAll, hashForLogging } from "./securityPatterns";
+import { logSecurityEvent } from "./securityLogger";
 
 // ============================================================================
 // TYPES
@@ -275,13 +276,14 @@ function sanitizeResponse<T>(data: T): T {
 }
 
 // ============================================================================
-// AUDIT LOGGING
+// AUDIT LOGGING WITH REMOTE LOGGING
 // ============================================================================
 
 function auditLog(
   config: SecureApiConfig,
   status: "allowed" | "blocked",
-  reason?: string
+  reason?: string,
+  riskLevel?: "low" | "medium" | "high" | "critical"
 ): void {
   const logEntry = {
     timestamp: new Date().toISOString(),
@@ -296,7 +298,25 @@ function auditLog(
     console.log("[SecureApiGateway]", logEntry);
   }
   
-  // In production: Could send to security-log edge function
+  // Remote logging for blocked requests
+  if (status === "blocked") {
+    const eventType = reason?.includes("SSRF") ? "ssrf_blocked" 
+      : reason?.includes("Domain") ? "domain_blocked"
+      : reason?.includes("Rate limit") ? "rate_limited"
+      : reason?.includes("Threat") ? "payload_threat"
+      : "api_gateway_block";
+    
+    logSecurityEvent({
+      event_type: eventType,
+      risk_level: riskLevel || "high",
+      details: {
+        url_hash: hashForLogging(config.url),
+        category: config.category,
+        method: config.method,
+        reason,
+      },
+    });
+  }
 }
 
 // ============================================================================
@@ -313,7 +333,7 @@ export async function secureApiCall<T>(config: SecureApiConfig): Promise<T> {
   const ssrfResult = checkSsrf(config.url);
   if (!ssrfResult.safe) {
     stats.blockedRequests++;
-    auditLog(config, "blocked", ssrfResult.reason);
+    auditLog(config, "blocked", ssrfResult.reason, "critical");
     throw new Error(`Security: ${ssrfResult.reason}`);
   }
   
@@ -321,7 +341,7 @@ export async function secureApiCall<T>(config: SecureApiConfig): Promise<T> {
   if (config.category !== "general") {
     if (!validateDomain(config.url, config.category)) {
       stats.blockedRequests++;
-      auditLog(config, "blocked", "Domain not in whitelist");
+      auditLog(config, "blocked", "Domain not in whitelist", "high");
       throw new Error(`Security: Domain not allowed for category ${config.category}`);
     }
   }
@@ -329,7 +349,7 @@ export async function secureApiCall<T>(config: SecureApiConfig): Promise<T> {
   // 3. Rate Limiting
   if (!checkRateLimit(config.category)) {
     stats.blockedRequests++;
-    auditLog(config, "blocked", "Rate limit exceeded");
+    auditLog(config, "blocked", "Rate limit exceeded", "medium");
     throw new Error(`Security: Rate limit exceeded for ${config.category}`);
   }
   
@@ -338,7 +358,7 @@ export async function secureApiCall<T>(config: SecureApiConfig): Promise<T> {
     const payloadCheck = checkPayloadThreats(config.body);
     if (!payloadCheck.allowed) {
       stats.blockedRequests++;
-      auditLog(config, "blocked", payloadCheck.reason);
+      auditLog(config, "blocked", payloadCheck.reason, payloadCheck.riskLevel as "high" | "critical");
       throw new Error(`Security: ${payloadCheck.reason}`);
     }
   }

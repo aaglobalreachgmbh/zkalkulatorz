@@ -1,8 +1,8 @@
-import { Calculator, Users, BarChart3, Building2, FolderOpen, Shield, Database, Settings, Home, Package, ShieldCheck, CreditCard, FileText, Radar } from "lucide-react";
+import { Calculator, Users, BarChart3, Building2, FolderOpen, Shield, Database, Settings, Home, Package, ShieldCheck, CreditCard, FileText, Radar, User, ChevronDown } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useUserRole } from "@/hooks/useUserRole";
-import { useIdentity } from "@/contexts/IdentityContext";
+import { useIdentity, MOCK_IDENTITIES } from "@/contexts/IdentityContext";
 import {
   Sidebar,
   SidebarContent,
@@ -12,8 +12,19 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 const mainItems = [
   { title: "Home", url: "/", icon: Home },
@@ -43,10 +54,16 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const location = useLocation();
   const { isAdmin } = useUserRole();
-  const { canAccessAdmin } = useIdentity();
+  const { identity, canAccessAdmin, setMockIdentity, clearMockIdentity, isSupabaseAuth } = useIdentity();
   
   // Show admin section if user has admin role OR can access admin via identity
   const showAdminSection = isAdmin || canAccessAdmin;
+
+  const roleColors: Record<string, string> = {
+    admin: "bg-primary text-primary-foreground",
+    manager: "bg-blue-500 text-white",
+    sales: "bg-emerald-500 text-white",
+  };
 
   const isActive = (path: string) => {
     if (path === "/") return location.pathname === "/";
@@ -143,6 +160,57 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
       </SidebarContent>
+      
+      {/* Identity Selector in Footer */}
+      {!isSupabaseAuth && (
+        <SidebarFooter className="border-t border-sidebar-border">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className={cn(
+                "w-full justify-start gap-2",
+                collapsed && "justify-center px-2"
+              )}>
+                <User className="h-4 w-4" />
+                {!collapsed && (
+                  <>
+                    <span className="flex-1 text-left truncate">{identity.displayName}</span>
+                    <Badge 
+                      className={`text-xs ${roleColors[identity.role] || ""}`}
+                      variant="secondary"
+                    >
+                      {identity.role}
+                    </Badge>
+                    <ChevronDown className="h-3 w-3" />
+                  </>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent side="top" align="start" className="w-56">
+              <DropdownMenuLabel>Benutzer wechseln</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {MOCK_IDENTITIES.map((id) => (
+                <DropdownMenuItem
+                  key={id.userId}
+                  onClick={() => setMockIdentity(id)}
+                  className="flex items-center justify-between"
+                >
+                  <span>{id.displayName}</span>
+                  <Badge 
+                    variant="outline" 
+                    className={`text-xs ${identity?.userId === id.userId ? "border-primary" : ""}`}
+                  >
+                    {id.role}
+                  </Badge>
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={clearMockIdentity} className="text-muted-foreground">
+                Abmelden (Gast)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </SidebarFooter>
+      )}
     </Sidebar>
   );
 }

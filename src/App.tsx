@@ -28,6 +28,7 @@ import Reporting from "./pages/Reporting";
 import SecuritySettings from "./pages/SecuritySettings";
 import Admin from "./pages/Admin";
 import License from "./pages/License";
+import SecurityReport from "./pages/SecurityReport";
 
 const queryClient = new QueryClient();
 
@@ -96,6 +97,14 @@ const App = () => (
                         element={
                           <AdminRoute>
                             <SecurityDashboard />
+                          </AdminRoute>
+                        }
+                      />
+                      <Route
+                        path="/security/report"
+                        element={
+                          <AdminRoute>
+                            <SecurityReport />
                           </AdminRoute>
                         }
                       />

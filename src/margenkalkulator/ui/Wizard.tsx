@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Smartphone, Signal, Router, LayoutGrid, Printer, Calculator, Home, ChevronLeft, ChevronRight } from "lucide-react";
+import { Smartphone, Signal, Router, LayoutGrid, Printer, Calculator, Home, ChevronLeft, ChevronRight, Lock } from "lucide-react";
 import {
   type OfferOptionState,
   type ViewMode,
@@ -32,7 +32,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useIdentity } from "@/contexts/IdentityContext";
 import { useCustomerSession } from "@/contexts/CustomerSessionContext";
 import { useEffectivePolicy } from "@/hooks/useEffectivePolicy";
+import { useFeature } from "@/hooks/useFeature";
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const STEPS: { id: WizardStep; label: string; icon: typeof Smartphone }[] = [
   { id: "hardware", label: "Hardware", icon: Smartphone },
@@ -53,8 +55,18 @@ export function Wizard() {
   const [activeOption, setActiveOption] = useState<1 | 2>(1);
   const [viewMode, setViewMode] = useState<ViewMode>(policy.defaultViewMode);
   
+  // Feature-Gating: Check if Option 2 is enabled
+  const { enabled: option2Enabled, reason: option2Reason } = useFeature("compareOption2");
+  
   const [option1, setOption1] = useState<OfferOptionState>(createDefaultOptionState);
   const [option2, setOption2] = useState<OfferOptionState>(createDefaultOptionState);
+  
+  // Force back to Option 1 if Option 2 is disabled
+  useEffect(() => {
+    if (!option2Enabled && activeOption === 2) {
+      setActiveOption(1);
+    }
+  }, [option2Enabled, activeOption]);
 
   // Sync storage scope with identity
   useEffect(() => {
@@ -155,8 +167,16 @@ export function Wizard() {
     }
   };
 
-  // Copy option
+  // Copy option (blocked if Option 2 disabled)
   const copyOption = (from: 1 | 2, to: 1 | 2) => {
+    if (!option2Enabled && to === 2) {
+      toast({
+        title: "Option 2 nicht verfügbar",
+        description: option2Reason,
+        variant: "destructive",
+      });
+      return;
+    }
     const source = from === 1 ? option1 : option2;
     const setter = to === 1 ? setOption1 : setOption2;
     setter(JSON.parse(JSON.stringify(source)));

@@ -1,11 +1,15 @@
 import { Button } from "@/components/ui/button";
 import type { CalculationResult, ViewMode, OfferOptionState } from "../../engine/types";
-import { Eye, EyeOff, Printer, Link2Off, Smartphone, Signal, Wifi, Lock, LockKeyhole } from "lucide-react";
+import { Eye, EyeOff, Printer, Link2Off, Smartphone, Signal, Wifi, Lock, LockKeyhole, Copy } from "lucide-react";
 import { DiscreteMarginIndicator } from "../components/DiscreteMarginIndicator";
 import { PdfDownloadButton } from "../components/PdfDownloadButton";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
 import { useFeature } from "@/hooks/useFeature";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+
 interface CompareStepProps {
   option1: OfferOptionState;
   option2: OfferOptionState;
@@ -33,6 +37,9 @@ export function CompareStep({
   const visibility = useSensitiveFieldsVisible(viewMode);
   const isCustomerMode = visibility.effectiveMode === "customer";
   const showDealerEconomics = visibility.showDealerEconomics;
+  
+  // Feature-Gating for Option 2
+  const { enabled: option2Enabled, reason: option2Reason } = useFeature("compareOption2");
   
   return (
     <div className="space-y-6">

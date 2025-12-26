@@ -26,6 +26,9 @@ const FEATURE_NAMES: Record<keyof LicenseFeatures, string> = {
   exportPdf: "PDF Export",
   auditLog: "Audit-Protokoll",
   aiConsultant: "AI Berater",
+  advancedReporting: "Erweitertes Reporting",
+  apiAccess: "API-Zugang",
+  customBranding: "Eigenes Branding",
 };
 
 /**
@@ -33,6 +36,9 @@ const FEATURE_NAMES: Record<keyof LicenseFeatures, string> = {
  */
 const FEATURE_REQUIRED_PLANS: Partial<Record<keyof LicenseFeatures, string>> = {
   exportPdf: "enterprise",
+  advancedReporting: "enterprise",
+  apiAccess: "enterprise",
+  customBranding: "enterprise",
 };
 
 /**

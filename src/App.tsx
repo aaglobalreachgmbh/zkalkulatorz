@@ -27,6 +27,7 @@ import Offers from "./pages/Offers";
 import Reporting from "./pages/Reporting";
 import SecuritySettings from "./pages/SecuritySettings";
 import Admin from "./pages/Admin";
+import License from "./pages/License";
 
 const queryClient = new QueryClient();
 
@@ -49,6 +50,7 @@ const App = () => (
                       <Route path="/calculator" element={<Index />} />
                       <Route path="/bundles" element={<Bundles />} />
                       <Route path="/admin" element={<Admin />} />
+                      <Route path="/license" element={<License />} />
                       <Route
                         path="/offers"
                         element={

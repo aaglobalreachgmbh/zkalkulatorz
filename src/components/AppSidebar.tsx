@@ -1,4 +1,4 @@
-import { Calculator, Users, BarChart3, Building2, FolderOpen, Shield, Database, Settings, Home, Package, ShieldCheck } from "lucide-react";
+import { Calculator, Users, BarChart3, Building2, FolderOpen, Shield, Database, Settings, Home, Package, ShieldCheck, CreditCard } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -27,6 +27,7 @@ const mainItems = [
 
 const settingsItems = [
   { title: "Sicherheit", url: "/settings/security", icon: Settings },
+  { title: "Lizenz", url: "/license", icon: CreditCard },
 ];
 
 const adminItems = [

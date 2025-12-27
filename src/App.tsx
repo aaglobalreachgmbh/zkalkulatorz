@@ -38,7 +38,7 @@ import SecurityStatusDashboard from "./pages/SecurityStatusDashboard";
 import Privacy from "./pages/Privacy";
 import GDPRDashboard from "./pages/GDPRDashboard";
 import ActivityDashboard from "./pages/ActivityDashboard";
-
+import SecurityTestPage from "./pages/SecurityTestPage";
 const queryClient = new QueryClient();
 
 // Seiten die immer auf allen Geräten erlaubt sind
@@ -171,6 +171,16 @@ const App = () => (
                           <FeatureRoute feature="adminSecurityAccess">
                             <AdminRoute>
                               <ActivityDashboard />
+                            </AdminRoute>
+                          </FeatureRoute>
+                        }
+                      />
+                      <Route
+                        path="/security/test"
+                        element={
+                          <FeatureRoute feature="adminSecurityAccess">
+                            <AdminRoute>
+                              <SecurityTestPage />
                             </AdminRoute>
                           </FeatureRoute>
                         }

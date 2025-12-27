@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Save } from "lucide-react";
 import type { OfferOptionState } from "../../engine/types";
-import { createDraft } from "../../storage/drafts";
+import { useDrafts } from "../../hooks/useDrafts";
 import { useToast } from "@/hooks/use-toast";
 
 interface SaveDraftButtonProps {
@@ -33,9 +33,9 @@ export function SaveDraftButton({
   size = "sm",
 }: SaveDraftButtonProps) {
   const { toast } = useToast();
+  const { createDraft, isCreating } = useDrafts();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
-  const [saving, setSaving] = useState(false);
   
   // Generate default name
   const defaultName = () => {
@@ -49,26 +49,23 @@ export function SaveDraftButton({
     return parts.join(" + ") || `Entwurf ${new Date().toLocaleDateString("de-DE")}`;
   };
   
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name.trim()) return;
     
-    setSaving(true);
     try {
-      createDraft(name.trim(), config, avgMonthly);
+      await createDraft(name.trim(), config, avgMonthly);
       toast({
         title: "Entwurf gespeichert",
         description: `"${name.trim()}" wurde gespeichert.`,
       });
       setOpen(false);
       setName("");
-    } catch (e) {
+    } catch {
       toast({
         title: "Fehler",
         description: "Speichern fehlgeschlagen.",
         variant: "destructive",
       });
-    } finally {
-      setSaving(false);
     }
   };
   
@@ -107,8 +104,8 @@ export function SaveDraftButton({
           <Button variant="outline" onClick={() => setOpen(false)}>
             Abbrechen
           </Button>
-          <Button onClick={handleSave} disabled={!name.trim() || saving}>
-            {saving ? "Speichern..." : "Speichern"}
+          <Button onClick={handleSave} disabled={!name.trim() || isCreating}>
+            {isCreating ? "Speichern..." : "Speichern"}
           </Button>
         </DialogFooter>
       </DialogContent>

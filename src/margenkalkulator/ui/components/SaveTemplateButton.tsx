@@ -21,11 +21,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import type { OfferOptionState } from "@/margenkalkulator/engine/types";
-import {
-  saveTemplate,
-  loadFolders,
-  type PersonalTemplate,
-} from "@/margenkalkulator/storage/bundles";
+import { useTemplates } from "@/margenkalkulator/hooks/useTemplates";
 
 interface SaveTemplateButtonProps {
   config: OfferOptionState;
@@ -33,13 +29,12 @@ interface SaveTemplateButtonProps {
 
 export function SaveTemplateButton({ config }: SaveTemplateButtonProps) {
   const { toast } = useToast();
+  const { folders, createTemplate, isCreatingTemplate } = useTemplates();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [folderId, setFolderId] = useState<string | undefined>(undefined);
 
-  const folders = loadFolders();
-
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name.trim()) {
       toast({
         title: "Name erforderlich",
@@ -49,25 +44,22 @@ export function SaveTemplateButton({ config }: SaveTemplateButtonProps) {
       return;
     }
 
-    const template: PersonalTemplate = {
-      id: crypto.randomUUID(),
-      name: name.trim(),
-      folderId: folderId === "none" ? undefined : folderId,
-      config,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    saveTemplate(template);
-
-    toast({
-      title: "Template gespeichert",
-      description: `"${name}" wurde erfolgreich gespeichert.`,
-    });
-
-    setOpen(false);
-    setName("");
-    setFolderId(undefined);
+    try {
+      await createTemplate(name.trim(), config, folderId === "none" ? undefined : folderId);
+      toast({
+        title: "Template gespeichert",
+        description: `"${name}" wurde erfolgreich gespeichert.`,
+      });
+      setOpen(false);
+      setName("");
+      setFolderId(undefined);
+    } catch {
+      toast({
+        title: "Fehler",
+        description: "Template konnte nicht gespeichert werden.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -124,9 +116,9 @@ export function SaveTemplateButton({ config }: SaveTemplateButtonProps) {
           <Button variant="outline" onClick={() => setOpen(false)}>
             Abbrechen
           </Button>
-          <Button onClick={handleSave} className="gap-2">
+          <Button onClick={handleSave} disabled={isCreatingTemplate} className="gap-2">
             <Save className="h-4 w-4" />
-            Speichern
+            {isCreatingTemplate ? "Speichern..." : "Speichern"}
           </Button>
         </DialogFooter>
       </DialogContent>

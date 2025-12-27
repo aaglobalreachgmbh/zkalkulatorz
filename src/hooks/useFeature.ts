@@ -1,11 +1,12 @@
 // ============================================
-// useFeature Hook - Phase 3C.3
-// Check feature availability
+// useFeature Hook - Hybrid Cloud/localStorage
 // ============================================
 
 import { useMemo } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { useIdentity } from "@/contexts/IdentityContext";
-import { loadLicense, isFeatureEnabled, type LicenseFeatures } from "@/lib/license";
+import { useCloudLicense } from "@/hooks/useCloudLicense";
+import { loadLicense, isFeatureEnabled as isFeatureEnabledLocal, type LicenseFeatures } from "@/lib/license";
 
 export interface UseFeatureReturn {
   /** Whether the feature is enabled */
@@ -50,20 +51,24 @@ const FEATURE_REQUIRED_PLANS: Partial<Record<keyof LicenseFeatures, string>> = {
 };
 
 /**
- * Hook to check if a feature is enabled
- * 
- * @example
- * const { enabled, reason } = useFeature("aiConsultant");
- * if (!enabled) {
- *   return <FeatureDisabledMessage reason={reason} />;
- * }
+ * Hybrid hook - uses Cloud for authenticated users, localStorage for guests
  */
 export function useFeature(featureKey: keyof LicenseFeatures): UseFeatureReturn {
+  const { user } = useAuth();
   const { identity } = useIdentity();
+  const cloudLicense = useCloudLicense();
   
   return useMemo(() => {
-    const license = loadLicense(identity.tenantId);
-    const enabled = isFeatureEnabled(license, featureKey);
+    let enabled: boolean;
+    
+    if (user && cloudLicense.license) {
+      // Cloud mode - check feature in cloud license
+      enabled = (cloudLicense.license.features as unknown as Record<string, boolean>)[featureKey] ?? true;
+    } else {
+      // Guest mode - localStorage
+      const license = loadLicense(identity.tenantId);
+      enabled = isFeatureEnabledLocal(license, featureKey);
+    }
     
     if (enabled) {
       return { enabled: true };
@@ -79,21 +84,30 @@ export function useFeature(featureKey: keyof LicenseFeatures): UseFeatureReturn 
         : `${featureName} ist in Ihrer Lizenz nicht aktiviert.`,
       requiredPlan,
     };
-  }, [identity.tenantId, featureKey]);
+  }, [user, cloudLicense.license, identity.tenantId, featureKey]);
 }
 
 /**
  * Hook to check multiple features at once
  */
 export function useFeatures(featureKeys: (keyof LicenseFeatures)[]): Record<keyof LicenseFeatures, UseFeatureReturn> {
+  const { user } = useAuth();
   const { identity } = useIdentity();
+  const cloudLicense = useCloudLicense();
   
   return useMemo(() => {
-    const license = loadLicense(identity.tenantId);
     const result: Partial<Record<keyof LicenseFeatures, UseFeatureReturn>> = {};
     
     for (const key of featureKeys) {
-      const enabled = isFeatureEnabled(license, key);
+      let enabled: boolean;
+      
+      if (user && cloudLicense.license) {
+        enabled = (cloudLicense.license.features as unknown as Record<string, boolean>)[key] ?? true;
+      } else {
+        const license = loadLicense(identity.tenantId);
+        enabled = isFeatureEnabledLocal(license, key);
+      }
+      
       const featureName = FEATURE_NAMES[key] || key;
       const requiredPlan = FEATURE_REQUIRED_PLANS[key];
       
@@ -109,7 +123,7 @@ export function useFeatures(featureKeys: (keyof LicenseFeatures)[]): Record<keyo
     }
     
     return result as Record<keyof LicenseFeatures, UseFeatureReturn>;
-  }, [identity.tenantId, featureKeys]);
+  }, [user, cloudLicense.license, identity.tenantId, featureKeys]);
 }
 
 /**

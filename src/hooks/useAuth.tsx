@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { clearSessionKey } from "@/lib/secureStorage";
 
 interface MFAStatus {
   currentLevel: "aal1" | "aal2";
@@ -137,6 +138,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     setRequiresMFA(false);
     setMfaStatus(null);
+    // SECURITY: Clear session key to make encrypted local storage inaccessible
+    clearSessionKey();
     await supabase.auth.signOut();
   };
 

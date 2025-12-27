@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FileText, Loader2 } from "lucide-react";
 import { pdf } from "@react-pdf/renderer";
+import { useActivityTracker } from "@/hooks/useActivityTracker";
 import type { OfferOptionState, CalculationResult } from "../../engine/types";
 import { OfferPdf } from "../../pdf/OfferPdf";
 import { toast } from "sonner";
@@ -37,6 +38,7 @@ export function PdfDownloadButton({
   size = "sm",
 }: PdfDownloadButtonProps) {
   const [loading, setLoading] = useState(false);
+  const { trackPdfExported } = useActivityTracker();
 
   const handleDownload = async () => {
     setLoading(true);
@@ -83,6 +85,9 @@ export function PdfDownloadButton({
       URL.revokeObjectURL(url);
 
       toast.success("PDF wurde heruntergeladen");
+      
+      // Track PDF export
+      trackPdfExported(undefined, tariffName);
     } catch (e) {
       console.error("PDF generation failed:", e);
       const errorMessage =

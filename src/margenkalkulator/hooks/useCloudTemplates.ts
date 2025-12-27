@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useIdentity } from "@/contexts/IdentityContext";
 import { useToast } from "@/hooks/use-toast";
+import { useActivityTracker } from "@/hooks/useActivityTracker";
 import type { OfferOptionState } from "../engine/types";
 import type { OfferPreview } from "../storage/types";
 import type { Json } from "@/integrations/supabase/types";
@@ -85,6 +86,7 @@ export function useCloudTemplates() {
   const { identity } = useIdentity();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { trackTemplateCreated, trackTemplateDeleted, trackTemplateDuplicated, trackFolderCreated, trackFolderDeleted } = useActivityTracker();
 
   // Fetch templates
   const {
@@ -162,12 +164,13 @@ export function useCloudTemplates() {
       if (error) throw error;
       return rowToTemplate(data);
     },
-    onSuccess: () => {
+    onSuccess: (template) => {
       toast({
         title: "Vorlage gespeichert",
         description: "Die Vorlage wurde erfolgreich erstellt.",
       });
       queryClient.invalidateQueries({ queryKey: TEMPLATES_KEY });
+      trackTemplateCreated(template.id, template.name);
     },
     onError: () => {
       toast({
@@ -243,8 +246,9 @@ export function useCloudTemplates() {
         variant: "destructive",
       });
     },
-    onSuccess: () => {
+    onSuccess: (_, id) => {
       toast({ title: "Vorlage gelöscht" });
+      trackTemplateDeleted(id, "Gelöscht");
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: TEMPLATES_KEY });
@@ -276,9 +280,11 @@ export function useCloudTemplates() {
       if (error) throw error;
       return rowToTemplate(data);
     },
-    onSuccess: () => {
+    onSuccess: (template) => {
       toast({ title: "Vorlage dupliziert" });
       queryClient.invalidateQueries({ queryKey: TEMPLATES_KEY });
+      // Original template name not available, using new name
+      trackTemplateDuplicated(template.id, template.name.replace(" (Kopie)", ""), template.name);
     },
     onError: () => {
       toast({
@@ -326,9 +332,10 @@ export function useCloudTemplates() {
       if (error) throw error;
       return rowToFolder(data);
     },
-    onSuccess: () => {
+    onSuccess: (folder) => {
       toast({ title: "Ordner erstellt" });
       queryClient.invalidateQueries({ queryKey: FOLDERS_KEY });
+      trackFolderCreated(folder.id, folder.name);
     },
     onError: () => {
       toast({
@@ -378,10 +385,11 @@ export function useCloudTemplates() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, id) => {
       toast({ title: "Ordner gelöscht" });
       queryClient.invalidateQueries({ queryKey: FOLDERS_KEY });
       queryClient.invalidateQueries({ queryKey: TEMPLATES_KEY });
+      trackFolderDeleted(id, "Gelöscht");
     },
     onError: () => {
       toast({

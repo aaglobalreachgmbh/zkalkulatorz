@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useIdentity } from "@/contexts/IdentityContext";
 import { useToast } from "@/hooks/use-toast";
+import { useActivityTracker } from "@/hooks/useActivityTracker";
 import type { OfferOptionState } from "../engine/types";
 import type { OfferDraft, OfferPreview } from "../storage/types";
 import type { Json } from "@/integrations/supabase/types";
@@ -59,6 +60,7 @@ export function useCloudDrafts() {
   const { identity } = useIdentity();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { trackDraftCreated, trackDraftDeleted } = useActivityTracker();
 
   // Fetch all drafts for current user
   const { data: drafts = [], isLoading, error } = useQuery({
@@ -138,11 +140,12 @@ export function useCloudDrafts() {
         variant: "destructive",
       });
     },
-    onSuccess: () => {
+    onSuccess: (draft) => {
       toast({
         title: "Entwurf gespeichert",
         description: "Der Entwurf wurde erfolgreich gespeichert.",
       });
+      trackDraftCreated(draft.id, draft.name);
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
@@ -241,11 +244,12 @@ export function useCloudDrafts() {
         variant: "destructive",
       });
     },
-    onSuccess: () => {
+    onSuccess: (_, id) => {
       toast({
         title: "Gelöscht",
         description: "Entwurf wurde gelöscht.",
       });
+      trackDraftDeleted(id, "Gelöscht");
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });

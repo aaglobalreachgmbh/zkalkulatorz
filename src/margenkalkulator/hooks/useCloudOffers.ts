@@ -5,6 +5,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useActivityTracker } from "@/hooks/useActivityTracker";
 import type { OfferOptionState } from "../engine/types";
 import type { CloudOffer, OfferPreview } from "../storage/types";
 import { useToast } from "@/hooks/use-toast";
@@ -33,6 +34,7 @@ export function useCloudOffers() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { trackOfferCreated, trackOfferDeleted, trackOfferRenamed } = useActivityTracker();
 
   // Load offers query
   const {
@@ -120,6 +122,7 @@ export function useCloudOffers() {
         title: "Gespeichert",
         description: `"${newOffer.name}" wurde gespeichert.`,
       });
+      trackOfferCreated(newOffer.id, newOffer.name);
     },
     onError: (error: Error) => {
       toast({
@@ -148,6 +151,7 @@ export function useCloudOffers() {
         title: "Gelöscht",
         description: "Angebot wurde entfernt.",
       });
+      trackOfferDeleted(id, "Gelöscht");
     },
     onError: (error: Error) => {
       toast({
@@ -176,6 +180,7 @@ export function useCloudOffers() {
         title: "Umbenannt",
         description: `Angebot wurde in "${name}" umbenannt.`,
       });
+      trackOfferRenamed(id, "", name);
     },
     onError: (error: Error) => {
       toast({

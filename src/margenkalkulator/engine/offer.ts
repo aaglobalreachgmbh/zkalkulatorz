@@ -31,8 +31,15 @@ import {
   getEffectiveOneTimeCost,
   calculateHardwareAmortization,
   calculateDealerEconomics,
+  type EmployeeDeductionSettings,
 } from "./calculators";
 import { generateBreakdown } from "./breakdown";
+
+// Employee-specific calculation options
+export interface EmployeeCalculationOptions {
+  employeeDeduction?: EmployeeDeductionSettings | null;
+  pushBonus?: number;
+}
 
 // ============================================
 // Main Calculation Function
@@ -42,8 +49,12 @@ import { generateBreakdown } from "./breakdown";
  * Calculate complete result for an offer option
  * This is a pure function with no side effects
  * Slice B: Uses asOfISO for deterministic promo evaluation
+ * Extended: Supports employeeDeduction and pushBonus options
  */
-export function calculateOffer(state: OfferOptionState): CalculationResult {
+export function calculateOffer(
+  state: OfferOptionState,
+  employeeOptions?: EmployeeCalculationOptions
+): CalculationResult {
   const { meta, hardware, mobile, fixedNet } = state;
   const datasetVersion = meta.datasetVersion;
   const asOfISO = meta.asOfISO;
@@ -138,6 +149,7 @@ export function calculateOffer(state: OfferOptionState): CalculationResult {
   };
   
   // Dealer economics (Phase 2: with OMO-Matrix, Fixed Net provision, FH-Partner)
+  // Extended: Now includes employeeDeduction and pushBonus
   const dealer = calculateDealerEconomics(
     tariff, 
     mobile.contractType, 
@@ -148,6 +160,8 @@ export function calculateOffer(state: OfferOptionState): CalculationResult {
       omoRate: mobile.omoRate ?? 0,
       fixedNetProduct: fixedProduct,
       isFHPartner: mobile.isFHPartner ?? false,
+      employeeDeduction: employeeOptions?.employeeDeduction ?? null,
+      pushBonus: employeeOptions?.pushBonus ?? 0,
     }
   );
   

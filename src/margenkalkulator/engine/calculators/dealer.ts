@@ -3,6 +3,7 @@
 // Handles provision and margin calculations
 // Phase 2: OMO-Matrix (0-25%) + Fixed Net Provisions + FH-Partner
 // Phase 2.4: TeamDeal SUB-Variant Provisions (provisionsByVariant)
+// Phase 3: Employee Deduction + Push Provisions
 // ============================================
 
 import type { MobileTariff, DealerEconomics, ContractType, FixedNetProduct, SubVariantId } from "../types";
@@ -228,6 +229,85 @@ function mapSubVariantToProvisionKey(subVariantId: SubVariantId): keyof NonNulla
 }
 
 // ============================================
+// Employee Deduction Calculator (Phase 3)
+// ============================================
+
+/**
+ * Employee deduction settings for provision reduction.
+ */
+export type EmployeeDeductionSettings = {
+  /** Deduction amount (fixed EUR or percentage) */
+  deductionValue: number;
+  /** Deduction type: "fixed" = EUR, "percentage" = % of provision */
+  deductionType: "fixed" | "percentage";
+};
+
+/**
+ * Apply employee-specific provision deduction.
+ * 
+ * GESCHÄFTSLOGIK:
+ * Der Admin kann pro Mitarbeiter einen Provisionsabzug konfigurieren:
+ * - "fixed": Fester EUR-Betrag wird abgezogen (z.B. -20€)
+ * - "percentage": Prozentsatz der Provision (z.B. -5%)
+ * 
+ * @param provisionAfter - Provision after OMO deductions
+ * @param settings - Employee deduction settings (optional)
+ * @returns Deducted provision (never negative)
+ */
+export function applyEmployeeDeduction(
+  provisionAfter: number,
+  settings?: EmployeeDeductionSettings | null
+): number {
+  if (!settings || settings.deductionValue <= 0) {
+    return provisionAfter;
+  }
+
+  let deduction: number;
+  if (settings.deductionType === "percentage") {
+    deduction = Math.round(provisionAfter * (settings.deductionValue / 100) * 100) / 100;
+  } else {
+    deduction = settings.deductionValue;
+  }
+
+  return Math.max(0, Math.round((provisionAfter - deduction) * 100) / 100);
+}
+
+/**
+ * Calculate employee deduction amount.
+ * 
+ * @param provisionAfter - Provision after OMO deductions
+ * @param settings - Employee deduction settings
+ * @returns The deduction amount in EUR
+ */
+export function calculateEmployeeDeductionAmount(
+  provisionAfter: number,
+  settings?: EmployeeDeductionSettings | null
+): number {
+  if (!settings || settings.deductionValue <= 0) {
+    return 0;
+  }
+
+  if (settings.deductionType === "percentage") {
+    return Math.round(provisionAfter * (settings.deductionValue / 100) * 100) / 100;
+  }
+  
+  return Math.min(settings.deductionValue, provisionAfter);
+}
+
+// ============================================
+// Extended Dealer Economics Type
+// ============================================
+
+export type DealerEconomicsExtended = DealerEconomics & {
+  /** Push-Bonus from active push provisions */
+  pushBonus?: number;
+  /** Employee-specific provision deduction */
+  employeeDeduction?: number;
+  /** Display provision after all adjustments (for margin indicator) */
+  displayProvision?: number;
+};
+
+// ============================================
 // Dealer Economics Calculation
 // ============================================
 
@@ -235,12 +315,15 @@ function mapSubVariantToProvisionKey(subVariantId: SubVariantId): keyof NonNulla
  * Calculate dealer economics (provision, deductions, margin)
  * Phase 2: Supports OMO-Matrix (0-25%), Fixed Net Provisions, FH-Partner
  * Phase 2.4: Supports TeamDeal SUB-Variant Provisions
+ * Phase 3: Supports Employee Deduction + Push Provisions
  * 
  * GESCHÄFTSLOGIK (Source-of-Truth):
  * - Wenn OMO-Matrix vorhanden → absoluten Wert verwenden (KEINE zusätzliche Deduktion)
  * - Wenn Matrix-Wert null → Stufe gesperrt, Provision = 0
  * - Wenn keine Matrix → Fallback auf prozentuale Berechnung
  * - Wenn provisionsByVariant vorhanden (TeamDeal) → SUB-spezifische Provision
+ * - employeeDeduction: Wird von provisionAfter abgezogen (Mitarbeiter-Abzug)
+ * - pushBonus: Wird zur Marge addiert (Push-Provision)
  */
 export function calculateDealerEconomics(
   tariff: MobileTariff | undefined,
@@ -253,12 +336,16 @@ export function calculateDealerEconomics(
     fixedNetProduct?: FixedNetProduct;
     isFHPartner?: boolean;
     subVariantId?: SubVariantId;
+    employeeDeduction?: EmployeeDeductionSettings | null;
+    pushBonus?: number;
   }
-): DealerEconomics {
+): DealerEconomicsExtended {
   const omoRate = options?.omoRate ?? 0;
   const fixedNetProduct = options?.fixedNetProduct;
   const isFHPartner = options?.isFHPartner ?? false;
   const subVariantId = options?.subVariantId;
+  const employeeSettings = options?.employeeDeduction;
+  const pushBonus = options?.pushBonus ?? 0;
   
   // Fixed Net Provision (applies regardless of mobile tariff)
   const fixedNetProvision = calculateFixedNetProvision(fixedNetProduct, contractType);
@@ -269,9 +356,12 @@ export function calculateDealerEconomics(
       deductions: 0,
       provisionAfter: 0,
       hardwareEkNet,
-      margin: -hardwareEkNet + fixedNetProvision,
+      margin: -hardwareEkNet + fixedNetProvision + pushBonus,
       fixedNetProvision: fixedNetProvision > 0 ? fixedNetProvision : undefined,
       omoRate,
+      pushBonus: pushBonus > 0 ? pushBonus : undefined,
+      employeeDeduction: 0,
+      displayProvision: 0,
     };
   }
   
@@ -314,8 +404,17 @@ export function calculateDealerEconomics(
   const fhBonus = getFHPartnerBonus(tariff, isFHPartner) * quantity;
   provisionAfter += fhBonus;
   
-  // Total margin = Mobile provision + FH-Bonus + Fixed Net provision - Hardware
-  const totalProvision = provisionAfter + fixedNetProvision;
+  // ========================================
+  // PHASE 3: Employee Deduction
+  // ========================================
+  const employeeDeductionAmount = calculateEmployeeDeductionAmount(provisionAfter, employeeSettings);
+  const provisionAfterEmployee = applyEmployeeDeduction(provisionAfter, employeeSettings);
+  
+  // Display provision = after all deductions
+  const displayProvision = provisionAfterEmployee;
+  
+  // Total margin = Mobile provision (after employee deduction) + FH-Bonus + Fixed Net + Push Bonus - Hardware
+  const totalProvision = provisionAfterEmployee + fixedNetProvision + pushBonus;
   const margin = Math.round((totalProvision - hardwareEkNet) * 100) / 100;
   
   return {
@@ -328,6 +427,9 @@ export function calculateDealerEconomics(
     fhPartnerBonus: fhBonus > 0 ? fhBonus : undefined,
     omoRate,
     omoSource: omoResult?.source,
+    pushBonus: pushBonus > 0 ? pushBonus : undefined,
+    employeeDeduction: employeeDeductionAmount > 0 ? employeeDeductionAmount : undefined,
+    displayProvision,
   };
 }
 

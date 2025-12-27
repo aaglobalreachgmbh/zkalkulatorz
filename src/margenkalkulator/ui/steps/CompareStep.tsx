@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import type { CalculationResult, ViewMode, OfferOptionState } from "../../engine/types";
-import { Eye, EyeOff, Printer, Link2Off, Smartphone, Signal, Wifi, Lock, LockKeyhole, Copy } from "lucide-react";
+import { Eye, EyeOff, Printer, Link2Off, Smartphone, Signal, Wifi, Lock, LockKeyhole, Copy, TrendingUp, TrendingDown } from "lucide-react";
 import { DiscreteMarginIndicator } from "../components/DiscreteMarginIndicator";
 import { PdfDownloadButton } from "../components/PdfDownloadButton";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import type { DealerEconomicsExtended } from "../../engine/calculators/dealer";
 
 interface CompareStepProps {
   option1: OfferOptionState;
@@ -213,7 +214,18 @@ export function CompareStep({
                 {option1.fixedNet.enabled && result1.dealer.fixedNetProvision !== undefined && result1.dealer.fixedNetProvision > 0 && (
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Festnetz Provision</span>
-                    <span className="font-medium">+{result1.dealer.fixedNetProvision.toFixed(2)} €</span>
+                    <span className="font-medium text-emerald-600">+{result1.dealer.fixedNetProvision.toFixed(2)} €</span>
+                  </div>
+                )}
+                
+                {/* Push Bonus (if active) */}
+                {(result1.dealer as DealerEconomicsExtended).pushBonus !== undefined && (result1.dealer as DealerEconomicsExtended).pushBonus! > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground flex items-center gap-1.5">
+                      <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
+                      Push-Bonus
+                    </span>
+                    <span className="font-medium text-emerald-600">+{(result1.dealer as DealerEconomicsExtended).pushBonus!.toFixed(2)} €</span>
                   </div>
                 )}
                 
@@ -225,6 +237,18 @@ export function CompareStep({
                   <span className="text-muted-foreground">Abzüge (OMO)</span>
                   <span className="font-medium">-{result1.dealer.deductions.toFixed(2)} €</span>
                 </div>
+                
+                {/* Employee Deduction (if active) */}
+                {(result1.dealer as DealerEconomicsExtended).employeeDeduction !== undefined && (result1.dealer as DealerEconomicsExtended).employeeDeduction! > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground flex items-center gap-1.5">
+                      <TrendingDown className="w-3.5 h-3.5 text-amber-500" />
+                      MA-Abzug
+                    </span>
+                    <span className="font-medium text-amber-600">-{(result1.dealer as DealerEconomicsExtended).employeeDeduction!.toFixed(2)} €</span>
+                  </div>
+                )}
+                
                 <div className="border-t border-border pt-3 flex justify-between">
                   <span className="font-semibold">Netto-Marge</span>
                   <span className={`text-xl font-bold ${
@@ -239,6 +263,16 @@ export function CompareStep({
                 <p className="text-xs text-destructive">
                   Negative Marge: Hardware-Kosten übersteigen Provision.
                 </p>
+              )}
+              
+              {/* Push Bonus Badge */}
+              {(result1.dealer as DealerEconomicsExtended).pushBonus !== undefined && (result1.dealer as DealerEconomicsExtended).pushBonus! > 0 && (
+                <div className="pt-2">
+                  <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 gap-1">
+                    <TrendingUp className="w-3 h-3" />
+                    Push-Aktion aktiv
+                  </Badge>
+                </div>
               )}
             </div>
           )}

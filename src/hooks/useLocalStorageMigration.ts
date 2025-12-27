@@ -1,6 +1,7 @@
 // ============================================
 // useLocalStorageMigration Hook
 // Phase 3: Auto-migrate localStorage to Cloud on login
+// Phase 5: Auto-cleanup after successful migration
 // ============================================
 
 import { useEffect, useState, useCallback } from "react";
@@ -13,12 +14,17 @@ import {
   isMigrationNeeded,
   type MigrationResult,
 } from "@/lib/localStorageMigration";
+import { 
+  cleanupMigratedLocalStorage,
+  setMigrationFlag,
+} from "@/lib/localStoragePolicy";
 
 interface UseMigrationReturn {
   isMigrating: boolean;
   migrationResult: MigrationResult | null;
   migrationNeeded: boolean;
   triggerMigration: () => Promise<void>;
+  lastCleanupResult: { removed: string[]; kept: string[]; errors: string[] } | null;
 }
 
 export function useLocalStorageMigration(): UseMigrationReturn {
@@ -31,6 +37,11 @@ export function useLocalStorageMigration(): UseMigrationReturn {
   const [migrationResult, setMigrationResult] = useState<MigrationResult | null>(null);
   const [migrationNeeded, setMigrationNeeded] = useState(false);
   const [hasAttempted, setHasAttempted] = useState(false);
+  const [lastCleanupResult, setLastCleanupResult] = useState<{ 
+    removed: string[]; 
+    kept: string[]; 
+    errors: string[]; 
+  } | null>(null);
 
   // Check if migration is needed
   useEffect(() => {
@@ -91,6 +102,38 @@ export function useLocalStorageMigration(): UseMigrationReturn {
           title: "Lokale Daten synchronisiert",
           description: `${totalMigrated} Einträge erfolgreich in die Cloud übertragen.`,
         });
+        
+        // ============================================
+        // Phase 5: Auto-Cleanup nach erfolgreicher Migration
+        // ============================================
+        
+        // Set migration flags for completed areas
+        if (result.drafts.migrated > 0) {
+          setMigrationFlag(user.id, "drafts");
+        }
+        if (result.history.migrated > 0) {
+          setMigrationFlag(user.id, "history");
+        }
+        if (result.templates.migrated > 0) {
+          setMigrationFlag(user.id, "templates");
+        }
+        if (result.folders.migrated > 0) {
+          setMigrationFlag(user.id, "folders");
+        }
+        if (result.dataset) {
+          setMigrationFlag(user.id, "dataset");
+        }
+        
+        // Cleanup old localStorage data
+        const cleanupResult = cleanupMigratedLocalStorage(user.id);
+        setLastCleanupResult(cleanupResult);
+        
+        if (cleanupResult.removed.length > 0) {
+          console.info(
+            "[Migration] Alte localStorage-Daten bereinigt:",
+            cleanupResult.removed
+          );
+        }
       }
 
       setMigrationNeeded(false);
@@ -115,5 +158,6 @@ export function useLocalStorageMigration(): UseMigrationReturn {
     migrationResult,
     migrationNeeded,
     triggerMigration,
+    lastCleanupResult,
   };
 }

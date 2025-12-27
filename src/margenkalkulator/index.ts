@@ -44,6 +44,11 @@ export {
   type ValidationResult as WizardValidationResult,
 } from "./hooks/useWizardValidation";
 
+// Cloud Hooks (Supabase Integration)
+export { useCloudDrafts } from "./hooks/useCloudDrafts";
+export { useCloudHistory } from "./hooks/useCloudHistory";
+export { useCloudTemplates, type CloudTemplate, type CloudFolder } from "./hooks/useCloudTemplates";
+
 // Employee Settings & Push Provisions
 export { 
   useEmployeeSettings, 

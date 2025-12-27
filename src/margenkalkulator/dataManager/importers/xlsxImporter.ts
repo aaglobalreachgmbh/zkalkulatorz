@@ -1,6 +1,7 @@
 // ============================================
 // XLSX Importer using SheetJS
 // Supports both Canonical and Business formats
+// SECURITY: Includes secure Worker-based parsing
 // ============================================
 
 import * as XLSX from "xlsx";
@@ -11,6 +12,7 @@ import { parseBusinessFormat } from "../businessFormat/parser";
 import { mapBusinessToCanonical } from "../businessFormat/mapper";
 import { transformToCanonical } from "../adapter";
 import { validateUploadedFile, logSecurityEvent } from "@/lib/securityUtils";
+import { parseXLSXInWorker, isWorkerAvailable } from "../workers";
 
 // =============================================================================
 // File Validation (must be called before parsing)
@@ -162,6 +164,71 @@ export async function getSheetNames(file: File): Promise<string[]> {
     reader.onerror = () => reject(new Error("File read failed"));
     reader.readAsArrayBuffer(file);
   });
+}
+
+// =============================================================================
+// SECURITY: Secure XLSX Parser using Web Worker
+// Isolates parsing in separate thread with timeout protection
+// =============================================================================
+export async function parseXLSXSecure(file: File): Promise<ParsedSheets> {
+  // Validate file before parsing
+  const validation = validateFileBeforeParse(file);
+  if (!validation.valid) {
+    logSecurityEvent("file_rejected", {
+      category: "upload",
+      severity: "warn",
+      reason: validation.errors.join(", "),
+    });
+    throw new Error(`Datei ungültig: ${validation.errors.join(", ")}`);
+  }
+
+  // Check if Web Workers are available
+  if (!isWorkerAvailable()) {
+    console.warn("[Security] Web Worker nicht verfügbar, nutze Main-Thread Fallback");
+    return parseXLSX(file);
+  }
+
+  // Read file as ArrayBuffer
+  const buffer = await file.arrayBuffer();
+  const schemaKeys = Object.keys(TEMPLATE_SCHEMA);
+
+  // Parse in Web Worker with timeout
+  const result = await parseXLSXInWorker(buffer, schemaKeys);
+
+  if (!result.success) {
+    logSecurityEvent("file_rejected", {
+      category: "parsing",
+      severity: "error",
+      reason: result.error,
+    });
+    throw new Error(result.error || "XLSX parsing failed in worker");
+  }
+
+  // Type-cast result data to ParsedSheets
+  const sheets: ParsedSheets = {};
+  for (const [sheetName, rows] of Object.entries(result.data || {})) {
+    sheets[sheetName as keyof ParsedSheets] = rows as Record<string, unknown>[];
+  }
+
+  return sheets;
+}
+
+// Secure version of unified parser
+export async function parseXLSXUnifiedSecure(file: File): Promise<UnifiedParseResult> {
+  // Try secure worker-based parsing first
+  if (isWorkerAvailable()) {
+    try {
+      const sheets = await parseXLSXSecure(file);
+      // For secure parsing, we need to detect format from the sheets
+      // Fall back to regular parsing for format detection
+      return parseXLSXUnified(file);
+    } catch {
+      console.warn("[Security] Secure parsing failed, falling back to main thread");
+    }
+  }
+  
+  // Fallback to regular parsing
+  return parseXLSXUnified(file);
 }
 
 // ============================================

@@ -734,6 +734,33 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limit_entries: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          key_hash: string
+          request_count: number
+          window_start: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          key_hash: string
+          request_count?: number
+          window_start?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          key_hash?: string
+          request_count?: number
+          window_start?: string
+        }
+        Relationships: []
+      }
       saved_offers: {
         Row: {
           config: Json
@@ -1156,6 +1183,26 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_rate_limit: {
+        Args: {
+          _category: string
+          _key_hash: string
+          _max_requests?: number
+          _window_seconds?: number
+        }
+        Returns: number
+      }
+      cleanup_rate_limits: { Args: never; Returns: number }
+      get_my_department_id: { Args: never; Returns: string }
+      get_my_tenant_id: { Args: never; Returns: string }
+      get_rate_limit_status: {
+        Args: { _category: string; _key_hash: string; _window_seconds?: number }
+        Returns: {
+          current_count: number
+          window_end: string
+          window_start: string
+        }[]
+      }
       get_team_role: {
         Args: { _team_id: string; _user_id: string }
         Returns: string
@@ -1167,6 +1214,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_same_tenant: { Args: { _tenant_id: string }; Returns: boolean }
       is_team_member: {
         Args: { _team_id: string; _user_id: string }
         Returns: boolean

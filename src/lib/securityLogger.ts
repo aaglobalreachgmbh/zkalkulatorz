@@ -37,7 +37,9 @@ export type SecurityEventType =
   | "websocket_violation"
   | "tunnel_blocked"
   | "message_rate_limited"
-  | "protocol_violation";
+  | "protocol_violation"
+  // Phase C additions
+  | "access_denied";
 
 export type RiskLevel = "low" | "medium" | "high" | "critical";
 

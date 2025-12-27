@@ -9,6 +9,7 @@ import {
   type RiskLevel 
 } from "@/lib/securityLogger";
 import { auditLocalStorage, formatAuditForLog } from "@/lib/localStoragePolicy";
+import { isCryptoAvailable } from "@/lib/secureStorage";
 
 // ============================================================================
 // TYPES
@@ -26,7 +27,7 @@ interface SecurityContextType {
   escape: (input: string) => string;
   checkThreats: (input: string) => ReturnType<typeof checkAllThreats>;
   
-  // Rate Limiting
+  // Rate Limiting (Client-side)
   canMakeRequest: (category: keyof typeof RATE_LIMITS) => boolean;
   getRemainingRequests: (category: keyof typeof RATE_LIMITS) => number;
   
@@ -36,6 +37,9 @@ interface SecurityContextType {
   // Status
   isSecurityActive: boolean;
   recentEvents: SecurityEvent[];
+  
+  // Phase C additions
+  isEncryptionAvailable: boolean;
 }
 
 // ============================================================================
@@ -299,6 +303,9 @@ export function SecurityProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
   
+  // Check encryption availability
+  const isEncryptionAvailable = useMemo(() => isCryptoAvailable(), []);
+  
   const value = useMemo<SecurityContextType>(
     () => ({
       sanitize,
@@ -309,8 +316,9 @@ export function SecurityProvider({ children }: { children: React.ReactNode }) {
       logEvent,
       isSecurityActive: true,
       recentEvents,
+      isEncryptionAvailable,
     }),
-    [sanitize, escape, checkThreatsCallback, canMakeRequest, getRemainingRequests, logEvent, recentEvents]
+    [sanitize, escape, checkThreatsCallback, canMakeRequest, getRemainingRequests, logEvent, recentEvents, isEncryptionAvailable]
   );
   
   return (

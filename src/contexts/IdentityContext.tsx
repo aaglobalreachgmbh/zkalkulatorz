@@ -32,6 +32,13 @@ export interface IdentityState {
   tenantId: string;
 }
 
+/** JWT Claims from server (Phase C2) */
+export interface JwtClaims {
+  tenantId?: string;
+  departmentId?: string;
+  verified: boolean;
+}
+
 interface IdentityContextType {
   identity: IdentityState;
   isAuthenticated: boolean;
@@ -39,6 +46,8 @@ interface IdentityContextType {
   setMockIdentity: (identity: IdentityState) => void;
   clearMockIdentity: () => void;
   canAccessAdmin: boolean;
+  /** Server-verified claims from JWT (Phase C2) */
+  jwtClaims: JwtClaims;
 }
 
 const MOCK_STORAGE_KEY = "margenkalkulator_mock_identity";
@@ -127,6 +136,26 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
   }, [mockIdentity]);
 
   /**
+   * JWT Claims from server (Phase C2)
+   * These are set by the server and verified, providing trusted tenant/department info
+   */
+  const jwtClaims = useMemo((): JwtClaims => {
+    if (!user) {
+      return { verified: false };
+    }
+    
+    // Try to extract claims from JWT token
+    // In Supabase, custom claims can be added via hooks or directly
+    const appMetadata = user.app_metadata || {};
+    
+    return {
+      tenantId: appMetadata.tenant_id || user.user_metadata?.tenant_id,
+      departmentId: appMetadata.department_id || user.user_metadata?.department_id,
+      verified: !!appMetadata.tenant_id, // Only verified if set in app_metadata
+    };
+  }, [user]);
+
+  /**
    * Computed identity with priority:
    * 1. Supabase authenticated user → use Supabase data
    * 2. Mock identity from localStorage → use mock
@@ -140,8 +169,9 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
         userId: user.id,
         displayName: user.user_metadata?.display_name || user.email?.split("@")[0] || "User",
         role: appRole,
-        departmentId: user.user_metadata?.department_id || "dept_default",
-        tenantId: user.user_metadata?.tenant_id || "tenant_default",
+        // Prefer JWT claims over user_metadata for tenant/department
+        departmentId: jwtClaims.departmentId || user.user_metadata?.department_id || "dept_default",
+        tenantId: jwtClaims.tenantId || user.user_metadata?.tenant_id || "tenant_default",
       };
     }
 
@@ -152,7 +182,7 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
 
     // Priority 3: Default identity
     return DEFAULT_IDENTITY;
-  }, [user, authLoading, roleLoading, supabaseRole, mockIdentity]);
+  }, [user, authLoading, roleLoading, supabaseRole, mockIdentity, jwtClaims]);
 
   const isSupabaseAuth = !!user && !authLoading;
   const isAuthenticated = isSupabaseAuth || !!mockIdentity;
@@ -178,6 +208,7 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
         setMockIdentity,
         clearMockIdentity,
         canAccessAdmin,
+        jwtClaims,
       }}
     >
       {children}

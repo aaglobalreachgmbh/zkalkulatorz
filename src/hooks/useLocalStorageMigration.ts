@@ -1,0 +1,119 @@
+// ============================================
+// useLocalStorageMigration Hook
+// Phase 3: Auto-migrate localStorage to Cloud on login
+// ============================================
+
+import { useEffect, useState, useCallback } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { useIdentity } from "@/contexts/IdentityContext";
+import { useUserRole } from "@/hooks/useUserRole";
+import { useToast } from "@/hooks/use-toast";
+import {
+  performFullMigration,
+  isMigrationNeeded,
+  type MigrationResult,
+} from "@/lib/localStorageMigration";
+
+interface UseMigrationReturn {
+  isMigrating: boolean;
+  migrationResult: MigrationResult | null;
+  migrationNeeded: boolean;
+  triggerMigration: () => Promise<void>;
+}
+
+export function useLocalStorageMigration(): UseMigrationReturn {
+  const { user } = useAuth();
+  const { identity } = useIdentity();
+  const { isAdmin } = useUserRole();
+  const { toast } = useToast();
+
+  const [isMigrating, setIsMigrating] = useState(false);
+  const [migrationResult, setMigrationResult] = useState<MigrationResult | null>(null);
+  const [migrationNeeded, setMigrationNeeded] = useState(false);
+  const [hasAttempted, setHasAttempted] = useState(false);
+
+  // Check if migration is needed
+  useEffect(() => {
+    if (user?.id) {
+      setMigrationNeeded(isMigrationNeeded(user.id));
+    }
+  }, [user?.id]);
+
+  // Auto-trigger migration on first login
+  useEffect(() => {
+    if (
+      user?.id &&
+      identity?.tenantId &&
+      migrationNeeded &&
+      !isMigrating &&
+      !hasAttempted
+    ) {
+      setHasAttempted(true);
+      performMigration();
+    }
+  }, [user?.id, identity?.tenantId, migrationNeeded, isMigrating, hasAttempted]);
+
+  const performMigration = useCallback(async () => {
+    if (!user?.id || !identity?.tenantId) return;
+
+    setIsMigrating(true);
+
+    try {
+      const result = await performFullMigration(
+        user.id,
+        identity.tenantId,
+        isAdmin
+      );
+
+      setMigrationResult(result);
+
+      // Calculate totals for toast
+      const totalMigrated =
+        result.drafts.migrated +
+        result.history.migrated +
+        result.templates.migrated +
+        result.folders.migrated +
+        result.seats.migrated +
+        result.departments.migrated +
+        result.assignments.migrated +
+        (result.dataset ? 1 : 0) +
+        (result.license ? 1 : 0);
+
+      if (result.errors.length > 0) {
+        toast({
+          title: "Migration teilweise abgeschlossen",
+          description: `${totalMigrated} Einträge migriert, ${result.errors.length} Fehler aufgetreten.`,
+          variant: "destructive",
+        });
+        console.error("Migration errors:", result.errors);
+      } else if (totalMigrated > 0) {
+        toast({
+          title: "Lokale Daten synchronisiert",
+          description: `${totalMigrated} Einträge erfolgreich in die Cloud übertragen.`,
+        });
+      }
+
+      setMigrationNeeded(false);
+    } catch (error) {
+      console.error("Migration failed:", error);
+      toast({
+        title: "Migration fehlgeschlagen",
+        description: "Lokale Daten konnten nicht synchronisiert werden.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsMigrating(false);
+    }
+  }, [user?.id, identity?.tenantId, isAdmin, toast]);
+
+  const triggerMigration = useCallback(async () => {
+    await performMigration();
+  }, [performMigration]);
+
+  return {
+    isMigrating,
+    migrationResult,
+    migrationNeeded,
+    triggerMigration,
+  };
+}

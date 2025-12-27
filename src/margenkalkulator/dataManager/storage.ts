@@ -111,6 +111,12 @@ function createEmptyDataset(): CanonicalDataset {
     hardwareCatalog: [],
     promos: [],
     subVariants: [],
+    // NEU
+    iotTariffs: [],
+    voipProducts: [],
+    voipHardware: [],
+    provisions: [],
+    omoMatrix: [],
   };
 }
 

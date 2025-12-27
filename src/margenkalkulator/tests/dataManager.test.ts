@@ -13,6 +13,25 @@ import { diffDatasets, type DiffResult } from "../dataManager/diff";
 import { mapCanonicalToCatalog, transformToCanonical } from "../dataManager/adapter";
 import type { CanonicalDataset, ParsedSheets } from "../dataManager/types";
 
+// Helper to create a complete CanonicalDataset with all required fields
+function createTestDataset(partial: Partial<CanonicalDataset>): CanonicalDataset {
+  return {
+    meta: partial.meta ?? { datasetVersion: "test-v1", validFromISO: "2025-01-01", verifiedAtISO: "2025-01-01" },
+    mobileTariffs: partial.mobileTariffs ?? [],
+    mobileFeatures: partial.mobileFeatures ?? [],
+    mobileDependencies: partial.mobileDependencies ?? [],
+    fixedNetProducts: partial.fixedNetProducts ?? [],
+    hardwareCatalog: partial.hardwareCatalog ?? [],
+    promos: partial.promos ?? [],
+    subVariants: partial.subVariants ?? [],
+    iotTariffs: partial.iotTariffs ?? [],
+    voipProducts: partial.voipProducts ?? [],
+    voipHardware: partial.voipHardware ?? [],
+    provisions: partial.provisions ?? [],
+    omoMatrix: partial.omoMatrix ?? [],
+  };
+}
+
 describe("Data Manager - Validator", () => {
   describe("validateParsedSheets", () => {
     it("catches missing meta sheet", () => {
@@ -209,8 +228,7 @@ describe("Data Manager - Adapter", () => {
   });
 
   it("maps canonical format to catalog format", () => {
-    const canonical: CanonicalDataset = {
-      meta: { datasetVersion: "test-v1", validFromISO: "2025-01-01", verifiedAtISO: "2025-01-01" },
+    const canonical = createTestDataset({
       subVariants: [{ id: "SIM_ONLY", label: "SIM only", monthly_add_net: 0 }],
       mobileTariffs: [{
         id: "PRIME_S",
@@ -223,12 +241,7 @@ describe("Data Manager - Adapter", () => {
         active: true,
         minTermMonths: 24,
       }],
-      fixedNetProducts: [],
-      promos: [],
-      hardwareCatalog: [],
-      mobileFeatures: [],
-      mobileDependencies: [],
-    };
+    });
     
     const catalog = mapCanonicalToCatalog(canonical);
     
@@ -242,9 +255,7 @@ describe("Data Manager - Adapter", () => {
   });
 
   it("builds allowedSubVariants from SUB add prices", () => {
-    const canonical: CanonicalDataset = {
-      meta: { datasetVersion: "test-v1", validFromISO: "2025-01-01", verifiedAtISO: "2025-01-01" },
-      subVariants: [],
+    const canonical = createTestDataset({
       mobileTariffs: [{
         id: "T1",
         family: "prime",
@@ -259,12 +270,7 @@ describe("Data Manager - Adapter", () => {
         active: true,
         minTermMonths: 24,
       }],
-      fixedNetProducts: [],
-      promos: [],
-      hardwareCatalog: [],
-      mobileFeatures: [],
-      mobileDependencies: [],
-    };
+    });
     
     const catalog = mapCanonicalToCatalog(canonical);
     const tariff = catalog.mobileTariffs[0];
@@ -277,19 +283,12 @@ describe("Data Manager - Adapter", () => {
   });
 
   it("filters out inactive tariffs", () => {
-    const canonical: CanonicalDataset = {
-      meta: { datasetVersion: "test-v1", validFromISO: "2025-01-01", verifiedAtISO: "2025-01-01" },
-      subVariants: [],
+    const canonical = createTestDataset({
       mobileTariffs: [
         { id: "T1", family: "prime", name: "Active", base_sim_only_net: 29, data_de: 20, eu_rule: "numeric", active: true, minTermMonths: 24 },
         { id: "T2", family: "prime", name: "Inactive", base_sim_only_net: 39, data_de: 50, eu_rule: "numeric", active: false, minTermMonths: 24 },
       ],
-      fixedNetProducts: [],
-      promos: [],
-      hardwareCatalog: [],
-      mobileFeatures: [],
-      mobileDependencies: [],
-    };
+    });
     
     const catalog = mapCanonicalToCatalog(canonical);
     
@@ -298,9 +297,7 @@ describe("Data Manager - Adapter", () => {
   });
 
   it("handles unlimited data volume", () => {
-    const canonical: CanonicalDataset = {
-      meta: { datasetVersion: "test-v1", validFromISO: "2025-01-01", verifiedAtISO: "2025-01-01" },
-      subVariants: [],
+    const canonical = createTestDataset({
       mobileTariffs: [{
         id: "T1",
         family: "prime",
@@ -312,12 +309,7 @@ describe("Data Manager - Adapter", () => {
         active: true,
         minTermMonths: 24,
       }],
-      fixedNetProducts: [],
-      promos: [],
-      hardwareCatalog: [],
-      mobileFeatures: [],
-      mobileDependencies: [],
-    };
+    });
     
     const catalog = mapCanonicalToCatalog(canonical);
     

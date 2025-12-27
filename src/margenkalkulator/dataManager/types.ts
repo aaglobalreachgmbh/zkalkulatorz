@@ -267,6 +267,244 @@ export type SubVariantRow = {
   monthly_add_net: number;
 };
 
+// ============================================
+// IoT / M2M Tarife (NEU)
+// ============================================
+
+/**
+ * IoT/M2M-Tarif-Zeile aus XLSX-Import.
+ * 
+ * ANWENDUNGSFÄLLE:
+ * - Telematik (Fahrzeug-Tracking)
+ * - Smart Meter (Strom/Gas/Wasser)
+ * - Industrie 4.0 (Maschinen-Kommunikation)
+ * - POS-Terminals (Kartenzahlung)
+ * 
+ * @example
+ * const row: IoTTariffRow = {
+ *   id: "IOT_100MB",
+ *   name: "IoT Connect 100 MB",
+ *   category: "standard",
+ *   data_volume_mb: 100,
+ *   monthly_net: 2.50,
+ *   provision_new: 25,
+ *   active: true
+ * };
+ */
+export type IoTTariffRow = {
+  /** Eindeutige ID */
+  id: string;
+  /** Anzeigename */
+  name: string;
+  /** Kategorie (standard, enterprise, automotive) */
+  category: "standard" | "enterprise" | "automotive" | string;
+  /** Datenvolumen in MB */
+  data_volume_mb: number;
+  /** Datenvolumen als Text ("100 MB", "1 GB", "unlimited") */
+  data_volume_text?: string;
+  /** Monatspreis netto */
+  monthly_net: number;
+  /** Mindestlaufzeit in Monaten */
+  minTermMonths: number;
+  /** Überverbrauch pro MB netto (optional) */
+  overage_per_mb_net?: number;
+  /** Neuvertrag-Provision */
+  provision_new: number;
+  /** VVL-Provision */
+  provision_renewal?: number;
+  /** Features als kommaseparierte Liste */
+  features?: string;
+  /** Typische Anwendungsfälle */
+  use_cases?: string;
+  /** Sortierreihenfolge */
+  sort_order?: number;
+  /** Aktiv */
+  active: boolean;
+};
+
+// ============================================
+// VoIP / RingCentral (NEU)
+// ============================================
+
+/**
+ * VoIP-Produkt-Zeile aus XLSX-Import (RingCentral).
+ * 
+ * LIZENZMODELL:
+ * - Preis pro Benutzer pro Monat
+ * - Staffelpreise bei größeren Teams
+ * - Jährliche vs. monatliche Abrechnung
+ * 
+ * @example
+ * const row: VoIPProductRow = {
+ *   id: "RC_STANDARD_MONTHLY",
+ *   name: "RingCentral Standard",
+ *   tier: "standard",
+ *   price_per_user_net: 14.99,
+ *   min_users: 1,
+ *   video_conferencing: true,
+ *   provision_per_user: 20,
+ *   active: true
+ * };
+ */
+export type VoIPProductRow = {
+  /** Eindeutige ID */
+  id: string;
+  /** Anzeigename */
+  name: string;
+  /** Produktstufe */
+  tier: "essentials" | "standard" | "premium" | "ultimate" | string;
+  /** Preis pro Benutzer netto */
+  price_per_user_net: number;
+  /** Mindestanzahl Benutzer */
+  min_users: number;
+  /** Maximalanzahl Benutzer (optional) */
+  max_users?: number;
+  /** Mindestlaufzeit in Monaten */
+  minTermMonths: number;
+  /** Abrechnungszyklus */
+  billing_cycle: "monthly" | "annual";
+  /** Inklusivminuten Deutschland */
+  included_minutes_de?: number | "unlimited";
+  /** Inklusivminuten International */
+  included_minutes_intl?: number;
+  /** Videokonferenz inklusive? */
+  video_conferencing: boolean;
+  /** Team-Messaging inklusive? */
+  team_messaging: boolean;
+  /** SMS-Versand möglich? */
+  sms_enabled: boolean;
+  /** Hardware-Optionen (kommaseparierte IDs) */
+  hardware_options?: string;
+  /** Features als kommaseparierte Liste */
+  features?: string;
+  /** Provision pro Benutzer */
+  provision_per_user: number;
+  /** Einmalige Setup-Provision */
+  provision_setup?: number;
+  /** Sortierreihenfolge */
+  sort_order?: number;
+  /** Aktiv */
+  active: boolean;
+};
+
+/**
+ * VoIP-Hardware-Zeile (Telefone, Headsets).
+ */
+export type VoIPHardwareRow = {
+  /** Eindeutige ID */
+  id: string;
+  /** Hersteller (Poly, Yealink, Jabra) */
+  brand: string;
+  /** Modell */
+  model: string;
+  /** Kategorie */
+  category: "desk_phone" | "conference_phone" | "headset" | "accessory";
+  /** Einkaufspreis netto */
+  ek_net: number;
+  /** UVP netto */
+  uvp_net?: number;
+  /** Kompatible Tier-Level (kommasepariert) */
+  compatible_tiers?: string;
+  /** Features */
+  features?: string;
+  /** Bild-URL */
+  image_url?: string;
+  /** Sortierreihenfolge */
+  sort_order?: number;
+  /** Aktiv */
+  active: boolean;
+};
+
+// ============================================
+// PROVISIONEN (NEU)
+// ============================================
+
+/**
+ * Provisions-Zeile aus XLSX-Import.
+ * 
+ * STRUKTUR:
+ * - Pro Tarif: Neu- und VVL-Provision
+ * - Optional: FH-Partner und Push-Modifikatoren
+ * 
+ * @example
+ * const row: ProvisionRow = {
+ *   tariff_id: "PRIME_M",
+ *   tariff_type: "mobile",
+ *   provision_new_net: 450,
+ *   provision_renewal_net: 220,
+ *   provision_renewal_pct: 0.49
+ * };
+ */
+export type ProvisionRow = {
+  /** Referenz auf Tarif-ID */
+  tariff_id: string;
+  /** Tarif-Typ für Zuordnung */
+  tariff_type: "mobile" | "fixednet" | "iot" | "voip";
+  /** Neuvertrag-Provision netto */
+  provision_new_net: number;
+  /** VVL-Provision netto */
+  provision_renewal_net?: number;
+  /** VVL als Prozent von Neu (Alternative zu absolutem Wert) */
+  provision_renewal_pct?: number;
+  /** FH-Partner Modifikator (z.B. 0.95 = 95% der Basis) */
+  fh_partner_modifier?: number;
+  /** Push-Modifikator */
+  push_modifier?: number;
+  /** Notizen */
+  notes?: string;
+};
+
+// ============================================
+// OMO-MATRIX (NEU)
+// ============================================
+
+/**
+ * OMO-Matrix-Zeile aus XLSX-Import.
+ * 
+ * LOGIK:
+ * OMO (Online-Maßnahmen-Optimierung) = Dauerrabatt für Kunden
+ * → Reduziert den Tarifpreis
+ * → Reduziert die Händler-Provision um festen Betrag
+ * 
+ * STUFEN: 0%, 5%, 10%, 15%, 17.5%, 20%, 25%
+ * 
+ * @example
+ * const row: OMOMatrixRow = {
+ *   tariff_id: "PRIME_M",
+ *   omo_0: 0,      // Kein Abzug
+ *   omo_5: 15,     // 15€ Abzug bei 5% OMO
+ *   omo_10: 30,
+ *   omo_15: 45,
+ *   omo_17_5: 52.5,
+ *   omo_20: 60,
+ *   omo_25: 75     // 75€ Abzug bei 25% OMO
+ * };
+ */
+export type OMOMatrixRow = {
+  /** Referenz auf Tarif-ID */
+  tariff_id: string;
+  /** Abzug bei 0% OMO (immer 0, zur Vollständigkeit) */
+  omo_0: number;
+  /** Abzug bei 5% OMO */
+  omo_5: number | null;
+  /** Abzug bei 10% OMO */
+  omo_10: number | null;
+  /** Abzug bei 15% OMO */
+  omo_15: number | null;
+  /** Abzug bei 17.5% OMO */
+  omo_17_5: number | null;
+  /** Abzug bei 20% OMO */
+  omo_20: number | null;
+  /** Abzug bei 25% OMO */
+  omo_25: number | null;
+  /** Notizen */
+  notes?: string;
+};
+
+// ============================================
+// VOLLSTÄNDIGES CANONICAL DATASET
+// ============================================
+
 /**
  * Vollständiges kanonisches Dataset.
  * 
@@ -291,6 +529,16 @@ export type CanonicalDataset = {
   promos: PromoDefinitionRow[];
   /** SUB-Varianten */
   subVariants: SubVariantRow[];
+  /** IoT/M2M-Tarife (NEU) */
+  iotTariffs: IoTTariffRow[];
+  /** VoIP-Produkte (NEU) */
+  voipProducts: VoIPProductRow[];
+  /** VoIP-Hardware (NEU) */
+  voipHardware: VoIPHardwareRow[];
+  /** Provisions-Matrix (NEU) */
+  provisions: ProvisionRow[];
+  /** OMO-Matrix (NEU) */
+  omoMatrix: OMOMatrixRow[];
 };
 
 /**
@@ -309,4 +557,10 @@ export type ParsedSheets = {
   hardware_catalog?: Record<string, unknown>[];
   promos_possible?: Record<string, unknown>[];
   sub_variants?: Record<string, unknown>[];
+  // NEU
+  iot_tariffs?: Record<string, unknown>[];
+  voip_products?: Record<string, unknown>[];
+  voip_hardware?: Record<string, unknown>[];
+  provisions?: Record<string, unknown>[];
+  omo_matrix?: Record<string, unknown>[];
 };

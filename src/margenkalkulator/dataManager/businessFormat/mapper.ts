@@ -26,6 +26,12 @@ export function mapBusinessToCanonical(
     hardwareCatalog: business.hardware.map(mapHardwareRow),
     promos: [], // OMO could become promos later
     subVariants: getDefaultSubVariants(),
+    // NEU: Empty placeholders for new types
+    iotTariffs: [],
+    voipProducts: [],
+    voipHardware: [],
+    provisions: [],
+    omoMatrix: [],
   };
 }
 

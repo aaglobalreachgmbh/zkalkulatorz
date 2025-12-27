@@ -134,6 +134,7 @@ export function useLicense(): UseLicenseReturn {
         seatLimit: cloudLicense.license.seatLimit,
         seatsUsed: cloudLicense.license.seatsUsed,
         validUntil: cloudLicense.license.validUntil || undefined,
+        updatedAt: cloudLicense.license.updatedAt,
       },
       isValid: cloudLicense.isValid,
       seatLimitExceeded: cloudSeats.seatUsage.exceeded,

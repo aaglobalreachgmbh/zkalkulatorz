@@ -2,7 +2,14 @@
 // Importers Index
 // ============================================
 
-export { parseXLSX, getSheetNames } from "./xlsxImporter";
+export { 
+  parseXLSX, 
+  parseXLSXSecure, 
+  parseXLSXUnifiedSecure,
+  getSheetNames,
+  parseXLSXUnified,
+  validateFileBeforeParse,
+} from "./xlsxImporter";
 export { parseCSV } from "./csvImporter";
 export * from "./hardwareImporter";
 export * from "./mobileImporter";

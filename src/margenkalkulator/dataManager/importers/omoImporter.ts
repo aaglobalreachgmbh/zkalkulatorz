@@ -61,7 +61,7 @@ export async function parseOMOMatrixXLSX(file: File): Promise<OMOMatrixRow[]> {
 // Row Normalization
 // ============================================
 
-function normalizeOMORows(rows: Record<string, unknown>[]): OMOMatrixRow[] {
+export function normalizeOMORows(rows: Record<string, unknown>[]): OMOMatrixRow[] {
   return rows
     .filter(row => {
       const id = row.tariff_id || row.tariffId || row.TarifID || row.Tarif || row.id;
@@ -102,7 +102,7 @@ function normalizeOMORows(rows: Record<string, unknown>[]): OMOMatrixRow[] {
  * - Empty = null (not set)
  * - Number = deduction amount
  */
-function parseOMOValue(value: unknown): number | null {
+export function parseOMOValue(value: unknown): number | null {
   if (value === null || value === undefined || value === "") return null;
   
   const strVal = String(value).toLowerCase().trim();

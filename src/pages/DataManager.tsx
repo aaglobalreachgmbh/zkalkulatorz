@@ -50,6 +50,7 @@ import {
   type DatasetStatus,
 } from "@/lib/datasetGovernance";
 import { logDatasetImport, logDatasetStatusChange } from "@/lib/auditLog";
+import { ProductTabs } from "@/margenkalkulator/ui/components/ProductTabs";
 
 export default function DataManager() {
   const { identity } = useIdentity();
@@ -278,11 +279,17 @@ export default function DataManager() {
       {/* Workflow Legend */}
       <WorkflowLegend />
 
-      <Tabs defaultValue="datasets" className="mt-6">
+      <Tabs defaultValue="produkte" className="mt-6">
         <TabsList>
+          <TabsTrigger value="produkte">Produkte</TabsTrigger>
           <TabsTrigger value="datasets">Datasets</TabsTrigger>
           <TabsTrigger value="import">Importieren</TabsTrigger>
         </TabsList>
+
+        {/* Produkte Tab (NEU) */}
+        <TabsContent value="produkte" className="space-y-6">
+          <ProductTabs />
+        </TabsContent>
 
         {/* Datasets Tab */}
         <TabsContent value="datasets" className="space-y-6">

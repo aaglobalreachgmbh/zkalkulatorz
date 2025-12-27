@@ -77,7 +77,7 @@ export async function parseTeamDealXLSX(file: File): Promise<TeamDealRow[]> {
 // Row Normalization
 // ============================================
 
-function normalizeTeamDealRows(rows: Record<string, unknown>[]): TeamDealRow[] {
+export function normalizeTeamDealRows(rows: Record<string, unknown>[]): TeamDealRow[] {
   return rows
     .filter(row => {
       const id = row.id || row.ID || row.Tier;

@@ -3,7 +3,6 @@
 // Load & Delete Saved Drafts
 // ============================================
 
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,11 +13,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { FolderOpen, Trash2, Clock, Smartphone, Signal } from "lucide-react";
+import { FolderOpen, Trash2, Clock, Smartphone, Signal, Loader2 } from "lucide-react";
 import type { OfferOptionState } from "../../engine/types";
-import type { OfferDraft } from "../../storage/types";
-import { loadDrafts, deleteDraft, hasDrafts } from "../../storage/drafts";
+import { useDrafts } from "../../hooks/useDrafts";
 import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 interface DraftManagerProps {
   onLoadDraft: (config: OfferOptionState) => void;
@@ -33,16 +32,9 @@ export function DraftManager({
 }: DraftManagerProps) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
-  const [drafts, setDrafts] = useState<OfferDraft[]>([]);
+  const { drafts, isLoading, deleteDraft, isDeleting } = useDrafts();
   
-  // Load drafts when dialog opens
-  useEffect(() => {
-    if (open) {
-      setDrafts(loadDrafts());
-    }
-  }, [open]);
-  
-  const handleLoad = (draft: OfferDraft) => {
+  const handleLoad = (draft: { name: string; config: OfferOptionState }) => {
     onLoadDraft(draft.config);
     toast({
       title: "Entwurf geladen",
@@ -51,13 +43,15 @@ export function DraftManager({
     setOpen(false);
   };
   
-  const handleDelete = (id: string, name: string) => {
-    if (deleteDraft(id)) {
-      setDrafts((prev) => prev.filter((d) => d.id !== id));
+  const handleDelete = async (id: string, name: string) => {
+    try {
+      await deleteDraft(id);
       toast({
         title: "Entwurf gelöscht",
         description: `"${name}" wurde entfernt.`,
       });
+    } catch {
+      // Error handled by hook
     }
   };
   
@@ -88,7 +82,12 @@ export function DraftManager({
           </DialogDescription>
         </DialogHeader>
         
-        {drafts.length === 0 ? (
+        {isLoading ? (
+          <div className="py-12 text-center">
+            <Loader2 className="w-8 h-8 mx-auto mb-4 animate-spin text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">Laden...</p>
+          </div>
+        ) : drafts.length === 0 ? (
           <div className="py-12 text-center text-muted-foreground">
             <FolderOpen className="w-12 h-12 mx-auto mb-4 opacity-30" />
             <p>Keine gespeicherten Entwürfe</p>
@@ -134,6 +133,7 @@ export function DraftManager({
                       e.stopPropagation();
                       handleDelete(draft.id, draft.name);
                     }}
+                    disabled={isDeleting}
                     className="text-muted-foreground hover:text-destructive"
                   >
                     <Trash2 className="w-4 h-4" />

@@ -27,9 +27,7 @@ import { CloudOfferManager } from "./components/CloudOfferManager";
 import { ViewModeToggle } from "./components/ViewModeToggle";
 import { CustomerSessionToggle } from "./components/CustomerSessionToggle";
 import { IdentitySelector } from "./components/IdentitySelector";
-import { addToHistory } from "../storage/history";
-import { setDraftScope, resetDraftScope, migrateLegacyDrafts } from "../storage/drafts";
-import { setHistoryScope, resetHistoryScope, migrateLegacyHistory } from "../storage/history";
+import { useHistory } from "../hooks/useHistory";
 import { useToast } from "@/hooks/use-toast";
 import { useIdentity } from "@/contexts/IdentityContext";
 import { useCustomerSession } from "@/contexts/CustomerSessionContext";
@@ -56,6 +54,7 @@ export function Wizard() {
   // Employee Settings & Push Provisions Hooks
   const { settings: employeeSettings } = useEmployeeSettings();
   const { getBonusAmount } = usePushProvisions();
+  const { addToHistory } = useHistory();
   
   const [currentStep, setCurrentStep] = useState<WizardStep>("hardware");
   const [activeOption, setActiveOption] = useState<1 | 2>(1);
@@ -74,18 +73,7 @@ export function Wizard() {
     }
   }, [option2Enabled, activeOption]);
 
-  // Sync storage scope with identity
-  useEffect(() => {
-    if (identity) {
-      setDraftScope(identity.tenantId, identity.departmentId, identity.userId);
-      setHistoryScope(identity.tenantId, identity.departmentId, identity.userId);
-      migrateLegacyDrafts();
-      migrateLegacyHistory();
-    } else {
-      resetDraftScope();
-      resetHistoryScope();
-    }
-  }, [identity]);
+  // Sync happens automatically via Cloud hooks - no manual scope setting needed
 
   // Load bundle or template config from route state
   useEffect(() => {
@@ -137,12 +125,13 @@ export function Wizard() {
   // Validation
   const validation = useWizardValidation(activeState);
 
-  // Auto-save to history on step change
+  // Auto-save to history on step change (only if we have a tariff selected)
   useEffect(() => {
     if (activeState.mobile.tariffId) {
-      addToHistory(activeState);
+      const result = activeOption === 1 ? result1 : result2;
+      addToHistory(activeState, result.totals.avgTermNet, result.dealer.margin);
     }
-  }, [currentStep, activeState]);
+  }, [currentStep]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load draft/history handler
   const handleLoadConfig = useCallback((config: OfferOptionState) => {

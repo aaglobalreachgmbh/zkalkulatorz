@@ -1,30 +1,29 @@
 // ============================================
-// useLicense Hook - Phase 3C
-// Access license state in components
+// useLicense Hook - Hybrid Cloud/localStorage
 // ============================================
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { useIdentity } from "@/contexts/IdentityContext";
+import { useCloudLicense } from "@/hooks/useCloudLicense";
+import { useCloudSeats } from "@/hooks/useCloudSeats";
 import {
   loadLicense,
-  saveLicense,
-  updateLicense,
   updateFeatureFlag,
   changePlan,
   isLicenseValid,
   isSeatLimitExceeded,
-  isFeatureEnabled,
+  isFeatureEnabled as isFeatureEnabledLocal,
   type LicenseState,
   type LicenseFeatures,
   type LicensePlan,
 } from "@/lib/license";
 import {
   getSeatUsageInfo,
-  assignSeat,
-  revokeSeat,
-  isUserSeated,
+  assignSeat as assignSeatLocal,
+  revokeSeat as revokeSeatLocal,
+  isUserSeated as isUserSeatedLocal,
   getSeatedUsers,
-  type SeatAssignment,
 } from "@/lib/seatManagement";
 
 export interface UseLicenseReturn {
@@ -61,45 +60,118 @@ export interface UseLicenseReturn {
   revokeUserSeat: (userId: string) => boolean;
   /** Refresh license from storage */
   refresh: () => void;
+  /** Whether using cloud storage */
+  isCloud: boolean;
 }
 
 /**
- * Hook to access and manage license state
+ * Hybrid hook - uses Cloud for authenticated users, localStorage for guests
  */
 export function useLicense(): UseLicenseReturn {
+  const { user } = useAuth();
   const { identity } = useIdentity();
-  const [license, setLicense] = useState<LicenseState>(() => loadLicense(identity.tenantId));
-  const [seatedUsers, setSeatedUsers] = useState<Array<{
+  
+  // Cloud hooks (only active when authenticated)
+  const cloudLicense = useCloudLicense();
+  const cloudSeats = useCloudSeats();
+  
+  // Local state for guest mode
+  const [localLicense, setLocalLicense] = useState<LicenseState>(() => loadLicense(identity.tenantId));
+  const [localSeatedUsers, setLocalSeatedUsers] = useState<Array<{
     userId: string;
     userName: string;
     assignedAt: string;
     assignedBy: string;
   }>>([]);
   
-  // Reload on tenant change
+  // Reload local on tenant change (guest mode)
   useEffect(() => {
-    const loaded = loadLicense(identity.tenantId);
-    setLicense(loaded);
-    setSeatedUsers(getSeatedUsers(identity.tenantId));
-  }, [identity.tenantId]);
+    if (!user) {
+      const loaded = loadLicense(identity.tenantId);
+      setLocalLicense(loaded);
+      setLocalSeatedUsers(getSeatedUsers(identity.tenantId));
+    }
+  }, [user, identity.tenantId]);
   
+  // If authenticated, use cloud
+  if (user && cloudLicense.license) {
+    const checkFeatureEnabled = (featureKey: keyof LicenseFeatures): boolean => {
+      return (cloudLicense.license.features as unknown as Record<string, boolean>)[featureKey] ?? true;
+    };
+    
+    const setFeatureEnabled = async (featureKey: keyof LicenseFeatures, enabled: boolean) => {
+      const features = { ...(cloudLicense.license.features as unknown as Record<string, boolean>), [featureKey]: enabled };
+      await cloudLicense.updateLicense({ features: features as any });
+    };
+    
+    const setPlan = async (plan: LicensePlan) => {
+      await cloudLicense.updateLicense({ plan: plan as any });
+    };
+    
+    const assignUserSeat = (userId: string, userName: string): { success: boolean; error?: string } => {
+      cloudSeats.assignSeat(userId, userName, userName);
+      return { success: true };
+    };
+    
+    const revokeUserSeat = (userId: string): boolean => {
+      cloudSeats.revokeSeat(userId);
+      return true;
+    };
+    
+    // Map cloud seats to expected format
+    const seatedUsers = (cloudSeats.seats || []).map(s => ({
+      userId: s.userId,
+      userName: s.userName || s.userEmail,
+      assignedAt: s.assignedAt,
+      assignedBy: s.assignedBy,
+    }));
+    
+    return {
+      license: {
+        tenantId: cloudLicense.license.tenantId,
+        plan: cloudLicense.license.plan as LicensePlan,
+        features: cloudLicense.license.features as unknown as LicenseFeatures,
+        seatLimit: cloudLicense.license.seatLimit,
+        seatsUsed: cloudLicense.license.seatsUsed,
+        validUntil: cloudLicense.license.validUntil || undefined,
+      },
+      isValid: cloudLicense.isValid,
+      seatLimitExceeded: cloudSeats.seatUsage.exceeded,
+      seatUsage: {
+        used: cloudSeats.seatUsage.used,
+        limit: cloudSeats.seatUsage.limit,
+        available: cloudSeats.seatUsage.available,
+      },
+      seatedUsers,
+      isFeatureEnabled: checkFeatureEnabled,
+      currentUserHasSeat: cloudSeats.currentUserHasSeat,
+      setFeatureEnabled,
+      setPlan,
+      assignUserSeat,
+      revokeUserSeat,
+      refresh: () => {},
+      isCloud: true,
+    };
+  }
+  
+  // Guest mode: localStorage fallback
   const refresh = useCallback(() => {
     const loaded = loadLicense(identity.tenantId);
-    setLicense(loaded);
-    setSeatedUsers(getSeatedUsers(identity.tenantId));
+    setLocalLicense(loaded);
+    setLocalSeatedUsers(getSeatedUsers(identity.tenantId));
   }, [identity.tenantId]);
   
   const checkFeatureEnabled = useCallback(
     (featureKey: keyof LicenseFeatures): boolean => {
-      return isFeatureEnabled(license, featureKey);
+      return isFeatureEnabledLocal(localLicense, featureKey);
     },
-    [license]
+    [localLicense]
   );
   
   const setFeatureEnabled = useCallback(
     (featureKey: keyof LicenseFeatures, enabled: boolean) => {
       const updated = updateFeatureFlag(identity.tenantId, featureKey, enabled);
-      setLicense(updated);
+      setLocalLicense(updated);
     },
     [identity.tenantId]
   );
@@ -107,14 +179,14 @@ export function useLicense(): UseLicenseReturn {
   const setPlan = useCallback(
     (plan: LicensePlan) => {
       const updated = changePlan(identity.tenantId, plan);
-      setLicense(updated);
+      setLocalLicense(updated);
     },
     [identity.tenantId]
   );
   
   const assignUserSeat = useCallback(
     (userId: string, userName: string): { success: boolean; error?: string } => {
-      const result = assignSeat(identity.tenantId, userId, userName, identity.userId);
+      const result = assignSeatLocal(identity.tenantId, userId, userName, identity.userId);
       if (result.success) {
         refresh();
       }
@@ -125,7 +197,7 @@ export function useLicense(): UseLicenseReturn {
   
   const revokeUserSeat = useCallback(
     (userId: string): boolean => {
-      const result = revokeSeat(identity.tenantId, userId);
+      const result = revokeSeatLocal(identity.tenantId, userId);
       if (result) {
         refresh();
       }
@@ -135,18 +207,18 @@ export function useLicense(): UseLicenseReturn {
   );
   
   const seatUsage = getSeatUsageInfo(identity.tenantId);
-  const currentUserHasSeat = isUserSeated(identity.tenantId, identity.userId);
+  const currentUserHasSeat = isUserSeatedLocal(identity.tenantId, identity.userId);
   
   return {
-    license,
-    isValid: isLicenseValid(license),
-    seatLimitExceeded: isSeatLimitExceeded(license),
+    license: localLicense,
+    isValid: isLicenseValid(localLicense),
+    seatLimitExceeded: isSeatLimitExceeded(localLicense),
     seatUsage: {
       used: seatUsage.used,
       limit: seatUsage.limit,
       available: seatUsage.available,
     },
-    seatedUsers,
+    seatedUsers: localSeatedUsers,
     isFeatureEnabled: checkFeatureEnabled,
     currentUserHasSeat,
     setFeatureEnabled,
@@ -154,5 +226,6 @@ export function useLicense(): UseLicenseReturn {
     assignUserSeat,
     revokeUserSeat,
     refresh,
+    isCloud: false,
   };
 }

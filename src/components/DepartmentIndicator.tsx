@@ -1,11 +1,13 @@
 // ============================================
-// Department Indicator - Phase 3B.1
+// Department Indicator - Hybrid Cloud/localStorage
 // Shows active department in header
 // ============================================
 
 import { Building2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
 import { useIdentity } from "@/contexts/IdentityContext";
+import { useCloudDepartments } from "@/hooks/useCloudDepartments";
 import { getDepartmentById } from "@/lib/organisation";
 
 interface DepartmentIndicatorProps {
@@ -13,11 +15,21 @@ interface DepartmentIndicatorProps {
 }
 
 export function DepartmentIndicator({ className }: DepartmentIndicatorProps) {
+  const { user } = useAuth();
   const { identity } = useIdentity();
+  const cloudDepartments = useCloudDepartments();
   
-  // Try to get department name from storage
-  const department = getDepartmentById(identity.tenantId, identity.departmentId);
-  const displayName = department?.name || identity.departmentId;
+  // Get department name based on auth state
+  let displayName: string;
+  
+  if (user && cloudDepartments.currentUserDepartment) {
+    // Cloud mode
+    displayName = cloudDepartments.currentUserDepartment.name;
+  } else {
+    // Guest mode - localStorage fallback
+    const department = getDepartmentById(identity.tenantId, identity.departmentId);
+    displayName = department?.name || identity.departmentId;
+  }
   
   return (
     <Badge variant="outline" className={className}>

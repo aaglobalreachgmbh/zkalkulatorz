@@ -3,7 +3,6 @@
 // Quick access to last 10 configurations
 // ============================================
 
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,10 +12,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { History, Clock } from "lucide-react";
+import { History, Clock, Loader2 } from "lucide-react";
 import type { OfferOptionState } from "../../engine/types";
-import type { HistoryEntry } from "../../storage/types";
-import { loadHistory, clearHistory } from "../../storage/history";
+import { useHistory } from "../../hooks/useHistory";
 import { useToast } from "@/hooks/use-toast";
 
 interface HistoryDropdownProps {
@@ -25,31 +23,18 @@ interface HistoryDropdownProps {
 
 export function HistoryDropdown({ onLoadHistory }: HistoryDropdownProps) {
   const { toast } = useToast();
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [open, setOpen] = useState(false);
+  const { history, isLoading, clearHistory, isClearing } = useHistory();
   
-  // Refresh history when dropdown opens
-  useEffect(() => {
-    if (open) {
-      setHistory(loadHistory());
-    }
-  }, [open]);
-  
-  const handleLoad = (entry: HistoryEntry) => {
+  const handleLoad = (entry: { config: OfferOptionState; summary: string }) => {
     onLoadHistory(entry.config);
     toast({
       title: "Verlauf geladen",
       description: entry.summary,
     });
-    setOpen(false);
   };
   
-  const handleClear = () => {
-    clearHistory();
-    setHistory([]);
-    toast({
-      title: "Verlauf gelöscht",
-    });
+  const handleClear = async () => {
+    await clearHistory();
   };
   
   const formatTime = (iso: string) => {
@@ -66,10 +51,14 @@ export function HistoryDropdown({ onLoadHistory }: HistoryDropdownProps) {
   };
   
   return (
-    <DropdownMenu open={open} onOpenChange={setOpen}>
+    <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
-          <History className="w-4 h-4" />
+          {isLoading ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <History className="w-4 h-4" />
+          )}
           {history.length > 0 && (
             <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-primary-foreground text-[10px] rounded-full flex items-center justify-center">
               {history.length}
@@ -86,8 +75,9 @@ export function HistoryDropdown({ onLoadHistory }: HistoryDropdownProps) {
               size="sm"
               className="h-6 text-xs text-muted-foreground hover:text-destructive"
               onClick={handleClear}
+              disabled={isClearing}
             >
-              Löschen
+              {isClearing ? "..." : "Löschen"}
             </Button>
           )}
         </DropdownMenuLabel>

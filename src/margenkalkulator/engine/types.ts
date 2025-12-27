@@ -745,6 +745,21 @@ export type MobileTariff = {
    * mit provisionRenewal/provisionBase skaliert.
    */
   omoMatrixRenewal?: Record<number, number | null>;
+  /**
+   * Provisionen nach SUB-Variante (für TeamDeal).
+   * 
+   * STRUKTUR:
+   * - SIM_ONLY: Provision für SIM-only
+   * - BASIC: Provision mit Basic/SUB5
+   * - SMARTPHONE: Provision mit Smartphone/SUB10
+   * 
+   * WICHTIG: Diese Werte überschreiben provisionBase wenn vorhanden.
+   */
+  provisionsByVariant?: {
+    SIM_ONLY?: number;
+    BASIC?: number;
+    SMARTPHONE?: number;
+  };
 };
 
 /**

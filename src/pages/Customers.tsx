@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/MainLayout";
 import { useCustomers, Customer, CustomerInput } from "@/margenkalkulator/hooks/useCustomers";
 import { Button } from "@/components/ui/button";
@@ -29,9 +30,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, MoreHorizontal, Pencil, Trash2, Building2, Loader2 } from "lucide-react";
+import { Plus, MoreHorizontal, Pencil, Trash2, Building2, Loader2, Upload } from "lucide-react";
 
 export default function Customers() {
+  const navigate = useNavigate();
   const { customers, isLoading, createCustomer, updateCustomer, deleteCustomer } = useCustomers();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
@@ -101,13 +103,18 @@ export default function Customers() {
             <h1 className="text-2xl font-bold text-foreground">Kunden</h1>
             <p className="text-muted-foreground">Verwalten Sie Ihre Geschäftskunden</p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={() => handleOpenDialog()}>
-                <Plus className="h-4 w-4 mr-2" />
-                Neuer Kunde
-              </Button>
-            </DialogTrigger>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => navigate("/customers/import")}>
+              <Upload className="h-4 w-4 mr-2" />
+              Import
+            </Button>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={() => handleOpenDialog()}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Neuer Kunde
+                </Button>
+              </DialogTrigger>
             <DialogContent className="sm:max-w-[500px]">
               <form onSubmit={handleSubmit}>
                 <DialogHeader>
@@ -203,7 +210,8 @@ export default function Customers() {
                 </DialogFooter>
               </form>
             </DialogContent>
-          </Dialog>
+            </Dialog>
+          </div>
         </div>
 
         {/* Content */}

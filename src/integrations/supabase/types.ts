@@ -185,14 +185,53 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_import_mappings: {
+        Row: {
+          column_mapping: Json
+          created_at: string
+          field_transformations: Json | null
+          id: string
+          is_default: boolean | null
+          mapping_name: string
+          source_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          column_mapping?: Json
+          created_at?: string
+          field_transformations?: Json | null
+          id?: string
+          is_default?: boolean | null
+          mapping_name: string
+          source_type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          column_mapping?: Json
+          created_at?: string
+          field_transformations?: Json | null
+          id?: string
+          is_default?: boolean | null
+          mapping_name?: string
+          source_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       customers: {
         Row: {
           company_name: string
           contact_name: string | null
           created_at: string
           email: string | null
+          external_id: string | null
+          external_refs: Json | null
           id: string
           industry: string | null
+          mocca_customer_number: string | null
           notes: string | null
           phone: string | null
           updated_at: string
@@ -203,8 +242,11 @@ export type Database = {
           contact_name?: string | null
           created_at?: string
           email?: string | null
+          external_id?: string | null
+          external_refs?: Json | null
           id?: string
           industry?: string | null
+          mocca_customer_number?: string | null
           notes?: string | null
           phone?: string | null
           updated_at?: string
@@ -215,8 +257,11 @@ export type Database = {
           contact_name?: string | null
           created_at?: string
           email?: string | null
+          external_id?: string | null
+          external_refs?: Json | null
           id?: string
           industry?: string | null
+          mocca_customer_number?: string | null
           notes?: string | null
           phone?: string | null
           updated_at?: string

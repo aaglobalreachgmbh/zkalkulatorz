@@ -32,6 +32,7 @@ const mainItems = [
   { title: "Bundles", url: "/bundles", icon: Package },
   { title: "Meine Angebote", url: "/offers", icon: FolderOpen },
   { title: "Kunden", url: "/customers", icon: Building2 },
+  { title: "Kunden-Import", url: "/customers/import", icon: FileText },
   { title: "Team", url: "/team", icon: Users },
   { title: "Reporting", url: "/reporting", icon: BarChart3 },
 ];

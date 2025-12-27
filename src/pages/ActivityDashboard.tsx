@@ -308,6 +308,34 @@ export default function ActivityDashboard() {
     },
   });
 
+  // Realtime subscription for live updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('activity-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'user_activity_log'
+        },
+        (payload) => {
+          console.log('[ActivityDashboard] New activity:', payload.new);
+          // Show toast notification
+          const newActivity = payload.new as ActivityLogEntry;
+          toast.info("Neue Aktivität", {
+            description: newActivity.summary || ACTION_LABELS[newActivity.action] || newActivity.action,
+          });
+          // Refetch to update the list and stats
+          refetch();
+        }
+      )
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [refetch]);
   // Filter activities
   const filteredActivities = useMemo(() => {
     if (!activities) return [];

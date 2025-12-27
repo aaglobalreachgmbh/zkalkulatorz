@@ -8,6 +8,7 @@ import {
   type SecurityEventType,
   type RiskLevel 
 } from "@/lib/securityLogger";
+import { auditLocalStorage, formatAuditForLog } from "@/lib/localStoragePolicy";
 
 // ============================================================================
 // TYPES
@@ -266,6 +267,35 @@ export function SecurityProvider({ children }: { children: React.ReactNode }) {
       return () => {
         document.removeEventListener("contextmenu", handleContextMenu);
       };
+    }
+  }, []);
+  
+  // localStorage Security Audit bei App-Start
+  useEffect(() => {
+    const audit = auditLocalStorage();
+    
+    // In Development: Immer loggen
+    if (import.meta.env.DEV) {
+      console.log(formatAuditForLog(audit));
+    }
+    
+    // Warnung bei sensiblen Daten (auch in Production)
+    if (audit.sensitive.length > 0) {
+      console.warn(
+        "[Security] Potentiell sensible Daten in localStorage gefunden:",
+        audit.sensitive
+      );
+      
+      // Remote-Logging für sensible Daten
+      logRemoteSecurityEvent({
+        event_type: "anomaly_detected",
+        risk_level: "medium",
+        details: {
+          audit_type: "localStorage_sensitive_keys",
+          sensitive_keys_count: audit.sensitive.length,
+          // Keine Key-Namen senden aus Datenschutzgründen
+        },
+      });
     }
   }, []);
   

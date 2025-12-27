@@ -83,6 +83,108 @@ export type Database = {
         }
         Relationships: []
       }
+      calculation_history: {
+        Row: {
+          avg_monthly: number | null
+          config: Json
+          created_at: string
+          department_id: string | null
+          hardware_name: string | null
+          id: string
+          margin: number | null
+          summary: string | null
+          tariff_name: string | null
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          avg_monthly?: number | null
+          config: Json
+          created_at?: string
+          department_id?: string | null
+          hardware_name?: string | null
+          id?: string
+          margin?: number | null
+          summary?: string | null
+          tariff_name?: string | null
+          tenant_id: string
+          user_id: string
+        }
+        Update: {
+          avg_monthly?: number | null
+          config?: Json
+          created_at?: string
+          department_id?: string | null
+          hardware_name?: string | null
+          id?: string
+          margin?: number | null
+          summary?: string | null
+          tariff_name?: string | null
+          tenant_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      custom_datasets: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          dataset_version: string
+          fixed_net_products: Json
+          hardware_catalog: Json
+          id: string
+          mobile_dependencies: Json
+          mobile_features: Json
+          mobile_tariffs: Json
+          omo_matrix: Json
+          promos: Json
+          provisions: Json
+          sub_variants: Json
+          tenant_id: string
+          updated_at: string
+          valid_from: string
+          verified_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          dataset_version: string
+          fixed_net_products?: Json
+          hardware_catalog?: Json
+          id?: string
+          mobile_dependencies?: Json
+          mobile_features?: Json
+          mobile_tariffs?: Json
+          omo_matrix?: Json
+          promos?: Json
+          provisions?: Json
+          sub_variants?: Json
+          tenant_id: string
+          updated_at?: string
+          valid_from: string
+          verified_at: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          dataset_version?: string
+          fixed_net_products?: Json
+          hardware_catalog?: Json
+          id?: string
+          mobile_dependencies?: Json
+          mobile_features?: Json
+          mobile_tariffs?: Json
+          omo_matrix?: Json
+          promos?: Json
+          provisions?: Json
+          sub_variants?: Json
+          tenant_id?: string
+          updated_at?: string
+          valid_from?: string
+          verified_at?: string
+        }
+        Relationships: []
+      }
       customers: {
         Row: {
           company_name: string
@@ -161,6 +263,42 @@ export type Database = {
           top_attackers?: Json | null
           top_threats?: Json | null
           total_events?: number | null
+        }
+        Relationships: []
+      }
+      departments: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          department_id: string
+          id: string
+          name: string
+          parent_id: string | null
+          policy: Json
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          department_id: string
+          id?: string
+          name: string
+          parent_id?: string | null
+          policy?: Json
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          department_id?: string
+          id?: string
+          name?: string
+          parent_id?: string | null
+          policy?: Json
+          tenant_id?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -269,6 +407,45 @@ export type Database = {
         }
         Relationships: []
       }
+      licenses: {
+        Row: {
+          activated_at: string | null
+          created_at: string
+          features: Json
+          id: string
+          plan: string
+          seat_limit: number
+          seats_used: number
+          tenant_id: string
+          updated_at: string
+          valid_until: string | null
+        }
+        Insert: {
+          activated_at?: string | null
+          created_at?: string
+          features?: Json
+          id?: string
+          plan?: string
+          seat_limit?: number
+          seats_used?: number
+          tenant_id: string
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Update: {
+          activated_at?: string | null
+          created_at?: string
+          features?: Json
+          id?: string
+          plan?: string
+          seat_limit?: number
+          seats_used?: number
+          tenant_id?: string
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
       login_anomalies: {
         Row: {
           anomaly_type: string
@@ -360,6 +537,56 @@ export type Database = {
             columns: ["offer_id"]
             isOneToOne: false
             referencedRelation: "saved_offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      offer_drafts: {
+        Row: {
+          config: Json
+          created_at: string
+          department_id: string | null
+          draft_type: string
+          folder_id: string | null
+          id: string
+          name: string
+          preview: Json | null
+          tenant_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          config: Json
+          created_at?: string
+          department_id?: string | null
+          draft_type?: string
+          folder_id?: string | null
+          id?: string
+          name: string
+          preview?: Json | null
+          tenant_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          department_id?: string | null
+          draft_type?: string
+          folder_id?: string | null
+          id?: string
+          name?: string
+          preview?: Json | null
+          tenant_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offer_drafts_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "template_folders"
             referencedColumns: ["id"]
           },
         ]
@@ -519,6 +746,36 @@ export type Database = {
           },
         ]
       }
+      seat_assignments: {
+        Row: {
+          assigned_at: string
+          assigned_by: string
+          id: string
+          tenant_id: string
+          user_email: string
+          user_id: string
+          user_name: string | null
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by: string
+          id?: string
+          tenant_id: string
+          user_email: string
+          user_id: string
+          user_name?: string | null
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string
+          id?: string
+          tenant_id?: string
+          user_email?: string
+          user_id?: string
+          user_name?: string | null
+        }
+        Relationships: []
+      }
       security_events: {
         Row: {
           created_at: string
@@ -619,6 +876,44 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      template_folders: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          parent_id: string | null
+          tenant_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          parent_id?: string | null
+          tenant_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          parent_id?: string | null
+          tenant_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_folders_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "template_folders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tenant_settings: {
         Row: {
@@ -730,6 +1025,33 @@ export type Database = {
           sync_status?: string
           total_entries?: number | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      user_department_assignments: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          department_id: string
+          id: string
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          department_id: string
+          id?: string
+          tenant_id: string
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          department_id?: string
+          id?: string
+          tenant_id?: string
+          user_id?: string
         }
         Relationships: []
       }

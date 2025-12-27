@@ -1,6 +1,6 @@
 // ============================================
-// Admin Panel - Phase 3C Complete
-// Organisation, Policies, Daten, Protokoll, Lizenz
+// Admin Panel - Phase 5 Complete
+// Organisation, Policies, Daten, Protokoll, Lizenz, Speicher
 // ============================================
 
 import { useState, useEffect, useCallback } from "react";
@@ -14,10 +14,12 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useIdentity, MOCK_IDENTITIES, type IdentityState } from "@/contexts/IdentityContext";
-import { Building2, Settings, Database, Plus, Trash2, Users, FileText, Clock, User, Key, Check, X, Crown } from "lucide-react";
+import { Building2, Settings, Database, Plus, Trash2, Users, FileText, Clock, User, Key, Check, X, Crown, HardDrive, RefreshCw, AlertTriangle, CheckCircle2, Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useLocalStorageAudit, formatBytes, getCategoryLabel, getCategoryColor } from "@/hooks/useLocalStorageAudit";
 
 // Organisation imports
 import { 
@@ -183,26 +185,30 @@ export default function Admin() {
         </div>
 
         <Tabs defaultValue="organisation" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="organisation" className="gap-2">
               <Building2 className="w-4 h-4" />
-              Organisation
+              <span className="hidden sm:inline">Organisation</span>
             </TabsTrigger>
             <TabsTrigger value="policies" className="gap-2">
               <Settings className="w-4 h-4" />
-              Richtlinien
+              <span className="hidden sm:inline">Richtlinien</span>
             </TabsTrigger>
             <TabsTrigger value="daten" className="gap-2">
               <Database className="w-4 h-4" />
-              Daten
+              <span className="hidden sm:inline">Daten</span>
             </TabsTrigger>
             <TabsTrigger value="protokoll" className="gap-2">
               <FileText className="w-4 h-4" />
-              Protokoll
+              <span className="hidden sm:inline">Protokoll</span>
             </TabsTrigger>
             <TabsTrigger value="lizenz" className="gap-2">
               <Key className="w-4 h-4" />
-              Lizenz
+              <span className="hidden sm:inline">Lizenz</span>
+            </TabsTrigger>
+            <TabsTrigger value="speicher" className="gap-2">
+              <HardDrive className="w-4 h-4" />
+              <span className="hidden sm:inline">Speicher</span>
             </TabsTrigger>
           </TabsList>
 
@@ -460,6 +466,9 @@ export default function Admin() {
 
           {/* Daten Tab */}
           <TabsContent value="daten" className="space-y-6">
+            {/* localStorage Status Widget */}
+            <LocalStorageStatusWidget />
+            
             <Card>
               <CardHeader>
                 <CardTitle>Datenverwaltung</CardTitle>
@@ -536,6 +545,9 @@ export default function Admin() {
 
           {/* Lizenz Tab */}
           <LicenseTab />
+
+          {/* Speicher Tab */}
+          <StorageTab />
         </Tabs>
       </div>
     </MainLayout>
@@ -854,6 +866,248 @@ function LicenseTab() {
               />
             </div>
           ))}
+        </CardContent>
+      </Card>
+    </TabsContent>
+  );
+}
+
+// ============================================
+// localStorage Status Widget (Compact for Daten Tab)
+// ============================================
+
+function LocalStorageStatusWidget() {
+  const { audit, runAudit, isLoading } = useLocalStorageAudit();
+  
+  if (!audit) return null;
+  
+  const totalSize = audit.allowed.length + audit.unknown.length + audit.sensitive.length;
+  
+  return (
+    <Card className="bg-muted/30">
+      <CardHeader className="py-3 px-4">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <HardDrive className="w-4 h-4" />
+            localStorage-Status
+          </CardTitle>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={runAudit}
+            disabled={isLoading}
+            className="h-7 px-2"
+          >
+            <RefreshCw className={`w-3 h-3 ${isLoading ? "animate-spin" : ""}`} />
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="py-2 px-4">
+        <div className="flex gap-4 text-sm flex-wrap">
+          <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
+            <CheckCircle2 className="w-3 h-3" />
+            {audit.allowed.length} erlaubt
+          </span>
+          {audit.sensitive.length > 0 && (
+            <span className="flex items-center gap-1 text-red-600 dark:text-red-400">
+              <AlertTriangle className="w-3 h-3" />
+              {audit.sensitive.length} sensibel
+            </span>
+          )}
+          {audit.unknown.length > 0 && (
+            <span className="flex items-center gap-1 text-orange-600 dark:text-orange-400">
+              <Info className="w-3 h-3" />
+              {audit.unknown.length} unbekannt
+            </span>
+          )}
+          <span className="text-muted-foreground">
+            Gesamt: {totalSize} Keys
+          </span>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ============================================
+// Storage Tab Component (Full localStorage Audit)
+// ============================================
+
+function StorageTab() {
+  const { toast } = useToast();
+  const { audit, keyDetails, runAudit, cleanup, isLoading } = useLocalStorageAudit();
+  
+  const handleCleanup = useCallback(() => {
+    const result = cleanup();
+    
+    if (result.errors.length > 0) {
+      toast({
+        title: "Bereinigung mit Fehlern",
+        description: `${result.removed.length} entfernt, ${result.errors.length} Fehler`,
+        variant: "destructive",
+      });
+    } else if (result.removed.length > 0) {
+      toast({
+        title: "Bereinigung erfolgreich",
+        description: `${result.removed.length} migrierte Einträge entfernt`,
+      });
+    } else if (result.kept.length > 0) {
+      toast({
+        title: "Keine Bereinigung nötig",
+        description: `${result.kept.length} Einträge noch nicht migriert`,
+      });
+    } else {
+      toast({
+        title: "Keine Daten",
+        description: "Keine migrierbaren Daten im localStorage",
+      });
+    }
+  }, [cleanup, toast]);
+
+  // Calculate total size
+  const totalSize = keyDetails.reduce((acc, k) => acc + k.size, 0);
+  
+  return (
+    <TabsContent value="speicher" className="space-y-6">
+      {/* Audit Overview */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>localStorage-Audit</CardTitle>
+              <CardDescription>
+                Übersicht aller lokalen Daten mit Kategorisierung
+              </CardDescription>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={runAudit}
+              disabled={isLoading}
+              className="gap-2"
+            >
+              <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
+              Aktualisieren
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {audit && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <div className="p-4 rounded-lg bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800">
+                <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
+                  <CheckCircle2 className="w-5 h-5" />
+                  <span className="text-2xl font-bold">{audit.allowed.length}</span>
+                </div>
+                <p className="text-sm text-green-600 dark:text-green-400 mt-1">Erlaubte Keys</p>
+              </div>
+              
+              <div className={`p-4 rounded-lg ${audit.sensitive.length > 0 
+                ? "bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800" 
+                : "bg-muted border"}`}>
+                <div className={`flex items-center gap-2 ${audit.sensitive.length > 0 
+                  ? "text-red-700 dark:text-red-300" 
+                  : "text-muted-foreground"}`}>
+                  <AlertTriangle className="w-5 h-5" />
+                  <span className="text-2xl font-bold">{audit.sensitive.length}</span>
+                </div>
+                <p className={`text-sm mt-1 ${audit.sensitive.length > 0 
+                  ? "text-red-600 dark:text-red-400" 
+                  : "text-muted-foreground"}`}>
+                  Sensible Keys
+                </p>
+              </div>
+              
+              <div className={`p-4 rounded-lg ${audit.unknown.length > 0 
+                ? "bg-orange-50 dark:bg-orange-950 border border-orange-200 dark:border-orange-800" 
+                : "bg-muted border"}`}>
+                <div className={`flex items-center gap-2 ${audit.unknown.length > 0 
+                  ? "text-orange-700 dark:text-orange-300" 
+                  : "text-muted-foreground"}`}>
+                  <Info className="w-5 h-5" />
+                  <span className="text-2xl font-bold">{audit.unknown.length}</span>
+                </div>
+                <p className={`text-sm mt-1 ${audit.unknown.length > 0 
+                  ? "text-orange-600 dark:text-orange-400" 
+                  : "text-muted-foreground"}`}>
+                  Unbekannte Keys
+                </p>
+              </div>
+              
+              <div className="p-4 rounded-lg bg-muted border">
+                <div className="flex items-center gap-2 text-foreground">
+                  <HardDrive className="w-5 h-5" />
+                  <span className="text-2xl font-bold">{formatBytes(totalSize)}</span>
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">Gesamtgröße</p>
+              </div>
+            </div>
+          )}
+          
+          {/* Cleanup Button */}
+          <div className="flex gap-3">
+            <Button 
+              variant="destructive" 
+              size="sm"
+              onClick={handleCleanup}
+              className="gap-2"
+            >
+              <Trash2 className="w-4 h-4" />
+              Migrierte Daten bereinigen
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+      
+      {/* Key Details Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Alle localStorage-Keys</CardTitle>
+          <CardDescription>
+            Detaillierte Übersicht aller {keyDetails.length} gespeicherten Einträge
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ScrollArea className="h-[400px]">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Key</TableHead>
+                  <TableHead>Kategorie</TableHead>
+                  <TableHead className="text-right">Größe</TableHead>
+                  <TableHead>Vorschau</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {keyDetails.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                      Keine localStorage-Einträge gefunden
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  keyDetails.map((item) => (
+                    <TableRow key={item.key}>
+                      <TableCell className="font-mono text-xs max-w-[200px] truncate" title={item.key}>
+                        {item.key}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={getCategoryColor(item.category)}>
+                          {getCategoryLabel(item.category)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right text-muted-foreground">
+                        {formatBytes(item.size)}
+                      </TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground max-w-[200px] truncate" title={item.valuePreview}>
+                        {item.valuePreview}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </ScrollArea>
         </CardContent>
       </Card>
     </TabsContent>

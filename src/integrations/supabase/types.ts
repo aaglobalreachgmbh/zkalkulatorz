@@ -164,6 +164,51 @@ export type Database = {
         }
         Relationships: []
       }
+      employee_settings: {
+        Row: {
+          blocked_tariffs: string[] | null
+          created_at: string
+          department: string | null
+          display_name: string | null
+          feature_overrides: Json | null
+          id: string
+          provision_deduction: number | null
+          provision_deduction_type: string | null
+          tenant_id: string
+          updated_at: string
+          updated_by: string | null
+          user_id: string
+        }
+        Insert: {
+          blocked_tariffs?: string[] | null
+          created_at?: string
+          department?: string | null
+          display_name?: string | null
+          feature_overrides?: Json | null
+          id?: string
+          provision_deduction?: number | null
+          provision_deduction_type?: string | null
+          tenant_id: string
+          updated_at?: string
+          updated_by?: string | null
+          user_id: string
+        }
+        Update: {
+          blocked_tariffs?: string[] | null
+          created_at?: string
+          department?: string | null
+          display_name?: string | null
+          feature_overrides?: Json | null
+          id?: string
+          provision_deduction?: number | null
+          provision_deduction_type?: string | null
+          tenant_id?: string
+          updated_at?: string
+          updated_by?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       gdpr_deletion_log: {
         Row: {
           deleted_at: string
@@ -357,6 +402,66 @@ export type Database = {
           },
         ]
       }
+      push_provisions: {
+        Row: {
+          bonus_amount: number
+          bonus_type: string | null
+          contract_type: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          scope_id: string | null
+          scope_type: string
+          tariff_family: string | null
+          tariff_id: string
+          tenant_id: string
+          updated_at: string
+          valid_from: string
+          valid_until: string | null
+        }
+        Insert: {
+          bonus_amount: number
+          bonus_type?: string | null
+          contract_type?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          scope_id?: string | null
+          scope_type?: string
+          tariff_family?: string | null
+          tariff_id: string
+          tenant_id: string
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Update: {
+          bonus_amount?: number
+          bonus_type?: string | null
+          contract_type?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          scope_id?: string | null
+          scope_type?: string
+          tariff_family?: string | null
+          tariff_id?: string
+          tenant_id?: string
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
       saved_offers: {
         Row: {
           config: Json
@@ -512,6 +617,39 @@ export type Database = {
           id?: string
           name?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      tenant_settings: {
+        Row: {
+          created_at: string
+          default_blocked_tariffs: string[] | null
+          default_provision_deduction: number | null
+          default_provision_deduction_type: string | null
+          id: string
+          tenant_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          default_blocked_tariffs?: string[] | null
+          default_provision_deduction?: number | null
+          default_provision_deduction_type?: string | null
+          id?: string
+          tenant_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          default_blocked_tariffs?: string[] | null
+          default_provision_deduction?: number | null
+          default_provision_deduction_type?: string | null
+          id?: string
+          tenant_id?: string
+          updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }

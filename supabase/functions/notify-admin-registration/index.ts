@@ -4,10 +4,30 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const adminEmail = Deno.env.get("SECURITY_ALERT_EMAIL");
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+// Allowed origins for CORS - restrict to production domains
+const ALLOWED_ORIGINS = [
+  "https://margenkalkulator.lovable.app",
+  "https://lovable.dev",
+  /^https:\/\/[a-z0-9-]+\.lovable\.app$/,
+  /^https:\/\/[a-z0-9-]+--[a-z0-9-]+\.lovable\.app$/,
+];
+
+function getCorsHeaders(origin: string | null): Record<string, string> {
+  const headers: Record<string, string> = {
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  };
+  
+  if (origin) {
+    const isAllowed = ALLOWED_ORIGINS.some((allowed) =>
+      typeof allowed === "string" ? allowed === origin : allowed.test(origin)
+    );
+    if (isAllowed) {
+      headers["Access-Control-Allow-Origin"] = origin;
+    }
+  }
+  
+  return headers;
+}
 
 interface RegistrationNotification {
   userId: string;
@@ -17,6 +37,9 @@ interface RegistrationNotification {
 
 const handler = async (req: Request): Promise<Response> => {
   console.log("[notify-admin-registration] Request received");
+  
+  const origin = req.headers.get("origin");
+  const corsHeaders = getCorsHeaders(origin);
 
   // Handle CORS preflight
   if (req.method === "OPTIONS") {

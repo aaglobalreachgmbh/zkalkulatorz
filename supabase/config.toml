@@ -20,3 +20,6 @@ verify_jwt = true
 
 [functions.gdpr-cleanup]
 verify_jwt = false
+
+[functions.rate-limiter]
+verify_jwt = false

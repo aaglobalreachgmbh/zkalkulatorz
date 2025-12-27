@@ -53,9 +53,11 @@ function rowToCloudDataset(row: {
     updatedAt: row.updated_at,
     createdBy: row.created_by,
     dataset: {
-      version: row.dataset_version,
-      validFrom: row.valid_from,
-      verifiedAt: row.verified_at,
+      meta: {
+        datasetVersion: row.dataset_version,
+        validFromISO: row.valid_from,
+        verifiedAtISO: row.verified_at,
+      },
       hardwareCatalog: row.hardware_catalog as unknown as CanonicalDataset["hardwareCatalog"],
       mobileTariffs: row.mobile_tariffs as unknown as CanonicalDataset["mobileTariffs"],
       mobileFeatures: row.mobile_features as unknown as CanonicalDataset["mobileFeatures"],
@@ -65,6 +67,9 @@ function rowToCloudDataset(row: {
       provisions: row.provisions as unknown as CanonicalDataset["provisions"],
       subVariants: row.sub_variants as unknown as CanonicalDataset["subVariants"],
       omoMatrix: row.omo_matrix as unknown as CanonicalDataset["omoMatrix"],
+      iotTariffs: [],
+      voipProducts: [],
+      voipHardware: [],
     },
   };
 }
@@ -104,9 +109,9 @@ export function useCloudDatasets() {
 
       const payload = {
         tenant_id: identity.tenantId,
-        dataset_version: dataset.datasetVersion,
-        valid_from: dataset.validFromISO,
-        verified_at: dataset.verifiedAtISO,
+        dataset_version: dataset.meta.datasetVersion,
+        valid_from: dataset.meta.validFromISO,
+        verified_at: dataset.meta.verifiedAtISO,
         created_by: user.id,
         hardware_catalog: dataset.hardwareCatalog as unknown as Json,
         mobile_tariffs: dataset.mobileTariffs as unknown as Json,

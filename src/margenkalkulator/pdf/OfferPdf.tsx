@@ -1,6 +1,7 @@
 // ============================================
 // Offer PDF Document Component
 // Generates customer-facing PDF (no dealer data!)
+// SECURITY: All dynamic content is sanitized before rendering
 // ============================================
 
 import { Document, Page, Text, View } from "@react-pdf/renderer";
@@ -13,6 +14,23 @@ interface OfferPdfProps {
   validDays?: number;
 }
 
+// SECURITY: Sanitize text content to prevent XSS and injection in PDF
+function sanitizePdfText(text: string | undefined | null, maxLength = 200): string {
+  if (!text) return "";
+  return String(text)
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "") // Remove control characters
+    .replace(/<[^>]*>/g, "") // Remove HTML tags
+    .replace(/javascript:/gi, "") // Remove javascript: protocol
+    .replace(/data:/gi, "") // Remove data: protocol
+    .slice(0, maxLength);
+}
+
+// SECURITY: Sanitize number to prevent NaN display
+function sanitizeNumber(value: number | undefined | null): number {
+  if (value === undefined || value === null || isNaN(value)) return 0;
+  return value;
+}
+
 export function OfferPdf({ option, result, validDays = 14 }: OfferPdfProps) {
   const today = new Date();
   const validUntil = new Date(today.getTime() + validDays * 24 * 60 * 60 * 1000);
@@ -21,26 +39,26 @@ export function OfferPdf({ option, result, validDays = 14 }: OfferPdfProps) {
     date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
   
   const formatCurrency = (value: number) => 
-    `${value.toFixed(2).replace(".", ",")} €`;
+    `${sanitizeNumber(value).toFixed(2).replace(".", ",")} €`;
   
   // Calculate one-time total
-  const oneTimeTotal = result.oneTime.reduce((sum, item) => sum + item.net, 0);
+  const oneTimeTotal = result.oneTime.reduce((sum, item) => sum + sanitizeNumber(item.net), 0);
   
-  // Get hardware display info
-  const hasHardware = option.hardware.ekNet > 0;
-  const hardwareName = option.hardware.name || "Keine Hardware";
+  // Get hardware display info (SANITIZED)
+  const hasHardware = sanitizeNumber(option.hardware.ekNet) > 0;
+  const hardwareName = sanitizePdfText(option.hardware.name) || "Keine Hardware";
   
-  // Get tariff info from breakdown
+  // Get tariff info from breakdown (SANITIZED)
   const tariffBreakdown = result.breakdown.find(b => b.ruleId === "base");
-  const tariffName = tariffBreakdown?.label.replace(" Grundpreis", "") || "Mobilfunk-Tarif";
+  const tariffName = sanitizePdfText(tariffBreakdown?.label?.replace(" Grundpreis", "")) || "Mobilfunk-Tarif";
   
-  // Get fixed net info
+  // Get fixed net info (SANITIZED)
   const fixedNetBreakdown = result.breakdown.find(b => b.ruleId === "fixed_base");
-  const fixedNetName = fixedNetBreakdown?.label.replace(" monatlich", "") || "Festnetz";
-  const fixedNetMonthly = fixedNetBreakdown?.net || 0;
+  const fixedNetName = sanitizePdfText(fixedNetBreakdown?.label?.replace(" monatlich", "")) || "Festnetz";
+  const fixedNetMonthly = sanitizeNumber(fixedNetBreakdown?.net);
   
   // Calculate mobile-only monthly (without fixed net)
-  const mobileMonthly = result.totals.avgTermNet - (option.fixedNet.enabled ? fixedNetMonthly : 0);
+  const mobileMonthly = sanitizeNumber(result.totals.avgTermNet) - (option.fixedNet.enabled ? fixedNetMonthly : 0);
   
   return (
     <Document>

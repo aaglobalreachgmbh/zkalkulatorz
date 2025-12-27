@@ -1055,6 +1055,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_meta: {
+        Row: {
+          created_at: string | null
+          discount_tier: string | null
+          feature_flags: Json | null
+          id: string
+          subscription_status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          discount_tier?: string | null
+          feature_flags?: Json | null
+          id?: string
+          subscription_status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          discount_tier?: string | null
+          feature_flags?: Json | null
+          id?: string
+          subscription_status?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1094,6 +1124,15 @@ export type Database = {
       }
       is_team_member: {
         Args: { _team_id: string; _user_id: string }
+        Returns: boolean
+      }
+      update_user_meta: {
+        Args: {
+          _discount_tier?: string
+          _feature_flags?: Json
+          _subscription_status?: string
+          _user_id: string
+        }
         Returns: boolean
       }
     }

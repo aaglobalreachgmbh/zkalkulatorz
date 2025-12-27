@@ -2,12 +2,13 @@
  * Activity Dashboard
  * 
  * Admin-Dashboard für die Anzeige aller Benutzeraktivitäten.
- * Features: Filterung, Timeline-Ansicht, Export.
+ * Features: Filterung, Timeline-Ansicht, Export, Realtime-Updates.
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { MainLayout } from "@/components/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";

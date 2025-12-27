@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useActivityTracker } from "@/hooks/useActivityTracker";
 import { toast } from "sonner";
 
 export interface Customer {
@@ -28,6 +29,7 @@ export interface CustomerInput {
 export function useCustomers() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { trackCustomerCreated, trackCustomerUpdated, trackCustomerDeleted } = useActivityTracker();
 
   const customersQuery = useQuery({
     queryKey: ["customers", user?.id],
@@ -65,9 +67,10 @@ export function useCustomers() {
       if (error) throw error;
       return data as Customer;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["customers"] });
       toast.success("Kunde erstellt");
+      trackCustomerCreated(data.id, data.company_name);
     },
     onError: (error) => {
       toast.error("Fehler beim Erstellen: " + error.message);
@@ -93,9 +96,10 @@ export function useCustomers() {
       if (error) throw error;
       return data as Customer;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["customers"] });
       toast.success("Kunde aktualisiert");
+      trackCustomerUpdated(data.id, data.company_name);
     },
     onError: (error) => {
       toast.error("Fehler beim Aktualisieren: " + error.message);
@@ -103,13 +107,15 @@ export function useCustomers() {
   });
 
   const deleteCustomer = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("customers").delete().eq("id", id);
+    mutationFn: async (customer: { id: string; company_name: string }) => {
+      const { error } = await supabase.from("customers").delete().eq("id", customer.id);
       if (error) throw error;
+      return customer;
     },
-    onSuccess: () => {
+    onSuccess: (customer) => {
       queryClient.invalidateQueries({ queryKey: ["customers"] });
       toast.success("Kunde gelöscht");
+      trackCustomerDeleted(customer.id, customer.company_name);
     },
     onError: (error) => {
       toast.error("Fehler beim Löschen: " + error.message);

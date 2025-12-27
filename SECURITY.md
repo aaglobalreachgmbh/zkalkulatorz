@@ -605,3 +605,73 @@ const ws = new WebSocket("wss://...");
 import { createSecureWebSocket } from "@/lib/tunnelSecurityGuard";
 const ws = createSecureWebSocket("wss://...");
 ```
+
+---
+
+## 🔒 Security Audit (27.12.2025)
+
+### Basis-Dokument
+
+Audit durchgeführt basierend auf: **"Strategien zur Härtung von Vibe Coding Applikationen auf der Lovable-Plattform"**
+
+### Ergebnis-Zusammenfassung
+
+| Bereich | PDF-Empfehlung | Status | Details |
+|---------|----------------|--------|---------|
+| **RLS Aktiviert** | Alle Tabellen | ✅ | USING + WITH CHECK auf allen Tabellen |
+| **Multi-Tenant Isolation** | JWT Claims nutzen | ✅ | `get_my_tenant_id()` Funktion |
+| **SECURITY DEFINER** | search_path setzen | ✅ | Alle Funktionen haben `search_path = public` |
+| **Edge Function Auth** | JWT kryptographisch prüfen | ✅ | `supabase.auth.getUser()` Validierung |
+| **CORS Konfiguration** | Origin Whitelist | ✅ | Alle Edge Functions mit ALLOWED_ORIGINS |
+| **Rate Limiting** | Pro User/Kategorie | ✅ | 10/min AI, 60/min API |
+| **Input Validation** | Zod strict mode | ✅ | `securityPatterns.ts` + Edge Functions |
+| **Prompt Injection** | Sandwich Defense | ✅ | `llmSecurityLayer.ts` implementiert |
+| **Output Filtering** | API Key Redaction | ✅ | `filterAIOutput()` in ai-consultant |
+| **Encrypted Storage** | Session-based Key | ✅ | AES-256-GCM in `secureStorage.ts` |
+| **No Secrets in Frontend** | Edge Functions nutzen | ✅ | Alle APIs über Edge Functions |
+| **Content-Type Check** | Nur JSON erlauben | ✅ | ai-consultant prüft explizit |
+
+### RLS-Policies Verifiziert
+
+```sql
+-- Alle Tabellen haben korrekte Policies:
+profiles:              auth.uid() = id (USING + WITH CHECK)
+customers:             auth.uid() = user_id (alle Operationen)
+saved_offers:          auth.uid() = user_id + Team-Access
+calculation_history:   Tenant-Isolation
+user_roles:            Admin only (has_role check)
+security_events:       Admin only
+daily_security_reports: Admin only
+```
+
+### Edge Function Security Headers
+
+Alle Edge Functions implementieren:
+
+```typescript
+const SECURITY_HEADERS = {
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "X-XSS-Protection": "1; mode=block",
+  "Cache-Control": "no-store, no-cache, must-revalidate",
+};
+```
+
+### Dependency Audit
+
+| Paket | CVE | Status |
+|-------|-----|--------|
+| xlsx@0.18.5 | CVE-2023-30533 | ✅ Gepatcht |
+| react@18.3.1 | - | ✅ Sicher (nicht 19.x) |
+| @react-pdf/renderer | - | ✅ PDF-Generierung (kein JS-Rendering) |
+
+### Nächste Schritte (Optional)
+
+1. **npm audit in CI/CD** - GitHub Actions Workflow hinzufügen
+2. **pgTAP RLS Tests** - Automatisierte Policy-Tests
+3. **Object.freeze(Object.prototype)** - Prototype Pollution Schutz
+
+---
+
+*Letztes Audit: 27.12.2025 | Auditor: AI Security Scan*

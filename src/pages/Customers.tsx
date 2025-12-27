@@ -88,9 +88,9 @@ export default function Customers() {
     resetForm();
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (customer: { id: string; company_name: string }) => {
     if (window.confirm("Kunde wirklich löschen?")) {
-      await deleteCustomer.mutateAsync(id);
+      await deleteCustomer.mutateAsync(customer);
     }
   };
 
@@ -266,7 +266,7 @@ export default function Customers() {
                               Bearbeiten
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onClick={() => handleDelete(customer.id)}
+                              onClick={() => handleDelete({ id: customer.id, company_name: customer.company_name })}
                               className="text-destructive"
                             >
                               <Trash2 className="h-4 w-4 mr-2" />

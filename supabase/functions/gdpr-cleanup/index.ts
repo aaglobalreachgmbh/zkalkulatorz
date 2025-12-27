@@ -129,6 +129,14 @@ serve(async (req: Request) => {
         
         if (!activitiesError) deletedTables.push("offer_activities");
 
+        // 3b. Delete user's activity log entries
+        const { error: activityLogError } = await supabaseAdmin
+          .from("user_activity_log")
+          .delete()
+          .eq("user_id", user.id);
+        
+        if (!activityLogError) deletedTables.push("user_activity_log");
+
         // 4. Delete user's MFA backup codes
         const { error: mfaError } = await supabaseAdmin
           .from("mfa_backup_codes")

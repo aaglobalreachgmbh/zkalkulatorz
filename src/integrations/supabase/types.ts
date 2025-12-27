@@ -1100,6 +1100,60 @@ export type Database = {
         }
         Relationships: []
       }
+      user_activity_log: {
+        Row: {
+          action: string
+          created_at: string
+          department_id: string | null
+          id: string
+          ip_hash: string | null
+          metadata: Json | null
+          new_values: Json | null
+          old_values: Json | null
+          resource_id: string | null
+          resource_name: string | null
+          resource_type: string
+          summary: string | null
+          tenant_id: string
+          user_agent_hash: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          department_id?: string | null
+          id?: string
+          ip_hash?: string | null
+          metadata?: Json | null
+          new_values?: Json | null
+          old_values?: Json | null
+          resource_id?: string | null
+          resource_name?: string | null
+          resource_type: string
+          summary?: string | null
+          tenant_id: string
+          user_agent_hash?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          department_id?: string | null
+          id?: string
+          ip_hash?: string | null
+          metadata?: Json | null
+          new_values?: Json | null
+          old_values?: Json | null
+          resource_id?: string | null
+          resource_name?: string | null
+          resource_type?: string
+          summary?: string | null
+          tenant_id?: string
+          user_agent_hash?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_department_assignments: {
         Row: {
           assigned_at: string
@@ -1192,6 +1246,10 @@ export type Database = {
         }
         Returns: number
       }
+      cleanup_old_activities: {
+        Args: { retention_days?: number }
+        Returns: number
+      }
       cleanup_rate_limits: { Args: never; Returns: number }
       get_my_department_id: { Args: never; Returns: string }
       get_my_tenant_id: { Args: never; Returns: string }
@@ -1218,6 +1276,20 @@ export type Database = {
       is_team_member: {
         Args: { _team_id: string; _user_id: string }
         Returns: boolean
+      }
+      log_user_activity: {
+        Args: {
+          _action: string
+          _metadata?: Json
+          _new_values?: Json
+          _old_values?: Json
+          _resource_id?: string
+          _resource_name?: string
+          _resource_type: string
+          _summary?: string
+          _user_id: string
+        }
+        Returns: string
       }
       update_user_meta: {
         Args: {

@@ -44,6 +44,21 @@ export {
   type ValidationResult as WizardValidationResult,
 } from "./hooks/useWizardValidation";
 
+// Employee Settings & Push Provisions
+export { 
+  useEmployeeSettings, 
+  useAllEmployeeSettings,
+  useAdminEmployeeManagement,
+  applyEmployeeDeduction,
+  isTariffBlocked,
+} from "./hooks/useEmployeeSettings";
+
+export { 
+  usePushProvisions,
+  useAdminPushProvisions,
+  useAllPushProvisions,
+} from "./hooks/usePushProvisions";
+
 // === BENEFITS ENGINE ===
 export { calculateGigaKombi } from "./engine/benefitsEngine";
 

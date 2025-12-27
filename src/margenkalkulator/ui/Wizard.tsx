@@ -10,6 +10,8 @@ import {
   calculateOffer,
   useWizardValidation,
 } from "@/margenkalkulator";
+import { useEmployeeSettings } from "@/margenkalkulator/hooks/useEmployeeSettings";
+import { usePushProvisions } from "@/margenkalkulator/hooks/usePushProvisions";
 import { HardwareStep } from "./steps/HardwareStep";
 import { MobileStep } from "./steps/MobileStep";
 import { FixedNetStep } from "./steps/FixedNetStep";
@@ -50,6 +52,10 @@ export function Wizard() {
   const { identity } = useIdentity();
   const { session: customerSession, toggleSession } = useCustomerSession();
   const policy = useEffectivePolicy();
+  
+  // Employee Settings & Push Provisions Hooks
+  const { settings: employeeSettings } = useEmployeeSettings();
+  const { getBonusAmount } = usePushProvisions();
   
   const [currentStep, setCurrentStep] = useState<WizardStep>("hardware");
   const [activeOption, setActiveOption] = useState<1 | 2>(1);
@@ -109,9 +115,24 @@ export function Wizard() {
   const activeState = activeOption === 1 ? option1 : option2;
   const setActiveState = activeOption === 1 ? setOption1 : setOption2;
 
-  // Calculate results (memoized)
-  const result1 = useMemo(() => calculateOffer(option1), [option1]);
-  const result2 = useMemo(() => calculateOffer(option2), [option2]);
+  // Prepare employee options for calculation
+  const employeeOptions = useMemo(() => ({
+    employeeDeduction: employeeSettings ? {
+      deductionValue: employeeSettings.provisionDeduction ?? 0,
+      deductionType: (employeeSettings.provisionDeductionType ?? "fixed") as "fixed" | "percentage",
+    } : null,
+  }), [employeeSettings]);
+
+  // Calculate results (memoized) with employee options
+  const result1 = useMemo(() => {
+    const pushBonus = getBonusAmount(option1.mobile.tariffId, option1.mobile.contractType);
+    return calculateOffer(option1, { ...employeeOptions, pushBonus });
+  }, [option1, employeeOptions, getBonusAmount]);
+  
+  const result2 = useMemo(() => {
+    const pushBonus = getBonusAmount(option2.mobile.tariffId, option2.mobile.contractType);
+    return calculateOffer(option2, { ...employeeOptions, pushBonus });
+  }, [option2, employeeOptions, getBonusAmount]);
 
   // Validation
   const validation = useWizardValidation(activeState);

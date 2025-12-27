@@ -47,4 +47,8 @@ export {
   calculateFixedNetProvision,
   calculateDealerEconomics,
   calculateDealerEconomicsLegacy,
+  applyEmployeeDeduction,
+  calculateEmployeeDeductionAmount,
+  type EmployeeDeductionSettings,
+  type DealerEconomicsExtended,
 } from "./dealer";

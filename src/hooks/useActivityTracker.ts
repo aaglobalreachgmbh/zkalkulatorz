@@ -329,6 +329,18 @@ export function useActivityTracker() {
     [trackActivity]
   );
 
+  const trackDraftDeleted = useCallback(
+    (draftId: string, draftName: string) => 
+      trackActivity({
+        action: "draft_delete",
+        resourceType: "draft",
+        resourceId: draftId,
+        resourceName: draftName,
+        summary: `Entwurf "${draftName}" gelöscht`,
+      }),
+    [trackActivity]
+  );
+
   // =====================================================
   // Convenience Methods - Exports
   // =====================================================
@@ -452,6 +464,7 @@ export function useActivityTracker() {
     // Draft methods
     trackDraftCreated,
     trackDraftRestored,
+    trackDraftDeleted,
     
     // Export methods
     trackPdfExported,

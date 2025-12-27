@@ -6,6 +6,7 @@ import { useState, useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useActivityTracker } from "@/hooks/useActivityTracker";
 import { toast } from "sonner";
 import {
   MoccaCustomerRow,
@@ -47,6 +48,7 @@ export interface ColumnMapping {
 export function useMoccaImport() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { trackCustomerImport } = useActivityTracker();
   const [progress, setProgress] = useState<ImportProgress | null>(null);
   const [isImporting, setIsImporting] = useState(false);
 
@@ -235,6 +237,11 @@ export function useMoccaImport() {
         // Invalidate customers query
         queryClient.invalidateQueries({ queryKey: ["customers"] });
 
+        // Track customer import
+        if (imported > 0) {
+          trackCustomerImport(imported, "Mocca");
+        }
+
         return {
           success: errors.length === 0,
           totalProcessed: validatedRows.length,
@@ -247,7 +254,7 @@ export function useMoccaImport() {
         setIsImporting(false);
       }
     },
-    [user, checkExistingCustomers, queryClient]
+    [user, checkExistingCustomers, queryClient, trackCustomerImport]
   );
 
   // ============================================

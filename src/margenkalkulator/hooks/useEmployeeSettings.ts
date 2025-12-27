@@ -6,6 +6,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useIdentity } from "@/contexts/IdentityContext";
+import { useActivityTracker } from "@/hooks/useActivityTracker";
 import { supabase } from "@/integrations/supabase/client";
 import type { SubVariantId } from "../engine/types";
 
@@ -173,6 +174,7 @@ export function useAllEmployeeSettings() {
 export function useAdminEmployeeManagement() {
   const { user } = useAuth();
   const { identity } = useIdentity();
+  const { trackSettingsChanged } = useActivityTracker();
 
   const createOrUpdateSettings = useCallback(
     async (
@@ -209,9 +211,13 @@ export function useAdminEmployeeManagement() {
         .single();
 
       if (error) throw error;
+      
+      // Track settings change
+      trackSettingsChanged("employee_settings", targetUserId, updates);
+      
       return data;
     },
-    [user?.id, identity.tenantId]
+    [user?.id, identity.tenantId, trackSettingsChanged]
   );
 
   const updateProvisionDeduction = useCallback(

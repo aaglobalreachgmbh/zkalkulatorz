@@ -65,7 +65,7 @@ export async function parseFixedNetXLSX(file: File): Promise<FixedNetProductRow[
 // Row Normalization
 // ============================================
 
-function normalizeFixedNetRows(rows: Record<string, unknown>[]): FixedNetProductRow[] {
+export function normalizeFixedNetRows(rows: Record<string, unknown>[]): FixedNetProductRow[] {
   return rows
     .filter(row => {
       const id = row.id || row.ID;

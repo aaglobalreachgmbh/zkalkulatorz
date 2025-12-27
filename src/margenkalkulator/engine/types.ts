@@ -954,21 +954,212 @@ export type HardwareItem = {
  *   hardwareCatalog: [...]
  * };
  */
+// ============================================
+// IoT / M2M Typen (NEU)
+// ============================================
+
+/**
+ * IoT/M2M-Tarif aus dem Katalog.
+ * 
+ * ANWENDUNGSFÄLLE:
+ * - Telematik (Fahrzeug-Tracking)
+ * - Smart Meter (Strom/Gas/Wasser)
+ * - Industrie 4.0 (Maschinen-Kommunikation)
+ * - POS-Terminals (Kartenzahlung)
+ */
+export type IoTTariff = {
+  /** Eindeutige ID */
+  id: string;
+  /** Anzeigename */
+  name: string;
+  /** Kategorie */
+  category: "standard" | "enterprise" | "automotive";
+  /** Datenvolumen in MB */
+  dataVolumeMB: number;
+  /** Datenvolumen als Text */
+  dataVolumeText?: string;
+  /** Monatspreis netto */
+  monthlyNet: number;
+  /** Mindestlaufzeit */
+  minTermMonths: number;
+  /** Überverbrauch pro MB */
+  overagePerMBNet?: number;
+  /** Neuvertrag-Provision */
+  provisionNew: number;
+  /** VVL-Provision */
+  provisionRenewal?: number;
+  /** Features */
+  features: string[];
+  /** Typische Anwendungsfälle */
+  useCases: string[];
+  /** Sortierreihenfolge */
+  sortOrder?: number;
+};
+
+// ============================================
+// VoIP / RingCentral Typen (NEU)
+// ============================================
+
+/** VoIP-Produktstufe */
+export type VoIPTier = "essentials" | "standard" | "premium" | "ultimate";
+
+/**
+ * VoIP-Produkt aus dem Katalog (RingCentral).
+ * 
+ * LIZENZMODELL:
+ * - Preis pro Benutzer pro Monat
+ * - Staffelpreise bei größeren Teams
+ */
+export type VoIPProduct = {
+  /** Eindeutige ID */
+  id: string;
+  /** Anzeigename */
+  name: string;
+  /** Produktstufe */
+  tier: VoIPTier;
+  /** Preis pro Benutzer netto */
+  pricePerUserNet: number;
+  /** Mindestanzahl Benutzer */
+  minUsers: number;
+  /** Maximalanzahl Benutzer */
+  maxUsers?: number;
+  /** Mindestlaufzeit */
+  minTermMonths: number;
+  /** Abrechnungszyklus */
+  billingCycle: "monthly" | "annual";
+  /** Inklusivminuten Deutschland */
+  includedMinutesDE?: number | "unlimited";
+  /** Inklusivminuten International */
+  includedMinutesIntl?: number;
+  /** Features */
+  features: {
+    videoConferencing: boolean;
+    teamMessaging: boolean;
+    smsEnabled: boolean;
+  };
+  /** Kompatible Hardware-IDs */
+  hardwareOptions: string[];
+  /** Provision pro Benutzer */
+  provisionPerUser: number;
+  /** Einmalige Setup-Provision */
+  provisionSetup?: number;
+  /** Sortierreihenfolge */
+  sortOrder?: number;
+};
+
+/**
+ * VoIP-Hardware aus dem Katalog.
+ */
+export type VoIPHardware = {
+  /** Eindeutige ID */
+  id: string;
+  /** Hersteller */
+  brand: string;
+  /** Modell */
+  model: string;
+  /** Kategorie */
+  category: "desk_phone" | "conference_phone" | "headset" | "accessory";
+  /** Einkaufspreis netto */
+  ekNet: number;
+  /** UVP netto */
+  uvpNet?: number;
+  /** Kompatible Tier-Level */
+  compatibleTiers: VoIPTier[];
+  /** Features */
+  features: string[];
+  /** Bild-URL */
+  imageUrl?: string;
+  /** Sortierreihenfolge */
+  sortOrder?: number;
+};
+
+// ============================================
+// Provisions-Typen (NEU)
+// ============================================
+
+/**
+ * Provisions-Eintrag aus der Matrix.
+ */
+export type ProvisionEntry = {
+  /** Referenz auf Tarif-ID */
+  tariffId: string;
+  /** Tarif-Typ */
+  tariffType: "mobile" | "fixednet" | "iot" | "voip";
+  /** Neuvertrag-Provision netto */
+  provisionNewNet: number;
+  /** VVL-Provision netto */
+  provisionRenewalNet?: number;
+  /** VVL als Prozent von Neu */
+  provisionRenewalPct?: number;
+  /** FH-Partner Modifikator */
+  fhPartnerModifier?: number;
+  /** Push-Modifikator */
+  pushModifier?: number;
+};
+
+// ============================================
+// OMO-Matrix Typen (NEU)
+// ============================================
+
+/** OMO-Rabattstufen */
+export type OMOLevel = 0 | 5 | 10 | 15 | 17.5 | 20 | 25;
+
+/**
+ * OMO-Matrix-Eintrag.
+ * 
+ * LOGIK:
+ * OMO = Dauerrabatt für Kunden
+ * → Reduziert Tarifpreis um X%
+ * → Reduziert Händler-Provision um festen Betrag
+ */
+export type OMOMatrixEntry = {
+  /** Referenz auf Tarif-ID */
+  tariffId: string;
+  /** Abzugsbeträge nach OMO-Stufe */
+  deductions: Record<OMOLevel, number | null>;
+};
+
+// ============================================
+// Vollständiger Katalog (erweitert)
+// ============================================
+
 export type Catalog = {
   /** Dataset-Version */
   version: DatasetVersion;
   /** Gültig ab (für historische Angebote) */
   validFrom?: string;
+  
+  // MOBILFUNK
   /** SUB-Varianten (Geräte-Klassen) */
   subVariants: SubVariant[];
   /** Mobilfunk-Tarife */
   mobileTariffs: MobileTariff[];
   /** Promos/Rabattaktionen */
   promos: Promo[];
+  
+  // FESTNETZ
   /** Festnetz-Produkte */
   fixedNetProducts: FixedNetProduct[];
+  
+  // HARDWARE
   /** Hardware-Katalog (optional) */
   hardwareCatalog?: HardwareItem[];
+  
+  // IoT (NEU)
+  /** IoT/M2M-Tarife */
+  iotTariffs?: IoTTariff[];
+  
+  // VoIP (NEU)
+  /** VoIP-Produkte (RingCentral) */
+  voipProducts?: VoIPProduct[];
+  /** VoIP-Hardware */
+  voipHardware?: VoIPHardware[];
+  
+  // PROVISIONEN & OMO (NEU)
+  /** Provisions-Matrix */
+  provisions?: ProvisionEntry[];
+  /** OMO-Matrix */
+  omoMatrix?: OMOMatrixEntry[];
 };
 
 /** Legacy-Alias für Abwärtskompatibilität */

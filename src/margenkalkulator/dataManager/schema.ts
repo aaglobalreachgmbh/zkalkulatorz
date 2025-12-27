@@ -2,6 +2,16 @@
 // XLSX/CSV Template Schema Definition
 // Defines expected columns and validation rules
 // ============================================
+// 
+// PRODUKTKATEGORIEN:
+// - Hardware (Smartphones, Tablets, Zubehör)
+// - Mobilfunk (Prime, Smart, TeamDeal)
+// - Festnetz (Cable, DSL, Fiber, Komfort)
+// - IoT/M2M (Daten-SIMs für Maschinen)
+// - VoIP (RingCentral Cloud-Telefonie)
+// - Provisionen (Neu/VVL pro Tarif)
+// - OMO-Matrix (Rabatt-Abzüge)
+// ============================================
 
 export type SheetSchema = {
   columns: string[];
@@ -11,10 +21,17 @@ export type SheetSchema = {
 };
 
 export const TEMPLATE_SCHEMA: Record<string, SheetSchema> = {
+  // ============================================
+  // META-DATEN
+  // ============================================
   meta: {
     columns: ["datasetVersion", "validFromISO", "verifiedAtISO", "notes"],
     required: ["datasetVersion", "validFromISO"],
   },
+
+  // ============================================
+  // MOBILFUNK
+  // ============================================
   mobile_tariffs: {
     columns: [
       "id", "family", "productLine", "name", "minTermMonths",
@@ -39,6 +56,10 @@ export const TEMPLATE_SCHEMA: Record<string, SheetSchema> = {
     required: ["tariff_id", "rule_type"],
     foreignKey: { tariff_id: "mobile_tariffs.id" },
   },
+
+  // ============================================
+  // FESTNETZ
+  // ============================================
   fixednet_products: {
     columns: [
       "id", "access_type", "variant", "name", "minTermMonths",
@@ -52,11 +73,64 @@ export const TEMPLATE_SCHEMA: Record<string, SheetSchema> = {
     required: ["id", "access_type", "name", "monthly_net"],
     uniqueKey: "id",
   },
+
+  // ============================================
+  // IoT / M2M
+  // ============================================
+  iot_tariffs: {
+    columns: [
+      "id", "name", "category",
+      "data_volume_mb", "data_volume_text",
+      "monthly_net", "minTermMonths",
+      "overage_per_mb_net",
+      "provision_new", "provision_renewal",
+      "features", "use_cases",
+      "sort_order", "active"
+    ],
+    required: ["id", "name", "data_volume_mb", "monthly_net"],
+    uniqueKey: "id",
+  },
+
+  // ============================================
+  // VoIP / RingCentral
+  // ============================================
+  voip_products: {
+    columns: [
+      "id", "name", "tier",
+      "price_per_user_net", "min_users", "max_users",
+      "minTermMonths", "billing_cycle",
+      "included_minutes_de", "included_minutes_intl",
+      "video_conferencing", "team_messaging", "sms_enabled",
+      "hardware_options", "features",
+      "provision_per_user", "provision_setup",
+      "sort_order", "active"
+    ],
+    required: ["id", "name", "tier", "price_per_user_net"],
+    uniqueKey: "id",
+  },
+  voip_hardware: {
+    columns: [
+      "id", "brand", "model", "category",
+      "ek_net", "uvp_net",
+      "compatible_tiers", "features",
+      "image_url", "sort_order", "active"
+    ],
+    required: ["id", "brand", "model", "ek_net"],
+    uniqueKey: "id",
+  },
+
+  // ============================================
+  // HARDWARE (Mobilfunk)
+  // ============================================
   hardware_catalog: {
     columns: ["id", "brand", "model", "category", "ek_net", "image_url", "sort_order", "active"],
     required: ["id", "brand", "model", "ek_net"],
     uniqueKey: "id",
   },
+
+  // ============================================
+  // PROMOS & RABATTE
+  // ============================================
   promos_possible: {
     columns: [
       "id", "label", "applies_to", "type", "duration_months",
@@ -71,6 +145,34 @@ export const TEMPLATE_SCHEMA: Record<string, SheetSchema> = {
     required: ["id", "label", "monthly_add_net"],
     uniqueKey: "id",
   },
+
+  // ============================================
+  // PROVISIONEN (NEU)
+  // ============================================
+  provisions: {
+    columns: [
+      "tariff_id", "tariff_type",
+      "provision_new_net", "provision_renewal_net",
+      "provision_renewal_pct",
+      "fh_partner_modifier", "push_modifier",
+      "notes"
+    ],
+    required: ["tariff_id", "tariff_type", "provision_new_net"],
+    foreignKey: { tariff_id: "mobile_tariffs.id" },
+  },
+
+  // ============================================
+  // OMO-MATRIX (Rabatt-Abzüge)
+  // ============================================
+  omo_matrix: {
+    columns: [
+      "tariff_id",
+      "omo_0", "omo_5", "omo_10", "omo_15", "omo_17_5", "omo_20", "omo_25",
+      "notes"
+    ],
+    required: ["tariff_id"],
+    foreignKey: { tariff_id: "mobile_tariffs.id" },
+  },
 };
 
 // Sheet names in German for UI display
@@ -80,7 +182,22 @@ export const SHEET_LABELS: Record<string, string> = {
   mobile_features: "Mobilfunk-Leistungen",
   mobile_dependencies: "Mobilfunk-Abhängigkeiten",
   fixednet_products: "Festnetz-Produkte",
+  iot_tariffs: "IoT/M2M-Tarife",
+  voip_products: "VoIP-Produkte (RingCentral)",
+  voip_hardware: "VoIP-Hardware",
   hardware_catalog: "Hardware-Katalog",
   promos_possible: "Aktionen/Promos",
   sub_variants: "SUB-Varianten",
+  provisions: "Provisionen",
+  omo_matrix: "OMO-Matrix",
 };
+
+// Product type categories for UI grouping
+export const PRODUCT_CATEGORIES = {
+  MOBILE: ["mobile_tariffs", "mobile_features", "mobile_dependencies"],
+  FIXED_NET: ["fixednet_products"],
+  IOT: ["iot_tariffs"],
+  VOIP: ["voip_products", "voip_hardware"],
+  HARDWARE: ["hardware_catalog"],
+  PRICING: ["promos_possible", "sub_variants", "provisions", "omo_matrix"],
+} as const;

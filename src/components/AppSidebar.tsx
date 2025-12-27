@@ -43,6 +43,8 @@ const settingsItems = [
 
 const adminItems = [
   { title: "Administration", url: "/admin", icon: ShieldCheck },
+  { title: "Mitarbeiter", url: "/admin/employees", icon: Users },
+  { title: "Push-Provisionen", url: "/admin/push-provisions", icon: CreditCard },
   { title: "Datenmanager", url: "/data-manager", icon: Database },
   { title: "Security Status", url: "/security/status", icon: Activity },
   { title: "Security Events", url: "/security", icon: Shield },

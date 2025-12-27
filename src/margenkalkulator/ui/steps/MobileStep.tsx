@@ -17,11 +17,12 @@ import {
   getMobileTariffFromCatalog,
   checkGKEligibility,
 } from "@/margenkalkulator";
-import { Signal, Tag, AlertTriangle, Minus, Plus } from "lucide-react";
+import { Signal, Tag, AlertTriangle, Minus, Plus, Ban } from "lucide-react";
 import { OMORateSelectorEnhanced, type OMORate } from "../components/OMORateSelectorEnhanced";
 import { SubVariantSelector } from "../components/SubVariantSelector";
 import { FHPartnerToggle } from "../components/FHPartnerToggle";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
+import { useEmployeeSettings, isTariffBlocked } from "@/margenkalkulator/hooks/useEmployeeSettings";
 
 interface MobileStepProps {
   value: MobileState;
@@ -84,11 +85,27 @@ export function MobileStep({
     return Array.from(uniqueFamilies) as TariffFamily[];
   }, [mobileTariffs]);
 
-  // Filter tariffs by selected family
+  // Employee settings for tariff blocking
+  const { settings: employeeSettings } = useEmployeeSettings();
+
+  // Filter tariffs by selected family AND blocked tariffs
   const filteredTariffs = useMemo(() => {
-    if (selectedFamily === "all") return mobileTariffs;
-    return mobileTariffs.filter(t => t.family === selectedFamily);
-  }, [mobileTariffs, selectedFamily]);
+    let tariffs = selectedFamily === "all" ? mobileTariffs : mobileTariffs.filter(t => t.family === selectedFamily);
+    
+    // Filter out blocked tariffs for this employee
+    if (employeeSettings?.blockedTariffs?.length) {
+      tariffs = tariffs.filter(t => !isTariffBlocked(t.id, employeeSettings));
+    }
+    
+    return tariffs;
+  }, [mobileTariffs, selectedFamily, employeeSettings]);
+
+  // Count blocked tariffs for info display
+  const blockedCount = useMemo(() => {
+    if (!employeeSettings?.blockedTariffs?.length) return 0;
+    const allTariffs = selectedFamily === "all" ? mobileTariffs : mobileTariffs.filter(t => t.family === selectedFamily);
+    return allTariffs.filter(t => isTariffBlocked(t.id, employeeSettings)).length;
+  }, [mobileTariffs, selectedFamily, employeeSettings]);
 
   // Format data volume display
   const formatDataVolume = (volume: number | "unlimited" | undefined) => {
@@ -192,8 +209,14 @@ export function MobileStep({
         </div>
 
         {/* Results Count */}
-        <div className="text-sm text-muted-foreground">
-          {filteredTariffs.length} Tarif{filteredTariffs.length !== 1 ? "e" : ""} verfügbar
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+          <span>{filteredTariffs.length} Tarif{filteredTariffs.length !== 1 ? "e" : ""} verfügbar</span>
+          {blockedCount > 0 && (
+            <Badge variant="secondary" className="gap-1 text-xs">
+              <Ban className="w-3 h-3" />
+              {blockedCount} gesperrt
+            </Badge>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

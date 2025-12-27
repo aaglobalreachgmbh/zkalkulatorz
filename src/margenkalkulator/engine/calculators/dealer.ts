@@ -2,9 +2,10 @@
 // Dealer Economics Module
 // Handles provision and margin calculations
 // Phase 2: OMO-Matrix (0-25%) + Fixed Net Provisions + FH-Partner
+// Phase 2.4: TeamDeal SUB-Variant Provisions (provisionsByVariant)
 // ============================================
 
-import type { MobileTariff, DealerEconomics, ContractType, FixedNetProduct } from "../types";
+import type { MobileTariff, DealerEconomics, ContractType, FixedNetProduct, SubVariantId } from "../types";
 import { getOMODeductionFactor, FIXED_NET_PROVISIONS } from "../../config";
 
 // ============================================
@@ -163,17 +164,83 @@ export function calculateFixedNetProvision(
 }
 
 // ============================================
+// SUB-Variant Provision Resolver (TeamDeal)
+// ============================================
+
+/**
+ * Get provision for a tariff, considering SUB-variant specific provisions.
+ * 
+ * GESCHÄFTSLOGIK (TeamDeal):
+ * TeamDeal-Tarife haben unterschiedliche Provisionen je nach SUB-Variante:
+ * - SIM_ONLY: Niedrigste Provision (z.B. 55€)
+ * - BASIC/SUB_5: Mittlere Provision (z.B. 120€)
+ * - SMARTPHONE/SUB_10: Höchste Provision (z.B. 170€)
+ * 
+ * @returns Provision amount, or undefined if not found
+ */
+export function getProvisionForVariant(
+  tariff: MobileTariff | undefined,
+  contractType: ContractType,
+  subVariantId?: SubVariantId
+): number {
+  if (!tariff) return 0;
+  
+  // Check for SUB-Variant specific provisions (TeamDeal)
+  if (tariff.provisionsByVariant && subVariantId) {
+    // Map SubVariantId to provisionsByVariant keys
+    const variantKey = mapSubVariantToProvisionKey(subVariantId);
+    const variantProvision = tariff.provisionsByVariant[variantKey];
+    
+    if (variantProvision !== undefined) {
+      return variantProvision;
+    }
+  }
+  
+  // Fallback to contract-type based provision
+  if (contractType === "renewal" && tariff.provisionRenewal !== undefined) {
+    return tariff.provisionRenewal;
+  }
+  
+  return tariff.provisionBase;
+}
+
+/**
+ * Map SubVariantId to provisionsByVariant key.
+ * 
+ * MAPPING:
+ * - SIM_ONLY → SIM_ONLY
+ * - BASIC_PHONE → BASIC
+ * - SMARTPHONE, PREMIUM_SMARTPHONE, SPECIAL_PREMIUM_SMARTPHONE → SMARTPHONE
+ */
+function mapSubVariantToProvisionKey(subVariantId: SubVariantId): keyof NonNullable<MobileTariff["provisionsByVariant"]> {
+  switch (subVariantId) {
+    case "SIM_ONLY":
+      return "SIM_ONLY";
+    case "BASIC_PHONE":
+      return "BASIC";
+    case "SMARTPHONE":
+    case "PREMIUM_SMARTPHONE":
+    case "SPECIAL_PREMIUM_SMARTPHONE":
+      return "SMARTPHONE";
+    default:
+      return "SIM_ONLY";
+  }
+}
+
+// ============================================
 // Dealer Economics Calculation
 // ============================================
 
 /**
  * Calculate dealer economics (provision, deductions, margin)
  * Phase 2: Supports OMO-Matrix (0-25%), Fixed Net Provisions, FH-Partner
+ * Phase 2.4: Supports TeamDeal SUB-Variant Provisions
  * 
  * GESCHÄFTSLOGIK (Source-of-Truth):
  * - Wenn OMO-Matrix vorhanden → absoluten Wert verwenden (KEINE zusätzliche Deduktion)
  * - Wenn Matrix-Wert null → Stufe gesperrt, Provision = 0
  * - Wenn keine Matrix → Fallback auf prozentuale Berechnung
+ * - Wenn provisionsByVariant vorhanden (TeamDeal) → SUB-spezifische Provision
  */
 export function calculateDealerEconomics(
   tariff: MobileTariff | undefined,
@@ -185,11 +252,13 @@ export function calculateDealerEconomics(
     omoRate?: number;
     fixedNetProduct?: FixedNetProduct;
     isFHPartner?: boolean;
+    subVariantId?: SubVariantId;
   }
 ): DealerEconomics {
   const omoRate = options?.omoRate ?? 0;
   const fixedNetProduct = options?.fixedNetProduct;
   const isFHPartner = options?.isFHPartner ?? false;
+  const subVariantId = options?.subVariantId;
   
   // Fixed Net Provision (applies regardless of mobile tariff)
   const fixedNetProvision = calculateFixedNetProvision(fixedNetProduct, contractType);

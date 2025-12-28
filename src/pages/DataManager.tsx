@@ -275,6 +275,72 @@ export default function DataManager() {
     }
   }, [parsedData, validation, identity, refreshDatasets, canBypassApproval]);
 
+  // Create draft from PDF data
+  const handlePdfImport = useCallback(() => {
+    if (!pdfResult || pdfResult.errors.length > 0) return;
+    if (!canImport(identity.role)) {
+      toast({ title: "Keine Berechtigung", variant: "destructive" });
+      return;
+    }
+    
+    try {
+      // Build partial dataset from PDF results
+      const pdfDataset: Partial<CanonicalDataset> = {
+        meta: {
+          datasetVersion: `pdf-import-${new Date().toISOString().slice(0, 10)}`,
+          validFromISO: new Date().toISOString().slice(0, 10),
+          verifiedAtISO: new Date().toISOString().slice(0, 10),
+          notes: `PDF-Import: ${file?.name || "Unbekannt"}`,
+        },
+      };
+      
+      if (pdfResult.hardware && pdfResult.hardware.length > 0) {
+        pdfDataset.hardwareCatalog = pdfResult.hardware;
+      }
+      if (pdfResult.provisions && pdfResult.provisions.length > 0) {
+        pdfDataset.provisions = pdfResult.provisions;
+      }
+      if (pdfResult.omoMatrix && pdfResult.omoMatrix.length > 0) {
+        pdfDataset.omoMatrix = pdfResult.omoMatrix;
+      }
+      
+      const newDataset = createDraftDataset(
+        identity.tenantId,
+        identity.departmentId,
+        pdfDataset as CanonicalDataset,
+        identity.userId,
+        identity.displayName
+      );
+      
+      logDatasetImport(
+        identity.tenantId,
+        identity.departmentId,
+        identity.userId,
+        identity.displayName,
+        identity.role,
+        newDataset.datasetId,
+        newDataset.datasetVersion
+      );
+      
+      toast({
+        title: "PDF-Entwurf erstellt",
+        description: `${pdfResult.rowsExtracted} Einträge als Entwurf gespeichert.`,
+      });
+      
+      refreshDatasets();
+      setFile(null);
+      setPdfDetection(null);
+      setPdfResult(null);
+      
+    } catch (err) {
+      toast({
+        title: "Fehler",
+        description: err instanceof Error ? err.message : "Unbekannter Fehler",
+        variant: "destructive",
+      });
+    }
+  }, [pdfResult, file, identity, refreshDatasets]);
+
   const handleTransition = useCallback((datasetId: string, newStatus: DatasetStatus) => {
     const dataset = datasets.find(d => d.datasetId === datasetId);
     if (!dataset) return;
@@ -614,6 +680,21 @@ export default function DataManager() {
                 )}
               </CardContent>
             </Card>
+          )}
+
+          {/* PDF Import Button */}
+          {pdfResult && pdfResult.errors.length === 0 && pdfResult.rowsExtracted > 0 && (
+            <Button 
+              onClick={handlePdfImport} 
+              className="w-full" 
+              size="lg"
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              Als Entwurf speichern
+              <Badge variant="secondary" className="ml-2">
+                {pdfResult.rowsExtracted} Einträge
+              </Badge>
+            </Button>
           )}
 
           {/* Validation */}

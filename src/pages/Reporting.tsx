@@ -4,7 +4,13 @@ import { useReporting, TimeRange } from "@/margenkalkulator/hooks/useReporting";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, FileText, TrendingUp, Target, Euro, Calendar, AlertTriangle, Package, Receipt } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Loader2, FileText, TrendingUp, Target, Euro, Calendar, AlertTriangle, Package, Receipt, Download } from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -18,6 +24,8 @@ import {
   Cell,
   Legend,
 } from "recharts";
+import { VVLExportDialog } from "@/margenkalkulator/ui/components/VVLExportDialog";
+import { ProvisionForecastDialog } from "@/margenkalkulator/ui/components/ProvisionForecastDialog";
 
 const COLORS = {
   positive: "hsl(142 76% 36%)",
@@ -43,6 +51,8 @@ const HARDWARE_COLORS = [
 export default function Reporting() {
   const [timeRange, setTimeRange] = useState<TimeRange>("month");
   const { data: stats, isLoading, error } = useReporting(timeRange);
+  const [showVVLExport, setShowVVLExport] = useState(false);
+  const [showProvisionExport, setShowProvisionExport] = useState(false);
 
   const timeRangeLabels: Record<TimeRange, string> = {
     week: "Diese Woche",
@@ -103,8 +113,30 @@ export default function Reporting() {
                 {timeRangeLabels[range]}
               </Button>
             ))}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Download className="h-4 w-4 mr-2" />
+                  Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setShowVVLExport(true)}>
+                  <Calendar className="h-4 w-4 mr-2" />
+                  VVL-Liste
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setShowProvisionExport(true)}>
+                  <Euro className="h-4 w-4 mr-2" />
+                  Provisions-Prognose
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
+
+        {/* Export Dialogs */}
+        <VVLExportDialog open={showVVLExport} onOpenChange={setShowVVLExport} />
+        <ProvisionForecastDialog open={showProvisionExport} onOpenChange={setShowProvisionExport} />
 
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList>

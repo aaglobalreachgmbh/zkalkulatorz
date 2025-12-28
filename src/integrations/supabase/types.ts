@@ -513,6 +513,60 @@ export type Database = {
         }
         Relationships: []
       }
+      dataset_versions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          hardware_catalog: Json
+          id: string
+          is_active: boolean
+          mobile_tariffs: Json
+          omo_matrix: Json
+          provisions: Json
+          source_file: string | null
+          sub_variants: Json
+          tenant_id: string
+          updated_at: string
+          valid_from: string
+          valid_until: string | null
+          version_name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          hardware_catalog?: Json
+          id?: string
+          is_active?: boolean
+          mobile_tariffs?: Json
+          omo_matrix?: Json
+          provisions?: Json
+          source_file?: string | null
+          sub_variants?: Json
+          tenant_id: string
+          updated_at?: string
+          valid_from: string
+          valid_until?: string | null
+          version_name: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          hardware_catalog?: Json
+          id?: string
+          is_active?: boolean
+          mobile_tariffs?: Json
+          omo_matrix?: Json
+          provisions?: Json
+          source_file?: string | null
+          sub_variants?: Json
+          tenant_id?: string
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+          version_name?: string
+        }
+        Relationships: []
+      }
       departments: {
         Row: {
           created_at: string

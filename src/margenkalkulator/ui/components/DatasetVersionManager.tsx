@@ -1,0 +1,316 @@
+import { useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { 
+  Database, 
+  Check, 
+  Trash2, 
+  Plus, 
+  Loader2, 
+  FileText,
+  Calendar,
+  Power,
+} from "lucide-react";
+import { useDatasetVersions, type DatasetVersion } from "@/margenkalkulator/hooks/useDatasetVersions";
+import { format } from "date-fns";
+import { de } from "date-fns/locale";
+
+export function DatasetVersionManager() {
+  const { 
+    versions, 
+    activeVersion, 
+    isLoading,
+    createVersion,
+    activateVersion,
+    deleteVersion,
+    isCreating,
+    isActivating,
+    isDeleting,
+  } = useDatasetVersions();
+
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [newVersion, setNewVersion] = useState({
+    versionName: "",
+    validFrom: new Date().toISOString().slice(0, 10),
+    sourceFile: "",
+  });
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [activatingId, setActivatingId] = useState<string | null>(null);
+
+  const handleCreate = async () => {
+    if (!newVersion.versionName || !newVersion.validFrom) return;
+    
+    await createVersion({
+      versionName: newVersion.versionName,
+      validFrom: newVersion.validFrom,
+      sourceFile: newVersion.sourceFile || null,
+      setActive: false,
+    });
+    
+    setIsCreateOpen(false);
+    setNewVersion({
+      versionName: "",
+      validFrom: new Date().toISOString().slice(0, 10),
+      sourceFile: "",
+    });
+  };
+
+  const handleActivate = async (id: string) => {
+    setActivatingId(id);
+    try {
+      await activateVersion(id);
+    } finally {
+      setActivatingId(null);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    setDeletingId(id);
+    try {
+      await deleteVersion(id);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Database className="h-5 w-5" />
+              Provisions-Versionen
+            </CardTitle>
+            <CardDescription>
+              Historie aller hochgeladenen Provisionslisten. 
+              Die aktive Version wird für alle Berechnungen verwendet.
+            </CardDescription>
+          </div>
+          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Neue Version
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Neue Provisions-Version</DialogTitle>
+                <DialogDescription>
+                  Erstelle eine neue Version für Provisionsdaten. 
+                  Die Daten können nach dem Erstellen per PDF-Import befüllt werden.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="versionName">Versionsname</Label>
+                  <Input
+                    id="versionName"
+                    placeholder="z.B. Oktober 2025"
+                    value={newVersion.versionName}
+                    onChange={(e) => setNewVersion(prev => ({ ...prev, versionName: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="validFrom">Gültig ab</Label>
+                  <Input
+                    id="validFrom"
+                    type="date"
+                    value={newVersion.validFrom}
+                    onChange={(e) => setNewVersion(prev => ({ ...prev, validFrom: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="sourceFile">Quelldatei (optional)</Label>
+                  <Input
+                    id="sourceFile"
+                    placeholder="z.B. SoHo_Provisionsliste_10_2025.pdf"
+                    value={newVersion.sourceFile}
+                    onChange={(e) => setNewVersion(prev => ({ ...prev, sourceFile: e.target.value }))}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
+                  Abbrechen
+                </Button>
+                <Button onClick={handleCreate} disabled={isCreating || !newVersion.versionName}>
+                  {isCreating ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : null}
+                  Erstellen
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {versions.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <Database className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p>Noch keine Versions erstellt.</p>
+            <p className="text-sm mt-1">
+              Es werden die Standard-Provisionen aus v2025_10 verwendet.
+            </p>
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Version</TableHead>
+                <TableHead>Gültig ab</TableHead>
+                <TableHead>Quelldatei</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Aktionen</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {versions.map((version) => (
+                <TableRow key={version.id}>
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-2">
+                      {version.versionName}
+                      {version.isActive && (
+                        <Badge variant="default" className="bg-green-600">
+                          Aktiv
+                        </Badge>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1 text-muted-foreground">
+                      <Calendar className="h-3 w-3" />
+                      {format(new Date(version.validFrom), "dd.MM.yyyy", { locale: de })}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {version.sourceFile ? (
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <FileText className="h-3 w-3" />
+                        <span className="truncate max-w-[150px]" title={version.sourceFile}>
+                          {version.sourceFile}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {version.isActive ? (
+                      <Badge variant="outline" className="border-green-600 text-green-600">
+                        <Check className="h-3 w-3 mr-1" />
+                        Aktiv
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline">Inaktiv</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      {!version.isActive && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleActivate(version.id)}
+                          disabled={isActivating && activatingId === version.id}
+                        >
+                          {isActivating && activatingId === version.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <>
+                              <Power className="h-4 w-4 mr-1" />
+                              Aktivieren
+                            </>
+                          )}
+                        </Button>
+                      )}
+                      
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-destructive hover:text-destructive"
+                            disabled={version.isActive}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Version löschen?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Möchten Sie die Version "{version.versionName}" wirklich löschen? 
+                              Diese Aktion kann nicht rückgängig gemacht werden.
+                              Angebote, die mit dieser Version erstellt wurden, 
+                              behalten ihre berechneten Werte.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDelete(version.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              {isDeleting && deletingId === version.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                              ) : null}
+                              Löschen
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
+  );
+}

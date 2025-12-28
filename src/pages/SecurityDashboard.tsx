@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Pagination,
   PaginationContent,
@@ -24,10 +25,12 @@ import {
   Download,
   ArrowLeft,
   Activity,
+  ClipboardCheck,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
+import { SecurityChecklist } from "@/components/security/SecurityChecklist";
 
 interface SecurityEvent {
   id: string;
@@ -269,173 +272,193 @@ export default function SecurityDashboard() {
           </Card>
         </div>
 
-        {/* Filters */}
-        <Card className="bg-card border-border">
-          <CardContent className="pt-4">
-            <div className="flex flex-wrap gap-4">
-              <div className="flex-1 min-w-[150px]">
-                <label className="text-sm text-muted-foreground mb-1 block">Zeitraum</label>
-                <Select value={timeFilter} onValueChange={(v) => { setTimeFilter(v); setPage(1); }}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1h">Letzte Stunde</SelectItem>
-                    <SelectItem value="24h">Letzte 24 Stunden</SelectItem>
-                    <SelectItem value="7d">Letzte 7 Tage</SelectItem>
-                    <SelectItem value="30d">Letzte 30 Tage</SelectItem>
-                    <SelectItem value="all">Alle</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+        {/* Tabs for Events and Checklist */}
+        <Tabs defaultValue="events" className="space-y-4">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="events" className="flex items-center gap-2">
+              <Activity className="h-4 w-4" />
+              Security Events
+            </TabsTrigger>
+            <TabsTrigger value="checklist" className="flex items-center gap-2">
+              <ClipboardCheck className="h-4 w-4" />
+              Checkliste
+            </TabsTrigger>
+          </TabsList>
 
-              <div className="flex-1 min-w-[150px]">
-                <label className="text-sm text-muted-foreground mb-1 block">Risikostufe</label>
-                <Select value={riskFilter} onValueChange={(v) => { setRiskFilter(v); setPage(1); }}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Alle</SelectItem>
-                    <SelectItem value="critical">Kritisch</SelectItem>
-                    <SelectItem value="high">Hoch</SelectItem>
-                    <SelectItem value="medium">Mittel</SelectItem>
-                    <SelectItem value="low">Niedrig</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+          <TabsContent value="checklist" className="space-y-4">
+            <SecurityChecklist />
+          </TabsContent>
 
-              <div className="flex-1 min-w-[150px]">
-                <label className="text-sm text-muted-foreground mb-1 block">Event-Typ</label>
-                <Select value={eventTypeFilter} onValueChange={(v) => { setEventTypeFilter(v); setPage(1); }}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Alle</SelectItem>
-                    <SelectItem value="threat_detected">Bedrohung erkannt</SelectItem>
-                    <SelectItem value="auth_failure">Auth-Fehler</SelectItem>
-                    <SelectItem value="rate_limit">Rate-Limit</SelectItem>
-                    <SelectItem value="xss_attempt">XSS-Versuch</SelectItem>
-                    <SelectItem value="sql_injection">SQL-Injection</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          <TabsContent value="events" className="space-y-4">
+            {/* Filters */}
+            <Card className="bg-card border-border">
+              <CardContent className="pt-4">
+                <div className="flex flex-wrap gap-4">
+                  <div className="flex-1 min-w-[150px]">
+                    <label className="text-sm text-muted-foreground mb-1 block">Zeitraum</label>
+                    <Select value={timeFilter} onValueChange={(v) => { setTimeFilter(v); setPage(1); }}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1h">Letzte Stunde</SelectItem>
+                        <SelectItem value="24h">Letzte 24 Stunden</SelectItem>
+                        <SelectItem value="7d">Letzte 7 Tage</SelectItem>
+                        <SelectItem value="30d">Letzte 30 Tage</SelectItem>
+                        <SelectItem value="all">Alle</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-        {/* Events Table */}
-        <Card className="bg-card border-border">
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-border hover:bg-transparent">
-                  <TableHead className="text-muted-foreground">Zeitpunkt</TableHead>
-                  <TableHead className="text-muted-foreground">Event-Typ</TableHead>
-                  <TableHead className="text-muted-foreground">Risikostufe</TableHead>
-                  <TableHead className="text-muted-foreground">IP-Hash</TableHead>
-                  <TableHead className="text-muted-foreground">Flags</TableHead>
-                  <TableHead className="text-muted-foreground">Details</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <TableRow key={i} className="border-border">
-                      <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-40" /></TableCell>
+                  <div className="flex-1 min-w-[150px]">
+                    <label className="text-sm text-muted-foreground mb-1 block">Risikostufe</label>
+                    <Select value={riskFilter} onValueChange={(v) => { setRiskFilter(v); setPage(1); }}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Alle</SelectItem>
+                        <SelectItem value="critical">Kritisch</SelectItem>
+                        <SelectItem value="high">Hoch</SelectItem>
+                        <SelectItem value="medium">Mittel</SelectItem>
+                        <SelectItem value="low">Niedrig</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex-1 min-w-[150px]">
+                    <label className="text-sm text-muted-foreground mb-1 block">Event-Typ</label>
+                    <Select value={eventTypeFilter} onValueChange={(v) => { setEventTypeFilter(v); setPage(1); }}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Alle</SelectItem>
+                        <SelectItem value="threat_detected">Bedrohung erkannt</SelectItem>
+                        <SelectItem value="auth_failure">Auth-Fehler</SelectItem>
+                        <SelectItem value="rate_limit">Rate-Limit</SelectItem>
+                        <SelectItem value="xss_attempt">XSS-Versuch</SelectItem>
+                        <SelectItem value="sql_injection">SQL-Injection</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Events Table */}
+            <Card className="bg-card border-border">
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-border hover:bg-transparent">
+                      <TableHead className="text-muted-foreground">Zeitpunkt</TableHead>
+                      <TableHead className="text-muted-foreground">Event-Typ</TableHead>
+                      <TableHead className="text-muted-foreground">Risikostufe</TableHead>
+                      <TableHead className="text-muted-foreground">IP-Hash</TableHead>
+                      <TableHead className="text-muted-foreground">Flags</TableHead>
+                      <TableHead className="text-muted-foreground">Details</TableHead>
                     </TableRow>
-                  ))
-                ) : events.length === 0 ? (
-                  <TableRow className="border-border">
-                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                      Keine Sicherheitsereignisse gefunden
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  events.map((event) => (
-                    <TableRow key={event.id} className="border-border hover:bg-muted/50">
-                      <TableCell className="text-foreground">
-                        {format(new Date(event.created_at), "dd.MM.yyyy HH:mm:ss", { locale: de })}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="font-mono text-xs">
-                          {event.event_type}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={riskColors[event.risk_level] || riskColors.low}>
-                          {event.risk_level}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-mono text-xs text-muted-foreground">
-                        {event.ip_hash?.slice(0, 12) || "-"}...
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          {event.is_bot && (
-                            <Badge variant="outline" className="text-orange-400 border-orange-400/50">
-                              <Bot className="h-3 w-3 mr-1" />
-                              Bot
+                  </TableHeader>
+                  <TableBody>
+                    {isLoading ? (
+                      Array.from({ length: 5 }).map((_, i) => (
+                        <TableRow key={i} className="border-border">
+                          <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-40" /></TableCell>
+                        </TableRow>
+                      ))
+                    ) : events.length === 0 ? (
+                      <TableRow className="border-border">
+                        <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                          Keine Sicherheitsereignisse gefunden
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      events.map((event) => (
+                        <TableRow key={event.id} className="border-border hover:bg-muted/50">
+                          <TableCell className="text-foreground">
+                            {format(new Date(event.created_at), "dd.MM.yyyy HH:mm:ss", { locale: de })}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="font-mono text-xs">
+                              {event.event_type}
                             </Badge>
-                          )}
-                          {event.is_phishing && (
-                            <Badge variant="outline" className="text-purple-400 border-purple-400/50">
-                              <Skull className="h-3 w-3 mr-1" />
-                              Phishing
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={riskColors[event.risk_level] || riskColors.low}>
+                              {event.risk_level}
                             </Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="max-w-xs truncate text-muted-foreground text-xs">
-                        {JSON.stringify(event.details).slice(0, 50)}...
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                          </TableCell>
+                          <TableCell className="font-mono text-xs text-muted-foreground">
+                            {event.ip_hash?.slice(0, 12) || "-"}...
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              {event.is_bot && (
+                                <Badge variant="outline" className="text-orange-400 border-orange-400/50">
+                                  <Bot className="h-3 w-3 mr-1" />
+                                  Bot
+                                </Badge>
+                              )}
+                              {event.is_phishing && (
+                                <Badge variant="outline" className="text-purple-400 border-purple-400/50">
+                                  <Skull className="h-3 w-3 mr-1" />
+                                  Phishing
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="max-w-xs truncate text-muted-foreground text-xs">
+                            {JSON.stringify(event.details).slice(0, 50)}...
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                />
-              </PaginationItem>
-              {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
-                const pageNum = i + 1;
-                return (
-                  <PaginationItem key={pageNum}>
-                    <PaginationLink
-                      onClick={() => setPage(pageNum)}
-                      isActive={page === pageNum}
-                      className="cursor-pointer"
-                    >
-                      {pageNum}
-                    </PaginationLink>
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
                   </PaginationItem>
-                );
-              })}
-              <PaginationItem>
-                <PaginationNext
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  className={page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        )}
+                  {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
+                    const pageNum = i + 1;
+                    return (
+                      <PaginationItem key={pageNum}>
+                        <PaginationLink
+                          onClick={() => setPage(pageNum)}
+                          isActive={page === pageNum}
+                          className="cursor-pointer"
+                        >
+                          {pageNum}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  })}
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      className={page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

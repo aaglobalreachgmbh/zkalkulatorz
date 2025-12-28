@@ -14,9 +14,12 @@ import {
   Check, 
   AlertTriangle, 
   FileSpreadsheet,
+  FileText,
   ArrowLeft,
   Info,
   Zap,
+  Package,
+  Euro,
 } from "lucide-react";
 import { 
   validateDataset,
@@ -30,6 +33,16 @@ import {
   type UnifiedParseResult,
   type FormatDetectionResult,
 } from "@/margenkalkulator";
+import {
+  parsePdf,
+  validatePdfFile,
+  parseProvisionPdf,
+  parseHardwarePdf,
+  diffHardware,
+  type PdfDetectionResult,
+  type PdfFormatType,
+} from "@/margenkalkulator/dataManager/importers";
+import type { HardwareItemRow, ProvisionRow, OMOMatrixRow } from "@/margenkalkulator/dataManager/types";
 import { toast } from "@/hooks/use-toast";
 import { useIdentity } from "@/contexts/IdentityContext";
 import { useFeature } from "@/hooks/useFeature";
@@ -52,6 +65,17 @@ import {
 import { logDatasetImport, logDatasetStatusChange } from "@/lib/auditLog";
 import { ProductTabs } from "@/margenkalkulator/ui/components/ProductTabs";
 
+// PDF Import Result Type
+type PdfImportResult = {
+  format: PdfFormatType;
+  hardware?: HardwareItemRow[];
+  provisions?: ProvisionRow[];
+  omoMatrix?: OMOMatrixRow[];
+  warnings: string[];
+  errors: string[];
+  rowsExtracted: number;
+};
+
 export default function DataManager() {
   const { identity } = useIdentity();
   const { enabled: canBypassApproval } = useFeature("adminBypassApproval");
@@ -62,6 +86,10 @@ export default function DataManager() {
   const [detection, setDetection] = useState<FormatDetectionResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [previewDatasetId, setPreviewDatasetId] = useState<string | null>(null);
+  
+  // PDF Import State
+  const [pdfDetection, setPdfDetection] = useState<PdfDetectionResult | null>(null);
+  const [pdfResult, setPdfResult] = useState<PdfImportResult | null>(null);
   
   // Load datasets from governance storage
   const [datasets, setDatasets] = useState<ManagedDataset[]>(() => 
@@ -84,30 +112,77 @@ export default function DataManager() {
     setValidation(null);
     setDiff(null);
     setDetection(null);
+    setPdfDetection(null);
+    setPdfResult(null);
+    
+    const isPdf = selectedFile.type.includes("pdf") || selectedFile.name.toLowerCase().endsWith(".pdf");
     
     try {
-      // Step 1: Parse XLSX with unified parser
-      const result: UnifiedParseResult = await parseXLSXUnified(selectedFile);
-      
-      setDetection(result.detection);
-      
-      // Step 2: Validate
-      const datasetValidation = validateDataset(result.canonical);
-      setValidation(datasetValidation);
-      
-      if (!datasetValidation.isValid) {
-        return;
+      if (isPdf) {
+        // PDF Import Flow
+        const pdfValidation = validatePdfFile(selectedFile);
+        if (!pdfValidation.valid) {
+          toast({
+            title: "Ungültige PDF",
+            description: pdfValidation.error,
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        // Extract text and detect format
+        const { detection: pdfDet, pages } = await parsePdf(selectedFile);
+        setPdfDetection(pdfDet);
+        
+        // Parse based on detected format
+        if (pdfDet.format === "provision_tkworld") {
+          const result = parseProvisionPdf(pages);
+          setPdfResult({
+            format: "provision_tkworld",
+            provisions: result.data[0]?.provisions ?? [],
+            omoMatrix: result.data[0]?.omoMatrix ?? [],
+            warnings: result.warnings,
+            errors: result.errors,
+            rowsExtracted: result.meta.rowsExtracted,
+          });
+        } else if (pdfDet.format === "hardware_distri") {
+          const result = parseHardwarePdf(pages);
+          setPdfResult({
+            format: "hardware_distri",
+            hardware: result.data,
+            warnings: result.warnings,
+            errors: result.errors,
+            rowsExtracted: result.meta.rowsExtracted,
+          });
+        } else {
+          toast({
+            title: "Format nicht erkannt",
+            description: "Die PDF konnte nicht als Provisionsliste oder Hardware-Preisliste identifiziert werden.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        // XLSX Import Flow (existing)
+        const result: UnifiedParseResult = await parseXLSXUnified(selectedFile);
+        
+        setDetection(result.detection);
+        
+        const datasetValidation = validateDataset(result.canonical);
+        setValidation(datasetValidation);
+        
+        if (!datasetValidation.isValid) {
+          return;
+        }
+        
+        setParsedData(result.canonical);
+        
+        const currentCanonical = activeDataset?.payload ?? convertCatalogToCanonical(businessCatalog2025_09);
+        const diffResult = diffDatasets(
+          currentCanonical as unknown as Record<string, { id: string }[]>,
+          result.canonical as unknown as Record<string, { id: string }[]>
+        );
+        setDiff(diffResult);
       }
-      
-      setParsedData(result.canonical);
-      
-      // Step 3: Calculate diff against active dataset or default
-      const currentCanonical = activeDataset?.payload ?? convertCatalogToCanonical(businessCatalog2025_09);
-      const diffResult = diffDatasets(
-        currentCanonical as unknown as Record<string, { id: string }[]>,
-        result.canonical as unknown as Record<string, { id: string }[]>
-      );
-      setDiff(diffResult);
       
     } catch (err) {
       toast({
@@ -408,13 +483,13 @@ export default function DataManager() {
                 Datei importieren
               </CardTitle>
               <CardDescription>
-                XLSX-Datei hochladen → Validieren → Als Entwurf speichern
+                XLSX oder PDF hochladen → Validieren → Als Entwurf speichern
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Input
                 type="file"
-                accept=".xlsx,.xls"
+                accept=".xlsx,.xls,.pdf"
                 onChange={handleFileSelect}
                 className="mb-4"
                 disabled={isLoading}
@@ -423,6 +498,12 @@ export default function DataManager() {
                 <p className="text-sm text-muted-foreground">
                   Datei: <span className="font-medium">{file.name}</span>{" "}
                   ({(file.size / 1024).toFixed(1)} KB)
+                  {file.name.toLowerCase().endsWith(".pdf") && (
+                    <Badge variant="outline" className="ml-2">
+                      <FileText className="h-3 w-3 mr-1" />
+                      PDF
+                    </Badge>
+                  )}
                 </p>
               )}
               {isLoading && (
@@ -433,7 +514,7 @@ export default function DataManager() {
             </CardContent>
           </Card>
 
-          {/* Format Detection */}
+          {/* Format Detection - XLSX */}
           {detection && (
             <Alert>
               <Info className="h-4 w-4" />
@@ -451,6 +532,88 @@ export default function DataManager() {
                 )}
               </AlertDescription>
             </Alert>
+          )}
+
+          {/* Format Detection - PDF */}
+          {pdfDetection && (
+            <Alert className={pdfDetection.format === "unknown" ? "border-destructive" : ""}>
+              <FileText className="h-4 w-4" />
+              <AlertTitle>
+                PDF erkannt: {pdfDetection.format === "provision_tkworld" ? "TK-World Provisionsliste" : 
+                             pdfDetection.format === "hardware_distri" ? "Hardware-Preisliste" : 
+                             "Unbekanntes Format"}
+              </AlertTitle>
+              <AlertDescription>
+                {pdfDetection.pageCount} Seiten • Konfidenz: {pdfDetection.confidence}
+                {pdfDetection.hints.length > 0 && (
+                  <span className="block text-xs mt-1 text-muted-foreground">
+                    {pdfDetection.hints.slice(0, 3).join(", ")}
+                  </span>
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* PDF Parse Results */}
+          {pdfResult && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  {pdfResult.errors.length === 0 ? (
+                    <><Check className="h-5 w-5 text-green-600" /> PDF erfolgreich geparst</>
+                  ) : (
+                    <><AlertTriangle className="h-5 w-5 text-destructive" /> Fehler beim Parsen</>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  {pdfResult.format === "hardware_distri" && pdfResult.hardware && (
+                    <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/20">
+                      <div className="flex items-center gap-2">
+                        <Package className="h-4 w-4 text-blue-600" />
+                        <p className="font-semibold text-blue-700 dark:text-blue-400">Hardware</p>
+                      </div>
+                      <p className="text-2xl font-bold">{pdfResult.hardware.length} Artikel</p>
+                    </div>
+                  )}
+                  {pdfResult.format === "provision_tkworld" && pdfResult.provisions && (
+                    <>
+                      <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950/20">
+                        <div className="flex items-center gap-2">
+                          <Euro className="h-4 w-4 text-green-600" />
+                          <p className="font-semibold text-green-700 dark:text-green-400">Provisionen</p>
+                        </div>
+                        <p className="text-2xl font-bold">{pdfResult.provisions.length} Tarife</p>
+                      </div>
+                      <div className="p-3 rounded-lg bg-purple-50 dark:bg-purple-950/20">
+                        <p className="font-semibold text-purple-700 dark:text-purple-400">OMO-Matrix</p>
+                        <p className="text-2xl font-bold">{pdfResult.omoMatrix?.length ?? 0} Einträge</p>
+                      </div>
+                    </>
+                  )}
+                </div>
+                
+                {pdfResult.warnings.length > 0 && (
+                  <div className="space-y-1 max-h-32 overflow-y-auto">
+                    {pdfResult.warnings.slice(0, 5).map((w, i) => (
+                      <p key={i} className="text-xs text-muted-foreground">⚠️ {w}</p>
+                    ))}
+                    {pdfResult.warnings.length > 5 && (
+                      <p className="text-xs text-muted-foreground">+{pdfResult.warnings.length - 5} weitere Hinweise</p>
+                    )}
+                  </div>
+                )}
+                
+                {pdfResult.errors.length > 0 && (
+                  <Alert variant="destructive">
+                    <AlertDescription>
+                      {pdfResult.errors.map((e, i) => <p key={i}>{e}</p>)}
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </CardContent>
+            </Card>
           )}
 
           {/* Validation */}

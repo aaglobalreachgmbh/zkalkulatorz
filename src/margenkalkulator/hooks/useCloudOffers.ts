@@ -76,10 +76,12 @@ export function useCloudOffers() {
       name,
       config,
       avgMonthly,
+      customerId,
     }: {
       name: string;
       config: OfferOptionState;
       avgMonthly: number;
+      customerId?: string | null;
     }): Promise<CloudOffer> => {
       if (!user) throw new Error("Nicht eingeloggt");
 
@@ -93,6 +95,7 @@ export function useCloudOffers() {
           config: JSON.parse(JSON.stringify(config)),
           preview: JSON.parse(JSON.stringify(preview)),
           is_draft: false,
+          customer_id: customerId || null,
         })
         .select()
         .single();

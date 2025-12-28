@@ -6,10 +6,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FileText, Loader2 } from "lucide-react";
-import { pdf } from "@react-pdf/renderer";
 import { useActivityTracker } from "@/hooks/useActivityTracker";
 import type { OfferOptionState, CalculationResult } from "../../engine/types";
-import { OfferPdf } from "../../pdf/OfferPdf";
 import { toast } from "sonner";
 
 interface PdfDownloadButtonProps {
@@ -52,6 +50,12 @@ export function PdfDownloadButton({
     });
 
     try {
+      // Dynamically import PDF dependencies to avoid SSR issues
+      const [{ pdf }, { OfferPdf }] = await Promise.all([
+        import("@react-pdf/renderer"),
+        import("../../pdf/OfferPdf"),
+      ]);
+
       // Generate PDF blob with timeout protection
       const blob = await Promise.race([
         pdf(<OfferPdf option={option} result={result} />).toBlob(),

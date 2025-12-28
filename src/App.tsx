@@ -20,6 +20,7 @@ import Bundles from "./pages/Bundles";
 import NotFound from "./pages/NotFound";
 import DataManager from "./pages/DataManager";
 import HardwareManager from "./pages/HardwareManager";
+import HardwareImages from "./pages/HardwareImages";
 import Auth from "./pages/Auth";
 import SecurityDashboard from "./pages/SecurityDashboard";
 import Customers from "./pages/Customers";
@@ -135,6 +136,14 @@ const App = () => (
                         element={
                           <ProtectedRoute>
                             <SecuritySettings />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/settings/hardware-images"
+                        element={
+                          <ProtectedRoute>
+                            <HardwareImages />
                           </ProtectedRoute>
                         }
                       />

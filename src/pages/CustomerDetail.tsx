@@ -6,13 +6,10 @@ import { useCustomerNotes, NoteType } from "@/margenkalkulator/hooks/useCustomer
 import { useCloudOffers } from "@/margenkalkulator/hooks/useCloudOffers";
 import {
   useCustomerContracts,
-  getVVLUrgency,
-  getVVLUrgencyConfig,
-  getRemainingDays,
-  NETZ_CONFIG,
   type CustomerContract,
   type ContractInput,
 } from "@/margenkalkulator/hooks/useCustomerContracts";
+import { ContractCard } from "./CustomerDetail/ContractCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -83,7 +80,7 @@ export default function CustomerDetail() {
   const { customers, isLoading: customersLoading } = useCustomers();
   const { notes, isLoading: notesLoading, createNote, deleteNote, noteTypes } = useCustomerNotes(id);
   const { offers, isLoading: offersLoading } = useCloudOffers();
-  const { contracts, isLoading: contractsLoading, createContract, deleteContract } = useCustomerContracts(id);
+  const { contracts, isLoading: contractsLoading, createContract, updateContract, deleteContract } = useCustomerContracts(id);
 
   const [newNoteContent, setNewNoteContent] = useState("");
   const [newNoteType, setNewNoteType] = useState<NoteType>("info");
@@ -437,84 +434,17 @@ export default function CustomerDetail() {
               </Card>
             ) : (
               <div className="grid gap-3">
-                {contracts.map((contract) => {
-                  const urgency = getVVLUrgency(contract.vvl_datum);
-                  const urgencyConfig = getVVLUrgencyConfig(urgency);
-                  const remainingDays = getRemainingDays(contract.vvl_datum);
-                  const netzConfig = NETZ_CONFIG[contract.netz as keyof typeof NETZ_CONFIG] || NETZ_CONFIG.vodafone;
-
-                  return (
-                    <Card key={contract.id} className="group">
-                      <CardContent className="py-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            {/* Urgency Dot */}
-                            <div className={`w-2 h-2 rounded-full ${urgencyConfig.dotColor}`} />
-                            
-                            {/* Netz Badge */}
-                            <Badge variant="outline" className={`text-xs ${netzConfig.textColor}`}>
-                              {netzConfig.label}
-                            </Badge>
-
-                            {/* Contract Info */}
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-2">
-                                {contract.tarif_name && (
-                                  <span className="font-medium">{contract.tarif_name}</span>
-                                )}
-                                {contract.hardware_name && (
-                                  <span className="text-sm text-muted-foreground">
-                                    ({contract.hardware_name})
-                                  </span>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                {contract.handy_nr && (
-                                  <span className="flex items-center gap-1">
-                                    <Phone className="h-3 w-3" />
-                                    {contract.handy_nr}
-                                  </span>
-                                )}
-                                {contract.monatspreis && (
-                                  <span>{contract.monatspreis.toFixed(2)}€/Monat</span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* VVL Status */}
-                          <div className="flex items-center gap-4">
-                            {contract.vvl_datum && (
-                              <div className="text-right">
-                                <div className="flex items-center gap-1 text-sm">
-                                  <Calendar className="h-3 w-3" />
-                                  VVL: {format(new Date(contract.vvl_datum), "dd.MM.yyyy")}
-                                </div>
-                                {remainingDays !== null && (
-                                  <Badge className={`mt-1 text-xs ${urgencyConfig.color}`}>
-                                    {remainingDays <= 0 
-                                      ? `${Math.abs(remainingDays)} Tage überfällig`
-                                      : `in ${remainingDays} Tagen`
-                                    }
-                                  </Badge>
-                                )}
-                              </div>
-                            )}
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={() => deleteContract.mutate(contract.id)}
-                              disabled={deleteContract.isPending}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
+                {contracts.map((contract) => (
+                  <ContractCard
+                    key={contract.id}
+                    contract={contract}
+                    customerId={id!}
+                    onDelete={(contractId) => deleteContract.mutate(contractId)}
+                    onUpdate={(contractId, data) => updateContract.mutate({ id: contractId, ...data })}
+                    isDeleting={deleteContract.isPending}
+                    isUpdating={updateContract.isPending}
+                  />
+                ))}
               </div>
             )}
           </TabsContent>

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useIdentity } from "@/contexts/IdentityContext";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import type { Json } from "@/integrations/supabase/types";
 
@@ -51,9 +52,13 @@ interface CreateVersionInput {
 // ============================================
 
 export function useDatasetVersions() {
-  const { identity } = useIdentity();
+  const { identity, isSupabaseAuth } = useIdentity();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const tenantId = identity.tenantId;
+  
+  // Get real UUID for created_by (only if authenticated with Supabase)
+  const createdByUserId = isSupabaseAuth && user?.id ? user.id : null;
 
   // Fetch all versions for tenant
   const { data: versions = [], isLoading, error } = useQuery({
@@ -108,7 +113,7 @@ export function useDatasetVersions() {
           mobile_tariffs: input.mobileTariffs ?? [],
           sub_variants: input.subVariants ?? [],
           is_active: input.setActive ?? false,
-          created_by: identity.userId,
+          created_by: createdByUserId,
         })
         .select()
         .single();
@@ -243,7 +248,7 @@ export function useDatasetVersions() {
           mobile_tariffs: [...mobilePrimeTariffs, ...businessSmartTariffs] as unknown as Json,
           sub_variants: businessSubVariants as unknown as Json,
           is_active: true,
-          created_by: identity.userId,
+          created_by: createdByUserId,
         })
         .select()
         .single();

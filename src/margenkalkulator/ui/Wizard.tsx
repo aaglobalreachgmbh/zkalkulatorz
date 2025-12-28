@@ -57,20 +57,31 @@ export function Wizard() {
   const { getBonusAmount } = usePushProvisions();
   const { addToHistory } = useHistory();
   
-  // Dataset Versions - Auto-seed if none exist
+  // Dataset Versions - Auto-seed if none exist (only for authenticated admins)
   const { versions, isLoading: isLoadingVersions, seedDefaultVersion, isSeeding } = useDatasetVersions();
   const hasSeeded = useRef(false);
+  const { canAccessAdmin, isSupabaseAuth } = useIdentity();
   
   useEffect(() => {
-    // Auto-seed v2025_10 if no versions exist and not already seeding
-    if (!isLoadingVersions && versions.length === 0 && !hasSeeded.current && !isSeeding) {
+    // Auto-seed v2025_10 if:
+    // - No versions exist for this tenant
+    // - User is authenticated via Supabase AND has admin access
+    // - Not already seeding
+    const shouldSeed = !isLoadingVersions 
+      && versions.length === 0 
+      && !hasSeeded.current 
+      && !isSeeding
+      && isSupabaseAuth 
+      && canAccessAdmin;
+      
+    if (shouldSeed) {
       hasSeeded.current = true;
       seedDefaultVersion().catch(() => {
         // Reset flag on error so user can retry
         hasSeeded.current = false;
       });
     }
-  }, [isLoadingVersions, versions.length, seedDefaultVersion, isSeeding]);
+  }, [isLoadingVersions, versions.length, seedDefaultVersion, isSeeding, isSupabaseAuth, canAccessAdmin]);
   
   const [currentStep, setCurrentStep] = useState<WizardStep>("hardware");
   const [activeOption, setActiveOption] = useState<1 | 2>(1);

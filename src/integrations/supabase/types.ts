@@ -125,6 +125,57 @@ export type Database = {
         }
         Relationships: []
       }
+      corporate_bundles: {
+        Row: {
+          config: Json
+          created_at: string
+          created_by: string | null
+          description: string | null
+          featured: boolean | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          name: string
+          sector: string
+          sort_order: number | null
+          tags: string[] | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          config: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          featured?: boolean | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name: string
+          sector: string
+          sort_order?: number | null
+          tags?: string[] | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          featured?: boolean | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name?: string
+          sector?: string
+          sort_order?: number | null
+          tags?: string[] | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       custom_datasets: {
         Row: {
           created_at: string
@@ -419,6 +470,39 @@ export type Database = {
           email_hash?: string | null
           id?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      hardware_images: {
+        Row: {
+          created_at: string
+          hardware_id: string
+          id: string
+          image_url: string
+          tenant_id: string
+          thumbnail_url: string | null
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          hardware_id: string
+          id?: string
+          image_url: string
+          tenant_id?: string
+          thumbnail_url?: string | null
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          hardware_id?: string
+          id?: string
+          image_url?: string
+          tenant_id?: string
+          thumbnail_url?: string | null
+          updated_at?: string
+          uploaded_by?: string | null
         }
         Relationships: []
       }

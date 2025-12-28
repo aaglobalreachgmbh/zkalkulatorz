@@ -64,6 +64,7 @@ export function useCloudOffers() {
         customer_id: row.customer_id ?? null,
         team_id: row.team_id ?? null,
         visibility: (row.visibility as "private" | "team") ?? "private",
+        dataset_version_id: row.dataset_version_id ?? null,
       }));
     },
     enabled: !!user,
@@ -77,11 +78,13 @@ export function useCloudOffers() {
       config,
       avgMonthly,
       customerId,
+      datasetVersionId,
     }: {
       name: string;
       config: OfferOptionState;
       avgMonthly: number;
       customerId?: string | null;
+      datasetVersionId?: string | null;
     }): Promise<CloudOffer> => {
       if (!user) throw new Error("Nicht eingeloggt");
 
@@ -96,6 +99,7 @@ export function useCloudOffers() {
           preview: JSON.parse(JSON.stringify(preview)),
           is_draft: false,
           customer_id: customerId || null,
+          dataset_version_id: datasetVersionId || null,
         })
         .select()
         .single();
@@ -114,6 +118,7 @@ export function useCloudOffers() {
         customer_id: data.customer_id ?? null,
         team_id: data.team_id ?? null,
         visibility: (data.visibility as "private" | "team") ?? "private",
+        dataset_version_id: data.dataset_version_id ?? null,
       };
     },
     onSuccess: (newOffer) => {

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Smartphone, Signal, Router, LayoutGrid, Printer, Calculator, Home, ChevronLeft, ChevronRight, Lock } from "lucide-react";
@@ -12,6 +12,7 @@ import {
 } from "@/margenkalkulator";
 import { useEmployeeSettings } from "@/margenkalkulator/hooks/useEmployeeSettings";
 import { usePushProvisions } from "@/margenkalkulator/hooks/usePushProvisions";
+import { useDatasetVersions } from "@/margenkalkulator/hooks/useDatasetVersions";
 import { HardwareStep } from "./steps/HardwareStep";
 import { MobileStep } from "./steps/MobileStep";
 import { FixedNetStep } from "./steps/FixedNetStep";
@@ -55,6 +56,21 @@ export function Wizard() {
   const { settings: employeeSettings } = useEmployeeSettings();
   const { getBonusAmount } = usePushProvisions();
   const { addToHistory } = useHistory();
+  
+  // Dataset Versions - Auto-seed if none exist
+  const { versions, isLoading: isLoadingVersions, seedDefaultVersion, isSeeding } = useDatasetVersions();
+  const hasSeeded = useRef(false);
+  
+  useEffect(() => {
+    // Auto-seed v2025_10 if no versions exist and not already seeding
+    if (!isLoadingVersions && versions.length === 0 && !hasSeeded.current && !isSeeding) {
+      hasSeeded.current = true;
+      seedDefaultVersion().catch(() => {
+        // Reset flag on error so user can retry
+        hasSeeded.current = false;
+      });
+    }
+  }, [isLoadingVersions, versions.length, seedDefaultVersion, isSeeding]);
   
   const [currentStep, setCurrentStep] = useState<WizardStep>("hardware");
   const [activeOption, setActiveOption] = useState<1 | 2>(1);

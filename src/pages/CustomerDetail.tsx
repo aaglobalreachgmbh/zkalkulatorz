@@ -10,6 +10,8 @@ import {
   type ContractInput,
 } from "@/margenkalkulator/hooks/useCustomerContracts";
 import { ContractCard } from "./CustomerDetail/ContractCard";
+import { OfferToContractDialog } from "./CustomerDetail/OfferToContractDialog";
+import type { CloudOffer } from "@/margenkalkulator/hooks/useCloudOffers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -89,6 +91,9 @@ export default function CustomerDetail() {
   const [isContractDialogOpen, setIsContractDialogOpen] = useState(false);
   const [contractForm, setContractForm] = useState<ContractInput>(initialContractForm);
 
+  // Offer → Contract Dialog State
+  const [offerToConvert, setOfferToConvert] = useState<CloudOffer | null>(null);
+
   const customer = customers.find((c) => c.id === id);
   const customerOffers = offers.filter((o) => o.customer_id === id);
 
@@ -139,6 +144,11 @@ export default function CustomerDetail() {
     });
     setContractForm({ ...initialContractForm, customer_id: id });
     setIsContractDialogOpen(false);
+  };
+
+  const handleCreateContractFromOffer = async (input: ContractInput) => {
+    await createContract.mutateAsync(input);
+    setOfferToConvert(null);
   };
 
   const openContractDialog = () => {
@@ -474,7 +484,7 @@ export default function CustomerDetail() {
                 {customerOffers.map((offer) => (
                   <Card key={offer.id} className="hover:bg-accent/50 transition-colors">
                     <CardContent className="py-4 flex items-center justify-between">
-                      <div className="space-y-1">
+                      <div className="space-y-1 flex-1">
                         <p className="font-medium">{offer.name}</p>
                         <div className="flex items-center gap-3 text-sm text-muted-foreground">
                           {offer.preview && (
@@ -492,9 +502,19 @@ export default function CustomerDetail() {
                           {format(new Date(offer.created_at), "dd.MM.yyyy HH:mm", { locale: de })}
                         </p>
                       </div>
-                      <Button variant="ghost" size="sm" onClick={() => navigate(`/offers`)}>
-                        <ExternalLink className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => setOfferToConvert(offer)}
+                        >
+                          <ScrollText className="h-4 w-4 mr-1" />
+                          Als Vertrag anlegen
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => navigate(`/offers`)}>
+                          <ExternalLink className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
@@ -711,6 +731,15 @@ export default function CustomerDetail() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Offer to Contract Dialog */}
+        <OfferToContractDialog
+          offer={offerToConvert}
+          isOpen={!!offerToConvert}
+          onClose={() => setOfferToConvert(null)}
+          onCreate={handleCreateContractFromOffer}
+          isCreating={createContract.isPending}
+        />
       </div>
     </MainLayout>
   );

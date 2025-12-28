@@ -53,9 +53,9 @@ export default function Contracts() {
   // Group by urgency
   const groupedContracts = useMemo(() => {
     const groups: Record<VVLUrgency, ContractWithCustomer[]> = {
-      overdue: [],
-      soon: [],
-      upcoming: [],
+      critical: [],
+      warning: [],
+      ok: [],
       future: [],
       none: [],
     };
@@ -70,9 +70,9 @@ export default function Contracts() {
 
   // Counts
   const counts = useMemo(() => ({
-    overdue: groupedContracts.overdue.length,
-    soon: groupedContracts.soon.length,
-    upcoming: groupedContracts.upcoming.length,
+    critical: groupedContracts.critical.length,
+    warning: groupedContracts.warning.length,
+    ok: groupedContracts.ok.length,
     total: filteredContracts.length,
   }), [groupedContracts, filteredContracts]);
 
@@ -199,8 +199,8 @@ export default function Contracts() {
             <CardContent className="py-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Überfällig</p>
-                  <p className="text-2xl font-bold text-red-600">{counts.overdue}</p>
+                  <p className="text-sm text-muted-foreground">Dringend (&lt;30d)</p>
+                  <p className="text-2xl font-bold text-red-600">{counts.critical}</p>
                 </div>
                 <AlertTriangle className="h-8 w-8 text-red-500/50" />
               </div>
@@ -210,21 +210,21 @@ export default function Contracts() {
             <CardContent className="py-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">In 30 Tagen</p>
-                  <p className="text-2xl font-bold text-amber-600">{counts.soon}</p>
+                  <p className="text-sm text-muted-foreground">Bald (30-60d)</p>
+                  <p className="text-2xl font-bold text-amber-600">{counts.warning}</p>
                 </div>
                 <Clock className="h-8 w-8 text-amber-500/50" />
               </div>
             </CardContent>
           </Card>
-          <Card className="border-blue-500/30 bg-blue-500/5">
+          <Card className="border-green-500/30 bg-green-500/5">
             <CardContent className="py-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">In 90 Tagen</p>
-                  <p className="text-2xl font-bold text-blue-600">{counts.upcoming}</p>
+                  <p className="text-sm text-muted-foreground">Vormerken (60-90d)</p>
+                  <p className="text-2xl font-bold text-green-600">{counts.ok}</p>
                 </div>
-                <CalendarDays className="h-8 w-8 text-blue-500/50" />
+                <CalendarDays className="h-8 w-8 text-green-500/50" />
               </div>
             </CardContent>
           </Card>
@@ -289,10 +289,10 @@ export default function Contracts() {
           </Card>
         ) : (
           <div className="space-y-6">
-            {renderGroup('overdue', 'Überfällig', <AlertTriangle className="h-5 w-5 text-red-500" />)}
-            {renderGroup('soon', 'VVL in 30 Tagen', <Clock className="h-5 w-5 text-amber-500" />)}
-            {renderGroup('upcoming', 'VVL in 90 Tagen', <CalendarDays className="h-5 w-5 text-blue-500" />)}
-            {renderGroup('future', 'Später', <Calendar className="h-5 w-5 text-muted-foreground" />)}
+            {renderGroup('critical', 'Dringend – < 30 Tage', <AlertTriangle className="h-5 w-5 text-red-500" />)}
+            {renderGroup('warning', 'Bald – 30-60 Tage', <Clock className="h-5 w-5 text-amber-500" />)}
+            {renderGroup('ok', 'Vormerken – 60-90 Tage', <CalendarDays className="h-5 w-5 text-green-500" />)}
+            {renderGroup('future', 'Später – > 90 Tage', <Calendar className="h-5 w-5 text-muted-foreground" />)}
             {renderGroup('none', 'Ohne VVL-Datum', <Calendar className="h-5 w-5 text-muted-foreground" />)}
           </div>
         )}

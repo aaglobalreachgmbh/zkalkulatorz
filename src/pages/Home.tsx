@@ -1,9 +1,14 @@
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Zap, CheckCircle, TrendingUp, Key, UserPlus, Search, FileText, Bell } from "lucide-react";
 import { MainLayout } from "@/components/MainLayout";
+import { useVVLCounts } from "@/margenkalkulator/hooks/useCustomerContracts";
 
 const Home = () => {
   const navigate = useNavigate();
+  const vvlCounts = useVVLCounts();
+  
+  // Badge shows critical (< 30 days) count
+  const urgentVVLCount = vvlCounts.critical;
 
   return (
     <MainLayout>
@@ -56,10 +61,16 @@ const Home = () => {
 
             <button
               onClick={() => navigate("/contracts")}
-              className="group flex flex-col items-center gap-3 p-5 bg-card border border-border rounded-xl hover:border-primary/30 hover:shadow-lg transition-all duration-200"
+              className="group relative flex flex-col items-center gap-3 p-5 bg-card border border-border rounded-xl hover:border-amber-500/30 hover:shadow-lg transition-all duration-200"
             >
-              <div className="w-12 h-12 bg-amber-500/10 rounded-full flex items-center justify-center group-hover:bg-amber-500/20 transition-colors">
+              <div className="relative w-12 h-12 bg-amber-500/10 rounded-full flex items-center justify-center group-hover:bg-amber-500/20 transition-colors">
                 <Bell className="w-6 h-6 text-amber-500" />
+                {/* VVL Badge */}
+                {urgentVVLCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center animate-pulse">
+                    {urgentVVLCount > 9 ? '9+' : urgentVVLCount}
+                  </span>
+                )}
               </div>
               <span className="text-sm font-medium text-foreground">VVL-Liste</span>
             </button>

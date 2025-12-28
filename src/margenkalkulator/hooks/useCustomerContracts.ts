@@ -39,7 +39,7 @@ export interface ContractInput {
   notes?: string;
 }
 
-export type VVLUrgency = 'overdue' | 'soon' | 'upcoming' | 'future' | 'none';
+export type VVLUrgency = 'critical' | 'warning' | 'ok' | 'future' | 'none';
 
 // VVL Helper Functions
 export function getRemainingDays(dateStr: string | null): number | null {
@@ -66,46 +66,56 @@ export function isVVLReady(vvl_datum: string | null): boolean {
   return days <= 0;
 }
 
+// NEW: Color coding per user request:
+// 🔴 Rot (critical): < 30 Tage (inkl. überfällig)
+// 🟡 Gelb (warning): 30-60 Tage
+// 🟢 Grün (ok): 60-90 Tage
+// ⚪ Grau (future): > 90 Tage
 export function getVVLUrgency(vvl_datum: string | null): VVLUrgency {
   const days = getRemainingDays(vvl_datum);
   if (days === null) return 'none';
-  if (days <= 0) return 'overdue';
-  if (days <= 30) return 'soon';
-  if (days <= 90) return 'upcoming';
-  return 'future';
+  if (days < 30) return 'critical';    // Rot: < 30 Tage (inkl. überfällig)
+  if (days < 60) return 'warning';     // Gelb: 30-60 Tage
+  if (days <= 90) return 'ok';         // Grün: 60-90 Tage
+  return 'future';                     // Grau: > 90 Tage
 }
 
 export function getVVLUrgencyConfig(urgency: VVLUrgency) {
   const configs = {
-    overdue: { 
-      label: 'Überfällig', 
+    critical: { 
+      label: 'Dringend', 
       color: 'bg-red-500/20 text-red-600 border-red-500/30',
       dotColor: 'bg-red-500',
-      priority: 0 
+      priority: 0,
+      description: '< 30 Tage – Sofort kontaktieren'
     },
-    soon: { 
-      label: 'In 30 Tagen', 
+    warning: { 
+      label: 'Bald', 
       color: 'bg-amber-500/20 text-amber-600 border-amber-500/30',
       dotColor: 'bg-amber-500',
-      priority: 1 
+      priority: 1,
+      description: '30-60 Tage – In Planung nehmen'
     },
-    upcoming: { 
-      label: 'In 90 Tagen', 
-      color: 'bg-blue-500/20 text-blue-600 border-blue-500/30',
-      dotColor: 'bg-blue-500',
-      priority: 2 
+    ok: { 
+      label: 'Vormerken', 
+      color: 'bg-green-500/20 text-green-600 border-green-500/30',
+      dotColor: 'bg-green-500',
+      priority: 2,
+      description: '60-90 Tage – Vormerken'
     },
     future: { 
       label: 'Später', 
       color: 'bg-muted text-muted-foreground border-border',
       dotColor: 'bg-muted-foreground',
-      priority: 3 
+      priority: 3,
+      description: '> 90 Tage'
     },
     none: { 
       label: 'Kein VVL', 
       color: 'bg-muted text-muted-foreground border-border',
       dotColor: 'bg-muted-foreground',
-      priority: 4 
+      priority: 4,
+      description: 'Kein Datum hinterlegt'
     },
   };
   return configs[urgency];
@@ -275,9 +285,9 @@ export function useVVLCounts() {
   const { data: contracts = [] } = useAllContracts();
   
   const counts = {
-    overdue: 0,
-    soon: 0,
-    upcoming: 0,
+    critical: 0,
+    warning: 0,
+    ok: 0,
     future: 0,
     none: 0,
     total: contracts.length,

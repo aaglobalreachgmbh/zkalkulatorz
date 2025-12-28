@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { VVLNotificationBanner } from "@/components/VVLNotificationBanner";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -23,6 +24,9 @@ export function MainLayout({ children }: MainLayoutProps) {
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          {/* VVL Notification Banner */}
+          <VVLNotificationBanner />
+          
           {/* Header */}
           <header className="h-14 border-b border-border bg-card/80 backdrop-blur-sm flex items-center justify-between px-4 sticky top-0 z-40">
             <div className="flex items-center gap-2">

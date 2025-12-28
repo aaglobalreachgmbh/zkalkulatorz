@@ -3,7 +3,6 @@
 // ============================================
 
 import { useState } from "react";
-import { pdf } from "@react-pdf/renderer";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -23,7 +22,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { FileText, Download, Loader2, TrendingUp, Package, Euro } from "lucide-react";
 import { toast } from "sonner";
 import { useProvisionForecast } from "../../hooks/useProvisionForecast";
-import { ProvisionForecastPdf } from "../../pdf/ProvisionForecastPdf";
 import { downloadCSV, formatDateForFilename, formatCurrencyForCSV } from "../../lib/exportHelpers";
 import type { TimeRange } from "../../hooks/useReporting";
 
@@ -91,6 +89,12 @@ export function ProvisionForecastDialog({ open, onOpenChange }: ProvisionForecas
   const handleExportPDF = async () => {
     setExporting(true);
     try {
+      // Dynamically import PDF dependencies to avoid SSR issues
+      const [{ pdf }, { ProvisionForecastPdf }] = await Promise.all([
+        import("@react-pdf/renderer"),
+        import("../../pdf/ProvisionForecastPdf"),
+      ]);
+
       const blob = await pdf(
         <ProvisionForecastPdf
           rows={rows}

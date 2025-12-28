@@ -3,7 +3,6 @@
 // ============================================
 
 import { useState } from "react";
-import { pdf } from "@react-pdf/renderer";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -16,7 +15,6 @@ import {
 import { FileText, Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAllContracts, getVVLUrgency } from "../../hooks/useCustomerContracts";
-import { VVLListPdf } from "../../pdf/VVLListPdf";
 import { downloadCSV, formatDate, formatDateForFilename, getRemainingDays, getVVLUrgencyLabel } from "../../lib/exportHelpers";
 
 interface VVLExportDialogProps {
@@ -91,6 +89,12 @@ export function VVLExportDialog({ open, onOpenChange }: VVLExportDialogProps) {
   const handleExportPDF = async () => {
     setExporting(true);
     try {
+      // Dynamically import PDF dependencies to avoid SSR issues
+      const [{ pdf }, { VVLListPdf }] = await Promise.all([
+        import("@react-pdf/renderer"),
+        import("../../pdf/VVLListPdf"),
+      ]);
+
       const blob = await pdf(
         <VVLListPdf contracts={filteredContracts} generatedAt={new Date()} />
       ).toBlob();

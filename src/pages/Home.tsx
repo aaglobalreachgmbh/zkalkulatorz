@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Calculator, ArrowRight, Zap, CheckCircle, TrendingUp, Key } from "lucide-react";
+import { ArrowRight, Zap, CheckCircle, TrendingUp, Key, UserPlus, Search, FileText, Bell } from "lucide-react";
 import { MainLayout } from "@/components/MainLayout";
 
 const Home = () => {
@@ -20,6 +20,49 @@ const Home = () => {
               Wählen Sie zwischen der detaillierten Einzelkonfiguration oder unseren
               optimierten Best-Practice Lösungen für Geschäftskunden.
             </p>
+          </div>
+
+          {/* Quickstart Icons */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto mb-8 animate-fade-in">
+            <button
+              onClick={() => navigate("/customers?action=new")}
+              className="group flex flex-col items-center gap-3 p-5 bg-card border border-border rounded-xl hover:border-primary/30 hover:shadow-lg transition-all duration-200"
+            >
+              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                <UserPlus className="w-6 h-6 text-primary" />
+              </div>
+              <span className="text-sm font-medium text-foreground">Neuer Kunde</span>
+            </button>
+
+            <button
+              onClick={() => navigate("/customers")}
+              className="group flex flex-col items-center gap-3 p-5 bg-card border border-border rounded-xl hover:border-primary/30 hover:shadow-lg transition-all duration-200"
+            >
+              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                <Search className="w-6 h-6 text-primary" />
+              </div>
+              <span className="text-sm font-medium text-foreground">Kundensuche</span>
+            </button>
+
+            <button
+              onClick={() => navigate("/calculator")}
+              className="group flex flex-col items-center gap-3 p-5 bg-card border border-border rounded-xl hover:border-primary/30 hover:shadow-lg transition-all duration-200"
+            >
+              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                <FileText className="w-6 h-6 text-primary" />
+              </div>
+              <span className="text-sm font-medium text-foreground">Neues Angebot</span>
+            </button>
+
+            <button
+              onClick={() => navigate("/customers")}
+              className="group flex flex-col items-center gap-3 p-5 bg-card border border-border rounded-xl hover:border-primary/30 hover:shadow-lg transition-all duration-200"
+            >
+              <div className="w-12 h-12 bg-amber-500/10 rounded-full flex items-center justify-center group-hover:bg-amber-500/20 transition-colors">
+                <Bell className="w-6 h-6 text-amber-500" />
+              </div>
+              <span className="text-sm font-medium text-foreground">VVL-Liste</span>
+            </button>
           </div>
 
           {/* Option Cards */}

@@ -191,6 +191,11 @@ export function useCloudOffers() {
     },
   });
 
+  // Helper: Get offers for specific customer
+  const getOffersForCustomer = (customerId: string) => {
+    return offers.filter((o) => o.customer_id === customerId);
+  };
+
   return {
     offers,
     isLoading,
@@ -200,5 +205,6 @@ export function useCloudOffers() {
     createOffer: createMutation,
     deleteOffer: deleteMutation,
     renameOffer: renameMutation,
+    getOffersForCustomer,
   };
 }

@@ -514,7 +514,11 @@ export default function Customers() {
                 </TableHeader>
                 <TableBody>
                   {customers.map((customer) => (
-                    <TableRow key={customer.id}>
+                    <TableRow 
+                      key={customer.id}
+                      className="cursor-pointer hover:bg-accent/50"
+                      onClick={() => navigate(`/customers/${customer.id}`)}
+                    >
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
                           {customer.vip_kunde && (
@@ -532,7 +536,7 @@ export default function Customers() {
                           : customer.ort || "-"}
                       </TableCell>
                       <TableCell>{getStatusBadge(customer.customer_status)}</TableCell>
-                      <TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon">
@@ -540,6 +544,10 @@ export default function Customers() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => navigate(`/customers/${customer.id}`)}>
+                              <Building2 className="h-4 w-4 mr-2" />
+                              Details anzeigen
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleOpenDialog(customer)}>
                               <Pencil className="h-4 w-4 mr-2" />
                               Bearbeiten

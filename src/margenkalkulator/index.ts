@@ -64,6 +64,16 @@ export {
   useAllPushProvisions,
 } from "./hooks/usePushProvisions";
 
+// Hardware Images & Corporate Bundles
+export { useHardwareImages } from "./hooks/useHardwareImages";
+export { 
+  useCorporateBundles,
+  SECTOR_LABELS,
+  SECTOR_ICONS,
+  type Sector,
+  type CorporateBundle,
+} from "./hooks/useCorporateBundles";
+
 // === BENEFITS ENGINE ===
 export { calculateGigaKombi } from "./engine/benefitsEngine";
 

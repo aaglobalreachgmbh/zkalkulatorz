@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { MainLayout } from "@/components/MainLayout";
 import { useCustomers, Customer, CustomerInput } from "@/margenkalkulator/hooks/useCustomers";
 import { Button } from "@/components/ui/button";
@@ -68,10 +68,21 @@ const initialFormData: CustomerInput = {
 
 export default function Customers() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { customers, isLoading, createCustomer, updateCustomer, deleteCustomer } = useCustomers();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [formData, setFormData] = useState<CustomerInput>(initialFormData);
+
+  // Handle ?action=new query parameter
+  useEffect(() => {
+    if (searchParams.get("action") === "new") {
+      setIsDialogOpen(true);
+      // Clear the query parameter after opening dialog
+      searchParams.delete("action");
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const resetForm = () => {
     setFormData(initialFormData);

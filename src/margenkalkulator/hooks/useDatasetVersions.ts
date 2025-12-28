@@ -4,6 +4,13 @@ import { useIdentity } from "@/contexts/IdentityContext";
 import { toast } from "@/hooks/use-toast";
 import type { Json } from "@/integrations/supabase/types";
 
+// Seed data imports
+import { provisionTable } from "@/margenkalkulator/data/business/v2025_10/provisions";
+import { omoMatrix } from "@/margenkalkulator/data/business/v2025_10/omoMatrix";
+import { hardwareCatalog } from "@/margenkalkulator/data/business/v2025_10/hardware";
+import { mobilePrimeTariffs, businessSmartTariffs } from "@/margenkalkulator/data/business/v2025_10";
+import { businessSubVariants } from "@/margenkalkulator/data/business/v2025_09/subVariants";
+
 // ============================================
 // Types
 // ============================================
@@ -219,6 +226,47 @@ export function useDatasetVersions() {
     },
   });
 
+  // Seed default v2025_10 version
+  const seedMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase
+        .from("dataset_versions")
+        .insert({
+          tenant_id: tenantId,
+          version_name: "Oktober 2025 (Standard)",
+          valid_from: "2025-10-01",
+          valid_until: "2025-10-31",
+          source_file: "v2025_10 TypeScript-Seed",
+          provisions: provisionTable as unknown as Json,
+          omo_matrix: omoMatrix as unknown as Json,
+          hardware_catalog: hardwareCatalog as unknown as Json,
+          mobile_tariffs: [...mobilePrimeTariffs, ...businessSmartTariffs] as unknown as Json,
+          sub_variants: businessSubVariants as unknown as Json,
+          is_active: true,
+          created_by: identity.userId,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dataset-versions", tenantId] });
+      toast({
+        title: "Standard-Daten geladen",
+        description: "v2025_10 wurde als aktive Version eingerichtet.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Fehler beim Seeding",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
     versions,
     activeVersion,
@@ -228,9 +276,11 @@ export function useDatasetVersions() {
     activateVersion: activateMutation.mutateAsync,
     deleteVersion: deleteMutation.mutateAsync,
     updateVersion: updateMutation.mutateAsync,
+    seedDefaultVersion: seedMutation.mutateAsync,
     isCreating: createMutation.isPending,
     isActivating: activateMutation.isPending,
     isDeleting: deleteMutation.isPending,
     isUpdating: updateMutation.isPending,
+    isSeeding: seedMutation.isPending,
   };
 }

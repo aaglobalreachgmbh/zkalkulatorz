@@ -44,14 +44,12 @@ interface CloudOfferManagerProps {
   config: OfferOptionState;
   avgMonthly: number;
   onLoadOffer: (config: OfferOptionState) => void;
-  datasetVersionId?: string | null;
 }
 
 export function CloudOfferManager({
   config,
   avgMonthly,
   onLoadOffer,
-  datasetVersionId,
 }: CloudOfferManagerProps) {
   const { user } = useAuth();
   const {
@@ -62,7 +60,7 @@ export function CloudOfferManager({
     deleteOffer,
   } = useCloudOffers();
   const { customers } = useCustomers();
-  const { versions } = useDatasetVersions();
+  const { versions, activeVersion } = useDatasetVersions();
 
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<"load" | "save">("load");
@@ -112,7 +110,7 @@ export function CloudOfferManager({
         config,
         avgMonthly,
         customerId: selectedCustomerId,
-        datasetVersionId: datasetVersionId || null,
+        datasetVersionId: activeVersion?.id || null,
       });
       setSaveName("");
       setSelectedCustomerId(null);

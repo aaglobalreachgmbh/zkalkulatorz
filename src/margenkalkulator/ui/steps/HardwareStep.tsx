@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/accordion";
 import type { HardwareState, DatasetVersion, ViewMode } from "../../engine/types";
 import { listHardwareItems } from "../../engine/catalogResolver";
-import { Smartphone, Upload, Check, Search, Tablet, ChevronDown } from "lucide-react";
+import { Smartphone, Upload, Check, Search, Tablet, ChevronDown, Image as ImageIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { 
@@ -25,6 +25,7 @@ import {
   type HardwareConfig 
 } from "../../lib/hardwareGrouping";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
+import { useHardwareImages } from "../../hooks/useHardwareImages";
 
 interface HardwareStepProps {
   value: HardwareState;
@@ -33,15 +34,9 @@ interface HardwareStepProps {
   viewMode?: ViewMode;
 }
 
-// Placeholder images for hardware (using picsum for demo)
-const HARDWARE_IMAGES: Record<string, string> = {
-  no_hardware: "https://picsum.photos/seed/simonly/200/200",
-  default: "https://picsum.photos/seed/phone/200/200",
-};
-
-function getHardwareImage(familyId: string): string {
-  return `https://picsum.photos/seed/${familyId}/200/200`;
-}
+// Fallback placeholder for hardware without images
+const PLACEHOLDER_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect fill='%23f1f5f9' width='200' height='200'/%3E%3Cpath fill='%2394a3b8' d='M85 60h30v80H85z'/%3E%3Ccircle fill='%2394a3b8' cx='100' cy='150' r='8'/%3E%3C/svg%3E";
+const SIM_ONLY_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect fill='%23fef3c7' width='200' height='200'/%3E%3Crect fill='%23f59e0b' x='60' y='50' width='80' height='100' rx='8'/%3E%3Crect fill='%23fbbf24' x='70' y='70' width='25' height='20'/%3E%3Crect fill='%23fbbf24' x='105' y='70' width='25' height='20'/%3E%3Crect fill='%23fbbf24' x='70' y='100' width='60' height='8'/%3E%3Crect fill='%23fbbf24' x='70' y='115' width='60' height='8'/%3E%3Crect fill='%23fbbf24' x='70' y='130' width='60' height='8'/%3E%3C/svg%3E";
 
 type CategoryFilter = "all" | "smartphone" | "tablet";
 
@@ -54,6 +49,23 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
   const [selectedBrand, setSelectedBrand] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>("all");
   const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
+
+  // Hardware images from Supabase
+  const { imageMap } = useHardwareImages();
+
+  // Helper to get image for a hardware item
+  const getHardwareImage = (hardwareId: string, familyId?: string): string => {
+    // Check direct ID match first
+    if (imageMap.has(hardwareId)) {
+      return imageMap.get(hardwareId)!;
+    }
+    // Check family ID match
+    if (familyId && imageMap.has(familyId)) {
+      return imageMap.get(familyId)!;
+    }
+    // Return placeholder
+    return PLACEHOLDER_IMAGE;
+  };
 
   const hardwareItems = useMemo(() => listHardwareItems(datasetVersion), [datasetVersion]);
   
@@ -292,9 +304,9 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
             
             <div className="flex justify-center mb-3">
               <img 
-                src={HARDWARE_IMAGES.no_hardware}
+                src={imageMap.get("no_hardware") || SIM_ONLY_IMAGE}
                 alt="SIM Only"
-                className="w-20 h-20 object-cover rounded-lg"
+                className="w-20 h-20 object-contain rounded-lg bg-muted"
               />
             </div>
             
@@ -357,9 +369,12 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
                   
                   <div className="flex justify-center mb-3 mt-2">
                     <img 
-                      src={getHardwareImage(family.familyId)}
+                      src={getHardwareImage(family.familyId, family.familyId)}
                       alt={family.familyName}
-                      className="w-20 h-20 object-cover rounded-lg"
+                      className="w-20 h-20 object-contain rounded-lg bg-muted"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = PLACEHOLDER_IMAGE;
+                      }}
                     />
                   </div>
                   

@@ -59,9 +59,11 @@ export function DatasetVersionManager() {
     createVersion,
     activateVersion,
     deleteVersion,
+    seedDefaultVersion,
     isCreating,
     isActivating,
     isDeleting,
+    isSeeding,
   } = useDatasetVersions();
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -395,9 +397,21 @@ export function DatasetVersionManager() {
           <div className="text-center py-8 text-muted-foreground">
             <Database className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p>Noch keine Versionen erstellt.</p>
-            <p className="text-sm mt-1">
-              Es werden die Standard-Provisionen aus v2025_10 verwendet.
+            <p className="text-sm mt-1 mb-4">
+              Laden Sie die Standard-Provisionen aus v2025_10.
             </p>
+            <Button
+              onClick={() => seedDefaultVersion()}
+              disabled={isSeeding}
+              className="gap-2"
+            >
+              {isSeeding ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Database className="h-4 w-4" />
+              )}
+              {isSeeding ? "Wird geladen..." : "v2025_10 Standard-Daten laden"}
+            </Button>
           </div>
         ) : (
           <Table>

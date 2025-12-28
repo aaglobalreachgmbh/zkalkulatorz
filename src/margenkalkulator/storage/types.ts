@@ -47,6 +47,7 @@ export interface CloudOffer {
   customer_id: string | null;
   team_id: string | null;
   visibility: "private" | "team";
+  dataset_version_id: string | null;
 }
 
 /**

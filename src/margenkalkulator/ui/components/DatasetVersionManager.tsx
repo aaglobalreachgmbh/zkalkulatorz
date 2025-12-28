@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,15 +41,20 @@ import {
   FileText,
   Calendar,
   Power,
+  FileUp,
 } from "lucide-react";
-import { useDatasetVersions, type DatasetVersion } from "@/margenkalkulator/hooks/useDatasetVersions";
+import { useDatasetVersions } from "@/margenkalkulator/hooks/useDatasetVersions";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
+import { parsePdf, validatePdfFile, type PdfDetectionResult } from "@/margenkalkulator/dataManager/importers/pdfImporter";
+import { parseProvisionPdf } from "@/margenkalkulator/dataManager/importers/pdfParsers/provisionPdfParser";
+import type { ProvisionRow, OMOMatrixRow } from "@/margenkalkulator/dataManager/types";
+import type { Json } from "@/integrations/supabase/types";
+import { toast } from "@/hooks/use-toast";
 
 export function DatasetVersionManager() {
   const { 
     versions, 
-    activeVersion, 
     isLoading,
     createVersion,
     activateVersion,
@@ -67,6 +72,16 @@ export function DatasetVersionManager() {
   });
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [activatingId, setActivatingId] = useState<string | null>(null);
+  
+  // PDF Import state
+  const [isDragging, setIsDragging] = useState(false);
+  const [pdfProcessing, setPdfProcessing] = useState(false);
+  const [pdfResult, setPdfResult] = useState<{
+    detection: PdfDetectionResult;
+    provisions: ProvisionRow[];
+    omoMatrix: OMOMatrixRow[];
+    fileName: string;
+  } | null>(null);
 
   const handleCreate = async () => {
     if (!newVersion.versionName || !newVersion.validFrom) return;
@@ -104,6 +119,133 @@ export function DatasetVersionManager() {
     }
   };
 
+  // PDF Drag & Drop handlers
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+
+  const processPdfFile = async (file: File) => {
+    const validation = validatePdfFile(file);
+    if (!validation.valid) {
+      toast({
+        title: "Ungültige Datei",
+        description: validation.error,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setPdfProcessing(true);
+    setPdfResult(null);
+
+    try {
+      const { detection, pages } = await parsePdf(file);
+
+      if (detection.format === "provision_tkworld") {
+        const result = parseProvisionPdf(pages);
+        const parsedData = result.data[0];
+        
+        setPdfResult({
+          detection,
+          provisions: parsedData?.provisions || [],
+          omoMatrix: parsedData?.omoMatrix || [],
+          fileName: file.name,
+        });
+        
+        // Auto-fill version name
+        const monthMatch = file.name.match(/(\d{2})_?(\d{4})/);
+        if (monthMatch) {
+          const month = parseInt(monthMatch[1]);
+          const year = monthMatch[2];
+          const monthNames = ["Januar", "Februar", "März", "April", "Mai", "Juni", 
+                            "Juli", "August", "September", "Oktober", "November", "Dezember"];
+          setNewVersion(prev => ({
+            ...prev,
+            versionName: `${monthNames[month - 1]} ${year}`,
+            validFrom: `${year}-${monthMatch[1]}-01`,
+            sourceFile: file.name,
+          }));
+        } else {
+          setNewVersion(prev => ({
+            ...prev,
+            sourceFile: file.name,
+          }));
+        }
+        
+        setIsCreateOpen(true);
+      } else {
+        toast({
+          title: "Unbekanntes Format",
+          description: `Das PDF-Format wurde nicht erkannt. Erkannte Hinweise: ${detection.hints.slice(0, 3).join(", ")}`,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Fehler beim Verarbeiten",
+        description: error instanceof Error ? error.message : "PDF konnte nicht gelesen werden",
+        variant: "destructive",
+      });
+    } finally {
+      setPdfProcessing(false);
+    }
+  };
+
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = Array.from(e.dataTransfer.files);
+    const pdfFile = files.find(f => f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf"));
+    
+    if (pdfFile) {
+      await processPdfFile(pdfFile);
+    } else {
+      toast({
+        title: "Keine PDF-Datei",
+        description: "Bitte eine PDF-Datei ziehen",
+        variant: "destructive",
+      });
+    }
+  }, []);
+
+  const handleFileInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      await processPdfFile(file);
+    }
+  };
+
+  const handleCreateWithData = async () => {
+    if (!newVersion.versionName || !newVersion.validFrom || !pdfResult) return;
+    
+    await createVersion({
+      versionName: newVersion.versionName,
+      validFrom: newVersion.validFrom,
+      sourceFile: newVersion.sourceFile || null,
+      setActive: false,
+      provisions: pdfResult.provisions as unknown as Json,
+      omoMatrix: pdfResult.omoMatrix as unknown as Json,
+    });
+    
+    setIsCreateOpen(false);
+    setPdfResult(null);
+    setNewVersion({
+      versionName: "",
+      validFrom: new Date().toISOString().slice(0, 10),
+      sourceFile: "",
+    });
+  };
+
   if (isLoading) {
     return (
       <Card>
@@ -135,14 +277,31 @@ export function DatasetVersionManager() {
                 Neue Version
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="sm:max-w-lg">
               <DialogHeader>
                 <DialogTitle>Neue Provisions-Version</DialogTitle>
                 <DialogDescription>
-                  Erstelle eine neue Version für Provisionsdaten. 
-                  Die Daten können nach dem Erstellen per PDF-Import befüllt werden.
+                  {pdfResult 
+                    ? `${pdfResult.provisions.length} Tarife und ${pdfResult.omoMatrix.length} OMO-Einträge aus PDF extrahiert.`
+                    : "Erstelle eine neue Version für Provisionsdaten oder importiere eine PDF."}
                 </DialogDescription>
               </DialogHeader>
+              
+              {pdfResult && (
+                <div className="flex items-center gap-2 p-3 bg-primary/10 rounded-lg">
+                  <FileText className="h-5 w-5 text-primary" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{pdfResult.fileName}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {pdfResult.provisions.length} Provisionen, {pdfResult.omoMatrix.length} OMO-Einträge
+                    </p>
+                  </div>
+                  <Badge variant="outline" className="text-primary border-primary">
+                    {pdfResult.detection.confidence}
+                  </Badge>
+                </div>
+              )}
+              
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
                   <Label htmlFor="versionName">Versionsname</Label>
@@ -163,7 +322,7 @@ export function DatasetVersionManager() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="sourceFile">Quelldatei (optional)</Label>
+                  <Label htmlFor="sourceFile">Quelldatei</Label>
                   <Input
                     id="sourceFile"
                     placeholder="z.B. SoHo_Provisionsliste_10_2025.pdf"
@@ -173,25 +332,69 @@ export function DatasetVersionManager() {
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
+                <Button variant="outline" onClick={() => { setIsCreateOpen(false); setPdfResult(null); }}>
                   Abbrechen
                 </Button>
-                <Button onClick={handleCreate} disabled={isCreating || !newVersion.versionName}>
+                <Button 
+                  onClick={pdfResult ? handleCreateWithData : handleCreate} 
+                  disabled={isCreating || !newVersion.versionName}
+                >
                   {isCreating ? (
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
                   ) : null}
-                  Erstellen
+                  {pdfResult ? "Mit Daten speichern" : "Erstellen"}
                 </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-6">
+        {/* PDF Drop Zone */}
+        <div
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          className={`
+            relative border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer
+            ${isDragging 
+              ? "border-primary bg-primary/5" 
+              : "border-border hover:border-primary/50 hover:bg-muted/50"
+            }
+            ${pdfProcessing ? "pointer-events-none opacity-50" : ""}
+          `}
+        >
+          <input
+            type="file"
+            accept=".pdf"
+            onChange={handleFileInput}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            disabled={pdfProcessing}
+          />
+          
+          {pdfProcessing ? (
+            <div className="flex flex-col items-center gap-2">
+              <Loader2 className="h-10 w-10 animate-spin text-primary" />
+              <p className="text-sm text-muted-foreground">PDF wird verarbeitet...</p>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+                <FileUp className="h-7 w-7 text-primary" />
+              </div>
+              <p className="font-medium">PDF hier ablegen</p>
+              <p className="text-sm text-muted-foreground">
+                Provisions-PDF (TK-World Format) per Drag & Drop importieren
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Version Table */}
         {versions.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <Database className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>Noch keine Versions erstellt.</p>
+            <p>Noch keine Versionen erstellt.</p>
             <p className="text-sm mt-1">
               Es werden die Standard-Provisionen aus v2025_10 verwendet.
             </p>

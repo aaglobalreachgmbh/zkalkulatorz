@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import {
   Cloud,
   CloudOff,
@@ -29,11 +30,13 @@ import {
   Loader2,
   RefreshCw,
   Building2,
+  Database,
 } from "lucide-react";
 import type { OfferOptionState } from "../../engine/types";
 import type { CloudOffer } from "../../storage/types";
 import { useCloudOffers } from "../../hooks/useCloudOffers";
 import { useCustomers } from "../../hooks/useCustomers";
+import { useDatasetVersions } from "../../hooks/useDatasetVersions";
 import { useAuth } from "@/hooks/useAuth";
 import { CustomerSelector } from "./CustomerSelector";
 
@@ -41,12 +44,14 @@ interface CloudOfferManagerProps {
   config: OfferOptionState;
   avgMonthly: number;
   onLoadOffer: (config: OfferOptionState) => void;
+  datasetVersionId?: string | null;
 }
 
 export function CloudOfferManager({
   config,
   avgMonthly,
   onLoadOffer,
+  datasetVersionId,
 }: CloudOfferManagerProps) {
   const { user } = useAuth();
   const {
@@ -57,6 +62,7 @@ export function CloudOfferManager({
     deleteOffer,
   } = useCloudOffers();
   const { customers } = useCustomers();
+  const { versions } = useDatasetVersions();
 
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<"load" | "save">("load");
@@ -69,6 +75,13 @@ export function CloudOfferManager({
     customers.forEach((c) => map.set(c.id, c.company_name));
     return map;
   }, [customers]);
+
+  // Build version lookup map
+  const versionMap = useMemo(() => {
+    const map = new Map<string, string>();
+    versions.forEach((v) => map.set(v.id, v.versionName));
+    return map;
+  }, [versions]);
 
   // Generate default name
   const defaultName = () => {
@@ -99,6 +112,7 @@ export function CloudOfferManager({
         config,
         avgMonthly,
         customerId: selectedCustomerId,
+        datasetVersionId: datasetVersionId || null,
       });
       setSaveName("");
       setSelectedCustomerId(null);
@@ -238,6 +252,13 @@ export function CloudOfferManager({
                               <Building2 className="w-3 h-3" />
                               {customerMap.get(offer.customer_id)}
                             </div>
+                          )}
+                          {/* Version badge */}
+                          {offer.dataset_version_id && versionMap.get(offer.dataset_version_id) && (
+                            <Badge variant="outline" className="mt-1 text-xs">
+                              <Database className="w-3 h-3 mr-1" />
+                              {versionMap.get(offer.dataset_version_id)}
+                            </Badge>
                           )}
                           <div className="mt-1 text-sm font-medium text-primary">
                             {(offer.preview?.avgMonthly || 0).toFixed(2)} € /mtl.

@@ -1055,6 +1055,7 @@ export type Database = {
           config: Json
           created_at: string
           customer_id: string | null
+          dataset_version_id: string | null
           id: string
           is_draft: boolean | null
           name: string
@@ -1068,6 +1069,7 @@ export type Database = {
           config: Json
           created_at?: string
           customer_id?: string | null
+          dataset_version_id?: string | null
           id?: string
           is_draft?: boolean | null
           name: string
@@ -1081,6 +1083,7 @@ export type Database = {
           config?: Json
           created_at?: string
           customer_id?: string | null
+          dataset_version_id?: string | null
           id?: string
           is_draft?: boolean | null
           name?: string
@@ -1096,6 +1099,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_offers_dataset_version_id_fkey"
+            columns: ["dataset_version_id"]
+            isOneToOne: false
+            referencedRelation: "dataset_versions"
             referencedColumns: ["id"]
           },
           {

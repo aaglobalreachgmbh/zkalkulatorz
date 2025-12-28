@@ -23,6 +23,7 @@ import HardwareManager from "./pages/HardwareManager";
 import Auth from "./pages/Auth";
 import SecurityDashboard from "./pages/SecurityDashboard";
 import Customers from "./pages/Customers";
+import CustomerDetail from "./pages/CustomerDetail";
 import MoccaImport from "./pages/MoccaImport";
 import Team from "./pages/Team";
 import Offers from "./pages/Offers";
@@ -80,6 +81,14 @@ const App = () => (
                         element={
                           <ProtectedRoute>
                             <Customers />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/customers/:id"
+                        element={
+                          <ProtectedRoute>
+                            <CustomerDetail />
                           </ProtectedRoute>
                         }
                       />

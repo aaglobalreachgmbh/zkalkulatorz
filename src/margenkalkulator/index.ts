@@ -48,6 +48,11 @@ export {
 export { useCloudDrafts } from "./hooks/useCloudDrafts";
 export { useCloudHistory } from "./hooks/useCloudHistory";
 export { useCloudTemplates, type CloudTemplate, type CloudFolder } from "./hooks/useCloudTemplates";
+export { useCloudOffers, type CloudOffer } from "./hooks/useCloudOffers";
+
+// Customer Hooks
+export { useCustomers, type Customer, type CustomerInput } from "./hooks/useCustomers";
+export { useCustomerNotes, type CustomerNote, type NoteType } from "./hooks/useCustomerNotes";
 
 // Employee Settings & Push Provisions
 export { 

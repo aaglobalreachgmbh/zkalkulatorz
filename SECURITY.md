@@ -1,5 +1,56 @@
 # Security Documentation
 
+## Quick Reference (Security Manifest)
+
+> **ROLLE:** Du agierst als Senior Security Engineer. Deine oberste Priorität ist die Sicherheit der Anwendung.
+
+### REGEL 1: Datenbank-Härtung (Supabase)
+
+| Anforderung | Code-Beispiel |
+|-------------|---------------|
+| RLS Pflicht | `ALTER TABLE x ENABLE ROW LEVEL SECURITY` |
+| WITH CHECK | `USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id)` |
+| Admin-Checks | `public.has_role(auth.uid(), 'admin')` |
+| SECURITY DEFINER | `SET search_path = public` |
+
+### REGEL 2: Geheimnisse & Edge Functions
+
+| ❌ Verboten | ✅ Erlaubt |
+|-------------|------------|
+| API-Keys im Frontend | Supabase Secrets |
+| Direkte API-Calls vom Client | Edge Functions als Proxy |
+| Auth-Header nur auf Existenz prüfen | JWT kryptographisch verifizieren |
+
+### REGEL 3: Frontend & Validierung
+
+```tsx
+// ✅ Immer so:
+import { Input } from "@/components/ui";          // = SecureInput
+import { useSecurity } from "@/providers/SecurityProvider";
+const { sanitize, checkThreats } = useSecurity();
+
+// ❌ Niemals:
+<input type="text" ... />                         // Raw HTML
+dangerouslySetInnerHTML={{ __html: userInput }}  // XSS-Gefahr
+```
+
+### REGEL 4: Projektspezifische Patterns
+
+| Pattern | Import |
+|---------|--------|
+| Security Context | `useSecurity()` |
+| Secure HOC | `withSecurity(Component, { requireAuth: true })` |
+| Rate Limiting | `useServerRateLimit('ai')` |
+| Encrypted Storage | `useSecureStorage('key')` |
+
+### REGEL 5: AI-Halluzinationen vermeiden
+
+- ✅ Prüfe ob Sicherheitskommentare echten Code haben
+- ✅ Nutze nur existierende npm-Pakete
+- ✅ Nutze Lovable AI Gateway statt direkter API-Calls
+
+---
+
 ## Überblick
 
 Dieses Projekt implementiert ein 8-Schichten-Sicherheitssystem, das automatischen Schutz für alle Komponenten bietet.
@@ -670,8 +721,25 @@ const SECURITY_HEADERS = {
 
 1. **npm audit in CI/CD** - GitHub Actions Workflow hinzufügen
 2. **pgTAP RLS Tests** - Automatisierte Policy-Tests
-3. **Object.freeze(Object.prototype)** - Prototype Pollution Schutz
+3. ~~**Object.freeze(Object.prototype)** - Prototype Pollution Schutz~~ ✅ Implementiert (28.12.2025)
 
 ---
 
-*Letztes Audit: 27.12.2025 | Auditor: AI Security Scan*
+## 🛡️ Go-Live Checkliste
+
+Vor dem Deployment prüfen:
+
+- [ ] RLS aktiviert + WITH CHECK für alle Tabellen?
+- [ ] Keine Secrets im Client-Code?
+- [ ] npm audit ausgeführt (keine kritischen Lücken)?
+- [ ] Prototype Pollution Schutz aktiv?
+- [ ] Edge Functions mit CORS-Whitelisting?
+- [ ] Zod-Validierung für alle Formulare?
+- [ ] SecureInput statt raw `<input>`?
+- [ ] Rate Limiting für externe APIs?
+
+**Interaktive Checkliste:** Verfügbar im Security Dashboard (`/security-dashboard`)
+
+---
+
+*Letztes Audit: 28.12.2025 | Auditor: AI Security Scan*

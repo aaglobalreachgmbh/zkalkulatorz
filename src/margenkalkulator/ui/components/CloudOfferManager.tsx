@@ -3,7 +3,7 @@
 // Save, Load, Delete from Supabase
 // ============================================
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -28,11 +28,14 @@ import {
   FolderOpen,
   Loader2,
   RefreshCw,
+  Building2,
 } from "lucide-react";
 import type { OfferOptionState } from "../../engine/types";
 import type { CloudOffer } from "../../storage/types";
 import { useCloudOffers } from "../../hooks/useCloudOffers";
+import { useCustomers } from "../../hooks/useCustomers";
 import { useAuth } from "@/hooks/useAuth";
+import { CustomerSelector } from "./CustomerSelector";
 
 interface CloudOfferManagerProps {
   config: OfferOptionState;
@@ -53,10 +56,19 @@ export function CloudOfferManager({
     createOffer,
     deleteOffer,
   } = useCloudOffers();
+  const { customers } = useCustomers();
 
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<"load" | "save">("load");
   const [saveName, setSaveName] = useState("");
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+
+  // Build customer lookup map
+  const customerMap = useMemo(() => {
+    const map = new Map<string, string>();
+    customers.forEach((c) => map.set(c.id, c.company_name));
+    return map;
+  }, [customers]);
 
   // Generate default name
   const defaultName = () => {
@@ -74,6 +86,7 @@ export function CloudOfferManager({
     setOpen(isOpen);
     if (isOpen) {
       setSaveName(defaultName());
+      setSelectedCustomerId(null);
       refetch();
     }
   };
@@ -81,8 +94,14 @@ export function CloudOfferManager({
   const handleSave = async () => {
     if (!saveName.trim()) return;
     try {
-      await createOffer.mutateAsync({ name: saveName.trim(), config, avgMonthly });
+      await createOffer.mutateAsync({
+        name: saveName.trim(),
+        config,
+        avgMonthly,
+        customerId: selectedCustomerId,
+      });
       setSaveName("");
+      setSelectedCustomerId(null);
       setTab("load");
     } catch {
       // Error handled in hook
@@ -199,7 +218,7 @@ export function CloudOfferManager({
                           <div className="font-medium text-foreground">
                             {offer.name}
                           </div>
-                          <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground flex-wrap">
                             <span className="flex items-center gap-1">
                               <Smartphone className="w-3 h-3" />
                               {offer.preview?.hardware || "SIM Only"}
@@ -213,6 +232,13 @@ export function CloudOfferManager({
                               {formatDate(offer.updated_at)}
                             </span>
                           </div>
+                          {/* Customer badge */}
+                          {offer.customer_id && customerMap.get(offer.customer_id) && (
+                            <div className="flex items-center gap-1 mt-1 text-xs text-primary">
+                              <Building2 className="w-3 h-3" />
+                              {customerMap.get(offer.customer_id)}
+                            </div>
+                          )}
                           <div className="mt-1 text-sm font-medium text-primary">
                             {(offer.preview?.avgMonthly || 0).toFixed(2)} € /mtl.
                             {(offer.preview?.quantity || 1) > 1 && (
@@ -256,6 +282,13 @@ export function CloudOfferManager({
                   autoFocus
                 />
               </div>
+
+              {/* Customer Selector */}
+              <CustomerSelector
+                value={selectedCustomerId}
+                onChange={setSelectedCustomerId}
+              />
+
               <div className="text-sm text-muted-foreground">
                 <p>Das Angebot wird in der Cloud gespeichert und ist auf allen Geräten verfügbar.</p>
               </div>

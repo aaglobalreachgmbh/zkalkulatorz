@@ -1,9 +1,11 @@
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { type ViewMode } from "@/margenkalkulator";
 import { ViewModeToggle } from "./ViewModeToggle";
+import { DatasetVersionSelector } from "./DatasetVersionSelector";
 import { Lock } from "lucide-react";
 import { useFeature } from "@/hooks/useFeature";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import type { DatasetVersion } from "@/margenkalkulator/hooks/useDatasetVersions";
 
 interface GlobalControlsProps {
   activeOption: 1 | 2;
@@ -11,6 +13,8 @@ interface GlobalControlsProps {
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
   showOptionToggle?: boolean;
+  showVersionSelector?: boolean;
+  onVersionChange?: (version: DatasetVersion | null) => void;
 }
 
 export function GlobalControls({
@@ -19,13 +23,15 @@ export function GlobalControls({
   viewMode,
   onViewModeChange,
   showOptionToggle = true,
+  showVersionSelector = true,
+  onVersionChange,
 }: GlobalControlsProps) {
   const { enabled: option2Enabled, reason: option2Reason } = useFeature("compareOption2");
   
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
-      {/* Left: Option Toggle */}
-      <div className="flex items-center gap-3">
+      {/* Left: Option Toggle & Version Selector */}
+      <div className="flex items-center gap-4 flex-wrap">
         {showOptionToggle && (
           <>
             <span className="text-sm text-muted-foreground hidden sm:inline">
@@ -73,6 +79,10 @@ export function GlobalControls({
               )}
             </ToggleGroup>
           </>
+        )}
+        
+        {showVersionSelector && (
+          <DatasetVersionSelector compact onVersionChange={onVersionChange} />
         )}
       </div>
 

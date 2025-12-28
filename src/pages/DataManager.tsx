@@ -64,6 +64,7 @@ import {
 } from "@/lib/datasetGovernance";
 import { logDatasetImport, logDatasetStatusChange } from "@/lib/auditLog";
 import { ProductTabs } from "@/margenkalkulator/ui/components/ProductTabs";
+import { DatasetVersionManager } from "@/margenkalkulator/ui/components/DatasetVersionManager";
 
 // PDF Import Result Type
 type PdfImportResult = {
@@ -423,13 +424,19 @@ export default function DataManager() {
       <Tabs defaultValue="produkte" className="mt-6">
         <TabsList>
           <TabsTrigger value="produkte">Produkte</TabsTrigger>
+          <TabsTrigger value="versionen">Provisions-Versionen</TabsTrigger>
           <TabsTrigger value="datasets">Datasets</TabsTrigger>
           <TabsTrigger value="import">Importieren</TabsTrigger>
         </TabsList>
 
-        {/* Produkte Tab (NEU) */}
+        {/* Produkte Tab */}
         <TabsContent value="produkte" className="space-y-6">
           <ProductTabs />
+        </TabsContent>
+
+        {/* Provisions-Versionen Tab (NEU) */}
+        <TabsContent value="versionen" className="space-y-6">
+          <DatasetVersionManager />
         </TabsContent>
 
         {/* Datasets Tab */}

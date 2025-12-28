@@ -725,6 +725,80 @@ const SECURITY_HEADERS = {
 
 ---
 
+## 📊 Dataset-Versionierung (Provisions-Historie)
+
+### Architektur
+
+Die Dataset-Versionierung ermöglicht die sichere Speicherung und Verwaltung mehrerer Provisions-Versionen:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    DATASET VERSION SECURITY                      │
+├─────────────────────────────────────────────────────────────────┤
+│  1. RLS POLICIES         │ Nur Admins können schreiben          │
+│  2. TENANT ISOLATION     │ Daten pro Mandant getrennt           │
+│  3. AUDIT TRAIL          │ created_by, created_at tracken       │
+│  4. SINGLE-ACTIVE        │ Nur eine Version aktiv pro Tenant    │
+│  5. NO PUBLIC ACCESS     │ Authentifizierung erforderlich       │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Tabelle: `dataset_versions`
+
+| Spalte | Typ | Sicherheits-Relevanz |
+|--------|-----|----------------------|
+| `tenant_id` | TEXT | Mandanten-Isolation |
+| `provisions` | JSONB | Sensible Provisionsbeträge |
+| `omo_matrix` | JSONB | Sensible OMO-Abzüge |
+| `hardware_catalog` | JSONB | Sensible EK-Preise |
+| `is_active` | BOOLEAN | Trigger für Single-Active |
+| `created_by` | UUID | Audit Trail |
+
+### RLS Policies
+
+```sql
+-- SELECT: Nur authentifizierte User
+USING (auth.uid() IS NOT NULL)
+
+-- INSERT/UPDATE/DELETE: Nur Admins
+USING/WITH CHECK (has_role(auth.uid(), 'admin'::app_role))
+```
+
+### Automatische Trigger
+
+| Trigger | Funktion |
+|---------|----------|
+| `ensure_single_active_dataset_version` | Deaktiviert andere Versionen wenn eine aktiviert wird |
+| `update_dataset_versions_updated_at` | Aktualisiert `updated_at` bei Änderungen |
+
+### Verwendung
+
+```tsx
+import { useDatasetVersions } from "@/margenkalkulator/hooks/useDatasetVersions";
+
+function MyComponent() {
+  const { 
+    versions,          // Alle Versionen
+    activeVersion,     // Aktuell aktive Version
+    createVersion,     // Neue Version erstellen (Admin only)
+    activateVersion,   // Version aktivieren (Admin only)
+    deleteVersion,     // Version löschen (Admin only)
+  } = useDatasetVersions();
+}
+```
+
+### Sicherheits-Garantien
+
+| Garantie | Beschreibung |
+|----------|--------------|
+| **Keine öffentlichen Daten** | Alle Provisions-Daten erfordern Auth |
+| **Admin-Only Schreibzugriff** | Nur Admins können Versionen erstellen/ändern |
+| **Mandanten-Isolation** | Jeder Tenant sieht nur eigene Versionen |
+| **Audit Trail** | Wer hat wann welche Version erstellt |
+| **Referenz in Angeboten** | Angebote dokumentieren verwendete Version |
+
+---
+
 ## 🛡️ Go-Live Checkliste
 
 Vor dem Deployment prüfen:
@@ -737,6 +811,7 @@ Vor dem Deployment prüfen:
 - [ ] Zod-Validierung für alle Formulare?
 - [ ] SecureInput statt raw `<input>`?
 - [ ] Rate Limiting für externe APIs?
+- [ ] Dataset-Versionen nur für Admins schreibbar?
 
 **Interaktive Checkliste:** Verfügbar im Security Dashboard (`/security-dashboard`)
 

@@ -4,6 +4,15 @@ import { MainLayout } from "@/components/MainLayout";
 import { useCustomers, Customer } from "@/margenkalkulator/hooks/useCustomers";
 import { useCustomerNotes, NoteType } from "@/margenkalkulator/hooks/useCustomerNotes";
 import { useCloudOffers } from "@/margenkalkulator/hooks/useCloudOffers";
+import {
+  useCustomerContracts,
+  getVVLUrgency,
+  getVVLUrgencyConfig,
+  getRemainingDays,
+  NETZ_CONFIG,
+  type CustomerContract,
+  type ContractInput,
+} from "@/margenkalkulator/hooks/useCustomerContracts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,6 +26,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import {
   ArrowLeft,
   Building2,
@@ -34,6 +51,7 @@ import {
   Calendar,
   CheckCircle,
   XCircle,
+  ScrollText,
 } from "lucide-react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
@@ -46,15 +64,33 @@ const NOTE_TYPE_CONFIG = {
   contract: { label: "Vertrag", icon: "✍️", color: "bg-emerald-500/20 text-emerald-600" },
 } as const;
 
+const initialContractForm: ContractInput = {
+  customer_id: "",
+  netz: "vodafone",
+  tarif_name: "",
+  handy_nr: "",
+  vertragsbeginn: "",
+  vertragsende: "",
+  vvl_datum: "",
+  status: "aktiv",
+  hardware_name: "",
+  monatspreis: undefined,
+};
+
 export default function CustomerDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { customers, isLoading: customersLoading } = useCustomers();
   const { notes, isLoading: notesLoading, createNote, deleteNote, noteTypes } = useCustomerNotes(id);
   const { offers, isLoading: offersLoading } = useCloudOffers();
+  const { contracts, isLoading: contractsLoading, createContract, deleteContract } = useCustomerContracts(id);
 
   const [newNoteContent, setNewNoteContent] = useState("");
   const [newNoteType, setNewNoteType] = useState<NoteType>("info");
+  
+  // Contract Dialog State
+  const [isContractDialogOpen, setIsContractDialogOpen] = useState(false);
+  const [contractForm, setContractForm] = useState<ContractInput>(initialContractForm);
 
   const customer = customers.find((c) => c.id === id);
   const customerOffers = offers.filter((o) => o.customer_id === id);
@@ -96,6 +132,21 @@ export default function CustomerDetail() {
     });
     setNewNoteContent("");
     setNewNoteType("info");
+  };
+
+  const handleCreateContract = async () => {
+    if (!id) return;
+    await createContract.mutateAsync({
+      ...contractForm,
+      customer_id: id,
+    });
+    setContractForm({ ...initialContractForm, customer_id: id });
+    setIsContractDialogOpen(false);
+  };
+
+  const openContractDialog = () => {
+    setContractForm({ ...initialContractForm, customer_id: id || "" });
+    setIsContractDialogOpen(true);
   };
 
   const getFullName = () => {
@@ -177,10 +228,14 @@ export default function CustomerDetail() {
 
         {/* Tabs */}
         <Tabs defaultValue="stammdaten" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3 max-w-md">
+          <TabsList className="grid w-full grid-cols-4 max-w-xl">
             <TabsTrigger value="stammdaten" className="flex items-center gap-2">
               <Building2 className="h-4 w-4" />
               Stammdaten
+            </TabsTrigger>
+            <TabsTrigger value="vertraege" className="flex items-center gap-2">
+              <ScrollText className="h-4 w-4" />
+              Verträge ({contracts.length})
             </TabsTrigger>
             <TabsTrigger value="angebote" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
@@ -360,6 +415,110 @@ export default function CustomerDetail() {
             </div>
           </TabsContent>
 
+          {/* Verträge Tab */}
+          <TabsContent value="vertraege" className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-medium">Kundenverträge</h3>
+              <Button onClick={openContractDialog}>
+                <Plus className="h-4 w-4 mr-2" />
+                Neuer Vertrag
+              </Button>
+            </div>
+
+            {contractsLoading ? (
+              <div className="flex items-center justify-center h-32">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : contracts.length === 0 ? (
+              <Card>
+                <CardContent className="py-8 text-center text-muted-foreground">
+                  Noch keine Verträge für diesen Kunden.
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-3">
+                {contracts.map((contract) => {
+                  const urgency = getVVLUrgency(contract.vvl_datum);
+                  const urgencyConfig = getVVLUrgencyConfig(urgency);
+                  const remainingDays = getRemainingDays(contract.vvl_datum);
+                  const netzConfig = NETZ_CONFIG[contract.netz as keyof typeof NETZ_CONFIG] || NETZ_CONFIG.vodafone;
+
+                  return (
+                    <Card key={contract.id} className="group">
+                      <CardContent className="py-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            {/* Urgency Dot */}
+                            <div className={`w-2 h-2 rounded-full ${urgencyConfig.dotColor}`} />
+                            
+                            {/* Netz Badge */}
+                            <Badge variant="outline" className={`text-xs ${netzConfig.textColor}`}>
+                              {netzConfig.label}
+                            </Badge>
+
+                            {/* Contract Info */}
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                {contract.tarif_name && (
+                                  <span className="font-medium">{contract.tarif_name}</span>
+                                )}
+                                {contract.hardware_name && (
+                                  <span className="text-sm text-muted-foreground">
+                                    ({contract.hardware_name})
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                {contract.handy_nr && (
+                                  <span className="flex items-center gap-1">
+                                    <Phone className="h-3 w-3" />
+                                    {contract.handy_nr}
+                                  </span>
+                                )}
+                                {contract.monatspreis && (
+                                  <span>{contract.monatspreis.toFixed(2)}€/Monat</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* VVL Status */}
+                          <div className="flex items-center gap-4">
+                            {contract.vvl_datum && (
+                              <div className="text-right">
+                                <div className="flex items-center gap-1 text-sm">
+                                  <Calendar className="h-3 w-3" />
+                                  VVL: {format(new Date(contract.vvl_datum), "dd.MM.yyyy")}
+                                </div>
+                                {remainingDays !== null && (
+                                  <Badge className={`mt-1 text-xs ${urgencyConfig.color}`}>
+                                    {remainingDays <= 0 
+                                      ? `${Math.abs(remainingDays)} Tage überfällig`
+                                      : `in ${remainingDays} Tagen`
+                                    }
+                                  </Badge>
+                                )}
+                              </div>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => deleteContract.mutate(contract.id)}
+                              disabled={deleteContract.isPending}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </TabsContent>
+
           {/* Angebote Tab */}
           <TabsContent value="angebote" className="space-y-4">
             <div className="flex justify-between items-center">
@@ -507,6 +666,121 @@ export default function CustomerDetail() {
             )}
           </TabsContent>
         </Tabs>
+
+        {/* Contract Dialog */}
+        <Dialog open={isContractDialogOpen} onOpenChange={setIsContractDialogOpen}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Neuer Vertrag</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Netz</Label>
+                  <Select
+                    value={contractForm.netz}
+                    onValueChange={(v) => setContractForm({ ...contractForm, netz: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="vodafone">Vodafone</SelectItem>
+                      <SelectItem value="o2">O2</SelectItem>
+                      <SelectItem value="telekom">Telekom</SelectItem>
+                      <SelectItem value="freenet">Freenet</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <Select
+                    value={contractForm.status}
+                    onValueChange={(v) => setContractForm({ ...contractForm, status: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="aktiv">Aktiv</SelectItem>
+                      <SelectItem value="gekuendigt">Gekündigt</SelectItem>
+                      <SelectItem value="verlaengert">Verlängert</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Tarifname</Label>
+                <Input
+                  value={contractForm.tarif_name || ""}
+                  onChange={(e) => setContractForm({ ...contractForm, tarif_name: e.target.value })}
+                  placeholder="z.B. Business Prime M"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Rufnummer</Label>
+                <Input
+                  value={contractForm.handy_nr || ""}
+                  onChange={(e) => setContractForm({ ...contractForm, handy_nr: e.target.value })}
+                  placeholder="z.B. +49 170 1234567"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Hardware</Label>
+                <Input
+                  value={contractForm.hardware_name || ""}
+                  onChange={(e) => setContractForm({ ...contractForm, hardware_name: e.target.value })}
+                  placeholder="z.B. iPhone 15 Pro"
+                />
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Vertragsbeginn</Label>
+                  <Input
+                    type="date"
+                    value={contractForm.vertragsbeginn || ""}
+                    onChange={(e) => setContractForm({ ...contractForm, vertragsbeginn: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Vertragsende</Label>
+                  <Input
+                    type="date"
+                    value={contractForm.vertragsende || ""}
+                    onChange={(e) => setContractForm({ ...contractForm, vertragsende: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>VVL-Datum</Label>
+                  <Input
+                    type="date"
+                    value={contractForm.vvl_datum || ""}
+                    onChange={(e) => setContractForm({ ...contractForm, vvl_datum: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Monatspreis (€)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={contractForm.monatspreis || ""}
+                  onChange={(e) => setContractForm({ ...contractForm, monatspreis: e.target.value ? parseFloat(e.target.value) : undefined })}
+                  placeholder="z.B. 39.99"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsContractDialogOpen(false)}>
+                Abbrechen
+              </Button>
+              <Button onClick={handleCreateContract} disabled={createContract.isPending}>
+                {createContract.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                Vertrag anlegen
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </MainLayout>
   );

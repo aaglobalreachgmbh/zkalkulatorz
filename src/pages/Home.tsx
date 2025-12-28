@@ -55,7 +55,7 @@ const Home = () => {
             </button>
 
             <button
-              onClick={() => navigate("/customers")}
+              onClick={() => navigate("/contracts")}
               className="group flex flex-col items-center gap-3 p-5 bg-card border border-border rounded-xl hover:border-primary/30 hover:shadow-lg transition-all duration-200"
             >
               <div className="w-12 h-12 bg-amber-500/10 rounded-full flex items-center justify-center group-hover:bg-amber-500/20 transition-colors">

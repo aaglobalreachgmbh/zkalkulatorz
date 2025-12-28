@@ -25,6 +25,7 @@ import SecurityDashboard from "./pages/SecurityDashboard";
 import Customers from "./pages/Customers";
 import CustomerDetail from "./pages/CustomerDetail";
 import MoccaImport from "./pages/MoccaImport";
+import Contracts from "./pages/Contracts";
 import Team from "./pages/Team";
 import Offers from "./pages/Offers";
 import Reporting from "./pages/Reporting";
@@ -97,6 +98,14 @@ const App = () => (
                         element={
                           <ProtectedRoute>
                             <MoccaImport />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/contracts"
+                        element={
+                          <ProtectedRoute>
+                            <Contracts />
                           </ProtectedRoute>
                         }
                       />

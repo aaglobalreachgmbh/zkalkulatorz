@@ -21,14 +21,23 @@ export default defineConfig(({ mode }) => ({
     sourcemap: mode === "development",
     // Use esbuild for minification (default, no extra dependency)
     minify: "esbuild",
+    // Target ES2022 for top-level await support (required by pdfjs-dist)
+    target: "es2022",
     // Chunk splitting for better caching
     rollupOptions: {
       output: {
         manualChunks: {
           vendor: ["react", "react-dom"],
           router: ["react-router-dom"],
+          pdf: ["pdfjs-dist"],
         },
       },
+    },
+  },
+  // Optimize deps to handle pdfjs-dist correctly
+  optimizeDeps: {
+    esbuildOptions: {
+      target: "es2022",
     },
   },
   // Remove console/debugger in production

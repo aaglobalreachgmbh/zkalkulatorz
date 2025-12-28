@@ -236,6 +236,74 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_contracts: {
+        Row: {
+          created_at: string
+          customer_id: string
+          ek_preis: number | null
+          handy_nr: string | null
+          hardware_name: string | null
+          id: string
+          monatspreis: number | null
+          netz: string
+          notes: string | null
+          provision_erhalten: number | null
+          status: string
+          tarif_name: string | null
+          updated_at: string
+          user_id: string
+          vertragsbeginn: string | null
+          vertragsende: string | null
+          vvl_datum: string | null
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          ek_preis?: number | null
+          handy_nr?: string | null
+          hardware_name?: string | null
+          id?: string
+          monatspreis?: number | null
+          netz?: string
+          notes?: string | null
+          provision_erhalten?: number | null
+          status?: string
+          tarif_name?: string | null
+          updated_at?: string
+          user_id: string
+          vertragsbeginn?: string | null
+          vertragsende?: string | null
+          vvl_datum?: string | null
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          ek_preis?: number | null
+          handy_nr?: string | null
+          hardware_name?: string | null
+          id?: string
+          monatspreis?: number | null
+          netz?: string
+          notes?: string | null
+          provision_erhalten?: number | null
+          status?: string
+          tarif_name?: string | null
+          updated_at?: string
+          user_id?: string
+          vertragsbeginn?: string | null
+          vertragsende?: string | null
+          vvl_datum?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_contracts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_import_mappings: {
         Row: {
           column_mapping: Json

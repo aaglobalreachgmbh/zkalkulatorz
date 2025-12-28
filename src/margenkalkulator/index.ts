@@ -53,6 +53,21 @@ export { useCloudOffers, type CloudOffer } from "./hooks/useCloudOffers";
 // Customer Hooks
 export { useCustomers, type Customer, type CustomerInput } from "./hooks/useCustomers";
 export { useCustomerNotes, type CustomerNote, type NoteType } from "./hooks/useCustomerNotes";
+export {
+  useCustomerContracts,
+  useAllContracts,
+  useVVLCounts,
+  getRemainingDays,
+  getRemainingTime,
+  isVVLReady,
+  getVVLUrgency,
+  getVVLUrgencyConfig,
+  NETZ_CONFIG,
+  type CustomerContract,
+  type ContractInput,
+  type ContractWithCustomer,
+  type VVLUrgency,
+} from "./hooks/useCustomerContracts";
 
 // Employee Settings & Push Provisions
 export { 

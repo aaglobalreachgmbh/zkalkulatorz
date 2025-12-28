@@ -274,49 +274,94 @@ export type Database = {
       }
       customers: {
         Row: {
+          anrede: string | null
           company_name: string
           contact_name: string | null
           created_at: string
+          customer_status: string | null
           email: string | null
           external_id: string | null
           external_refs: Json | null
+          festnetz: string | null
+          geburtstag: string | null
+          handy_nr: string | null
+          hausnummer: string | null
           id: string
           industry: string | null
+          marketing_brief: boolean | null
+          marketing_email: boolean | null
+          marketing_sms: boolean | null
           mocca_customer_number: string | null
+          nachname: string | null
           notes: string | null
+          ort: string | null
           phone: string | null
+          plz: string | null
+          strasse: string | null
           updated_at: string
           user_id: string
+          vip_kunde: boolean | null
+          vorname: string | null
         }
         Insert: {
+          anrede?: string | null
           company_name: string
           contact_name?: string | null
           created_at?: string
+          customer_status?: string | null
           email?: string | null
           external_id?: string | null
           external_refs?: Json | null
+          festnetz?: string | null
+          geburtstag?: string | null
+          handy_nr?: string | null
+          hausnummer?: string | null
           id?: string
           industry?: string | null
+          marketing_brief?: boolean | null
+          marketing_email?: boolean | null
+          marketing_sms?: boolean | null
           mocca_customer_number?: string | null
+          nachname?: string | null
           notes?: string | null
+          ort?: string | null
           phone?: string | null
+          plz?: string | null
+          strasse?: string | null
           updated_at?: string
           user_id: string
+          vip_kunde?: boolean | null
+          vorname?: string | null
         }
         Update: {
+          anrede?: string | null
           company_name?: string
           contact_name?: string | null
           created_at?: string
+          customer_status?: string | null
           email?: string | null
           external_id?: string | null
           external_refs?: Json | null
+          festnetz?: string | null
+          geburtstag?: string | null
+          handy_nr?: string | null
+          hausnummer?: string | null
           id?: string
           industry?: string | null
+          marketing_brief?: boolean | null
+          marketing_email?: boolean | null
+          marketing_sms?: boolean | null
           mocca_customer_number?: string | null
+          nachname?: string | null
           notes?: string | null
+          ort?: string | null
           phone?: string | null
+          plz?: string | null
+          strasse?: string | null
           updated_at?: string
           user_id?: string
+          vip_kunde?: boolean | null
+          vorname?: string | null
         }
         Relationships: []
       }

@@ -13,6 +13,26 @@ export interface Customer {
   phone: string | null;
   industry: string | null;
   notes: string | null;
+  // Neue Mocca-Felder
+  anrede: string | null;
+  vorname: string | null;
+  nachname: string | null;
+  strasse: string | null;
+  hausnummer: string | null;
+  plz: string | null;
+  ort: string | null;
+  festnetz: string | null;
+  handy_nr: string | null;
+  geburtstag: string | null;
+  customer_status: string | null;
+  vip_kunde: boolean | null;
+  marketing_sms: boolean | null;
+  marketing_email: boolean | null;
+  marketing_brief: boolean | null;
+  // Meta
+  external_id: string | null;
+  external_refs: Record<string, unknown> | null;
+  mocca_customer_number: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -24,6 +44,22 @@ export interface CustomerInput {
   phone?: string;
   industry?: string;
   notes?: string;
+  // Neue Mocca-Felder
+  anrede?: string;
+  vorname?: string;
+  nachname?: string;
+  strasse?: string;
+  hausnummer?: string;
+  plz?: string;
+  ort?: string;
+  festnetz?: string;
+  handy_nr?: string;
+  geburtstag?: string;
+  customer_status?: string;
+  vip_kunde?: boolean;
+  marketing_sms?: boolean;
+  marketing_email?: boolean;
+  marketing_brief?: boolean;
 }
 
 export function useCustomers() {
@@ -60,6 +96,22 @@ export function useCustomers() {
           phone: input.phone || null,
           industry: input.industry || null,
           notes: input.notes || null,
+          // Neue Felder
+          anrede: input.anrede || null,
+          vorname: input.vorname || null,
+          nachname: input.nachname || null,
+          strasse: input.strasse || null,
+          hausnummer: input.hausnummer || null,
+          plz: input.plz || null,
+          ort: input.ort || null,
+          festnetz: input.festnetz || null,
+          handy_nr: input.handy_nr || null,
+          geburtstag: input.geburtstag || null,
+          customer_status: input.customer_status || "aktiv",
+          vip_kunde: input.vip_kunde ?? false,
+          marketing_sms: input.marketing_sms ?? false,
+          marketing_email: input.marketing_email ?? false,
+          marketing_brief: input.marketing_brief ?? false,
         })
         .select()
         .single();
@@ -88,6 +140,22 @@ export function useCustomers() {
           phone: input.phone || null,
           industry: input.industry || null,
           notes: input.notes || null,
+          // Neue Felder
+          anrede: input.anrede || null,
+          vorname: input.vorname || null,
+          nachname: input.nachname || null,
+          strasse: input.strasse || null,
+          hausnummer: input.hausnummer || null,
+          plz: input.plz || null,
+          ort: input.ort || null,
+          festnetz: input.festnetz || null,
+          handy_nr: input.handy_nr || null,
+          geburtstag: input.geburtstag || null,
+          customer_status: input.customer_status || "aktiv",
+          vip_kunde: input.vip_kunde ?? false,
+          marketing_sms: input.marketing_sms ?? false,
+          marketing_email: input.marketing_email ?? false,
+          marketing_brief: input.marketing_brief ?? false,
         })
         .eq("id", id)
         .select()

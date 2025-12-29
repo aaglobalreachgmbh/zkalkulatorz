@@ -201,16 +201,29 @@ export function Wizard() {
     } : null,
   }), [employeeSettings]);
 
-  // Calculate results (memoized) with employee options
+  // Build push provision context from option state
+  const buildPushContext = useCallback((option: OfferOptionState) => ({
+    hasHardware: option.hardware.ekNet > 0,
+    hardwareEkNet: option.hardware.ekNet,
+    hasFixedNet: option.fixedNet.enabled,
+    hasGigaKombi: option.fixedNet.enabled && option.mobile.tariffId.toLowerCase().includes("prime"),
+    subVariantId: option.mobile.subVariantId,
+    quantity: option.mobile.quantity,
+    contractType: option.mobile.contractType,
+  }), []);
+
+  // Calculate results (memoized) with employee options and push context
   const result1 = useMemo(() => {
-    const pushBonus = getBonusAmount(option1.mobile.tariffId, option1.mobile.contractType);
+    const context = buildPushContext(option1);
+    const pushBonus = getBonusAmount(option1.mobile.tariffId, option1.mobile.contractType, 0, context);
     return calculateOffer(option1, { ...employeeOptions, pushBonus });
-  }, [option1, employeeOptions, getBonusAmount]);
+  }, [option1, employeeOptions, getBonusAmount, buildPushContext]);
   
   const result2 = useMemo(() => {
-    const pushBonus = getBonusAmount(option2.mobile.tariffId, option2.mobile.contractType);
+    const context = buildPushContext(option2);
+    const pushBonus = getBonusAmount(option2.mobile.tariffId, option2.mobile.contractType, 0, context);
     return calculateOffer(option2, { ...employeeOptions, pushBonus });
-  }, [option2, employeeOptions, getBonusAmount]);
+  }, [option2, employeeOptions, getBonusAmount, buildPushContext]);
 
   // Validation
   const validation = useWizardValidation(activeState);

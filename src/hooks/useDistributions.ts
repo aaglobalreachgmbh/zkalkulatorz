@@ -77,7 +77,32 @@ export interface InvitePartnerInput {
 }
 
 // ============================================
-// Hook
+// Separate Hook for Distribution Partners
+// ============================================
+
+export function useDistributionPartners(distributionId?: string) {
+  const { user } = useAuth();
+  
+  return useQuery({
+    queryKey: ["distribution-partners", distributionId],
+    queryFn: async () => {
+      if (!distributionId) return [];
+      
+      const { data, error } = await supabase
+        .from("distribution_partners" as never)
+        .select("*")
+        .eq("distribution_id", distributionId)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return (data ?? []) as DistributionPartner[];
+    },
+    enabled: !!user && !!distributionId,
+  });
+}
+
+// ============================================
+// Main Hook
 // ============================================
 
 export function useDistributions() {
@@ -132,26 +157,6 @@ export function useDistributions() {
     },
     enabled: !!user,
   });
-
-  // Fetch partners for a distribution
-  const useDistributionPartners = (distributionId?: string) => {
-    return useQuery({
-      queryKey: ["distribution-partners", distributionId],
-      queryFn: async () => {
-        if (!distributionId) return [];
-        
-        const { data, error } = await supabase
-          .from("distribution_partners" as never)
-          .select("*")
-          .eq("distribution_id", distributionId)
-          .order("created_at", { ascending: false });
-
-        if (error) throw error;
-        return (data ?? []) as DistributionPartner[];
-      },
-      enabled: !!user && !!distributionId,
-    });
-  };
 
   // Create distribution (admin only)
   const createDistribution = useMutation({
@@ -325,7 +330,6 @@ export function useDistributions() {
     isLoading: distributionsQuery.isLoading,
     myDistribution: myDistributionQuery.data,
     isLoadingMyDistribution: myDistributionQuery.isLoading,
-    useDistributionPartners,
     
     // Mutations
     createDistribution,

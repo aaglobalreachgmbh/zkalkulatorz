@@ -1098,28 +1098,37 @@ export type Database = {
       profiles: {
         Row: {
           active_team_id: string | null
+          approved_at: string | null
+          approved_by: string | null
           created_at: string
           display_name: string | null
           email: string | null
           id: string
+          is_approved: boolean | null
           last_activity_at: string | null
           updated_at: string
         }
         Insert: {
           active_team_id?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           display_name?: string | null
           email?: string | null
           id: string
+          is_approved?: boolean | null
           last_activity_at?: string | null
           updated_at?: string
         }
         Update: {
           active_team_id?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           display_name?: string | null
           email?: string | null
           id?: string
+          is_approved?: boolean | null
           last_activity_at?: string | null
           updated_at?: string
         }
@@ -1941,6 +1950,7 @@ export type Database = {
       }
       is_tenant_admin: { Args: { _user_id: string }; Returns: boolean }
       is_tenant_manager: { Args: { _user_id: string }; Returns: boolean }
+      is_user_approved: { Args: { _user_id: string }; Returns: boolean }
       log_cross_tenant_attempt: {
         Args: {
           _action: string

@@ -1,4 +1,4 @@
-import { Calculator, Users, BarChart3, Building2, FolderOpen, Shield, Database, Settings, Home, Package, ShieldCheck, CreditCard, FileText, Radar, User, ChevronDown, Activity, UserX, ImageIcon, Network } from "lucide-react";
+import { Calculator, Users, BarChart3, Building2, FolderOpen, Shield, Database, Settings, Home, Package, ShieldCheck, CreditCard, FileText, Radar, User, ChevronDown, Activity, UserX, ImageIcon, Network, UserCheck } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -50,6 +50,7 @@ const tenantAdminItems = [
 
 const adminItems = [
   { title: "Administration", url: "/admin", icon: ShieldCheck },
+  { title: "Benutzerverwaltung", url: "/admin/users", icon: UserCheck },
   { title: "Mitarbeiter", url: "/admin/employees", icon: Users },
   { title: "Push-Provisionen", url: "/admin/push-provisions", icon: CreditCard },
   { title: "Distributionen", url: "/admin/distribution", icon: Network },

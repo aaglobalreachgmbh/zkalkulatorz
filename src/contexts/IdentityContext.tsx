@@ -76,6 +76,13 @@ export const MOCK_IDENTITIES: IdentityState[] = [
     tenantId: "demo_tenant",
   },
   {
+    userId: "tenant_admin_001",
+    displayName: "Sarah Tenant-Admin",
+    role: "tenant_admin",
+    departmentId: "hq",
+    tenantId: "allenetze_de",
+  },
+  {
     userId: "manager_001",
     displayName: "Lisa Manager",
     role: "manager",

@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminRoute } from "@/components/AdminRoute";
+import { TenantAdminRoute } from "@/components/TenantAdminRoute";
+import TenantAdmin from "./pages/TenantAdmin";
 import { SecurityProvider } from "@/providers/SecurityProvider";
 import { SecurityErrorBoundary } from "@/components/SecurityErrorBoundary";
 import { OfflineBoundary } from "@/components/OfflineBoundary";
@@ -248,6 +250,15 @@ const App = () => (
                         }
                       />
                       <Route path="/datenschutz" element={<Privacy />} />
+                      {/* Tenant Admin Route */}
+                      <Route
+                        path="/tenant-admin"
+                        element={
+                          <TenantAdminRoute>
+                            <TenantAdmin />
+                          </TenantAdminRoute>
+                        }
+                      />
                       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                       <Route path="*" element={<NotFound />} />
                     </Routes>

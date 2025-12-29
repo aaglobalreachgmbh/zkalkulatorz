@@ -6,7 +6,8 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useTenantAdmin } from "@/hooks/useTenantAdmin";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2 } from "lucide-react";
+import { Loader2, ShieldAlert } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface TenantAdminRouteProps {
   children: React.ReactNode;
@@ -31,19 +32,22 @@ export function TenantAdminRoute({ children }: TenantAdminRouteProps) {
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
-  // If not tenant admin, show access denied
+  // If not tenant admin, show access denied (without redirect)
   if (!isTenantAdmin) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+        <ShieldAlert className="h-16 w-16 text-destructive" />
         <div className="text-center">
           <h1 className="text-2xl font-bold text-destructive mb-2">
             Zugriff verweigert
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground mb-4">
             Sie benötigen Tenant-Admin-Rechte, um auf diesen Bereich zuzugreifen.
           </p>
+          <Button variant="outline" onClick={() => window.history.back()}>
+            Zurück
+          </Button>
         </div>
-        <Navigate to="/" replace />
       </div>
     );
   }

@@ -13,13 +13,14 @@ import { useUserRole } from "@/hooks/useUserRole";
  * - manager: Can access admin panel, manage team
  * - sales: Standard employee role
  */
-export type AppRole = "admin" | "manager" | "sales";
+export type AppRole = "admin" | "tenant_admin" | "manager" | "sales";
 
 /**
  * Supabase DB roles → App roles mapping
  */
 const SUPABASE_TO_APP_ROLE: Record<string, AppRole> = {
   admin: "admin",
+  tenant_admin: "tenant_admin",
   moderator: "manager",
   user: "sales",
 };

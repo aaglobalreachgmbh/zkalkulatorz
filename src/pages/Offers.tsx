@@ -49,6 +49,7 @@ import {
   Search,
   Users,
   Lock,
+  Download,
 } from "lucide-react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
@@ -56,6 +57,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { exportToCSV, OFFER_COLUMNS } from "@/lib/csvExport";
 
 export default function Offers() {
   const navigate = useNavigate();
@@ -133,6 +135,20 @@ export default function Offers() {
     return team?.name;
   };
 
+  const handleExportCSV = () => {
+    const exportData = filteredOffers.map(offer => ({
+      name: offer.name,
+      created_at: format(new Date(offer.created_at), "dd.MM.yyyy HH:mm", { locale: de }),
+      visibility: offer.visibility === "team" ? "Team" : "Privat",
+      tariff: offer.preview?.tariff || "-",
+      hardware: offer.preview?.hardware || "-",
+      avgMonthly: offer.preview?.avgMonthly?.toFixed(2) || "-",
+    }));
+    
+    exportToCSV(exportData, OFFER_COLUMNS as unknown as { key: keyof typeof exportData[0]; label: string }[], `angebote_${format(new Date(), "yyyy-MM-dd")}`);
+    toast.success(`${exportData.length} Angebote exportiert`);
+  };
+
   return (
     <MainLayout>
       <div className="space-y-6 animate-fade-in">
@@ -144,6 +160,10 @@ export default function Offers() {
               Alle gespeicherten Angebote ({filteredOffers.length})
             </p>
           </div>
+          <Button variant="outline" onClick={handleExportCSV} disabled={filteredOffers.length === 0}>
+            <Download className="h-4 w-4 mr-2" />
+            CSV Export
+          </Button>
         </div>
 
         {/* Search */}

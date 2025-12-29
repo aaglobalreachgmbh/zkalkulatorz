@@ -3,6 +3,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useIdentity, MOCK_IDENTITIES } from "@/contexts/IdentityContext";
+import { useTenantAdmin } from "@/hooks/useTenantAdmin";
 import {
   Sidebar,
   SidebarContent,
@@ -43,6 +44,10 @@ const settingsItems = [
   { title: "Hardware-Bilder", url: "/settings/hardware-images", icon: ImageIcon },
 ];
 
+const tenantAdminItems = [
+  { title: "Tenant-Verwaltung", url: "/tenant-admin", icon: Building2 },
+];
+
 const adminItems = [
   { title: "Administration", url: "/admin", icon: ShieldCheck },
   { title: "Mitarbeiter", url: "/admin/employees", icon: Users },
@@ -63,6 +68,7 @@ export function AppSidebar() {
   const location = useLocation();
   const { isAdmin } = useUserRole();
   const { identity, canAccessAdmin, setMockIdentity, clearMockIdentity, isSupabaseAuth } = useIdentity();
+  const { isTenantAdmin } = useTenantAdmin();
   
   // Show admin section if user has admin role OR can access admin via identity
   const showAdminSection = isAdmin || canAccessAdmin;
@@ -142,6 +148,31 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Tenant Admin section */}
+        {isTenantAdmin && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Mandanten-Verwaltung</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {tenantAdminItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton 
+                      asChild 
+                      isActive={isActive(item.url)}
+                      tooltip={collapsed ? item.title : undefined}
+                    >
+                      <NavLink to={item.url}>
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
         {/* Admin section */}
         {showAdminSection && (

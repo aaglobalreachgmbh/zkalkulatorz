@@ -27,13 +27,22 @@ import {
   Calendar,
   BarChart3,
   Megaphone,
+  Trash2,
+  Edit,
+  Plus,
 } from "lucide-react";
 
 import { 
   DEMO_BUNDLES, 
   type Sector, 
-  type CorporateBundle,
+  type CorporateBundle as LocalCorporateBundle,
 } from "@/margenkalkulator/storage/bundles";
+import { 
+  useCorporateBundles, 
+  SECTOR_LABELS, 
+  type CorporateBundle as CloudCorporateBundle,
+  type Sector as CloudSector,
+} from "@/margenkalkulator/hooks/useCorporateBundles";
 import { 
   TICKER_ITEMS, 
   MOCK_NEWS, 
@@ -42,12 +51,13 @@ import {
   QUICK_TOOLS,
   type NewsItem,
 } from "@/margenkalkulator/data/news";
+import { useAuth } from "@/hooks/useAuth";
 
 // ============================================
 // Types
 // ============================================
 
-type TabType = "campaigns" | "templates";
+type TabType = "campaigns" | "myBundles" | "templates";
 
 const SECTOR_DISPLAY: Record<Sector, { label: string; icon: typeof User }> = {
   private: { label: "Privat", icon: User },
@@ -56,7 +66,7 @@ const SECTOR_DISPLAY: Record<Sector, { label: string; icon: typeof User }> = {
 };
 
 // Demo bundle badges based on tags
-const getBundleBadge = (bundle: CorporateBundle): { label: string; color: string } | null => {
+const getBundleBadge = (bundle: LocalCorporateBundle | CloudCorporateBundle): { label: string; color: string } | null => {
   if (bundle.tags.includes("Einsteiger") || bundle.tags.includes("Günstig")) {
     return { label: "PREISSIEGER", color: "border-orange-400" };
   }
@@ -154,6 +164,17 @@ function Tabs({ activeTab, onTabChange }: TabsProps) {
         <span className="font-medium">Zentrale Kampagnen</span>
       </button>
       <button
+        onClick={() => onTabChange("myBundles")}
+        className={`flex items-center gap-2 pb-3 px-1 border-b-2 transition-colors ${
+          activeTab === "myBundles"
+            ? "border-primary text-primary"
+            : "border-transparent text-muted-foreground hover:text-foreground"
+        }`}
+      >
+        <Plus className="h-4 w-4" />
+        <span className="font-medium">Meine Pakete</span>
+      </button>
+      <button
         onClick={() => onTabChange("templates")}
         className={`flex items-center gap-2 pb-3 px-1 border-b-2 transition-colors ${
           activeTab === "templates"
@@ -225,12 +246,14 @@ function StrategicFocusCard() {
 }
 
 interface BundleCardProps {
-  bundle: CorporateBundle;
+  bundle: LocalCorporateBundle | CloudCorporateBundle;
   badgeInfo: { label: string; color: string } | null;
   onClick: () => void;
+  onDelete?: () => void;
+  showDelete?: boolean;
 }
 
-function BundleCard({ bundle, badgeInfo, onClick }: BundleCardProps) {
+function BundleCard({ bundle, badgeInfo, onClick, onDelete, showDelete }: BundleCardProps) {
   // Extract display info from config
   const hardwareName = bundle.config.hardware?.name || "SIM Only";
   const tariffId = bundle.config.mobile?.tariffId || "PRIME_S";
@@ -246,11 +269,26 @@ function BundleCard({ bundle, badgeInfo, onClick }: BundleCardProps) {
         {/* Header */}
         <div className="flex items-start justify-between mb-3">
           <h3 className="font-semibold text-lg">{bundle.name}</h3>
-          {badgeInfo && (
-            <Badge variant="outline" className="text-xs shrink-0">
-              {badgeInfo.label}
-            </Badge>
-          )}
+          <div className="flex items-center gap-2">
+            {badgeInfo && (
+              <Badge variant="outline" className="text-xs shrink-0">
+                {badgeInfo.label}
+              </Badge>
+            )}
+            {showDelete && onDelete && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete();
+                }}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
         
         {/* Description */}
@@ -353,13 +391,27 @@ function QuickToolsCard() {
 
 export default function Bundles() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>("campaigns");
   const [activeSector, setActiveSector] = useState<Sector>("business");
 
-  // Filter bundles by sector
+  // Cloud bundles (user-created)
+  const { 
+    bundles: cloudBundles, 
+    isLoading: isLoadingCloudBundles, 
+    deleteBundle,
+    isDeleting 
+  } = useCorporateBundles({ includeInactive: true });
+
+  // Filter demo bundles by sector
   const filteredBundles = useMemo(() => {
     return DEMO_BUNDLES.filter((b) => b.sector === activeSector);
   }, [activeSector]);
+
+  // Filter cloud bundles by sector  
+  const filteredCloudBundles = useMemo(() => {
+    return cloudBundles.filter((b) => b.sector === activeSector);
+  }, [cloudBundles, activeSector]);
 
   // Get featured bundles (max 2)
   const featuredBundles = useMemo(() => {
@@ -367,9 +419,15 @@ export default function Bundles() {
     return featured.length > 0 ? featured.slice(0, 2) : filteredBundles.slice(0, 2);
   }, [filteredBundles]);
 
-  const handleBundleClick = (bundle: CorporateBundle) => {
+  const handleBundleClick = (bundle: LocalCorporateBundle | CloudCorporateBundle) => {
     // Navigate to calculator with bundle config
     navigate("/calculator", { state: { bundleConfig: bundle.config } });
+  };
+
+  const handleDeleteBundle = (bundleId: string) => {
+    if (window.confirm("Möchtest du dieses Paket wirklich löschen?")) {
+      deleteBundle(bundleId);
+    }
   };
 
   return (
@@ -428,6 +486,73 @@ export default function Bundles() {
                       <div className="text-center py-12 text-muted-foreground bg-muted/30 rounded-xl">
                         <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
                         <p>Keine Bundles für diesen Sektor verfügbar</p>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {activeTab === "myBundles" && (
+                <>
+                  {/* Sector Switcher */}
+                  <SectorSwitcher 
+                    activeSector={activeSector} 
+                    onSectorChange={setActiveSector} 
+                  />
+
+                  {/* My Bundles Section */}
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <Package className="h-4 w-4 text-primary" />
+                        <h2 className="font-semibold text-sm uppercase tracking-wide">
+                          Meine Pakete: {SECTOR_DISPLAY[activeSector].label}
+                        </h2>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate("/calculator")}
+                        className="gap-2"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Neues Paket
+                      </Button>
+                    </div>
+
+                    {isLoadingCloudBundles ? (
+                      <div className="text-center py-12 text-muted-foreground">
+                        <Package className="h-12 w-12 mx-auto mb-4 opacity-50 animate-pulse" />
+                        <p>Pakete werden geladen...</p>
+                      </div>
+                    ) : filteredCloudBundles.length > 0 ? (
+                      <div className="grid md:grid-cols-2 gap-4">
+                        {filteredCloudBundles.map((bundle) => (
+                          <BundleCard
+                            key={bundle.id}
+                            bundle={bundle}
+                            badgeInfo={getBundleBadge(bundle)}
+                            onClick={() => handleBundleClick(bundle)}
+                            onDelete={() => handleDeleteBundle(bundle.id)}
+                            showDelete={true}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-16 text-muted-foreground bg-muted/20 rounded-xl">
+                        <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p className="font-medium mb-2">Keine eigenen Pakete vorhanden</p>
+                        <p className="text-sm mb-4">
+                          Erstelle Pakete im Kalkulator mit "Als Paket speichern"
+                        </p>
+                        <Button
+                          variant="outline"
+                          onClick={() => navigate("/calculator")}
+                          className="gap-2"
+                        >
+                          <Plus className="h-4 w-4" />
+                          Zum Kalkulator
+                        </Button>
                       </div>
                     )}
                   </div>

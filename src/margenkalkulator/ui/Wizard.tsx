@@ -22,6 +22,7 @@ import { ValidationWarning } from "./components/ValidationWarning";
 import { AiConsultant } from "./components/AiConsultant";
 import { SaveDraftButton } from "./components/SaveDraftButton";
 import { SaveTemplateButton } from "./components/SaveTemplateButton";
+import { SaveBundleButton } from "./components/SaveBundleButton";
 import { DraftManager } from "./components/DraftManager";
 import { HistoryDropdown } from "./components/HistoryDropdown";
 import { CloudOfferManager } from "./components/CloudOfferManager";
@@ -326,6 +327,7 @@ export function Wizard() {
             <DraftManager onLoadDraft={handleLoadConfig} />
             <SaveDraftButton config={activeState} avgMonthly={avgMonthlyNet} />
             <SaveTemplateButton config={activeState} />
+            <SaveBundleButton config={activeState} />
             <CloudOfferManager 
               config={activeState} 
               avgMonthly={avgMonthlyNet} 

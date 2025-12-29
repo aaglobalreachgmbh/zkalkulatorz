@@ -1,6 +1,7 @@
 // ============================================
 // Push Provisions Hook
 // Manages bonus provisions for tariffs
+// Extended with target types and conditions
 // ============================================
 
 import { useState, useEffect, useCallback, useMemo } from "react";
@@ -8,6 +9,35 @@ import { useAuth } from "@/hooks/useAuth";
 import { useIdentity } from "@/contexts/IdentityContext";
 import { supabase } from "@/integrations/supabase/client";
 import type { ContractType } from "../engine/types";
+
+// Condition types for push provisions
+export interface PushProvisionConditions {
+  requireHardware?: boolean;      // Nur mit Hardware (nicht SIM-Only)
+  requireFixedNet?: boolean;      // Nur mit Festnetz
+  requireGigaKombi?: boolean;     // Nur wenn GigaKombi aktiv
+  excludeSubVariants?: string[];  // Bestimmte SUB-Varianten ausschließen
+  includeSubVariants?: string[];  // Nur diese SUB-Varianten
+  minQuantity?: number;           // Mindestmenge
+  requireContractType?: "new" | "renewal";
+  bundleRequirements?: {          // Für Bundle-Boni
+    requireMobile?: boolean;
+    requireFixedNet?: boolean;
+    requireHardware?: boolean;
+    requireProducts?: string[];
+  };
+}
+
+// Context for evaluating push provisions
+export interface PushProvisionContext {
+  hasHardware?: boolean;
+  hardwareEkNet?: number;
+  hasFixedNet?: boolean;
+  hasGigaKombi?: boolean;
+  subVariantId?: string;
+  quantity?: number;
+  bundleProducts?: string[];
+  contractType?: ContractType;
+}
 
 export interface PushProvision {
   id: string;
@@ -26,6 +56,23 @@ export interface PushProvision {
   isActive: boolean;
   createdAt: string;
   createdBy?: string;
+  // New fields for extended targeting
+  targetType: "tariff" | "family" | "pattern" | "group" | "all";
+  conditions: PushProvisionConditions;
+}
+
+// Tariff group for grouping multiple tariffs
+export interface PushTariffGroup {
+  id: string;
+  tenantId: string;
+  name: string;
+  description?: string;
+  matchPattern?: string;
+  tariffIds: string[];
+  isActive: boolean;
+  createdBy?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface UsePushProvisionsReturn {
@@ -33,8 +80,144 @@ interface UsePushProvisionsReturn {
   isLoading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
-  getActiveForTariff: (tariffId: string, contractType?: ContractType) => PushProvision[];
-  getBonusAmount: (tariffId: string, contractType?: ContractType, baseProvision?: number) => number;
+  getActiveForTariff: (tariffId: string, contractType?: ContractType, context?: PushProvisionContext) => PushProvision[];
+  getBonusAmount: (tariffId: string, contractType?: ContractType, baseProvision?: number, context?: PushProvisionContext) => number;
+}
+
+/**
+ * Check if a provision's conditions are met
+ */
+function evaluateConditions(conditions: PushProvisionConditions, context?: PushProvisionContext): boolean {
+  if (!context) return true;
+  if (!conditions || Object.keys(conditions).length === 0) return true;
+
+  // Check hardware requirement
+  if (conditions.requireHardware) {
+    const hasHardware = context.hasHardware || (context.hardwareEkNet && context.hardwareEkNet > 0);
+    if (!hasHardware) return false;
+  }
+
+  // Check fixed net requirement
+  if (conditions.requireFixedNet && !context.hasFixedNet) {
+    return false;
+  }
+
+  // Check GigaKombi requirement
+  if (conditions.requireGigaKombi && !context.hasGigaKombi) {
+    return false;
+  }
+
+  // Check SUB-variant exclusions
+  if (conditions.excludeSubVariants?.length && context.subVariantId) {
+    if (conditions.excludeSubVariants.includes(context.subVariantId)) {
+      return false;
+    }
+  }
+
+  // Check SUB-variant inclusions
+  if (conditions.includeSubVariants?.length && context.subVariantId) {
+    if (!conditions.includeSubVariants.includes(context.subVariantId)) {
+      return false;
+    }
+  }
+
+  // Check minimum quantity
+  if (conditions.minQuantity && (context.quantity || 1) < conditions.minQuantity) {
+    return false;
+  }
+
+  // Check contract type requirement
+  if (conditions.requireContractType && context.contractType) {
+    if (conditions.requireContractType !== context.contractType) {
+      return false;
+    }
+  }
+
+  // Check bundle requirements
+  if (conditions.bundleRequirements) {
+    const bundle = conditions.bundleRequirements;
+    
+    // All enabled bundle requirements must be met
+    if (bundle.requireMobile !== false) {
+      // Mobile is always assumed to be present in calculator context
+    }
+    if (bundle.requireFixedNet && !context.hasFixedNet) {
+      return false;
+    }
+    if (bundle.requireHardware) {
+      const hasHardware = context.hasHardware || (context.hardwareEkNet && context.hardwareEkNet > 0);
+      if (!hasHardware) return false;
+    }
+    if (bundle.requireProducts?.length && context.bundleProducts) {
+      const hasAllProducts = bundle.requireProducts.every(p => context.bundleProducts?.includes(p));
+      if (!hasAllProducts) return false;
+    }
+  }
+
+  return true;
+}
+
+/**
+ * Check if a provision matches a tariff based on target type
+ */
+function matchesTariff(
+  provision: PushProvision, 
+  tariffId: string,
+  tariffGroups?: PushTariffGroup[]
+): boolean {
+  switch (provision.targetType) {
+    case "all":
+      return true;
+    
+    case "tariff":
+      return provision.tariffId === tariffId;
+    
+    case "family":
+      // Match tariff family (e.g., "prime" matches PRIME_S, PRIME_M, etc.)
+      if (provision.tariffFamily) {
+        return tariffId.toLowerCase().includes(provision.tariffFamily.toLowerCase());
+      }
+      return false;
+    
+    case "pattern":
+      // Match regex pattern
+      if (provision.tariffId) {
+        try {
+          const regex = new RegExp(provision.tariffId, "i");
+          return regex.test(tariffId);
+        } catch {
+          return false;
+        }
+      }
+      return false;
+    
+    case "group":
+      // Match tariff group
+      if (tariffGroups && provision.tariffId) {
+        const group = tariffGroups.find(g => g.id === provision.tariffId);
+        if (group) {
+          // Check explicit tariff IDs
+          if (group.tariffIds.includes(tariffId)) {
+            return true;
+          }
+          // Check match pattern
+          if (group.matchPattern) {
+            try {
+              const regex = new RegExp(group.matchPattern, "i");
+              return regex.test(tariffId);
+            } catch {
+              return false;
+            }
+          }
+        }
+      }
+      return false;
+    
+    default:
+      // Legacy fallback: exact match or family match
+      return provision.tariffId === tariffId || 
+        (provision.tariffFamily && tariffId.toLowerCase().includes(provision.tariffFamily.toLowerCase()));
+  }
 }
 
 /**
@@ -44,12 +227,14 @@ export function usePushProvisions(): UsePushProvisionsReturn {
   const { user } = useAuth();
   const { identity } = useIdentity();
   const [provisions, setProvisions] = useState<PushProvision[]>([]);
+  const [tariffGroups, setTariffGroups] = useState<PushTariffGroup[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const loadProvisions = useCallback(async () => {
     if (!identity.tenantId) {
       setProvisions([]);
+      setTariffGroups([]);
       setIsLoading(false);
       return;
     }
@@ -60,21 +245,28 @@ export function usePushProvisions(): UsePushProvisionsReturn {
 
       const today = new Date().toISOString().split("T")[0];
 
-      const { data, error: fetchError } = await supabase
-        .from("push_provisions")
-        .select("*")
-        .eq("tenant_id", identity.tenantId)
-        .eq("is_active", true)
-        .lte("valid_from", today)
-        .or(`valid_until.is.null,valid_until.gte.${today}`)
-        .order("created_at", { ascending: false });
+      // Load provisions and tariff groups in parallel
+      const [provisionsResult, groupsResult] = await Promise.all([
+        supabase
+          .from("push_provisions")
+          .select("*")
+          .eq("tenant_id", identity.tenantId)
+          .eq("is_active", true)
+          .lte("valid_from", today)
+          .or(`valid_until.is.null,valid_until.gte.${today}`)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("push_tariff_groups")
+          .select("*")
+          .eq("tenant_id", identity.tenantId)
+          .eq("is_active", true)
+      ]);
 
-      if (fetchError) {
-        throw fetchError;
-      }
+      if (provisionsResult.error) throw provisionsResult.error;
+      if (groupsResult.error) throw groupsResult.error;
 
       setProvisions(
-        (data || []).map((d) => ({
+        (provisionsResult.data || []).map((d) => ({
           id: d.id,
           tenantId: d.tenant_id,
           scopeType: d.scope_type as "all" | "user" | "team",
@@ -91,6 +283,23 @@ export function usePushProvisions(): UsePushProvisionsReturn {
           isActive: d.is_active ?? true,
           createdAt: d.created_at,
           createdBy: d.created_by ?? undefined,
+          targetType: (d.target_type as PushProvision["targetType"]) || "tariff",
+          conditions: (d.conditions as PushProvisionConditions) || {},
+        }))
+      );
+
+      setTariffGroups(
+        (groupsResult.data || []).map((g) => ({
+          id: g.id,
+          tenantId: g.tenant_id,
+          name: g.name,
+          description: g.description ?? undefined,
+          matchPattern: g.match_pattern ?? undefined,
+          tariffIds: g.tariff_ids || [],
+          isActive: g.is_active ?? true,
+          createdBy: g.created_by ?? undefined,
+          createdAt: g.created_at,
+          updatedAt: g.updated_at,
         }))
       );
     } catch (err: unknown) {
@@ -105,15 +314,14 @@ export function usePushProvisions(): UsePushProvisionsReturn {
     loadProvisions();
   }, [loadProvisions]);
 
-  // Get active provisions for a specific tariff
+  // Get active provisions for a specific tariff with context
   const getActiveForTariff = useCallback(
-    (tariffId: string, contractType?: ContractType): PushProvision[] => {
+    (tariffId: string, contractType?: ContractType, context?: PushProvisionContext): PushProvision[] => {
       return provisions.filter((p) => {
-        // Match tariff (exact or family)
-        const tariffMatch = p.tariffId === tariffId || 
-          (p.tariffFamily && tariffId.toLowerCase().includes(p.tariffFamily.toLowerCase()));
-        
-        if (!tariffMatch) return false;
+        // Match tariff based on target type
+        if (!matchesTariff(p, tariffId, tariffGroups)) {
+          return false;
+        }
 
         // Match contract type
         if (p.contractType && p.contractType !== "both" && contractType && p.contractType !== contractType) {
@@ -125,21 +333,26 @@ export function usePushProvisions(): UsePushProvisionsReturn {
           return false;
         }
 
-        // Team scope would need team membership check (simplified here)
+        // Team scope
         if (p.scopeType === "team" && p.scopeId !== identity.departmentId) {
+          return false;
+        }
+
+        // Evaluate conditions
+        if (!evaluateConditions(p.conditions, context)) {
           return false;
         }
 
         return true;
       });
     },
-    [provisions, user?.id, identity.departmentId]
+    [provisions, tariffGroups, user?.id, identity.departmentId]
   );
 
-  // Calculate total bonus amount for a tariff
+  // Calculate total bonus amount for a tariff with context
   const getBonusAmount = useCallback(
-    (tariffId: string, contractType?: ContractType, baseProvision: number = 0): number => {
-      const activeProvisions = getActiveForTariff(tariffId, contractType);
+    (tariffId: string, contractType?: ContractType, baseProvision: number = 0, context?: PushProvisionContext): number => {
+      const activeProvisions = getActiveForTariff(tariffId, contractType, context);
       
       return activeProvisions.reduce((total, p) => {
         if (p.bonusType === "percent") {
@@ -189,6 +402,8 @@ export function useAdminPushProvisions() {
         description: provision.description ?? null,
         is_active: provision.isActive,
         created_by: user.id,
+        target_type: provision.targetType || "tariff",
+        conditions: provision.conditions || {},
       };
 
       const { data, error } = await supabase
@@ -219,6 +434,8 @@ export function useAdminPushProvisions() {
       if (updates.name !== undefined) payload.name = updates.name;
       if (updates.description !== undefined) payload.description = updates.description ?? null;
       if (updates.isActive !== undefined) payload.is_active = updates.isActive;
+      if (updates.targetType !== undefined) payload.target_type = updates.targetType;
+      if (updates.conditions !== undefined) payload.conditions = updates.conditions;
 
       const { data, error } = await supabase
         .from("push_provisions")
@@ -298,6 +515,8 @@ export function useAllPushProvisions() {
           isActive: d.is_active ?? true,
           createdAt: d.created_at,
           createdBy: d.created_by ?? undefined,
+          targetType: (d.target_type as PushProvision["targetType"]) || "tariff",
+          conditions: (d.conditions as PushProvisionConditions) || {},
         }))
       );
     } catch (err: unknown) {
@@ -317,5 +536,128 @@ export function useAllPushProvisions() {
     isLoading,
     error,
     refresh: loadAll,
+  };
+}
+
+/**
+ * Hook for managing tariff groups
+ */
+export function usePushTariffGroups() {
+  const { user } = useAuth();
+  const { identity } = useIdentity();
+  const [groups, setGroups] = useState<PushTariffGroup[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadGroups = useCallback(async () => {
+    if (!identity.tenantId) {
+      setGroups([]);
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const { data, error: fetchError } = await supabase
+        .from("push_tariff_groups")
+        .select("*")
+        .eq("tenant_id", identity.tenantId)
+        .order("name", { ascending: true });
+
+      if (fetchError) throw fetchError;
+
+      setGroups(
+        (data || []).map((g) => ({
+          id: g.id,
+          tenantId: g.tenant_id,
+          name: g.name,
+          description: g.description ?? undefined,
+          matchPattern: g.match_pattern ?? undefined,
+          tariffIds: g.tariff_ids || [],
+          isActive: g.is_active ?? true,
+          createdBy: g.created_by ?? undefined,
+          createdAt: g.created_at,
+          updatedAt: g.updated_at,
+        }))
+      );
+    } catch (err: unknown) {
+      console.error("Failed to load tariff groups:", err);
+      setError(err instanceof Error ? err.message : "Laden fehlgeschlagen");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [identity.tenantId]);
+
+  const createGroup = useCallback(
+    async (group: Omit<PushTariffGroup, "id" | "tenantId" | "createdBy" | "createdAt" | "updatedAt">) => {
+      if (!user?.id || !identity.tenantId) {
+        throw new Error("Nicht authentifiziert");
+      }
+
+      const { data, error } = await supabase
+        .from("push_tariff_groups")
+        .insert({
+          tenant_id: identity.tenantId,
+          name: group.name,
+          description: group.description ?? null,
+          match_pattern: group.matchPattern ?? null,
+          tariff_ids: group.tariffIds,
+          is_active: group.isActive,
+          created_by: user.id,
+        } as any)
+        .select()
+        .single();
+
+      if (error) throw error;
+      await loadGroups();
+      return data;
+    },
+    [user?.id, identity.tenantId, loadGroups]
+  );
+
+  const updateGroup = useCallback(
+    async (id: string, updates: Partial<Omit<PushTariffGroup, "id" | "tenantId" | "createdBy" | "createdAt" | "updatedAt">>) => {
+      const payload: Record<string, unknown> = {};
+
+      if (updates.name !== undefined) payload.name = updates.name;
+      if (updates.description !== undefined) payload.description = updates.description ?? null;
+      if (updates.matchPattern !== undefined) payload.match_pattern = updates.matchPattern ?? null;
+      if (updates.tariffIds !== undefined) payload.tariff_ids = updates.tariffIds;
+      if (updates.isActive !== undefined) payload.is_active = updates.isActive;
+
+      const { data, error } = await supabase
+        .from("push_tariff_groups")
+        .update(payload)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      await loadGroups();
+      return data;
+    },
+    [loadGroups]
+  );
+
+  const deleteGroup = useCallback(async (id: string) => {
+    const { error } = await supabase.from("push_tariff_groups").delete().eq("id", id);
+    if (error) throw error;
+    await loadGroups();
+  }, [loadGroups]);
+
+  useEffect(() => {
+    loadGroups();
+  }, [loadGroups]);
+
+  return {
+    groups,
+    isLoading,
+    error,
+    refresh: loadGroups,
+    createGroup,
+    updateGroup,
+    deleteGroup,
   };
 }

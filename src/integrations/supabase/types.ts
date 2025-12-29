@@ -1146,6 +1146,7 @@ export type Database = {
         Row: {
           bonus_amount: number
           bonus_type: string | null
+          conditions: Json
           contract_type: string | null
           created_at: string
           created_by: string | null
@@ -1155,6 +1156,7 @@ export type Database = {
           name: string
           scope_id: string | null
           scope_type: string
+          target_type: string
           tariff_family: string | null
           tariff_id: string
           tenant_id: string
@@ -1165,6 +1167,7 @@ export type Database = {
         Insert: {
           bonus_amount: number
           bonus_type?: string | null
+          conditions?: Json
           contract_type?: string | null
           created_at?: string
           created_by?: string | null
@@ -1174,6 +1177,7 @@ export type Database = {
           name: string
           scope_id?: string | null
           scope_type?: string
+          target_type?: string
           tariff_family?: string | null
           tariff_id: string
           tenant_id: string
@@ -1184,6 +1188,7 @@ export type Database = {
         Update: {
           bonus_amount?: number
           bonus_type?: string | null
+          conditions?: Json
           contract_type?: string | null
           created_at?: string
           created_by?: string | null
@@ -1193,12 +1198,52 @@ export type Database = {
           name?: string
           scope_id?: string | null
           scope_type?: string
+          target_type?: string
           tariff_family?: string | null
           tariff_id?: string
           tenant_id?: string
           updated_at?: string
           valid_from?: string
           valid_until?: string | null
+        }
+        Relationships: []
+      }
+      push_tariff_groups: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          match_pattern: string | null
+          name: string
+          tariff_ids: string[] | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          match_pattern?: string | null
+          name: string
+          tariff_ids?: string[] | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          match_pattern?: string | null
+          name?: string
+          tariff_ids?: string[] | null
+          tenant_id?: string
+          updated_at?: string
         }
         Relationships: []
       }

@@ -404,6 +404,7 @@ export type Database = {
           phone: string | null
           plz: string | null
           strasse: string | null
+          tenant_id: string
           updated_at: string
           user_id: string
           vip_kunde: boolean | null
@@ -434,6 +435,7 @@ export type Database = {
           phone?: string | null
           plz?: string | null
           strasse?: string | null
+          tenant_id?: string
           updated_at?: string
           user_id: string
           vip_kunde?: boolean | null
@@ -464,6 +466,7 @@ export type Database = {
           phone?: string | null
           plz?: string | null
           strasse?: string | null
+          tenant_id?: string
           updated_at?: string
           user_id?: string
           vip_kunde?: boolean | null
@@ -1192,6 +1195,7 @@ export type Database = {
           name: string
           preview: Json | null
           team_id: string | null
+          tenant_id: string
           updated_at: string
           user_id: string
           visibility: string
@@ -1206,6 +1210,7 @@ export type Database = {
           name: string
           preview?: Json | null
           team_id?: string | null
+          tenant_id?: string
           updated_at?: string
           user_id: string
           visibility?: string
@@ -1220,6 +1225,7 @@ export type Database = {
           name?: string
           preview?: Json | null
           team_id?: string | null
+          tenant_id?: string
           updated_at?: string
           user_id?: string
           visibility?: string
@@ -1459,6 +1465,42 @@ export type Database = {
           sort_order?: number | null
           tenant_id?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      tenant_invitations: {
+        Row: {
+          accepted_at: string | null
+          created_at: string | null
+          email: string
+          expires_at: string
+          id: string
+          invite_token: string
+          invited_by: string
+          role: Database["public"]["Enums"]["app_role"]
+          tenant_id: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string | null
+          email: string
+          expires_at?: string
+          id?: string
+          invite_token: string
+          invited_by: string
+          role?: Database["public"]["Enums"]["app_role"]
+          tenant_id: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string | null
+          email?: string
+          expires_at?: string
+          id?: string
+          invite_token?: string
+          invited_by?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          tenant_id?: string
         }
         Relationships: []
       }

@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.rate-limiter]
 verify_jwt = false
+
+[functions.invite-user]
+verify_jwt = true

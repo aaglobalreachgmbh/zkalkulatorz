@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Smartphone, Signal, Router, LayoutGrid, Printer, Calculator, Home, ChevronLeft, ChevronRight, Lock } from "lucide-react";
+import { Smartphone, Signal, Router, LayoutGrid, Printer, Calculator, Home, ChevronLeft, ChevronRight, Lock, AlertTriangle, XCircle, Settings } from "lucide-react";
 import {
   type OfferOptionState,
   type ViewMode,
@@ -13,6 +13,7 @@ import {
 import { useEmployeeSettings } from "@/margenkalkulator/hooks/useEmployeeSettings";
 import { usePushProvisions } from "@/margenkalkulator/hooks/usePushProvisions";
 import { useDatasetVersions } from "@/margenkalkulator/hooks/useDatasetVersions";
+import { useTenantDataStatus } from "@/margenkalkulator/hooks/useTenantDataStatus";
 import { HardwareStep } from "./steps/HardwareStep";
 import { MobileStep } from "./steps/MobileStep";
 import { FixedNetStep } from "./steps/FixedNetStep";
@@ -40,6 +41,7 @@ import { useOnboardingTour } from "@/hooks/useOnboardingTour";
 import { useWizardAutoSave } from "@/hooks/useWizardAutoSave";
 import { OnboardingTour, OnboardingPrompt } from "@/components/OnboardingTour";
 import { WizardRestoreDialog } from "@/components/WizardRestoreDialog";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -75,6 +77,9 @@ export function Wizard() {
   const { versions, isLoading: isLoadingVersions, seedDefaultVersion, isSeeding } = useDatasetVersions();
   const hasSeeded = useRef(false);
   const { canAccessAdmin, isSupabaseAuth } = useIdentity();
+  
+  // Phase 7: Tenant Data Status Check
+  const { status: tenantDataStatus, isLoading: isLoadingTenantData } = useTenantDataStatus();
   
   useEffect(() => {
     // Auto-seed v2025_10 if:
@@ -334,6 +339,59 @@ export function Wizard() {
   // Get active result for footer KPI
   const activeResult = activeOption === 1 ? result1 : result2;
   const avgMonthlyNet = activeResult.totals.avgTermNet;
+
+  // Phase 7: Block wizard if tenant data incomplete (only for Supabase auth)
+  if (isSupabaseAuth && !isLoadingTenantData && tenantDataStatus && !tenantDataStatus.isComplete) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="max-w-lg w-full">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-16 h-16 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mb-4">
+              <AlertTriangle className="w-8 h-8 text-amber-600 dark:text-amber-400" />
+            </div>
+            <CardTitle>Stammdaten fehlen</CardTitle>
+            <CardDescription>
+              Um den Kalkulator nutzen zu können, müssen zunächst die Stammdaten gepflegt werden.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                {tenantDataStatus.hasHardware ? (
+                  <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                    <span className="text-emerald-600 dark:text-emerald-400 text-xs">✓</span>
+                  </div>
+                ) : (
+                  <XCircle className="w-5 h-5 text-destructive" />
+                )}
+                <span className={tenantDataStatus.hasHardware ? "text-muted-foreground" : "font-medium"}>
+                  Hardware-Katalog ({tenantDataStatus.hardwareCount} Geräte)
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                {tenantDataStatus.hasProvisions ? (
+                  <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                    <span className="text-emerald-600 dark:text-emerald-400 text-xs">✓</span>
+                  </div>
+                ) : (
+                  <XCircle className="w-5 h-5 text-destructive" />
+                )}
+                <span className={tenantDataStatus.hasProvisions ? "text-muted-foreground" : "font-medium"}>
+                  Provisionstabelle ({tenantDataStatus.provisionCount} Einträge)
+                </span>
+              </div>
+            </div>
+            <Button asChild className="w-full gap-2">
+              <Link to="/tenant-admin">
+                <Settings className="w-4 h-4" />
+                Zu den Stammdaten
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className={cn(

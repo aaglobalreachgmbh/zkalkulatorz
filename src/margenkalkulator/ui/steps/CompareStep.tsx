@@ -86,6 +86,15 @@ export function CompareStep({
             option={option1} 
             result={result1} 
             variant="secondary"
+            type="customer"
+            viewMode={viewMode}
+          />
+          <PdfDownloadButton 
+            option={option1} 
+            result={result1} 
+            variant="secondary"
+            type="dealer"
+            viewMode={viewMode}
           />
           <Button
             variant="outline"

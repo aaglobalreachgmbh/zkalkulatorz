@@ -1,10 +1,13 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Zap, CheckCircle, TrendingUp, Key, UserPlus, Search, FileText, Bell } from "lucide-react";
+import { ArrowRight, Zap, CheckCircle, TrendingUp, Key, UserPlus, Search, FileText, Bell, LogIn } from "lucide-react";
 import { MainLayout } from "@/components/MainLayout";
 import { useVVLCounts } from "@/margenkalkulator/hooks/useCustomerContracts";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
 
 const Home = () => {
   const navigate = useNavigate();
+  const { user, isLoading } = useAuth();
   const vvlCounts = useVVLCounts();
   
   // Badge shows critical (< 30 days) count
@@ -13,6 +16,25 @@ const Home = () => {
   return (
     <MainLayout>
       <div className="bg-background min-h-full flex flex-col">
+        {/* Login Banner for unauthenticated users */}
+        {!isLoading && !user && (
+          <div className="bg-primary/10 border-b border-primary/20 py-3 px-4">
+            <div className="container mx-auto flex items-center justify-between">
+              <p className="text-sm text-foreground">
+                <span className="font-medium">Willkommen!</span> Melden Sie sich an, um alle Funktionen zu nutzen.
+              </p>
+              <Button
+                onClick={() => navigate("/auth")}
+                size="sm"
+                className="gap-2"
+              >
+                <LogIn className="w-4 h-4" />
+                Anmelden
+              </Button>
+            </div>
+          </div>
+        )}
+        
         {/* Main Content */}
         <main className="flex-1 flex flex-col justify-center px-4 lg:px-6 py-6">
           {/* Headline */}

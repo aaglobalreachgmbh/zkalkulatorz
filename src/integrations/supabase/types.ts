@@ -1888,6 +1888,7 @@ export type Database = {
       get_effective_provision_split: { Args: never; Returns: number }
       get_my_department_id: { Args: never; Returns: string }
       get_my_distribution_id: { Args: never; Returns: string }
+      get_my_distribution_ids: { Args: never; Returns: string[] }
       get_my_tenant_id: { Args: never; Returns: string }
       get_rate_limit_status: {
         Args: { _category: string; _key_hash: string; _window_seconds?: number }

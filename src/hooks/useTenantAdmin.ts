@@ -21,22 +21,30 @@ interface UseTenantAdminResult {
  */
 export function useTenantAdmin(): UseTenantAdminResult {
   const { user } = useAuth();
-  const { role, isLoading } = useUserRole();
+  // FIX: Use isTenantAdmin directly from useUserRole instead of checking role string
+  const { isTenantAdmin: roleIsTenantAdmin, isLoading } = useUserRole();
   const { identity, isSupabaseAuth } = useIdentity();
 
-  // If using Supabase auth, check for tenant_admin or admin role
+  // Debug logging
+  console.log("[useTenantAdmin] isSupabaseAuth:", isSupabaseAuth, 
+              "user:", !!user, 
+              "roleIsTenantAdmin:", roleIsTenantAdmin,
+              "isLoading:", isLoading);
+
+  // If using Supabase auth, use the pre-calculated isTenantAdmin from useUserRole
   if (isSupabaseAuth && user) {
-    // role from useUserRole is string, check for tenant_admin or admin
-    const isTenantAdminRole = role === "tenant_admin" || role === "admin";
     return {
-      isTenantAdmin: isTenantAdminRole,
+      isTenantAdmin: roleIsTenantAdmin,
       isLoading,
     };
   }
 
   // For mock identity, treat "admin" or "tenant_admin" as tenant_admin
+  const mockIsTenantAdmin = identity.role === "admin" || identity.role === "tenant_admin";
+  console.log("[useTenantAdmin] Mock identity role:", identity.role, "isTenantAdmin:", mockIsTenantAdmin);
+  
   return {
-    isTenantAdmin: identity.role === "admin" || identity.role === "tenant_admin",
+    isTenantAdmin: mockIsTenantAdmin,
     isLoading: false,
   };
 }

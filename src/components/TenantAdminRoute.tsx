@@ -18,22 +18,47 @@ export function TenantAdminRoute({ children }: TenantAdminRouteProps) {
   const { isTenantAdmin, isLoading: adminLoading } = useTenantAdmin();
   const location = useLocation();
 
-  // Show loading while checking auth
-  if (authLoading || adminLoading) {
+  // DEBUG: Log all state for diagnosis
+  console.log("[TenantAdminRoute] State:", {
+    authLoading,
+    adminLoading,
+    hasUser: !!user,
+    userId: user?.id,
+    isTenantAdmin,
+    pathname: location.pathname
+  });
+
+  // 1. FIRST: Wait until auth is COMPLETELY loaded
+  if (authLoading) {
+    console.log("[TenantAdminRoute] Auth still loading - showing loader");
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <span className="ml-2 text-muted-foreground">Authentifizierung wird geprüft...</span>
       </div>
     );
   }
 
-  // If not authenticated, redirect to login
+  // 2. THEN: Check if user exists (auth is definitely loaded now)
   if (!user) {
+    console.log("[TenantAdminRoute] No user after auth loaded - redirecting to /auth");
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
-  // If not tenant admin, show access denied (without redirect)
+  // 3. THEN: Wait until roles are loaded
+  if (adminLoading) {
+    console.log("[TenantAdminRoute] Roles still loading - showing loader");
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <span className="ml-2 text-muted-foreground">Berechtigungen werden geprüft...</span>
+      </div>
+    );
+  }
+
+  // 4. FINALLY: Check permission (both auth and roles are loaded)
   if (!isTenantAdmin) {
+    console.log("[TenantAdminRoute] User is not tenant admin - access denied");
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4">
         <ShieldAlert className="h-16 w-16 text-destructive" />
@@ -52,5 +77,6 @@ export function TenantAdminRoute({ children }: TenantAdminRouteProps) {
     );
   }
 
+  console.log("[TenantAdminRoute] Access granted - rendering children");
   return <>{children}</>;
 }

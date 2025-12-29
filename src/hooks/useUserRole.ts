@@ -59,7 +59,11 @@ export function useUserRole(): UseUserRoleResult {
             )
           : "user" as AppRole;
 
-        console.log("[useUserRole] User:", user.id, "Roles:", roles, "Highest:", highestRole);
+        const calculatedIsTenantAdmin = roles.includes("tenant_admin") || roles.includes("admin");
+        console.log("[useUserRole] User:", user.id, 
+                    "Roles:", roles, 
+                    "Highest:", highestRole,
+                    "isTenantAdmin:", calculatedIsTenantAdmin);
 
         setAllRoles(roles);
         setRole(highestRole);

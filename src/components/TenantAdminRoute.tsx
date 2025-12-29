@@ -1,8 +1,10 @@
 // ============================================
 // Tenant Admin Route Protection
 // Only accessible for tenant_admin or admin roles
+// FIXED: Race condition with sessionStable state
 // ============================================
 
+import { useState, useEffect } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useTenantAdmin } from "@/hooks/useTenantAdmin";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,20 +19,39 @@ export function TenantAdminRoute({ children }: TenantAdminRouteProps) {
   const { user, isLoading: authLoading } = useAuth();
   const { isTenantAdmin, isLoading: adminLoading } = useTenantAdmin();
   const location = useLocation();
+  
+  // CRITICAL FIX: Wait for session to stabilize after auth loading completes
+  const [sessionStable, setSessionStable] = useState(false);
+
+  useEffect(() => {
+    if (!authLoading) {
+      console.log("[TenantAdminRoute] Auth loaded, waiting for session to stabilize...");
+      // Short delay to catch race condition where user is set slightly after isLoading
+      const timer = setTimeout(() => {
+        console.log("[TenantAdminRoute] Session stabilized, user:", !!user, user?.id);
+        setSessionStable(true);
+      }, 150);
+      return () => clearTimeout(timer);
+    } else {
+      // Reset when auth starts loading again
+      setSessionStable(false);
+    }
+  }, [authLoading, user]);
 
   // DEBUG: Log all state for diagnosis
   console.log("[TenantAdminRoute] State:", {
     authLoading,
     adminLoading,
+    sessionStable,
     hasUser: !!user,
     userId: user?.id,
     isTenantAdmin,
     pathname: location.pathname
   });
 
-  // 1. FIRST: Wait until auth is COMPLETELY loaded
-  if (authLoading) {
-    console.log("[TenantAdminRoute] Auth still loading - showing loader");
+  // 1. FIRST: Wait until auth is COMPLETELY loaded AND session is stable
+  if (authLoading || !sessionStable) {
+    console.log("[TenantAdminRoute] Waiting for auth/session stability");
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -39,9 +60,9 @@ export function TenantAdminRoute({ children }: TenantAdminRouteProps) {
     );
   }
 
-  // 2. THEN: Check if user exists (auth is definitely loaded now)
+  // 2. THEN: Check if user exists (auth is definitely loaded and stable now)
   if (!user) {
-    console.log("[TenantAdminRoute] No user after auth loaded - redirecting to /auth");
+    console.log("[TenantAdminRoute] No user after stable check - redirecting to /auth");
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 

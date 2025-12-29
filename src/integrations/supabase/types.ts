@@ -1417,6 +1417,102 @@ export type Database = {
           },
         ]
       }
+      tenant_hardware: {
+        Row: {
+          brand: string
+          category: string | null
+          created_at: string | null
+          created_by: string | null
+          ek_net: number
+          hardware_id: string
+          id: string
+          is_active: boolean | null
+          model: string
+          sort_order: number | null
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          brand: string
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          ek_net: number
+          hardware_id: string
+          id?: string
+          is_active?: boolean | null
+          model: string
+          sort_order?: number | null
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          brand?: string
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          ek_net?: number
+          hardware_id?: string
+          id?: string
+          is_active?: boolean | null
+          model?: string
+          sort_order?: number | null
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      tenant_provisions: {
+        Row: {
+          contract_type: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          provision_amount: number
+          sub_variant_id: string | null
+          tariff_family: string | null
+          tariff_id: string
+          tariff_name: string
+          tenant_id: string
+          updated_at: string | null
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          contract_type?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          provision_amount: number
+          sub_variant_id?: string | null
+          tariff_family?: string | null
+          tariff_id: string
+          tariff_name: string
+          tenant_id: string
+          updated_at?: string | null
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          contract_type?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          provision_amount?: number
+          sub_variant_id?: string | null
+          tariff_family?: string | null
+          tariff_id?: string
+          tariff_name?: string
+          tenant_id?: string
+          updated_at?: string | null
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
       tenant_settings: {
         Row: {
           branding: Json | null
@@ -1733,6 +1829,7 @@ export type Database = {
         Args: { _team_id: string; _user_id: string }
         Returns: boolean
       }
+      is_tenant_admin: { Args: { _user_id: string }; Returns: boolean }
       log_user_activity: {
         Args: {
           _action: string

@@ -90,14 +90,21 @@ const App = () => (
                       <BrowserRouter>
                     <Suspense fallback={<PageLoader />}>
                     <Routes>
+                      {/* Public routes - no authentication required */}
                       <Route path="/auth" element={<Auth />} />
-                      <Route path="/" element={<Home />} />
-                      <Route path="/calculator" element={<Index />} />
-                      <Route path="/bundles" element={<Bundles />} />
-                      <Route path="/admin" element={<Admin />} />
+                      <Route path="/datenschutz" element={<Privacy />} />
+                      
+                      {/* ALL other routes require authentication */}
+                      <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+                      <Route path="/calculator" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+                      <Route path="/bundles" element={<ProtectedRoute><Bundles /></ProtectedRoute>} />
+                      <Route path="/license" element={<ProtectedRoute><License /></ProtectedRoute>} />
+                      
+                      {/* Admin routes */}
+                      <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
                       <Route path="/admin/employees" element={<AdminRoute><AdminEmployees /></AdminRoute>} />
                       <Route path="/admin/push-provisions" element={<AdminRoute><AdminPushProvisions /></AdminRoute>} />
-                      <Route path="/license" element={<License />} />
+                      
                       <Route
                         path="/offers"
                         element={
@@ -274,7 +281,6 @@ const App = () => (
                           </FeatureRoute>
                         }
                       />
-                      <Route path="/datenschutz" element={<Privacy />} />
                       {/* Tenant Admin Route */}
                       <Route
                         path="/tenant-admin"

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useActivityTracker } from "@/hooks/useActivityTracker";
+import { useIdentity } from "@/contexts/IdentityContext";
 import { toast } from "sonner";
 
 export interface Customer {
@@ -64,6 +65,7 @@ export interface CustomerInput {
 
 export function useCustomers() {
   const { user } = useAuth();
+  const { identity } = useIdentity();
   const queryClient = useQueryClient();
   const { trackCustomerCreated, trackCustomerUpdated, trackCustomerDeleted } = useActivityTracker();
 
@@ -90,6 +92,7 @@ export function useCustomers() {
         .from("customers")
         .insert({
           user_id: user.id,
+          tenant_id: identity.tenantId,
           company_name: input.company_name,
           contact_name: input.contact_name || null,
           email: input.email || null,

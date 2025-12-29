@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useActivityTracker } from "@/hooks/useActivityTracker";
+import { useIdentity } from "@/contexts/IdentityContext";
 import type { OfferOptionState } from "../engine/types";
 import type { CloudOffer, OfferPreview } from "../storage/types";
 import { useToast } from "@/hooks/use-toast";
@@ -32,6 +33,7 @@ function createPreview(config: OfferOptionState, avgMonthly: number): OfferPrevi
  */
 export function useCloudOffers() {
   const { user } = useAuth();
+  const { identity } = useIdentity();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { trackOfferCreated, trackOfferDeleted, trackOfferRenamed } = useActivityTracker();
@@ -94,6 +96,7 @@ export function useCloudOffers() {
         .from("saved_offers")
         .insert({
           user_id: user.id,
+          tenant_id: identity.tenantId,
           name,
           config: JSON.parse(JSON.stringify(config)),
           preview: JSON.parse(JSON.stringify(preview)),

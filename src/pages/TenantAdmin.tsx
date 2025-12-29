@@ -11,6 +11,7 @@ import { Building2, FileSpreadsheet, CreditCard, Users, Shield, Info } from "luc
 import { useIdentity } from "@/contexts/IdentityContext";
 import { TenantHardwareManager } from "@/margenkalkulator/ui/components/TenantHardwareManager";
 import { TenantProvisionManager } from "@/margenkalkulator/ui/components/TenantProvisionManager";
+import { TenantTeamManager } from "@/margenkalkulator/ui/components/TenantTeamManager";
 import { useTenantHardware } from "@/margenkalkulator/hooks/useTenantHardware";
 import { useTenantProvisions } from "@/margenkalkulator/hooks/useTenantProvisions";
 
@@ -97,29 +98,9 @@ export default function TenantAdmin() {
           <TenantProvisionManager />
         </TabsContent>
 
-        {/* Team Tab - Placeholder for Phase 4 */}
+        {/* Team Tab */}
         <TabsContent value="team">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Team-Verwaltung
-              </CardTitle>
-              <CardDescription>
-                Laden Sie Mitarbeiter ein und verwalten Sie deren Rollen
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Alert>
-                <Info className="h-4 w-4" />
-                <AlertTitle>Demnächst verfügbar</AlertTitle>
-                <AlertDescription>
-                  Die Team-Verwaltung mit E-Mail-Einladungen wird in Phase 4 implementiert.
-                  Aktuell können Nutzer über den Admin-Bereich hinzugefügt werden.
-                </AlertDescription>
-              </Alert>
-            </CardContent>
-          </Card>
+          <TenantTeamManager />
         </TabsContent>
 
         {/* Permissions Tab - Placeholder for Phase 4 */}

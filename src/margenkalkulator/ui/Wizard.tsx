@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Smartphone, Signal, Router, LayoutGrid, Printer, Calculator, Home, ChevronLeft, ChevronRight, Lock, AlertTriangle, XCircle, Settings } from "lucide-react";
+import { useUserRole } from "@/hooks/useUserRole";
 import {
   type OfferOptionState,
   type ViewMode,
@@ -341,7 +342,10 @@ export function Wizard() {
   const avgMonthlyNet = activeResult.totals.avgTermNet;
 
   // Phase 7: Block wizard if tenant data incomplete (only for Supabase auth)
-  if (isSupabaseAuth && !isLoadingTenantData && tenantDataStatus && !tenantDataStatus.isComplete) {
+  // Super-Admin (Plattform-Admin) kann die Blockierung umgehen
+  const { isAdmin: isSuperAdmin } = useUserRole();
+  
+  if (isSupabaseAuth && !isSuperAdmin && !isLoadingTenantData && tenantDataStatus && !tenantDataStatus.isComplete) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="max-w-lg w-full">

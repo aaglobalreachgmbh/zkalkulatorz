@@ -41,11 +41,13 @@ const SecuritySettings = lazy(() => import("./pages/SecuritySettings"));
 const Admin = lazy(() => import("./pages/Admin"));
 const AdminEmployees = lazy(() => import("./pages/AdminEmployees"));
 const AdminPushProvisions = lazy(() => import("./pages/AdminPushProvisions"));
+const AdminUsers = lazy(() => import("./pages/AdminUsers"));
 const License = lazy(() => import("./pages/License"));
 const SecurityReport = lazy(() => import("./pages/SecurityReport"));
 const ThreatIntelligence = lazy(() => import("./pages/ThreatIntelligence"));
 const SecurityStatusDashboard = lazy(() => import("./pages/SecurityStatusDashboard"));
 const Privacy = lazy(() => import("./pages/Privacy"));
+const PendingApproval = lazy(() => import("./pages/PendingApproval"));
 const GDPRDashboard = lazy(() => import("./pages/GDPRDashboard"));
 const ActivityDashboard = lazy(() => import("./pages/ActivityDashboard"));
 const SecurityTestPage = lazy(() => import("./pages/SecurityTestPage"));
@@ -72,7 +74,7 @@ const queryClient = new QueryClient({
 });
 
 // Seiten die immer auf allen Geräten erlaubt sind
-const ALWAYS_ALLOWED_PATHS = ["/auth", "/datenschutz", "/license"];
+const ALWAYS_ALLOWED_PATHS = ["/auth", "/datenschutz", "/license", "/pending-approval"];
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -93,6 +95,7 @@ const App = () => (
                       {/* Public routes - no authentication required */}
                       <Route path="/auth" element={<Auth />} />
                       <Route path="/datenschutz" element={<Privacy />} />
+                      <Route path="/pending-approval" element={<PendingApproval />} />
                       
                       {/* ALL other routes require authentication */}
                       <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
@@ -104,6 +107,7 @@ const App = () => (
                       <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
                       <Route path="/admin/employees" element={<AdminRoute><AdminEmployees /></AdminRoute>} />
                       <Route path="/admin/push-provisions" element={<AdminRoute><AdminPushProvisions /></AdminRoute>} />
+                      <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
                       
                       <Route
                         path="/offers"

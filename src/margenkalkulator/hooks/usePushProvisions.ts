@@ -8,6 +8,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useIdentity } from "@/contexts/IdentityContext";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database, Json } from "@/integrations/supabase/types";
 import type { ContractType } from "../engine/types";
 
 // Condition types for push provisions
@@ -408,7 +409,7 @@ export function useAdminPushProvisions() {
 
       const { data, error } = await supabase
         .from("push_provisions")
-        .insert(payload)
+        .insert(payload as Database["public"]["Tables"]["push_provisions"]["Insert"])
         .select()
         .single();
 

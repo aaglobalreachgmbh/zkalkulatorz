@@ -48,8 +48,8 @@ const TERM_DEFINITIONS: Record<string, { title: string; description: string; exa
   },
   amortisieren: {
     title: "Monatlich amortisieren",
-    description: "Verteilt die Hardware-Kosten (EK) rechnerisch auf die 24 Monate Vertragslaufzeit. Zeigt den 'wahren' monatlichen Kundenpreis inkl. Gerät.",
-    example: "779€ EK ÷ 24 = 32,46€/Monat extra",
+    description: "Aktiviert: Hardware-Kosten werden auf 24 Monate verteilt und im monatlichen Kundenpreis angezeigt. Deaktiviert: Hardware-Kosten erscheinen NICHT im Kundenpreis, nur in der Händler-Marge.",
+    example: "Tipp: Für Kunden-Präsentationen aktivieren, damit der echte Monatspreis sichtbar wird",
   },
   // Provision & Marge
   provision: {

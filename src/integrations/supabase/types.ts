@@ -603,14 +603,137 @@ export type Database = {
         }
         Relationships: []
       }
+      distribution_partners: {
+        Row: {
+          branding_override: Json | null
+          created_at: string
+          distribution_id: string
+          id: string
+          invite_expires_at: string | null
+          invite_token: string | null
+          invited_by: string | null
+          invited_email: string | null
+          max_seats: number | null
+          max_users: number | null
+          onboarded_at: string | null
+          onboarded_by: string | null
+          provision_split_pct: number | null
+          status: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          branding_override?: Json | null
+          created_at?: string
+          distribution_id: string
+          id?: string
+          invite_expires_at?: string | null
+          invite_token?: string | null
+          invited_by?: string | null
+          invited_email?: string | null
+          max_seats?: number | null
+          max_users?: number | null
+          onboarded_at?: string | null
+          onboarded_by?: string | null
+          provision_split_pct?: number | null
+          status?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          branding_override?: Json | null
+          created_at?: string
+          distribution_id?: string
+          id?: string
+          invite_expires_at?: string | null
+          invite_token?: string | null
+          invited_by?: string | null
+          invited_email?: string | null
+          max_seats?: number | null
+          max_users?: number | null
+          onboarded_at?: string | null
+          onboarded_by?: string | null
+          provision_split_pct?: number | null
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "distribution_partners_distribution_id_fkey"
+            columns: ["distribution_id"]
+            isOneToOne: false
+            referencedRelation: "distributions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      distributions: {
+        Row: {
+          address: Json | null
+          branding: Json | null
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          created_by: string | null
+          default_provision_split: number | null
+          features: Json | null
+          id: string
+          max_partners: number | null
+          name: string
+          slug: string
+          status: string
+          trial_ends_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: Json | null
+          branding?: Json | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          created_by?: string | null
+          default_provision_split?: number | null
+          features?: Json | null
+          id?: string
+          max_partners?: number | null
+          name: string
+          slug: string
+          status?: string
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: Json | null
+          branding?: Json | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          created_by?: string | null
+          default_provision_split?: number | null
+          features?: Json | null
+          id?: string
+          max_partners?: number | null
+          name?: string
+          slug?: string
+          status?: string
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       employee_settings: {
         Row: {
           blocked_tariffs: string[] | null
+          can_export_pdf: boolean | null
+          can_manage_customers: boolean | null
+          can_view_margins: boolean | null
           created_at: string
           department: string | null
           display_name: string | null
           feature_overrides: Json | null
           id: string
+          is_subuser: boolean | null
           provision_deduction: number | null
           provision_deduction_type: string | null
           tenant_id: string
@@ -620,11 +743,15 @@ export type Database = {
         }
         Insert: {
           blocked_tariffs?: string[] | null
+          can_export_pdf?: boolean | null
+          can_manage_customers?: boolean | null
+          can_view_margins?: boolean | null
           created_at?: string
           department?: string | null
           display_name?: string | null
           feature_overrides?: Json | null
           id?: string
+          is_subuser?: boolean | null
           provision_deduction?: number | null
           provision_deduction_type?: string | null
           tenant_id: string
@@ -634,11 +761,15 @@ export type Database = {
         }
         Update: {
           blocked_tariffs?: string[] | null
+          can_export_pdf?: boolean | null
+          can_manage_customers?: boolean | null
+          can_view_margins?: boolean | null
           created_at?: string
           department?: string | null
           display_name?: string | null
           feature_overrides?: Json | null
           id?: string
+          is_subuser?: boolean | null
           provision_deduction?: number | null
           provision_deduction_type?: string | null
           tenant_id?: string
@@ -1288,36 +1419,56 @@ export type Database = {
       }
       tenant_settings: {
         Row: {
+          branding: Json | null
           created_at: string
           default_blocked_tariffs: string[] | null
           default_provision_deduction: number | null
           default_provision_deduction_type: string | null
+          distribution_id: string | null
+          features_override: Json | null
+          hide_margin_for_subusers: boolean | null
           id: string
           tenant_id: string
           updated_at: string
           updated_by: string | null
         }
         Insert: {
+          branding?: Json | null
           created_at?: string
           default_blocked_tariffs?: string[] | null
           default_provision_deduction?: number | null
           default_provision_deduction_type?: string | null
+          distribution_id?: string | null
+          features_override?: Json | null
+          hide_margin_for_subusers?: boolean | null
           id?: string
           tenant_id: string
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
+          branding?: Json | null
           created_at?: string
           default_blocked_tariffs?: string[] | null
           default_provision_deduction?: number | null
           default_provision_deduction_type?: string | null
+          distribution_id?: string | null
+          features_override?: Json | null
+          hide_margin_for_subusers?: boolean | null
           id?: string
           tenant_id?: string
           updated_at?: string
           updated_by?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tenant_settings_distribution_id_fkey"
+            columns: ["distribution_id"]
+            isOneToOne: false
+            referencedRelation: "distributions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       threat_feed_entries: {
         Row: {
@@ -1550,7 +1701,9 @@ export type Database = {
         Returns: number
       }
       cleanup_rate_limits: { Args: never; Returns: number }
+      get_effective_provision_split: { Args: never; Returns: number }
       get_my_department_id: { Args: never; Returns: string }
+      get_my_distribution_id: { Args: never; Returns: string }
       get_my_tenant_id: { Args: never; Returns: string }
       get_rate_limit_status: {
         Args: { _category: string; _key_hash: string; _window_seconds?: number }
@@ -1569,6 +1722,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_distribution_member: {
+        Args: { _distribution_id: string }
         Returns: boolean
       }
       is_same_tenant: { Args: { _tenant_id: string }; Returns: boolean }

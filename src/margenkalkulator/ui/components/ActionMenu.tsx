@@ -1,0 +1,135 @@
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { 
+  MoreHorizontal, 
+  History, 
+  FolderOpen, 
+  Save, 
+  FileText, 
+  Package, 
+  Cloud 
+} from "lucide-react";
+import type { OfferOptionState } from "@/margenkalkulator";
+import { useHistory } from "../../hooks/useHistory";
+import { useDrafts } from "../../hooks/useDrafts";
+import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
+
+interface ActionMenuProps {
+  config: OfferOptionState;
+  avgMonthly: number;
+  onLoadConfig: (config: OfferOptionState) => void;
+}
+
+export function ActionMenu({ config, avgMonthly, onLoadConfig }: ActionMenuProps) {
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const { history } = useHistory();
+  const { createDraft } = useDrafts();
+
+  const handleSaveDraft = async () => {
+    const tariffName = config.mobile.tariffId || "Kein Tarif";
+    const hardwareName = config.hardware.name || "SIM-Only";
+    const name = `${hardwareName} + ${tariffName}`;
+    
+    try {
+      await createDraft(name, config, avgMonthly);
+      
+      toast({
+        title: "Entwurf gespeichert",
+        description: `"${name}" wurde gespeichert.`,
+      });
+    } catch {
+      toast({
+        title: "Fehler",
+        description: "Entwurf konnte nicht gespeichert werden.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleLoadLastHistory = () => {
+    if (history.length > 0) {
+      onLoadConfig(history[0].config as OfferOptionState);
+      toast({
+        title: "Konfiguration geladen",
+        description: "Letzter Verlaufseintrag wurde geladen.",
+      });
+    } else {
+      toast({
+        title: "Kein Verlauf",
+        description: "Es gibt keine gespeicherten Konfigurationen.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleNavigateDrafts = () => {
+    navigate("/offers");
+  };
+
+  const handleNavigateCloud = () => {
+    navigate("/offers");
+  };
+
+  const handleSaveTemplate = () => {
+    toast({
+      title: "Template speichern",
+      description: "Bitte nutze den Vorlagen-Button auf der Angebote-Seite.",
+    });
+    navigate("/offers");
+  };
+
+  const handleSaveBundle = () => {
+    navigate("/bundles");
+    toast({
+      title: "Bundle speichern",
+      description: "Du wirst zur Bundle-Verwaltung weitergeleitet.",
+    });
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="sm" className="gap-2">
+          <MoreHorizontal className="w-4 h-4" />
+          <span className="hidden sm:inline">Aktionen</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56 bg-popover border border-border shadow-lg z-50">
+        <DropdownMenuItem onClick={handleLoadLastHistory} className="gap-3 cursor-pointer">
+          <History className="w-4 h-4" />
+          Letzten Verlauf laden
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={handleNavigateDrafts} className="gap-3 cursor-pointer">
+          <FolderOpen className="w-4 h-4" />
+          Entwürfe verwalten
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={handleSaveDraft} className="gap-3 cursor-pointer">
+          <Save className="w-4 h-4" />
+          Als Entwurf speichern
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={handleSaveTemplate} className="gap-3 cursor-pointer">
+          <FileText className="w-4 h-4" />
+          Als Template speichern
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={handleSaveBundle} className="gap-3 cursor-pointer">
+          <Package className="w-4 h-4" />
+          Als Bundle speichern
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={handleNavigateCloud} className="gap-3 cursor-pointer">
+          <Cloud className="w-4 h-4" />
+          Cloud-Angebote
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}

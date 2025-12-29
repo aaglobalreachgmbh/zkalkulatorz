@@ -205,22 +205,24 @@ const Home = () => {
 
         {/* System Status Footer */}
         <footer className="border-t border-border py-4 shrink-0">
-          <div className="text-center">
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-4">
-              Aktueller Systemstatus
-            </p>
-            <div className="flex items-center justify-center gap-8 text-sm">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 bg-success rounded-full" />
-                <span className="text-muted-foreground">API Verbunden</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 bg-success rounded-full" />
-                <span className="text-muted-foreground">Katalog: v24.10.1</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 bg-success rounded-full" />
-                <span className="text-muted-foreground">AI Engine: Ready</span>
+          <div className="container mx-auto px-4 lg:px-6">
+            <div className="text-center">
+              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-4">
+                Aktueller Systemstatus
+              </p>
+              <div className="flex items-center justify-center gap-8 text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-success rounded-full" />
+                  <span className="text-muted-foreground">API Verbunden</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-success rounded-full" />
+                  <span className="text-muted-foreground">Katalog: v24.10.1</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-success rounded-full" />
+                  <span className="text-muted-foreground">AI Engine: Ready</span>
+                </div>
               </div>
             </div>
           </div>

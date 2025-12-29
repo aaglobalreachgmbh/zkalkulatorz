@@ -26,6 +26,7 @@ import { SaveBundleButton } from "./components/SaveBundleButton";
 import { DraftManager } from "./components/DraftManager";
 import { HistoryDropdown } from "./components/HistoryDropdown";
 import { CloudOfferManager } from "./components/CloudOfferManager";
+import { ActionMenu } from "./components/ActionMenu";
 import { ViewModeToggle } from "./components/ViewModeToggle";
 import { CustomerSessionToggle } from "./components/CustomerSessionToggle";
 import { IdentitySelector } from "./components/IdentitySelector";
@@ -407,16 +408,13 @@ export function Wizard() {
             
             <div className="h-6 w-px bg-border" />
             
-            <HistoryDropdown onLoadHistory={handleLoadConfig} />
-            <DraftManager onLoadDraft={handleLoadConfig} />
-            <SaveDraftButton config={activeState} avgMonthly={avgMonthlyNet} />
-            <SaveTemplateButton config={activeState} />
-            <SaveBundleButton config={activeState} />
-            <CloudOfferManager 
+            {/* Grouped Actions Menu */}
+            <ActionMenu 
               config={activeState} 
               avgMonthly={avgMonthlyNet} 
-              onLoadOffer={handleLoadConfig}
+              onLoadConfig={handleLoadConfig} 
             />
+            
             <button 
               onClick={() => navigate("/")}
               className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"

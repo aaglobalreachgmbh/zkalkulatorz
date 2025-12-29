@@ -5,9 +5,11 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { FileText, Loader2 } from "lucide-react";
+import { FileText, Loader2, ShieldCheck } from "lucide-react";
 import { useActivityTracker } from "@/hooks/useActivityTracker";
-import type { OfferOptionState, CalculationResult } from "../../engine/types";
+import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
+import { useEmployeeSettings } from "@/margenkalkulator/hooks/useEmployeeSettings";
+import type { OfferOptionState, CalculationResult, ViewMode } from "../../engine/types";
 import { toast } from "sonner";
 
 interface PdfDownloadButtonProps {
@@ -15,6 +17,10 @@ interface PdfDownloadButtonProps {
   result: CalculationResult;
   variant?: "default" | "outline" | "secondary";
   size?: "default" | "sm";
+  /** PDF type: customer (default) or dealer (with margin info) */
+  type?: "customer" | "dealer";
+  /** Current view mode - required for dealer PDF security check */
+  viewMode?: ViewMode;
 }
 
 // SECURITY: Maximum PDF generation time (prevents DoS via complex documents)
@@ -34,11 +40,32 @@ export function PdfDownloadButton({
   result,
   variant = "outline",
   size = "sm",
+  type = "customer",
+  viewMode = "customer",
 }: PdfDownloadButtonProps) {
   const [loading, setLoading] = useState(false);
   const { trackPdfExported } = useActivityTracker();
+  const visibility = useSensitiveFieldsVisible(viewMode);
+  const { settings } = useEmployeeSettings();
+
+  // SECURITY: Dealer PDF only allowed when:
+  // 1. Not in customer mode
+  // 2. User has permission to view margins (default true if not set)
+  // 3. No active customer session
+  const canViewMargins = settings?.featureOverrides?.can_view_margins !== false;
+  const canGenerateDealerPdf = 
+    type === "dealer" &&
+    visibility.effectiveMode !== "customer" &&
+    canViewMargins &&
+    !visibility.isCustomerSessionActive;
 
   const handleDownload = async () => {
+    // SECURITY: Block dealer PDF if not authorized
+    if (type === "dealer" && !canGenerateDealerPdf) {
+      toast.error("Keine Berechtigung für Händler-PDF");
+      return;
+    }
+
     setLoading(true);
 
     // SECURITY: Timeout promise for PDF generation
@@ -50,15 +77,21 @@ export function PdfDownloadButton({
     });
 
     try {
-      // Dynamically import PDF dependencies to avoid SSR issues
-      const [{ pdf }, { OfferPdf }] = await Promise.all([
+      // Dynamically import PDF dependencies based on type
+      const [{ pdf }, pdfComponent] = await Promise.all([
         import("@react-pdf/renderer"),
-        import("../../pdf/OfferPdf"),
+        type === "dealer" 
+          ? import("../../pdf/DealerPdf")
+          : import("../../pdf/OfferPdf"),
       ]);
 
       // Generate PDF blob with timeout protection
+      const PdfComponent = type === "dealer" 
+        ? (pdfComponent as { DealerPdf: typeof import("../../pdf/DealerPdf").DealerPdf }).DealerPdf
+        : (pdfComponent as { OfferPdf: typeof import("../../pdf/OfferPdf").OfferPdf }).OfferPdf;
+
       const blob = await Promise.race([
-        pdf(<OfferPdf option={option} result={result} />).toBlob(),
+        pdf(<PdfComponent option={option} result={result} />).toBlob(),
         timeoutPromise,
       ]);
 
@@ -73,12 +106,13 @@ export function PdfDownloadButton({
       const link = document.createElement("a");
       link.href = url;
 
-      // Generate sanitized filename
+      // Generate sanitized filename with type suffix
       const date = new Date().toISOString().split("T")[0];
       const tariffName = option.mobile.tariffId
         ? sanitizeFilename(option.mobile.tariffId)
         : "Angebot";
-      link.download = `${tariffName}_${date}.pdf`;
+      const typeSuffix = type === "dealer" ? "_Haendler" : "_Kunde";
+      link.download = `${tariffName}${typeSuffix}_${date}.pdf`;
 
       // Trigger download
       document.body.appendChild(link);
@@ -88,10 +122,10 @@ export function PdfDownloadButton({
       // Cleanup immediately
       URL.revokeObjectURL(url);
 
-      toast.success("PDF wurde heruntergeladen");
+      toast.success(type === "dealer" ? "Händler-PDF wurde heruntergeladen" : "Kunden-PDF wurde heruntergeladen");
       
       // Track PDF export
-      trackPdfExported(undefined, tariffName);
+      trackPdfExported(undefined, `${tariffName}_${type}`);
     } catch (e) {
       console.error("PDF generation failed:", e);
       const errorMessage =
@@ -104,6 +138,11 @@ export function PdfDownloadButton({
     }
   };
 
+  // Don't render dealer button if not authorized
+  if (type === "dealer" && !canGenerateDealerPdf) {
+    return null;
+  }
+
   return (
     <Button
       variant={variant}
@@ -114,10 +153,12 @@ export function PdfDownloadButton({
     >
       {loading ? (
         <Loader2 className="w-4 h-4 animate-spin" />
+      ) : type === "dealer" ? (
+        <ShieldCheck className="w-4 h-4" />
       ) : (
         <FileText className="w-4 h-4" />
       )}
-      <span className="hidden sm:inline">PDF</span>
+      <span className="hidden sm:inline">{type === "dealer" ? "Händler-PDF" : "PDF"}</span>
     </Button>
   );
 }

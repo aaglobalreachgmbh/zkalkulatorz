@@ -1,3 +1,4 @@
+import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,7 +8,6 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminRoute } from "@/components/AdminRoute";
 import { TenantAdminRoute } from "@/components/TenantAdminRoute";
-import TenantAdmin from "./pages/TenantAdmin";
 import { SecurityProvider } from "@/providers/SecurityProvider";
 import { SecurityErrorBoundary } from "@/components/SecurityErrorBoundary";
 import { OfflineBoundary } from "@/components/OfflineBoundary";
@@ -16,36 +16,60 @@ import { CustomerSessionProvider } from "@/contexts/CustomerSessionContext";
 import { SeatLimitGate } from "@/components/SeatLimitGate";
 import { FeatureRoute } from "@/components/FeatureRoute";
 import { MobileAccessGate } from "@/components/MobileAccessGate";
+import { Loader2 } from "lucide-react";
+
+// Eagerly loaded pages (critical path)
 import Home from "./pages/Home";
-import Index from "./pages/Index";
-import Bundles from "./pages/Bundles";
-import NotFound from "./pages/NotFound";
-import DataManager from "./pages/DataManager";
-import HardwareManager from "./pages/HardwareManager";
-import HardwareImages from "./pages/HardwareImages";
 import Auth from "./pages/Auth";
-import SecurityDashboard from "./pages/SecurityDashboard";
-import Customers from "./pages/Customers";
-import CustomerDetail from "./pages/CustomerDetail";
-import MoccaImport from "./pages/MoccaImport";
-import Contracts from "./pages/Contracts";
-import Team from "./pages/Team";
-import Offers from "./pages/Offers";
-import Reporting from "./pages/Reporting";
-import SecuritySettings from "./pages/SecuritySettings";
-import Admin from "./pages/Admin";
-import AdminEmployees from "./pages/AdminEmployees";
-import AdminPushProvisions from "./pages/AdminPushProvisions";
-import License from "./pages/License";
-import SecurityReport from "./pages/SecurityReport";
-import ThreatIntelligence from "./pages/ThreatIntelligence";
-import SecurityStatusDashboard from "./pages/SecurityStatusDashboard";
-import Privacy from "./pages/Privacy";
-import GDPRDashboard from "./pages/GDPRDashboard";
-import ActivityDashboard from "./pages/ActivityDashboard";
-import SecurityTestPage from "./pages/SecurityTestPage";
-import DistributionDashboard from "./pages/DistributionDashboard";
-const queryClient = new QueryClient();
+import NotFound from "./pages/NotFound";
+
+// Lazy loaded pages (code splitting)
+const Index = lazy(() => import("./pages/Index"));
+const Bundles = lazy(() => import("./pages/Bundles"));
+const DataManager = lazy(() => import("./pages/DataManager"));
+const HardwareManager = lazy(() => import("./pages/HardwareManager"));
+const HardwareImages = lazy(() => import("./pages/HardwareImages"));
+const SecurityDashboard = lazy(() => import("./pages/SecurityDashboard"));
+const Customers = lazy(() => import("./pages/Customers"));
+const CustomerDetail = lazy(() => import("./pages/CustomerDetail"));
+const MoccaImport = lazy(() => import("./pages/MoccaImport"));
+const Contracts = lazy(() => import("./pages/Contracts"));
+const Team = lazy(() => import("./pages/Team"));
+const Offers = lazy(() => import("./pages/Offers"));
+const Reporting = lazy(() => import("./pages/Reporting"));
+const SecuritySettings = lazy(() => import("./pages/SecuritySettings"));
+const Admin = lazy(() => import("./pages/Admin"));
+const AdminEmployees = lazy(() => import("./pages/AdminEmployees"));
+const AdminPushProvisions = lazy(() => import("./pages/AdminPushProvisions"));
+const License = lazy(() => import("./pages/License"));
+const SecurityReport = lazy(() => import("./pages/SecurityReport"));
+const ThreatIntelligence = lazy(() => import("./pages/ThreatIntelligence"));
+const SecurityStatusDashboard = lazy(() => import("./pages/SecurityStatusDashboard"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+const GDPRDashboard = lazy(() => import("./pages/GDPRDashboard"));
+const ActivityDashboard = lazy(() => import("./pages/ActivityDashboard"));
+const SecurityTestPage = lazy(() => import("./pages/SecurityTestPage"));
+const DistributionDashboard = lazy(() => import("./pages/DistributionDashboard"));
+const TenantAdmin = lazy(() => import("./pages/TenantAdmin"));
+
+// Loading fallback component
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+  </div>
+);
+
+// QueryClient with optimized caching
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes - data stays fresh
+      gcTime: 1000 * 60 * 30, // 30 minutes - cache retention (formerly cacheTime)
+      retry: 2,
+      refetchOnWindowFocus: false, // Reduce unnecessary refetches
+    },
+  },
+});
 
 // Seiten die immer auf allen Geräten erlaubt sind
 const ALWAYS_ALLOWED_PATHS = ["/auth", "/datenschutz", "/license"];
@@ -64,6 +88,7 @@ const App = () => (
                       <Toaster />
                       <Sonner />
                       <BrowserRouter>
+                    <Suspense fallback={<PageLoader />}>
                     <Routes>
                       <Route path="/auth" element={<Auth />} />
                       <Route path="/" element={<Home />} />
@@ -262,6 +287,7 @@ const App = () => (
                       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                       <Route path="*" element={<NotFound />} />
                     </Routes>
+                    </Suspense>
                     </BrowserRouter>
                     </MobileAccessGate>
                   </SeatLimitGate>

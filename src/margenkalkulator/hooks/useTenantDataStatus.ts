@@ -18,6 +18,20 @@ export interface TenantDataStatus {
 export function useTenantDataStatus() {
   const { identity, isSupabaseAuth } = useIdentity();
 
+  // Super-Admin bypass - immer "complete" für Plattform-Admins
+  if (identity.role === "admin") {
+    return {
+      status: {
+        hasHardware: true,
+        hasProvisions: true,
+        isComplete: true,
+        hardwareCount: 0,
+        provisionCount: 0,
+      },
+      isLoading: false,
+    };
+  }
+
   const query = useQuery({
     queryKey: ["tenant-data-status", identity.tenantId],
     queryFn: async (): Promise<TenantDataStatus> => {

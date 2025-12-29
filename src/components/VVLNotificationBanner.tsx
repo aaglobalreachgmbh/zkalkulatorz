@@ -9,8 +9,8 @@ export function VVLNotificationBanner() {
   const counts = useVVLCounts();
   const [dismissed, setDismissed] = useState(false);
   
-  // Only show if there are critical VVLs (< 30 days)
-  const criticalCount = counts.critical;
+  // Only show if there are critical VVLs (< 30 days) - with null-safe access
+  const criticalCount = counts?.critical ?? 0;
   
   // Reset dismissed state when critical count changes
   useEffect(() => {

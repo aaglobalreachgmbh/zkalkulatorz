@@ -104,20 +104,31 @@ export function useDistributions() {
   const myDistributionQuery = useQuery({
     queryKey: ["my-distribution"],
     queryFn: async () => {
-      const { data: distributionId, error: rpcError } = await supabase
-        .rpc("get_my_distribution_id");
+      try {
+        const { data: distributionId, error: rpcError } = await supabase
+          .rpc("get_my_distribution_id");
 
-      if (rpcError) throw rpcError;
-      if (!distributionId) return null;
+        if (rpcError) {
+          console.warn("Distribution lookup failed:", rpcError.message);
+          return null;
+        }
+        if (!distributionId) return null;
 
-      const { data: distribution, error: distError } = await supabase
-        .from("distributions" as never)
-        .select("*")
-        .eq("id", distributionId)
-        .maybeSingle();
+        const { data: distribution, error: distError } = await supabase
+          .from("distributions" as never)
+          .select("*")
+          .eq("id", distributionId)
+          .maybeSingle();
 
-      if (distError) throw distError;
-      return distribution as Distribution | null;
+        if (distError) {
+          console.warn("Distribution fetch failed:", distError.message);
+          return null;
+        }
+        return distribution as Distribution | null;
+      } catch (e) {
+        console.warn("Unexpected error in distribution query:", e);
+        return null;
+      }
     },
     enabled: !!user,
   });

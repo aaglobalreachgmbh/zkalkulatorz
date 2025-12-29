@@ -282,7 +282,10 @@ export function useAllContracts() {
 
 // Hook to get counts by urgency
 export function useVVLCounts() {
-  const { data: contracts = [] } = useAllContracts();
+  const { data: contracts, isLoading, isError } = useAllContracts();
+  
+  // Return safe defaults if loading, error, or no data
+  const safeContracts = contracts ?? [];
   
   const counts = {
     critical: 0,
@@ -290,10 +293,15 @@ export function useVVLCounts() {
     ok: 0,
     future: 0,
     none: 0,
-    total: contracts.length,
+    total: safeContracts.length,
   };
 
-  contracts.forEach((contract) => {
+  // Skip counting if loading or error
+  if (isLoading || isError || !contracts) {
+    return counts;
+  }
+
+  safeContracts.forEach((contract) => {
     if (contract.status !== 'aktiv') return;
     const urgency = getVVLUrgency(contract.vvl_datum);
     counts[urgency]++;

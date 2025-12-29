@@ -40,7 +40,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, MoreHorizontal, Pencil, Trash2, Building2, Loader2, Upload, Star, User, MapPin, Phone, Mail } from "lucide-react";
+import { Plus, MoreHorizontal, Pencil, Trash2, Building2, Loader2, Upload, Star, User, MapPin, Phone, Mail, Download } from "lucide-react";
+import { format } from "date-fns";
+import { de } from "date-fns/locale";
+import { toast } from "sonner";
+import { exportToCSV, CUSTOMER_COLUMNS } from "@/lib/csvExport";
 
 const initialFormData: CustomerInput = {
   company_name: "",
@@ -158,6 +162,30 @@ export default function Customers() {
     return parts.length > 0 ? parts.join(" ") : customer.contact_name || "-";
   };
 
+  const handleExportCSV = () => {
+    const exportData = customers.map(customer => ({
+      company_name: customer.company_name,
+      anrede: customer.anrede || "",
+      vorname: customer.vorname || "",
+      nachname: customer.nachname || "",
+      email: customer.email || "",
+      phone: customer.phone || "",
+      handy_nr: customer.handy_nr || "",
+      festnetz: customer.festnetz || "",
+      strasse: customer.strasse || "",
+      hausnummer: customer.hausnummer || "",
+      plz: customer.plz || "",
+      ort: customer.ort || "",
+      industry: customer.industry || "",
+      customer_status: customer.customer_status || "",
+      vip_kunde: customer.vip_kunde ? "Ja" : "Nein",
+      created_at: format(new Date(customer.created_at), "dd.MM.yyyy", { locale: de }),
+    }));
+    
+    exportToCSV(exportData, CUSTOMER_COLUMNS as unknown as { key: keyof typeof exportData[0]; label: string }[], `kunden_${format(new Date(), "yyyy-MM-dd")}`);
+    toast.success(`${exportData.length} Kunden exportiert`);
+  };
+
   return (
     <MainLayout>
       <div className="space-y-6 animate-fade-in">
@@ -168,6 +196,10 @@ export default function Customers() {
             <p className="text-muted-foreground">Verwalten Sie Ihre Geschäftskunden</p>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" onClick={handleExportCSV} disabled={customers.length === 0}>
+              <Download className="h-4 w-4 mr-2" />
+              CSV Export
+            </Button>
             <Button variant="outline" onClick={() => navigate("/customers/import")}>
               <Upload className="h-4 w-4 mr-2" />
               Import

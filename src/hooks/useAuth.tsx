@@ -60,10 +60,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Track if initial session has been checked
     let initialSessionChecked = false;
     
+    // Helper to clear corrupt session
+    const clearCorruptSession = async (reason: string) => {
+      console.warn("[useAuth] Clearing corrupt session:", reason);
+      clearSessionKey();
+      try {
+        await supabase.auth.signOut();
+      } catch (e) {
+        console.error("[useAuth] Error during signOut:", e);
+      }
+      setSession(null);
+      setUser(null);
+      setRequiresMFA(false);
+      setMfaStatus(null);
+      setIsLoading(false);
+    };
+    
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log("[useAuth] Auth state change:", event, "session:", !!session, "initialChecked:", initialSessionChecked);
+        
+        // Handle token refresh failures - clear corrupt session
+        if (event === 'TOKEN_REFRESHED' && !session) {
+          await clearCorruptSession("TOKEN_REFRESHED without session");
+          return;
+        }
         
         // Always update session and user state
         setSession(session);
@@ -89,8 +111,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     // THEN check for existing session - THIS is the authoritative source
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      console.log("[useAuth] Initial session check complete:", !!session, session?.user?.id);
+    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
+      console.log("[useAuth] Initial session check complete:", !!session, session?.user?.id, "error:", error?.message);
+      
+      // Detect corrupt session (refresh token not found)
+      if (error?.message?.includes('refresh_token') || 
+          error?.message?.includes('Refresh Token Not Found') ||
+          error?.code === 'refresh_token_not_found') {
+        await clearCorruptSession("refresh_token_not_found");
+        return;
+      }
+      
       setSession(session);
       setUser(session?.user ?? null);
       initialSessionChecked = true;
@@ -99,6 +130,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (session?.user) {
         await checkMFAStatus();
       }
+    }).catch(async (err) => {
+      console.error("[useAuth] Session check failed:", err);
+      // On any session retrieval error, clear potentially corrupt data
+      await clearCorruptSession("session check exception");
     });
 
     return () => subscription.unsubscribe();

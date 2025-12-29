@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/accordion";
 import type { HardwareState, DatasetVersion, ViewMode } from "../../engine/types";
 import { listHardwareItems } from "../../engine/catalogResolver";
-import { Smartphone, Upload, Check, Search, Tablet, ChevronDown, Image as ImageIcon } from "lucide-react";
+import { Smartphone, Upload, Check, Search, Tablet, ChevronDown, Image as ImageIcon, AlertTriangle } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { 
@@ -26,6 +26,7 @@ import {
 } from "../../lib/hardwareGrouping";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
 import { useHardwareImages } from "../../hooks/useHardwareImages";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
 
 interface HardwareStepProps {
   value: HardwareState;
@@ -177,7 +178,10 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
               </Button>
             </Link>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Monatlich amortisieren</span>
+              <span className="text-sm text-muted-foreground inline-flex items-center gap-1">
+                Monatlich amortisieren
+                <HelpTooltip term="amortisieren" iconClassName="w-3.5 h-3.5" />
+              </span>
               <Switch
                 checked={value.amortize}
                 onCheckedChange={(checked) => updateField("amortize", checked)}
@@ -280,6 +284,21 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
           {showSimOnly && " + SIM Only"}
         </div>
       </div>
+      
+      {/* SIM-Only Warning Banner */}
+      {selectedInfo?.type === "simOnly" && (
+        <div className="flex items-center gap-3 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 rounded-lg">
+          <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+              SIM-Only ausgewählt – keine Hardware im Angebot
+            </p>
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
+              Der Kunde erhält nur einen Tarif ohne Gerät. Dies maximiert Ihre Marge, aber der Kunde könnte einen Geräte-Wunsch haben.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Hardware Grid - Family Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">

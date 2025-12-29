@@ -35,9 +35,9 @@ export default function Auth() {
   // Brute-force protection state
   const [lockoutSeconds, setLockoutSeconds] = useState<number | null>(null);
 
-  // Turnstile state
-  const loginTurnstile = useTurnstile();
-  const signupTurnstile = useTurnstile();
+  // Turnstile state - with fallback enabled for network restrictions
+  const loginTurnstile = useTurnstile({ allowFallback: true });
+  const signupTurnstile = useTurnstile({ allowFallback: true });
 
   // Login form
   const [loginEmail, setLoginEmail] = useState("");
@@ -97,29 +97,32 @@ export default function Auth() {
       return;
     }
 
-    // Check Turnstile verification
-    if (!loginTurnstile.isVerified || !loginTurnstile.token) {
+    // Check Turnstile verification (skip if in fallback mode)
+    const isFallbackMode = loginTurnstile.loadFailed && loginTurnstile.token === "FALLBACK_MODE";
+    if (!loginTurnstile.isVerified || (!loginTurnstile.token && !isFallbackMode)) {
       toast.error("Bitte bestätige, dass du kein Roboter bist.");
       return;
     }
 
-    // Verify Turnstile token server-side
-    try {
-      const { data: verifyResult, error: verifyError } = await supabase.functions.invoke("verify-turnstile", {
-        body: { token: loginTurnstile.token },
-      });
+    // Verify Turnstile token server-side (skip if in fallback mode)
+    if (!isFallbackMode) {
+      try {
+        const { data: verifyResult, error: verifyError } = await supabase.functions.invoke("verify-turnstile", {
+          body: { token: loginTurnstile.token },
+        });
 
-      if (verifyError || !verifyResult?.success) {
-        console.error("Turnstile verification failed:", verifyError || verifyResult);
-        toast.error("Sicherheitsüberprüfung fehlgeschlagen. Bitte lade die Seite neu.");
+        if (verifyError || !verifyResult?.success) {
+          console.error("Turnstile verification failed:", verifyError || verifyResult);
+          toast.error("Sicherheitsüberprüfung fehlgeschlagen. Bitte lade die Seite neu.");
+          loginTurnstile.reset();
+          return;
+        }
+      } catch (err) {
+        console.error("Turnstile verification error:", err);
+        toast.error("Sicherheitsüberprüfung fehlgeschlagen.");
         loginTurnstile.reset();
         return;
       }
-    } catch (err) {
-      console.error("Turnstile verification error:", err);
-      toast.error("Sicherheitsüberprüfung fehlgeschlagen.");
-      loginTurnstile.reset();
-      return;
     }
 
     // Sanitize inputs
@@ -165,29 +168,32 @@ export default function Auth() {
     e.preventDefault();
     setErrors({});
 
-    // Check Turnstile verification
-    if (!signupTurnstile.isVerified || !signupTurnstile.token) {
+    // Check Turnstile verification (skip if in fallback mode)
+    const isFallbackMode = signupTurnstile.loadFailed && signupTurnstile.token === "FALLBACK_MODE";
+    if (!signupTurnstile.isVerified || (!signupTurnstile.token && !isFallbackMode)) {
       toast.error("Bitte bestätige, dass du kein Roboter bist.");
       return;
     }
 
-    // Verify Turnstile token server-side
-    try {
-      const { data: verifyResult, error: verifyError } = await supabase.functions.invoke("verify-turnstile", {
-        body: { token: signupTurnstile.token },
-      });
+    // Verify Turnstile token server-side (skip if in fallback mode)
+    if (!isFallbackMode) {
+      try {
+        const { data: verifyResult, error: verifyError } = await supabase.functions.invoke("verify-turnstile", {
+          body: { token: signupTurnstile.token },
+        });
 
-      if (verifyError || !verifyResult?.success) {
-        console.error("Turnstile verification failed:", verifyError || verifyResult);
-        toast.error("Sicherheitsüberprüfung fehlgeschlagen. Bitte lade die Seite neu.");
+        if (verifyError || !verifyResult?.success) {
+          console.error("Turnstile verification failed:", verifyError || verifyResult);
+          toast.error("Sicherheitsüberprüfung fehlgeschlagen. Bitte lade die Seite neu.");
+          signupTurnstile.reset();
+          return;
+        }
+      } catch (err) {
+        console.error("Turnstile verification error:", err);
+        toast.error("Sicherheitsüberprüfung fehlgeschlagen.");
         signupTurnstile.reset();
         return;
       }
-    } catch (err) {
-      console.error("Turnstile verification error:", err);
-      toast.error("Sicherheitsüberprüfung fehlgeschlagen.");
-      signupTurnstile.reset();
-      return;
     }
 
     // Sanitize inputs

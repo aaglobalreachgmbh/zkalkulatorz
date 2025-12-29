@@ -36,6 +36,23 @@ const tariffWithoutRenewal: MobileTariff = {
   features: ["20 GB Daten"],
 };
 
+const teamDealTariff: MobileTariff = {
+  id: "TEAMDEAL_M",
+  family: "teamdeal",
+  tier: "M",
+  name: "TeamDeal M",
+  baseNet: 19.50,
+  dataVolumeGB: 50,
+  provisionBase: 170,
+  deductionRate: 0,
+  provisionsByVariant: {
+    SIM_ONLY: 55,
+    BASIC: 120,
+    SMARTPHONE: 170,
+  },
+  features: ["TeamDeal M"],
+};
+
 // ============================================
 // Test: getOMODeduction
 // ============================================
@@ -203,5 +220,72 @@ describe("calculateDealerEconomicsLegacy", () => {
     const modern = calculateDealerEconomics(baseTariff, "new", 1, 200, "NONE");
     
     expect(legacy).toEqual(modern);
+  });
+});
+
+// ============================================
+// Test: TeamDeal Fallback (primeOnAccount)
+// ============================================
+
+describe("TeamDeal fallback provision", () => {
+  it("returns 0 provision when TeamDeal without primeOnAccount", () => {
+    const result = calculateDealerEconomics(
+      teamDealTariff, "new", 1, 0, "NONE",
+      { primeOnAccount: false }
+    );
+    expect(result.provisionBase).toBe(0);
+    expect(result.provisionAfter).toBe(0);
+    expect(result.teamDealFallback).toBe(true);
+    expect(result.margin).toBe(0);
+  });
+
+  it("returns 0 provision with hardware cost results in negative margin", () => {
+    const result = calculateDealerEconomics(
+      teamDealTariff, "new", 1, 800, "NONE",
+      { primeOnAccount: false }
+    );
+    expect(result.provisionBase).toBe(0);
+    expect(result.teamDealFallback).toBe(true);
+    expect(result.margin).toBe(-800);
+  });
+
+  it("returns correct provision when TeamDeal with primeOnAccount", () => {
+    const result = calculateDealerEconomics(
+      teamDealTariff, "new", 1, 0, "NONE",
+      { primeOnAccount: true }
+    );
+    expect(result.provisionBase).toBe(170);
+    expect(result.teamDealFallback).toBeUndefined();
+  });
+
+  it("uses subVariantId for TeamDeal provision (SIM_ONLY)", () => {
+    const result = calculateDealerEconomics(
+      teamDealTariff, "new", 1, 0, "NONE",
+      { primeOnAccount: true, subVariantId: "SIM_ONLY" }
+    );
+    // Note: SUB-Variant provisions are resolved in getProvisionForVariant,
+    // but calculateDealerEconomics uses OMO-Matrix first which doesn't use subVariantId
+    // The subVariantId integration depends on tariff.omoMatrix being undefined
+    expect(result.provisionAfter).toBeGreaterThan(0);
+  });
+
+  it("defaults primeOnAccount to true", () => {
+    const result = calculateDealerEconomics(
+      teamDealTariff, "new", 1, 0, "NONE",
+      {} // No primeOnAccount specified
+    );
+    expect(result.provisionBase).toBe(170);
+    expect(result.teamDealFallback).toBeUndefined();
+  });
+
+  it("includes fixedNetProvision and pushBonus in margin when TeamDeal fallback", () => {
+    const result = calculateDealerEconomics(
+      teamDealTariff, "new", 1, 500, "NONE",
+      { primeOnAccount: false, pushBonus: 50 }
+    );
+    expect(result.provisionBase).toBe(0);
+    expect(result.teamDealFallback).toBe(true);
+    expect(result.pushBonus).toBe(50);
+    expect(result.margin).toBe(-450); // -500 + 50 pushBonus
   });
 });

@@ -305,6 +305,8 @@ export type DealerEconomicsExtended = DealerEconomics & {
   employeeDeduction?: number;
   /** Display provision after all adjustments (for margin indicator) */
   displayProvision?: number;
+  /** Flag: TeamDeal without Prime falls back to Smart Business Plus (no provision) */
+  teamDealFallback?: boolean;
 };
 
 // ============================================
@@ -336,6 +338,7 @@ export function calculateDealerEconomics(
     fixedNetProduct?: FixedNetProduct;
     isFHPartner?: boolean;
     subVariantId?: SubVariantId;
+    primeOnAccount?: boolean;
     employeeDeduction?: EmployeeDeductionSettings | null;
     pushBonus?: number;
   }
@@ -344,6 +347,7 @@ export function calculateDealerEconomics(
   const fixedNetProduct = options?.fixedNetProduct;
   const isFHPartner = options?.isFHPartner ?? false;
   const subVariantId = options?.subVariantId;
+  const primeOnAccount = options?.primeOnAccount ?? true;
   const employeeSettings = options?.employeeDeduction;
   const pushBonus = options?.pushBonus ?? 0;
   
@@ -359,6 +363,30 @@ export function calculateDealerEconomics(
       margin: -hardwareEkNet + fixedNetProvision + pushBonus,
       fixedNetProvision: fixedNetProvision > 0 ? fixedNetProvision : undefined,
       omoRate,
+      pushBonus: pushBonus > 0 ? pushBonus : undefined,
+      employeeDeduction: 0,
+      displayProvision: 0,
+    };
+  }
+  
+  // ========================================
+  // TEAMDEAL FALLBACK: No Prime = No Provision
+  // ========================================
+  const isTeamDeal = tariff.family === "teamdeal";
+  
+  if (isTeamDeal && !primeOnAccount) {
+    // TeamDeal without Business Prime on account:
+    // Falls back to Smart Business Plus, but we don't have provision data for that.
+    // Return 0 provision with teamDealFallback flag for UI warning.
+    return {
+      provisionBase: 0,
+      deductions: 0,
+      provisionAfter: 0,
+      hardwareEkNet,
+      margin: Math.round((-hardwareEkNet + fixedNetProvision + pushBonus) * 100) / 100,
+      fixedNetProvision: fixedNetProvision > 0 ? fixedNetProvision : undefined,
+      omoRate,
+      teamDealFallback: true,
       pushBonus: pushBonus > 0 ? pushBonus : undefined,
       employeeDeduction: 0,
       displayProvision: 0,

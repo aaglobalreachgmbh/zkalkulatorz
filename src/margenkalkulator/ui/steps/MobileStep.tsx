@@ -91,10 +91,12 @@ export function MobileStep({
 
   // Filter tariffs by selected family AND blocked tariffs
   const filteredTariffs = useMemo(() => {
+    if (!mobileTariffs || mobileTariffs.length === 0) return [];
+    
     let tariffs = selectedFamily === "all" ? mobileTariffs : mobileTariffs.filter(t => t.family === selectedFamily);
     
-    // Filter out blocked tariffs for this employee
-    if (employeeSettings?.blockedTariffs?.length) {
+    // Filter out blocked tariffs for this employee (with null-safe check)
+    if (employeeSettings?.blockedTariffs && employeeSettings.blockedTariffs.length > 0) {
       tariffs = tariffs.filter(t => !isTariffBlocked(t.id, employeeSettings));
     }
     
@@ -103,7 +105,9 @@ export function MobileStep({
 
   // Count blocked tariffs for info display
   const blockedCount = useMemo(() => {
-    if (!employeeSettings?.blockedTariffs?.length) return 0;
+    if (!employeeSettings?.blockedTariffs || employeeSettings.blockedTariffs.length === 0) return 0;
+    if (!mobileTariffs || mobileTariffs.length === 0) return 0;
+    
     const allTariffs = selectedFamily === "all" ? mobileTariffs : mobileTariffs.filter(t => t.family === selectedFamily);
     return allTariffs.filter(t => isTariffBlocked(t.id, employeeSettings)).length;
   }, [mobileTariffs, selectedFamily, employeeSettings]);

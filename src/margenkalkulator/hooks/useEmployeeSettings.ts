@@ -309,7 +309,7 @@ export function isTariffBlocked(
   tariffId: string,
   settings: EmployeeSettings | null
 ): boolean {
-  if (!settings || !settings.blockedTariffs.length) {
+  if (!settings || !settings.blockedTariffs || !settings.blockedTariffs.length) {
     return false;
   }
   return settings.blockedTariffs.includes(tariffId);

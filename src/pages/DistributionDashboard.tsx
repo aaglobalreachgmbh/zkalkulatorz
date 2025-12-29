@@ -47,7 +47,7 @@ import {
   TrendingUp,
   AlertCircle,
 } from "lucide-react";
-import { useDistributions, type DistributionPartner } from "@/hooks/useDistributions";
+import { useDistributions, useDistributionPartners, type DistributionPartner } from "@/hooks/useDistributions";
 import { useUserRole } from "@/hooks/useUserRole";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
@@ -66,13 +66,13 @@ export default function DistributionDashboard() {
   const {
     myDistribution,
     isLoadingMyDistribution,
-    useDistributionPartners,
     updateDistribution,
     invitePartner,
     activatePartner,
     suspendPartner,
   } = useDistributions();
-
+  
+  // Call hook at top level - it handles undefined distributionId internally
   const { data: partners = [], isLoading: isLoadingPartners } = useDistributionPartners(myDistribution?.id);
 
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);

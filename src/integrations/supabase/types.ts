@@ -1825,6 +1825,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      audit_rls_security: {
+        Args: never
+        Returns: {
+          has_select_policy: boolean
+          risk_level: string
+          rls_enabled: boolean
+          select_requires_auth: boolean
+          table_name: string
+        }[]
+      }
       check_rate_limit: {
         Args: {
           _category: string

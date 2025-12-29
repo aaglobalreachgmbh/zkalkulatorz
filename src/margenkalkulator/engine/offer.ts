@@ -7,6 +7,7 @@ import type {
   OfferOptionState,
   CalculationResult,
   Money,
+  SubVariantId,
 } from "./types";
 import {
   getSubVariantFromCatalog,
@@ -160,6 +161,8 @@ export function calculateOffer(
       omoRate: mobile.omoRate ?? 0,
       fixedNetProduct: fixedProduct,
       isFHPartner: mobile.isFHPartner ?? false,
+      subVariantId: mobile.subVariantId as SubVariantId,
+      primeOnAccount: mobile.primeOnAccount ?? true,
       employeeDeduction: employeeOptions?.employeeDeduction ?? null,
       pushBonus: employeeOptions?.pushBonus ?? 0,
     }

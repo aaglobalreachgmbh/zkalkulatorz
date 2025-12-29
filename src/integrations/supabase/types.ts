@@ -1459,6 +1459,27 @@ export type Database = {
           },
         ]
       }
+      tenant_distribution_map: {
+        Row: {
+          distribution_id: string
+          is_active: boolean | null
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          distribution_id: string
+          is_active?: boolean | null
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          distribution_id?: string
+          is_active?: boolean | null
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       tenant_hardware: {
         Row: {
           brand: string

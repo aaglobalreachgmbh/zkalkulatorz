@@ -1,4 +1,4 @@
-import { Calculator, Users, BarChart3, Building2, FolderOpen, Shield, Database, Settings, Home, Package, ShieldCheck, CreditCard, FileText, Radar, User, ChevronDown, Activity, UserX, ImageIcon } from "lucide-react";
+import { Calculator, Users, BarChart3, Building2, FolderOpen, Shield, Database, Settings, Home, Package, ShieldCheck, CreditCard, FileText, Radar, User, ChevronDown, Activity, UserX, ImageIcon, Network } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -47,6 +47,7 @@ const adminItems = [
   { title: "Administration", url: "/admin", icon: ShieldCheck },
   { title: "Mitarbeiter", url: "/admin/employees", icon: Users },
   { title: "Push-Provisionen", url: "/admin/push-provisions", icon: CreditCard },
+  { title: "Distributionen", url: "/admin/distribution", icon: Network },
   { title: "Aktivitätslog", url: "/admin/activity", icon: Activity },
   { title: "Datenmanager", url: "/data-manager", icon: Database },
   { title: "Security Status", url: "/security/status", icon: Activity },

@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      access_audit_log: {
+        Row: {
+          client_fingerprint: string | null
+          created_at: string
+          details: Json | null
+          id: string
+          operation: string
+          row_count: number | null
+          success: boolean | null
+          table_name: string
+          user_id: string | null
+        }
+        Insert: {
+          client_fingerprint?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          operation: string
+          row_count?: number | null
+          success?: boolean | null
+          table_name: string
+          user_id?: string | null
+        }
+        Update: {
+          client_fingerprint?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          operation?: string
+          row_count?: number | null
+          success?: boolean | null
+          table_name?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       admin_audit_log: {
         Row: {
           action: string

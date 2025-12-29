@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.invite-user]
 verify_jwt = true
+
+[functions.daily-security-audit]
+verify_jwt = false

@@ -35,6 +35,10 @@ import { useIdentity } from "@/contexts/IdentityContext";
 import { useCustomerSession } from "@/contexts/CustomerSessionContext";
 import { useEffectivePolicy } from "@/hooks/useEffectivePolicy";
 import { useFeature } from "@/hooks/useFeature";
+import { useOnboardingTour } from "@/hooks/useOnboardingTour";
+import { useWizardAutoSave } from "@/hooks/useWizardAutoSave";
+import { OnboardingTour, OnboardingPrompt } from "@/components/OnboardingTour";
+import { WizardRestoreDialog } from "@/components/WizardRestoreDialog";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -57,6 +61,14 @@ export function Wizard() {
   const { settings: employeeSettings } = useEmployeeSettings();
   const { getBonusAmount } = usePushProvisions();
   const { addToHistory } = useHistory();
+  
+  // Onboarding Tour Hook
+  const tour = useOnboardingTour();
+  
+  // Auto-Save Hook (Phase 5: Offline-Sync)
+  const autoSave = useWizardAutoSave();
+  const [showRestoreDialog, setShowRestoreDialog] = useState(false);
+  const hasCheckedAutoSave = useRef(false);
   
   // Dataset Versions - Auto-seed if none exist (only for authenticated admins)
   const { versions, isLoading: isLoadingVersions, seedDefaultVersion, isSeeding } = useDatasetVersions();
@@ -93,6 +105,49 @@ export function Wizard() {
   
   const [option1, setOption1] = useState<OfferOptionState>(createDefaultOptionState);
   const [option2, setOption2] = useState<OfferOptionState>(createDefaultOptionState);
+  
+  // Check for auto-saved draft on mount
+  useEffect(() => {
+    if (!hasCheckedAutoSave.current && autoSave.hasSavedDraft) {
+      hasCheckedAutoSave.current = true;
+      setShowRestoreDialog(true);
+    }
+  }, [autoSave.hasSavedDraft]);
+  
+  // Handle draft restore
+  const handleRestoreDraft = useCallback(() => {
+    const draft = autoSave.restoreDraft();
+    if (draft) {
+      setOption1(draft.option1);
+      setOption2(draft.option2);
+      setActiveOption(draft.activeOption);
+      setCurrentStep(draft.currentStep);
+      toast({
+        title: "Entwurf wiederhergestellt",
+        description: "Deine letzte Konfiguration wurde geladen.",
+      });
+    }
+    setShowRestoreDialog(false);
+  }, [autoSave, toast]);
+  
+  // Handle draft discard
+  const handleDiscardDraft = useCallback(() => {
+    autoSave.discardDraft();
+    setShowRestoreDialog(false);
+  }, [autoSave]);
+  
+  // Auto-save on state changes (debounced in hook)
+  useEffect(() => {
+    // Only auto-save if user has made some configuration
+    if (option1.mobile.tariffId || option2.mobile.tariffId) {
+      autoSave.saveDraft({
+        option1,
+        option2,
+        activeOption,
+        currentStep,
+      });
+    }
+  }, [option1, option2, activeOption, currentStep, autoSave]);
   
   // Force back to Option 1 if Option 2 is disabled
   useEffect(() => {
@@ -284,8 +339,37 @@ export function Wizard() {
       "min-h-screen flex flex-col bg-background",
       customerSession.isActive && "ring-4 ring-amber-400 ring-inset"
     )}>
+      {/* Restore Draft Dialog */}
+      <WizardRestoreDialog
+        open={showRestoreDialog}
+        savedAt={autoSave.savedAt}
+        onRestore={handleRestoreDraft}
+        onDiscard={handleDiscardDraft}
+      />
+      
+      {/* Onboarding Tour */}
+      <OnboardingTour
+        isActive={tour.isActive}
+        currentStep={tour.currentStep}
+        currentStepIndex={tour.currentStepIndex}
+        totalSteps={tour.totalSteps}
+        progress={tour.progress}
+        onNext={tour.nextStep}
+        onPrev={tour.prevStep}
+        onSkip={tour.skipTour}
+        onEnd={() => tour.endTour(true)}
+      />
+      
+      {/* Onboarding Prompt (first visit) */}
+      {tour.shouldShowTour && !tour.isActive && (
+        <OnboardingPrompt
+          onStart={tour.startTour}
+          onDismiss={tour.skipTour}
+        />
+      )}
+      
       {/* Header */}
-      <header className="border-b border-border bg-card shrink-0">
+      <header className="border-b border-border bg-card shrink-0" data-tour="header">
         <div className="container mx-auto px-4 lg:px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
@@ -350,16 +434,17 @@ export function Wizard() {
           <div className="flex items-center justify-center gap-2">
             {STEPS.map((step, idx) => {
               const Icon = step.icon;
-              const isActive = currentStep === step.id;
+              const isActiveStep = currentStep === step.id;
               
               return (
                 <button
                   key={step.id}
                   onClick={() => goToStep(step.id)}
+                  data-tour={`step-${step.id}`}
                   className={`
                     flex items-center gap-2 px-6 py-4 text-sm font-medium
                     border-b-2 transition-all
-                    ${isActive
+                    ${isActiveStep
                       ? "border-primary text-primary"
                       : "border-transparent text-muted-foreground hover:text-foreground"
                     }

@@ -132,13 +132,14 @@ export const VALIDATION_SCHEMAS = {
     .email({ message: "Ungültige E-Mail-Adresse" })
     .max(255, { message: "E-Mail zu lang (max. 255 Zeichen)" }),
   
-  // Passwort
+  // Passwort (SÄULE 2: Starke Passwort-Richtlinien)
   password: z.string()
-    .min(8, { message: "Passwort muss mindestens 8 Zeichen haben" })
+    .min(12, { message: "Passwort muss mindestens 12 Zeichen haben" })
     .max(128, { message: "Passwort zu lang (max. 128 Zeichen)" })
     .regex(/[A-Z]/, { message: "Mindestens ein Großbuchstabe erforderlich" })
     .regex(/[a-z]/, { message: "Mindestens ein Kleinbuchstabe erforderlich" })
-    .regex(/[0-9]/, { message: "Mindestens eine Zahl erforderlich" }),
+    .regex(/[0-9]/, { message: "Mindestens eine Zahl erforderlich" })
+    .regex(/[^A-Za-z0-9]/, { message: "Mindestens ein Sonderzeichen erforderlich" }),
   
   // Name
   name: z.string()
@@ -166,6 +167,31 @@ export const VALIDATION_SCHEMAS = {
   // Nummer
   positiveNumber: z.number()
     .positive({ message: "Muss eine positive Zahl sein" }),
+    
+  // SÄULE 1: Tenant-ID Validierung
+  tenantId: z.string()
+    .trim()
+    .min(3, { message: "Tenant-ID zu kurz" })
+    .max(50, { message: "Tenant-ID zu lang" })
+    .regex(/^[a-z][a-z0-9_]*$/, { message: "Ungültige Tenant-ID (nur Kleinbuchstaben, Zahlen, Unterstriche)" }),
+  
+  // SÄULE 3: CSV-Hardware-Import Validierung
+  hardwareCsvRow: z.object({
+    brand: z.string().trim().min(1).max(100),
+    model: z.string().trim().min(1).max(200),
+    ek_net: z.number().min(0).max(10000),
+    hardware_id: z.string().trim().min(1).max(100),
+  }),
+  
+  // SÄULE 3: Provision Validierung
+  provisionAmount: z.number()
+    .min(0, { message: "Provision muss positiv sein" })
+    .max(5000, { message: "Provision zu hoch (max. 5000€)" }),
+    
+  // SÄULE 3: EK-Preis Validierung
+  ekPreis: z.number()
+    .min(0, { message: "EK-Preis muss positiv sein" })
+    .max(10000, { message: "EK-Preis zu hoch (max. 10.000€)" }),
 } as const;
 
 // ============================================================================

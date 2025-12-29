@@ -67,6 +67,33 @@ const SPAM_PATTERNS = [
   /crypto.*invest/i, /make.*money.*fast/i, /work.*from.*home/i
 ];
 
+// =============================================================================
+// SÄULE 5: ALERT THRESHOLDS (Master Security Framework)
+// =============================================================================
+const ALERT_THRESHOLDS = {
+  failedLogins: 5,         // 5 fehlgeschlagene Logins in 5 Min → Alert
+  suspiciousAccess: 3,     // 3 unerwartete Admin-Zugriffe → Alert
+  dataExportLimit: 100,    // >100 Datensätze pro Stunde exportiert → Alert
+  crossTenantAttempt: 1,   // SOFORT alarmieren bei Cross-Tenant Versuch
+  windowMinutes: 5,        // Zeitfenster für Threshold-Prüfung
+};
+
+// Cross-Tenant Attempt Detection
+const CROSS_TENANT_PATTERNS = [
+  /tenant_id.*!=.*get_my_tenant/i,
+  /attempted_tenant.*!=.*actual_tenant/i,
+  /cross.?tenant/i,
+  /unauthorized.*tenant/i,
+];
+
+function detectCrossTenantAttempt(details: Record<string, unknown>): boolean {
+  const detailsStr = JSON.stringify(details).toLowerCase();
+  return CROSS_TENANT_PATTERNS.some(pattern => pattern.test(detailsStr)) ||
+    (details.attempted_tenant !== undefined && 
+     details.actual_tenant !== undefined &&
+     details.attempted_tenant !== details.actual_tenant);
+}
+
 interface SecurityEvent {
   event_type: string;
   risk_level: "low" | "medium" | "high" | "critical";
@@ -250,14 +277,22 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // Detect bots, phishing, and spam
+    // Detect bots, phishing, spam, and cross-tenant attempts
     const isBot = detectBot(userAgent);
     const isPhishing = detectPhishing(event.details || {});
     const isSpam = detectSpam(event.details || {});
+    const isCrossTenantAttempt = detectCrossTenantAttempt(event.details || {}) || 
+      event.event_type === "cross_tenant_attempt";
 
-    // Upgrade risk level if bot/phishing/spam detected
+    // Upgrade risk level based on threat detection (SÄULE 5)
     let adjustedRiskLevel = event.risk_level;
-    if (isPhishing) {
+    
+    // Cross-tenant attempts are ALWAYS critical (ALERT_THRESHOLDS.crossTenantAttempt = 1)
+    if (isCrossTenantAttempt) {
+      adjustedRiskLevel = "critical";
+      event.event_type = "cross_tenant_attempt";
+      console.error(`[SECURITY CRITICAL] Cross-tenant attempt detected! IP: ${ipHash}`);
+    } else if (isPhishing) {
       adjustedRiskLevel = "critical";
       event.event_type = "phishing_detected";
     } else if (isBot && event.risk_level === "medium") {
@@ -266,7 +301,7 @@ const handler = async (req: Request): Promise<Response> => {
       adjustedRiskLevel = "medium";
     }
 
-    console.log(`[SECURITY] Event: ${event.event_type}, Risk: ${adjustedRiskLevel}, Bot: ${isBot}, Phishing: ${isPhishing}`);
+    console.log(`[SECURITY] Event: ${event.event_type}, Risk: ${adjustedRiskLevel}, Bot: ${isBot}, Phishing: ${isPhishing}, CrossTenant: ${isCrossTenantAttempt}`);
 
     // Log to database
     const { error: dbError } = await supabase
@@ -282,7 +317,8 @@ const handler = async (req: Request): Promise<Response> => {
           original_risk_level: event.risk_level,
           bot_detected: isBot,
           phishing_detected: isPhishing,
-          spam_detected: isSpam
+          spam_detected: isSpam,
+          cross_tenant_attempt: isCrossTenantAttempt,
         },
         is_bot: isBot,
         is_phishing: isPhishing,
@@ -294,9 +330,11 @@ const handler = async (req: Request): Promise<Response> => {
       throw dbError;
     }
 
-    // Send email for high/critical events
+    // Send email for high/critical events OR cross-tenant attempts (SÄULE 5)
     let emailSent = false;
-    if (shouldSendEmail(adjustedRiskLevel, event.event_type)) {
+    const shouldEmail = shouldSendEmail(adjustedRiskLevel, event.event_type) || isCrossTenantAttempt;
+    
+    if (shouldEmail) {
       emailSent = await sendSecurityAlert(
         { ...event, risk_level: adjustedRiskLevel as SecurityEvent["risk_level"], ip_hash: ipHash },
         isBot,

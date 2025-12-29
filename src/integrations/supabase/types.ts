@@ -1872,6 +1872,16 @@ export type Database = {
         Returns: boolean
       }
       is_tenant_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_tenant_manager: { Args: { _user_id: string }; Returns: boolean }
+      log_cross_tenant_attempt: {
+        Args: {
+          _action: string
+          _actual_tenant_id: string
+          _attempted_tenant_id: string
+          _user_id: string
+        }
+        Returns: undefined
+      }
       log_user_activity: {
         Args: {
           _action: string

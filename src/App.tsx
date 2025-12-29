@@ -42,6 +42,7 @@ import Privacy from "./pages/Privacy";
 import GDPRDashboard from "./pages/GDPRDashboard";
 import ActivityDashboard from "./pages/ActivityDashboard";
 import SecurityTestPage from "./pages/SecurityTestPage";
+import DistributionDashboard from "./pages/DistributionDashboard";
 const queryClient = new QueryClient();
 
 // Seiten die immer auf allen Geräten erlaubt sind
@@ -144,6 +145,15 @@ const App = () => (
                         element={
                           <ProtectedRoute>
                             <HardwareImages />
+                          </ProtectedRoute>
+                        }
+                      />
+                      {/* Distribution Dashboard - Tenant Admin */}
+                      <Route
+                        path="/admin/distribution"
+                        element={
+                          <ProtectedRoute>
+                            <DistributionDashboard />
                           </ProtectedRoute>
                         }
                       />

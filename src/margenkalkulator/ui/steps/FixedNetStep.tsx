@@ -18,6 +18,7 @@ import {
 } from "@/margenkalkulator";
 import { Router, Phone, Lock } from "lucide-react";
 import { useFeature } from "@/hooks/useFeature";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
 
 interface FixedNetStepProps {
   value: FixedNetState;
@@ -96,9 +97,12 @@ export function FixedNetStep({ value, onChange, datasetVersion }: FixedNetStepPr
               <Router className="w-6 h-6 text-muted-foreground" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-foreground">
-                Festnetz & Internet hinzufügen
-              </h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-semibold text-foreground">
+                  Festnetz & Internet hinzufügen
+                </h2>
+                <HelpTooltip term="gigaKombi" />
+              </div>
               <p className="text-sm text-muted-foreground">
                 Aktivieren für GigaKombi Vorteil (-5€ mtl.)
               </p>
@@ -121,7 +125,10 @@ export function FixedNetStep({ value, onChange, datasetVersion }: FixedNetStepPr
         <div className="bg-card rounded-xl border border-border p-6 space-y-6 animate-fade-in">
           {/* Access Type Pills */}
           <div className="space-y-3">
-            <Label className="text-sm text-muted-foreground">Zugangstyp</Label>
+            <Label className="text-sm text-muted-foreground flex items-center gap-1.5">
+              Zugangstyp
+              <HelpTooltip term="cable" side="right" />
+            </Label>
             <div className="flex flex-wrap gap-2">
               {(["CABLE", "DSL", "FIBER"] as FixedNetAccessType[]).map((type) => (
                 <button
@@ -196,9 +203,12 @@ export function FixedNetStep({ value, onChange, datasetVersion }: FixedNetStepPr
 
           {/* GigaKombi Info */}
           <div className="p-4 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 rounded-lg">
-            <p className="text-sm text-emerald-800 dark:text-emerald-200">
-              <strong>GigaKombi Vorteil:</strong> Mit aktivem Festnetz-Vertrag erhalten berechtigte Mobilfunk-Tarife automatisch -5€/Monat Rabatt.
-            </p>
+            <div className="flex items-start gap-2">
+              <p className="text-sm text-emerald-800 dark:text-emerald-200 flex-1">
+                <strong>GigaKombi Vorteil:</strong> Mit aktivem Festnetz-Vertrag erhalten berechtigte Mobilfunk-Tarife automatisch -5€/Monat Rabatt.
+              </p>
+              <HelpTooltip term="gigaKombi" iconClassName="text-emerald-600" />
+            </div>
           </div>
         </div>
       )}

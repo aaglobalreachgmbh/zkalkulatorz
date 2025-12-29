@@ -23,6 +23,7 @@ import { SubVariantSelector } from "../components/SubVariantSelector";
 import { FHPartnerToggle } from "../components/FHPartnerToggle";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
 import { useEmployeeSettings, isTariffBlocked } from "@/margenkalkulator/hooks/useEmployeeSettings";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
 
 interface MobileStepProps {
   value: MobileState;
@@ -122,7 +123,10 @@ export function MobileStep({
         <div className="flex flex-wrap items-center justify-between gap-6">
           {/* Contract Type Toggle */}
           <div className="space-y-2">
-            <Label className="text-sm text-muted-foreground">Vertragsart</Label>
+            <Label className="text-sm text-muted-foreground flex items-center gap-1.5">
+              Vertragsart
+              <HelpTooltip term="vvl" />
+            </Label>
             <div className="flex">
               <button
                 onClick={() => updateField("contractType", "new")}
@@ -288,15 +292,18 @@ export function MobileStep({
       {/* TeamDeal Prime Requirement */}
       {isTeamDeal && (
         <div className="space-y-3">
-          <div className="flex items-center space-x-2 p-4 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800">
-            <Checkbox
-              id="primeOnAccount"
-              checked={value.primeOnAccount ?? false}
-              onCheckedChange={(checked) => updateField("primeOnAccount", !!checked)}
-            />
-            <Label htmlFor="primeOnAccount" className="font-normal cursor-pointer">
-              Business Prime aktiv auf gleichem Kundenkonto
-            </Label>
+          <div className="flex items-center justify-between p-4 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="primeOnAccount"
+                checked={value.primeOnAccount ?? false}
+                onCheckedChange={(checked) => updateField("primeOnAccount", !!checked)}
+              />
+              <Label htmlFor="primeOnAccount" className="font-normal cursor-pointer">
+                Business Prime aktiv auf gleichem Kundenkonto
+              </Label>
+            </div>
+            <HelpTooltip term="teamDeal" />
           </div>
           {showTeamDealWarning && (
             <Alert variant="destructive">
@@ -313,22 +320,34 @@ export function MobileStep({
       {selectedTariff && !isTeamDeal && (
         <div className={`grid grid-cols-1 ${(showOmoSelector || showFhPartnerToggle) ? "md:grid-cols-2 lg:grid-cols-3" : ""} gap-6 p-6 bg-card rounded-xl border border-border`}>
           {/* SUB Variant Selector - immer sichtbar */}
-          <SubVariantSelector
-            value={value.subVariantId}
-            onChange={(id) => updateField("subVariantId", id)}
-            hardwareName={hardwareName}
-            allowedSubVariants={selectedTariff.allowedSubVariants}
-            subVariants={subVariants}
-          />
+          <div className="space-y-2">
+            <Label className="text-sm text-muted-foreground flex items-center gap-1.5">
+              Geräteklasse (SUB)
+              <HelpTooltip term="sub" />
+            </Label>
+            <SubVariantSelector
+              value={value.subVariantId}
+              onChange={(id) => updateField("subVariantId", id)}
+              hardwareName={hardwareName}
+              allowedSubVariants={selectedTariff.allowedSubVariants}
+              subVariants={subVariants}
+            />
+          </div>
 
           {/* OMO Rate Selector - nur wenn showOmoSelector */}
           {showOmoSelector && (
-            <OMORateSelectorEnhanced
-              value={(value.omoRate ?? 0) as OMORate}
-              onChange={(rate) => updateField("omoRate", rate)}
-              tariff={selectedTariff}
-              contractType={value.contractType}
-            />
+            <div className="space-y-2">
+              <Label className="text-sm text-muted-foreground flex items-center gap-1.5">
+                OMO-Rate
+                <HelpTooltip term="omo" />
+              </Label>
+              <OMORateSelectorEnhanced
+                value={(value.omoRate ?? 0) as OMORate}
+                onChange={(rate) => updateField("omoRate", rate)}
+                tariff={selectedTariff}
+                contractType={value.contractType}
+              />
+            </div>
           )}
 
           {/* FH Partner Toggle - nur wenn showFhPartnerToggle */}

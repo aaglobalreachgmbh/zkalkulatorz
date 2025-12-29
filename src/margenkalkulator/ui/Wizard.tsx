@@ -433,24 +433,26 @@ export function Wizard() {
       
       {/* Header */}
       <header className="border-b border-border bg-card shrink-0" data-tour="header">
-        <div className="container mx-auto px-4 lg:px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-              <Calculator className="w-5 h-5 text-primary-foreground" />
+        <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-2 sm:py-3 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-primary rounded-lg flex items-center justify-center shrink-0">
+              <Calculator className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />
             </div>
-            <div>
-              <h1 className="text-lg font-bold text-foreground">
+            <div className="min-w-0">
+              <h1 className="text-base sm:text-lg font-bold text-foreground truncate">
                 Margen<span className="text-primary">Kalkulator</span>
               </h1>
-              <p className="text-xs text-muted-foreground">Konfigurator Modus</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground hidden sm:block">Konfigurator Modus</p>
             </div>
           </div>
           
-          <div className="flex items-center gap-3">
-            {/* Identity Selector (Dev) */}
-            <IdentitySelector />
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+            {/* Identity Selector (Dev) - hidden on mobile */}
+            <div className="hidden lg:block">
+              <IdentitySelector />
+            </div>
             
-            <div className="h-6 w-px bg-border" />
+            <div className="hidden lg:block h-6 w-px bg-border" />
             
             {/* Customer Session Toggle - Safety Lock (conditional) */}
             {policy.showCustomerSessionToggle && <CustomerSessionToggle />}
@@ -463,12 +465,12 @@ export function Wizard() {
             />
             
             {customerSession.isActive && (
-              <span className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 px-2 py-1 rounded text-xs font-medium">
-                🔒 Gesperrt
+              <span className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-medium">
+                🔒 <span className="hidden sm:inline">Gesperrt</span>
               </span>
             )}
             
-            <div className="h-6 w-px bg-border" />
+            <div className="h-6 w-px bg-border hidden sm:block" />
             
             {/* Grouped Actions Menu */}
             <ActionMenu 
@@ -479,7 +481,7 @@ export function Wizard() {
             
             <button 
               onClick={() => navigate("/")}
-              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
+              className="hidden sm:flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
             >
               <Home className="w-4 h-4" />
               Start
@@ -488,10 +490,10 @@ export function Wizard() {
         </div>
       </header>
 
-      {/* Tab Navigation */}
-      <nav className="bg-card border-b border-border">
-        <div className="container mx-auto px-6">
-          <div className="flex items-center justify-center gap-2">
+      {/* Tab Navigation - Mobile-optimized */}
+      <nav className="bg-card border-b border-border overflow-x-auto">
+        <div className="container mx-auto px-2 sm:px-6">
+          <div className="flex items-center justify-start sm:justify-center gap-0 sm:gap-2 min-w-max sm:min-w-0">
             {STEPS.map((step, idx) => {
               const Icon = step.icon;
               const isActiveStep = currentStep === step.id;
@@ -502,16 +504,17 @@ export function Wizard() {
                   onClick={() => goToStep(step.id)}
                   data-tour={`step-${step.id}`}
                   className={`
-                    flex items-center gap-2 px-6 py-4 text-sm font-medium
-                    border-b-2 transition-all
+                    flex items-center gap-1 sm:gap-2 px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium
+                    border-b-2 transition-all whitespace-nowrap touch-manipulation
+                    min-h-[44px] min-w-[44px]
                     ${isActiveStep
                       ? "border-primary text-primary"
-                      : "border-transparent text-muted-foreground hover:text-foreground"
+                      : "border-transparent text-muted-foreground hover:text-foreground active:text-foreground"
                     }
                   `}
                 >
-                  <Icon className="w-4 h-4" />
-                  {step.label}
+                  <Icon className="w-4 h-4 sm:w-4 sm:h-4" />
+                  <span className="hidden xs:inline sm:inline">{step.label}</span>
                 </button>
               );
             })}
@@ -533,38 +536,48 @@ export function Wizard() {
         </div>
       </main>
 
-      {/* Sticky Footer */}
-      <footer className="bg-card border-t border-border sticky bottom-0 z-40 shrink-0">
-        <div className="container mx-auto px-4 lg:px-6 py-3">
-          <div className="flex items-center justify-between">
+      {/* Sticky Footer - Mobile-optimized */}
+      <footer className="bg-card border-t border-border sticky bottom-0 z-40 shrink-0 safe-area-inset-bottom">
+        <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-2 sm:py-3">
+          <div className="flex items-center justify-between gap-2">
             <Button
               variant="ghost"
+              size="sm"
               onClick={goBack}
               disabled={currentStepIndex === 0}
-              className="gap-2"
+              className="gap-1 sm:gap-2 min-h-[44px] min-w-[44px] px-2 sm:px-4 touch-manipulation"
             >
               <ChevronLeft className="w-4 h-4" />
-              Zurück
+              <span className="hidden sm:inline">Zurück</span>
             </Button>
 
             {/* Live KPI */}
-            <div className="text-center">
-              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                Ø Monatspreis (Kunde)
+            <div className="text-center flex-1 min-w-0">
+              <p className="text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground truncate">
+                Ø Monatspreis
               </p>
-              <p className="text-2xl font-bold text-foreground tabular-nums">
+              <p className="text-xl sm:text-2xl font-bold text-foreground tabular-nums">
                 {avgMonthlyNet.toFixed(2)} €
               </p>
             </div>
 
             {currentStepIndex === STEPS.length - 1 ? (
-              <Button onClick={() => window.print()} className="gap-2">
+              <Button 
+                size="sm"
+                onClick={() => window.print()} 
+                className="gap-1 sm:gap-2 min-h-[44px] min-w-[44px] px-2 sm:px-4 touch-manipulation"
+              >
                 <Printer className="w-4 h-4" />
-                Drucken
+                <span className="hidden sm:inline">Drucken</span>
               </Button>
             ) : (
-              <Button onClick={goNext} disabled={!canProceed} className="gap-2">
-                Nächster Schritt
+              <Button 
+                size="sm"
+                onClick={goNext} 
+                disabled={!canProceed} 
+                className="gap-1 sm:gap-2 min-h-[44px] min-w-[44px] px-2 sm:px-4 touch-manipulation"
+              >
+                <span className="hidden sm:inline">Weiter</span>
                 <ChevronRight className="w-4 h-4" />
               </Button>
             )}

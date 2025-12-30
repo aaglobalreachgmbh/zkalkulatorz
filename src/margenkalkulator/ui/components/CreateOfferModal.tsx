@@ -8,7 +8,7 @@
 // ============================================
 
 import { useState, useMemo, useCallback } from "react";
-import { X, Search, User, Building, FileDown, Loader2, Mail } from "lucide-react";
+import { X, Search, User, Building, FileDown, Loader2, Mail, Calendar } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +26,7 @@ import { pdf } from "@react-pdf/renderer";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { SendOfferEmailModal } from "./SendOfferEmailModal";
+import { CreateCalendarEventModal } from "./CreateCalendarEventModal";
 
 export function CreateOfferModal() {
   const { 
@@ -536,10 +537,24 @@ export function CreateOfferModal() {
         </div>
 
         {/* Actions */}
-        <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
+        <div className="flex flex-wrap justify-end gap-3 mt-6 pt-4 border-t">
           <Button variant="outline" onClick={closeModal}>
             Abbrechen
           </Button>
+          
+          {/* Calendar Event Button */}
+          <CreateCalendarEventModal
+            trigger={
+              <Button
+                variant="outline"
+                disabled={items.length === 0}
+                className="gap-2"
+              >
+                <Calendar className="w-4 h-4" />
+                Termin
+              </Button>
+            }
+          />
           
           {/* Email Send Button */}
           <SendOfferEmailModal
@@ -550,7 +565,7 @@ export function CreateOfferModal() {
                 className="gap-2"
               >
                 <Mail className="w-4 h-4" />
-                Per E-Mail senden
+                E-Mail
               </Button>
             }
           />
@@ -558,7 +573,7 @@ export function CreateOfferModal() {
           <Button
             onClick={handleDownloadPdf}
             disabled={items.length === 0 || isGenerating}
-            className="bg-amber-400 hover:bg-amber-500 text-white"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground"
           >
             {isGenerating ? (
               <>
@@ -568,7 +583,7 @@ export function CreateOfferModal() {
             ) : (
               <>
                 <FileDown className="w-4 h-4 mr-2" />
-                PDF downloaden
+                PDF
               </>
             )}
           </Button>

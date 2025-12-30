@@ -4,6 +4,7 @@ import { MainLayout } from "@/components/MainLayout";
 import { useCustomers, Customer } from "@/margenkalkulator/hooks/useCustomers";
 import { useCustomerNotes, NoteType } from "@/margenkalkulator/hooks/useCustomerNotes";
 import { useCloudOffers } from "@/margenkalkulator/hooks/useCloudOffers";
+import { useCustomerEmails } from "@/margenkalkulator/hooks/useCustomerEmails";
 import {
   useCustomerContracts,
   type CustomerContract,
@@ -11,6 +12,8 @@ import {
 } from "@/margenkalkulator/hooks/useCustomerContracts";
 import { ContractCard } from "./CustomerDetail/ContractCard";
 import { OfferToContractDialog } from "./CustomerDetail/OfferToContractDialog";
+import { CustomerEmailsTab } from "@/margenkalkulator/ui/components/CustomerEmailsTab";
+import { CustomerTimeline } from "@/margenkalkulator/ui/components/CustomerTimeline";
 import type { CloudOffer } from "@/margenkalkulator/hooks/useCloudOffers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,6 +54,7 @@ import {
   CheckCircle,
   XCircle,
   ScrollText,
+  History,
 } from "lucide-react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
@@ -83,6 +87,7 @@ export default function CustomerDetail() {
   const { notes, isLoading: notesLoading, createNote, deleteNote, noteTypes } = useCustomerNotes(id);
   const { offers, isLoading: offersLoading } = useCloudOffers();
   const { contracts, isLoading: contractsLoading, createContract, updateContract, deleteContract } = useCustomerContracts(id);
+  const { emails, isLoading: emailsLoading } = useCustomerEmails(id);
 
   const [newNoteContent, setNewNoteContent] = useState("");
   const [newNoteType, setNewNoteType] = useState<NoteType>("info");
@@ -234,8 +239,12 @@ export default function CustomerDetail() {
         </Card>
 
         {/* Tabs */}
-        <Tabs defaultValue="stammdaten" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4 max-w-xl">
+        <Tabs defaultValue="timeline" className="space-y-4">
+          <TabsList className="grid w-full grid-cols-6 max-w-3xl">
+            <TabsTrigger value="timeline" className="flex items-center gap-2">
+              <History className="h-4 w-4" />
+              Timeline
+            </TabsTrigger>
             <TabsTrigger value="stammdaten" className="flex items-center gap-2">
               <Building2 className="h-4 w-4" />
               Stammdaten
@@ -247,6 +256,10 @@ export default function CustomerDetail() {
             <TabsTrigger value="angebote" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
               Angebote ({customerOffers.length})
+            </TabsTrigger>
+            <TabsTrigger value="emails" className="flex items-center gap-2">
+              <Mail className="h-4 w-4" />
+              E-Mails ({emails.length})
             </TabsTrigger>
             <TabsTrigger value="notizen" className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4" />
@@ -614,6 +627,33 @@ export default function CustomerDetail() {
                 })}
               </div>
             )}
+          </TabsContent>
+
+          {/* E-Mails Tab */}
+          <TabsContent value="emails" className="space-y-4">
+            <CustomerEmailsTab customerId={id!} />
+          </TabsContent>
+
+          {/* Timeline Tab */}
+          <TabsContent value="timeline" className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-medium">Kunden-Historie</h3>
+              <p className="text-sm text-muted-foreground">
+                Alle Aktivitäten chronologisch
+              </p>
+            </div>
+            <CustomerTimeline
+              offers={customerOffers}
+              emails={emails}
+              contracts={contracts}
+              notes={notes.map(n => ({
+                id: n.id,
+                content: n.content,
+                note_type: n.note_type,
+                created_at: n.created_at,
+              }))}
+              onOfferClick={() => navigate("/offers")}
+            />
           </TabsContent>
         </Tabs>
 

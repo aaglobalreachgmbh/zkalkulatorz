@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { VVLNotificationBanner } from "@/components/VVLNotificationBanner";
+import { FollowupReminders } from "@/margenkalkulator/ui/components/FollowupReminders";
 import { cn } from "@/lib/utils";
 
 interface MainLayoutProps {
@@ -64,7 +65,13 @@ export function MainLayout({ children }: MainLayoutProps) {
               )}
             </div>
             
-            <DropdownMenu>
+            <div className="flex items-center gap-2">
+              {/* Follow-up Reminders Bell Icon - only for logged in users, hidden in POS mode */}
+              {user && !isPOSMode && (
+                <FollowupReminders compact />
+              )}
+              
+              <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size={isPOSMode ? "icon" : "sm"} className="gap-2">
                   <User className="h-4 w-4" />
@@ -83,7 +90,8 @@ export function MainLayout({ children }: MainLayoutProps) {
                   Abmelden
                 </DropdownMenuItem>
               </DropdownMenuContent>
-            </DropdownMenu>
+              </DropdownMenu>
+            </div>
           </header>
 
           {/* Main content */}

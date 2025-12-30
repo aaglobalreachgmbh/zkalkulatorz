@@ -15,7 +15,8 @@ import {
   Wifi,
   Users,
   Smartphone,
-  Gift
+  Gift,
+  RefreshCw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -83,6 +84,12 @@ export function AiOfferCheck({ config, result, compact = false }: AiOfferCheckPr
 
   const analyzeOffer = async () => {
     if (!user) return;
+    
+    // Offline check
+    if (!navigator.onLine) {
+      setError("Keine Internetverbindung. Bitte prüfen Sie Ihre Verbindung und versuchen Sie es erneut.");
+      return;
+    }
     
     setIsLoading(true);
     setError(null);
@@ -219,11 +226,27 @@ export function AiOfferCheck({ config, result, compact = false }: AiOfferCheckPr
           </div>
         </CardHeader>
 
+        {/* Loading Skeleton */}
+        {isLoading && (
+          <CardContent className="pt-2">
+            <div className="space-y-3 animate-pulse">
+              <div className="h-4 bg-muted rounded w-3/4" />
+              <div className="h-10 bg-muted rounded" />
+              <div className="h-16 bg-muted rounded" />
+              <div className="h-12 bg-muted rounded w-1/2" />
+            </div>
+          </CardContent>
+        )}
+
         <CollapsibleContent>
           <CardContent className="pt-2 space-y-4">
             {error && (
-              <div className="p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-sm text-destructive">
-                {error}
+              <div className="p-3 bg-destructive/10 border border-destructive/30 rounded-lg">
+                <p className="text-sm text-destructive">{error}</p>
+                <Button variant="outline" size="sm" onClick={analyzeOffer} className="mt-2 gap-2">
+                  <RefreshCw className="w-4 h-4" />
+                  Erneut versuchen
+                </Button>
               </div>
             )}
 

@@ -77,6 +77,7 @@ export function OfferPdf({ option, result, validDays = 14, branding = DEFAULT_BR
           <View style={{ flexDirection: "row", alignItems: "center" }}>
             {branding.logoUrl ? (
               <View style={styles.logoContainer}>
+                {/* High-DPI logo rendering for PDF quality */}
                 <Image src={branding.logoUrl} style={styles.logoImage} />
               </View>
             ) : null}

@@ -89,6 +89,17 @@ export default function HardwareManager() {
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
     
+    // Validate file extension
+    const validExtensions = /\.(xlsx|xls|csv)$/i;
+    if (!selectedFile.name.match(validExtensions)) {
+      toast({
+        title: "Ungültiges Dateiformat",
+        description: "Bitte laden Sie eine XLSX-, XLS- oder CSV-Datei hoch. Andere Formate werden nicht unterstützt.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setFile(selectedFile);
     setIsLoading(true);
     setParsedData(null);
@@ -107,6 +118,17 @@ export default function HardwareManager() {
       setValidation(validationResult);
       
       if (!validationResult.isValid) {
+        // Summarize missing columns for better UX
+        const missingColumnsErrors = validationResult.errors.filter(e => 
+          e.message.includes("Spalte") || e.message.includes("fehlt")
+        );
+        if (missingColumnsErrors.length > 0) {
+          toast({
+            title: "Pflichtfelder fehlen",
+            description: `Die Spalten "brand", "model" und "ek_net" sind erforderlich. Bitte prüfen Sie Ihre Datei.`,
+            variant: "destructive",
+          });
+        }
         return;
       }
       
@@ -119,7 +141,7 @@ export default function HardwareManager() {
     } catch (err) {
       toast({
         title: "Fehler beim Parsen",
-        description: err instanceof Error ? err.message : "Unbekannter Fehler",
+        description: err instanceof Error ? err.message : "Die Datei konnte nicht gelesen werden. Bitte prüfen Sie das Format.",
         variant: "destructive",
       });
     } finally {

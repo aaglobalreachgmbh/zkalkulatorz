@@ -109,6 +109,21 @@
     @apply bg-background text-foreground antialiased;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
+  
+  /* Tenant Branding: CSS variable for dynamic primary color */
+  :root[style*="--tenant-primary"] {
+    --primary: var(--tenant-primary-hsl, 0 85% 47%);
+  }
+}
+
+/* Touch-Feedback for Mobile Buttons */
+.touch-feedback {
+  transition: transform 0.1s ease, opacity 0.1s ease;
+  touch-action: manipulation;
+}
+.touch-feedback:active {
+  transform: scale(0.97);
+  opacity: 0.9;
 }
 
 /* Animations */

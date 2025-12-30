@@ -7,11 +7,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Building2, FileSpreadsheet, CreditCard, Users, Shield, Info } from "lucide-react";
+import { Building2, FileSpreadsheet, CreditCard, Users, Shield, Info, Key } from "lucide-react";
 import { useIdentity } from "@/contexts/IdentityContext";
 import { TenantHardwareManager } from "@/margenkalkulator/ui/components/TenantHardwareManager";
 import { TenantProvisionManager } from "@/margenkalkulator/ui/components/TenantProvisionManager";
 import { TenantTeamManager } from "@/margenkalkulator/ui/components/TenantTeamManager";
+import { LicenseManagement } from "@/margenkalkulator/ui/components/LicenseManagement";
 import { useTenantHardware } from "@/margenkalkulator/hooks/useTenantHardware";
 import { useTenantProvisions } from "@/margenkalkulator/hooks/useTenantProvisions";
 
@@ -67,7 +68,7 @@ export default function TenantAdmin() {
 
       {/* Tabs */}
       <Tabs defaultValue="hardware" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="hardware" className="flex items-center gap-2">
             <FileSpreadsheet className="h-4 w-4" />
             Hardware
@@ -81,6 +82,10 @@ export default function TenantAdmin() {
           <TabsTrigger value="team" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
             Team
+          </TabsTrigger>
+          <TabsTrigger value="license" className="flex items-center gap-2">
+            <Key className="h-4 w-4" />
+            Lizenz
           </TabsTrigger>
           <TabsTrigger value="permissions" className="flex items-center gap-2">
             <Shield className="h-4 w-4" />
@@ -101,6 +106,11 @@ export default function TenantAdmin() {
         {/* Team Tab */}
         <TabsContent value="team">
           <TenantTeamManager />
+        </TabsContent>
+
+        {/* License Tab */}
+        <TabsContent value="license">
+          <LicenseManagement />
         </TabsContent>
 
         {/* Permissions Tab - Placeholder for Phase 4 */}

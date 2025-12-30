@@ -8,7 +8,7 @@
 // ============================================
 
 import { useState, useMemo, useCallback } from "react";
-import { X, Search, User, Building, FileDown, Loader2 } from "lucide-react";
+import { X, Search, User, Building, FileDown, Loader2, Mail } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,7 @@ import { MultiOfferPdf } from "../../pdf/MultiOfferPdf";
 import { pdf } from "@react-pdf/renderer";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { SendOfferEmailModal } from "./SendOfferEmailModal";
 
 export function CreateOfferModal() {
   const { 
@@ -539,6 +540,21 @@ export function CreateOfferModal() {
           <Button variant="outline" onClick={closeModal}>
             Abbrechen
           </Button>
+          
+          {/* Email Send Button */}
+          <SendOfferEmailModal
+            trigger={
+              <Button
+                variant="outline"
+                disabled={items.length === 0}
+                className="gap-2"
+              >
+                <Mail className="w-4 h-4" />
+                Per E-Mail senden
+              </Button>
+            }
+          />
+          
           <Button
             onClick={handleDownloadPdf}
             disabled={items.length === 0 || isGenerating}
@@ -552,7 +568,7 @@ export function CreateOfferModal() {
             ) : (
               <>
                 <FileDown className="w-4 h-4 mr-2" />
-                Angebot als PDF downloaden
+                PDF downloaden
               </>
             )}
           </Button>

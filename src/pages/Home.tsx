@@ -4,6 +4,7 @@ import { MainLayout } from "@/components/MainLayout";
 import { useVVLCounts } from "@/margenkalkulator/hooks/useCustomerContracts";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { DashboardWidgets } from "@/margenkalkulator/ui/components/DashboardWidgets";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -97,6 +98,9 @@ const Home = () => {
               <span className="text-sm font-medium text-foreground">VVL-Liste</span>
             </button>
           </div>
+
+          {/* Dashboard Widgets */}
+          <DashboardWidgets />
 
           {/* Option Cards */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 max-w-5xl mx-auto w-full mb-6 items-stretch">

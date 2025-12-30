@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useDashboardWidgets } from "@/margenkalkulator/hooks/useDashboardWidgets";
 import { useAuth } from "@/hooks/useAuth";
-
+import { useNavigate } from "react-router-dom";
 // Format currency
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat("de-DE", {
@@ -20,6 +20,7 @@ function formatCurrency(amount: number): string {
 
 export function DashboardWidgets() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { 
     sentOffersLast30Days, 
     monthlyRevenuePotential, 
@@ -35,7 +36,10 @@ export function DashboardWidgets() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-5xl mx-auto mb-8">
       {/* Widget 1: Gesendete Angebote */}
-      <Card className="bg-card border-border hover:shadow-md transition-shadow">
+      <Card 
+        className="bg-card border-border hover:shadow-md transition-shadow cursor-pointer"
+        onClick={() => navigate("/offers")}
+      >
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">
             Gesendete Angebote
@@ -64,7 +68,10 @@ export function DashboardWidgets() {
       </Card>
 
       {/* Widget 2: Umsatz-Potenzial */}
-      <Card className="bg-card border-border hover:shadow-md transition-shadow">
+      <Card 
+        className="bg-card border-border hover:shadow-md transition-shadow cursor-pointer"
+        onClick={() => navigate("/reporting")}
+      >
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">
             Umsatz-Potenzial
@@ -93,7 +100,10 @@ export function DashboardWidgets() {
       </Card>
 
       {/* Widget 3: Top 3 Tarife */}
-      <Card className="bg-card border-border hover:shadow-md transition-shadow">
+      <Card 
+        className="bg-card border-border hover:shadow-md transition-shadow cursor-pointer"
+        onClick={() => navigate("/reporting")}
+      >
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">
             Top Tarife

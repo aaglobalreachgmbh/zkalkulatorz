@@ -1388,6 +1388,7 @@ export type Database = {
           is_draft: boolean | null
           name: string
           preview: Json | null
+          status: string
           team_id: string | null
           tenant_id: string
           updated_at: string
@@ -1403,6 +1404,7 @@ export type Database = {
           is_draft?: boolean | null
           name: string
           preview?: Json | null
+          status?: string
           team_id?: string | null
           tenant_id?: string
           updated_at?: string
@@ -1418,6 +1420,7 @@ export type Database = {
           is_draft?: boolean | null
           name?: string
           preview?: Json | null
+          status?: string
           team_id?: string | null
           tenant_id?: string
           updated_at?: string

@@ -81,6 +81,8 @@ export default function Customers() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [formData, setFormData] = useState<CustomerInput>(initialFormData);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showVipOnly, setShowVipOnly] = useState(false);
 
   // Handle ?action=new query parameter
   useEffect(() => {
@@ -175,8 +177,28 @@ export default function Customers() {
     return parts.length > 0 ? parts.join(" ") : customer.contact_name || "-";
   };
 
+  // Filter customers by search and VIP status
+  const filteredCustomers = customers.filter((customer) => {
+    // VIP filter
+    if (showVipOnly && !customer.vip_kunde) return false;
+    
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      return (
+        customer.company_name.toLowerCase().includes(query) ||
+        (customer.vorname?.toLowerCase().includes(query) ?? false) ||
+        (customer.nachname?.toLowerCase().includes(query) ?? false) ||
+        (customer.email?.toLowerCase().includes(query) ?? false) ||
+        (customer.plz?.includes(query) ?? false) ||
+        (customer.ort?.toLowerCase().includes(query) ?? false)
+      );
+    }
+    return true;
+  });
+
   const handleExportCSV = () => {
-    const exportData = customers.map(customer => ({
+    const exportData = filteredCustomers.map(customer => ({
       company_name: customer.company_name,
       anrede: customer.anrede || "",
       vorname: customer.vorname || "",
@@ -206,10 +228,13 @@ export default function Customers() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Kunden</h1>
-            <p className="text-muted-foreground">Verwalten Sie Ihre Geschäftskunden</p>
+            <p className="text-muted-foreground">
+              {filteredCustomers.length} von {customers.length} Kunden
+              {showVipOnly && " (nur VIP)"}
+            </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleExportCSV} disabled={customers.length === 0}>
+            <Button variant="outline" onClick={handleExportCSV} disabled={filteredCustomers.length === 0}>
               <Download className="h-4 w-4 mr-2" />
               CSV Export
             </Button>
@@ -536,6 +561,27 @@ export default function Customers() {
           </div>
         </div>
 
+        {/* Search & Filters */}
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="relative flex-1 max-w-md">
+            <Input
+              placeholder="Suche nach Name, E-Mail, PLZ, Ort..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-3"
+            />
+          </div>
+          <Button
+            variant={showVipOnly ? "default" : "outline"}
+            size="sm"
+            onClick={() => setShowVipOnly(!showVipOnly)}
+            className="gap-2"
+          >
+            <Star className={cn("h-4 w-4", showVipOnly && "fill-current")} />
+            Nur VIP
+          </Button>
+        </div>
+
         {/* Content */}
         <Card>
           <CardHeader>
@@ -549,11 +595,11 @@ export default function Customers() {
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
-            ) : customers.length === 0 ? (
+            ) : filteredCustomers.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Building2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Noch keine Kunden vorhanden</p>
-                <p className="text-sm">Erstellen Sie Ihren ersten Kunden</p>
+                <p>{searchQuery || showVipOnly ? "Keine Kunden gefunden" : "Noch keine Kunden vorhanden"}</p>
+                <p className="text-sm">{searchQuery || showVipOnly ? "Passen Sie Ihre Filter an" : "Erstellen Sie Ihren ersten Kunden"}</p>
               </div>
             ) : (
               <Table>
@@ -570,7 +616,7 @@ export default function Customers() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {customers.map((customer) => (
+                  {filteredCustomers.map((customer) => (
                     <TableRow 
                       key={customer.id}
                       className="cursor-pointer hover:bg-accent/50"

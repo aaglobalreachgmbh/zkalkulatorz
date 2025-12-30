@@ -113,7 +113,7 @@ export default function TenantAdmin() {
           <LicenseManagement />
         </TabsContent>
 
-        {/* Permissions Tab - Placeholder for Phase 4 */}
+        {/* Permissions Tab */}
         <TabsContent value="permissions">
           <Card>
             <CardHeader>
@@ -125,13 +125,21 @@ export default function TenantAdmin() {
                 Steuern Sie, welche Mitarbeiter Margen sehen dürfen
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="space-y-0.5">
+                  <div className="font-medium">Margen für Mitarbeiter verbergen</div>
+                  <div className="text-sm text-muted-foreground">
+                    Wenn aktiviert, sehen Mitarbeiter (Subuser) keine Margen-Informationen im Dealer-Modus.
+                  </div>
+                </div>
+                <Badge variant="outline">Demnächst</Badge>
+              </div>
               <Alert>
                 <Info className="h-4 w-4" />
-                <AlertTitle>Demnächst verfügbar</AlertTitle>
+                <AlertTitle>Weitere Berechtigungen in Planung</AlertTitle>
                 <AlertDescription>
-                  Die feingranulare Rechteverwaltung (z.B. "Marge verbergen für Mitarbeiter") 
-                  wird in Phase 4 implementiert.
+                  Feingranulare Rechteverwaltung wie Export-Beschränkungen und Tarif-Sperrungen werden bald verfügbar sein.
                 </AlertDescription>
               </Alert>
             </CardContent>

@@ -379,10 +379,22 @@ export function MobileStep({
                       </Label>
                       <OMORateSelectorEnhanced
                         value={(value.omoRate ?? 0) as OMORate}
-                        onChange={(rate) => updateField("omoRate", rate)}
+                        onChange={(rate) => {
+                          // OMO und Promo sind nicht kombinierbar - OMO gewählt → Promo auf NONE
+                          if (rate > 0 && value.promoId !== "NONE") {
+                            onChange({ ...value, omoRate: rate, promoId: "NONE" });
+                          } else {
+                            updateField("omoRate", rate);
+                          }
+                        }}
                         tariff={selectedTariff}
                         contractType={value.contractType}
                       />
+                      {(value.omoRate ?? 0) > 0 && (
+                        <p className="text-xs text-amber-600 mt-2">
+                          ⚠️ OMO-Rabatte und Aktionen sind nicht kombinierbar
+                        </p>
+                      )}
                     </div>
                   )}
                   {showFhPartnerToggle && (
@@ -408,19 +420,41 @@ export function MobileStep({
           <h3 className="text-lg font-semibold">Aktionen & Promos</h3>
         </div>
 
+        {/* Warnung wenn OMO aktiv */}
+        {(value.omoRate ?? 0) > 0 && (
+          <Alert className="border-amber-500 bg-amber-50 dark:bg-amber-950/30">
+            <AlertTriangle className="h-4 w-4 text-amber-600" />
+            <AlertDescription className="text-amber-800 dark:text-amber-200">
+              OMO-Rate ({value.omoRate}%) ist aktiv. Aktionen sind deaktiviert.
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
           {promos.map((promo) => {
             const isSelected = value.promoId === promo.id;
+            const isDisabledByOmo = (value.omoRate ?? 0) > 0 && promo.id !== "NONE";
             
             return (
               <button
                 key={promo.id}
-                onClick={() => updateField("promoId", promo.id)}
+                onClick={() => {
+                  if (isDisabledByOmo) return;
+                  // Promo gewählt → OMO auf 0 zurücksetzen
+                  if (promo.id !== "NONE" && (value.omoRate ?? 0) > 0) {
+                    onChange({ ...value, promoId: promo.id, omoRate: 0 });
+                  } else {
+                    updateField("promoId", promo.id);
+                  }
+                }}
+                disabled={isDisabledByOmo}
                 className={`
                   p-4 rounded-lg border text-left transition-all
-                  ${isSelected 
-                    ? "border-primary bg-primary/5" 
-                    : "border-border bg-card hover:border-primary/50"
+                  ${isDisabledByOmo 
+                    ? "opacity-50 cursor-not-allowed border-border bg-muted"
+                    : isSelected 
+                      ? "border-primary bg-primary/5" 
+                      : "border-border bg-card hover:border-primary/50"
                   }
                 `}
               >
@@ -433,9 +467,10 @@ export function MobileStep({
                   <div>
                     <p className="font-medium text-foreground">{promo.label}</p>
                     <p className="text-sm text-muted-foreground">
-                      {promo.id === "STANDARD" && "Standardpreise"}
-                      {promo.id === "INTRO_6M" && "Basispreisbefreiung für 6 Monate"}
-                      {promo.id === "OMO25" && "25% Dauerrabatt auf Basispreis"}
+                      {promo.id === "NONE" && "Standardpreise"}
+                      {promo.type === "INTRO_PRICE" && `${promo.durationMonths} Monate Basispreisbefreiung`}
+                      {promo.type === "PCT_OFF_BASE" && `${(promo.value * 100).toFixed(0)}% Rabatt für ${promo.durationMonths} Monate`}
+                      {promo.type === "ABS_OFF_BASE" && `−${promo.amountNetPerMonth}€/mtl. für ${promo.durationMonths} Monate`}
                     </p>
                   </div>
                 </div>

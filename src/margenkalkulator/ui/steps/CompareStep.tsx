@@ -152,7 +152,7 @@ export function CompareStep({
               <div className="space-y-4">
                 <h3 className="font-semibold text-muted-foreground">Positionen</h3>
                 
-                {/* Hardware Position */}
+                {/* Hardware Position - Kundenansicht: kein EK anzeigen! */}
                 <div className="flex items-center justify-between py-3 border-b border-border">
                   <div className="flex items-center gap-3">
                     <Smartphone className="w-5 h-5 text-muted-foreground" />
@@ -162,8 +162,8 @@ export function CompareStep({
                   </div>
                   <span className="font-medium">
                     {option1.hardware.ekNet > 0 
-                      ? `${option1.hardware.ekNet.toFixed(2)} €` 
-                      : "0,00 €"
+                      ? (isCustomerMode ? "inklusive" : `EK: ${option1.hardware.ekNet.toFixed(2)} €`)
+                      : "–"
                     }
                   </span>
                 </div>

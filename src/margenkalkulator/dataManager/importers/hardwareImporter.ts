@@ -7,6 +7,9 @@ import * as XLSX from "xlsx";
 import Papa from "papaparse";
 import type { HardwareItemRow } from "../types";
 
+// Re-export the type for consumers
+export type { HardwareItemRow } from "../types";
+
 export type HardwareValidationResult = {
   isValid: boolean;
   errors: { row?: number; field: string; message: string }[];

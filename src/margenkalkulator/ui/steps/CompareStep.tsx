@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { CalculationResult, ViewMode, OfferOptionState } from "../../engine/types";
-import { Eye, EyeOff, Printer, Link2Off, Smartphone, Signal, Wifi, Lock, LockKeyhole, Copy, TrendingUp, TrendingDown } from "lucide-react";
+import { Eye, EyeOff, Printer, Link2Off, Smartphone, Signal, Wifi, Lock, LockKeyhole, Copy, TrendingUp, TrendingDown, Calendar } from "lucide-react";
 import { DiscreteMarginIndicator } from "../components/DiscreteMarginIndicator";
 import { PdfDownloadButton } from "../components/PdfDownloadButton";
 import { AiOfferCheck } from "../components/AiOfferCheck";
+import { CreateCalendarEventModal } from "../components/CreateCalendarEventModal";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
 import { useFeature } from "@/hooks/useFeature";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -106,6 +108,14 @@ export function CompareStep({
             <Printer className="w-4 h-4" />
             Drucken
           </Button>
+          <CreateCalendarEventModal
+            trigger={
+              <Button variant="secondary" size="sm" className="gap-2">
+                <Calendar className="w-4 h-4" />
+                Termin
+              </Button>
+            }
+          />
         </div>
       </div>
 

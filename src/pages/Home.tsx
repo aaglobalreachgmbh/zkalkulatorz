@@ -9,6 +9,7 @@ import { DashboardWidgets } from "@/margenkalkulator/ui/components/DashboardWidg
 import { RecentActivityFeed } from "@/margenkalkulator/ui/components/RecentActivityFeed";
 import { RevenueForecastWidget } from "@/margenkalkulator/ui/components/RevenueForecastWidget";
 import { FollowupReminders } from "@/margenkalkulator/ui/components/FollowupReminders";
+import { WelcomeWidget } from "@/margenkalkulator/ui/components/WelcomeWidget";
 import { cn } from "@/lib/utils";
 const Home = () => {
   const navigate = useNavigate();
@@ -103,6 +104,9 @@ const Home = () => {
               <span className="text-sm font-medium text-foreground">VVL-Liste</span>
             </button>
           </div>
+
+          {/* Welcome Widget for new users */}
+          {user && <WelcomeWidget />}
 
           {/* Dashboard Widgets */}
           <DashboardWidgets />

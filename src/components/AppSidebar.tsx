@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Calculator, Users, BarChart3, Building2, FolderOpen, Shield, Database, Settings, Home, Package, ShieldCheck, CreditCard, FileText, Radar, User, ChevronDown, Activity, UserX, ImageIcon, Network, UserCheck, Palette, Monitor } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -80,7 +81,14 @@ export function AppSidebar() {
   // Show admin section if user has admin role OR can access admin via identity
   const showAdminSection = isAdmin || canAccessAdmin;
 
-  // Auto-collapse sidebar in POS mode
+  // Auto-collapse sidebar when POS mode is active (on mount and on change)
+  useEffect(() => {
+    if (isPOSMode) {
+      setOpen(false);
+    }
+  }, [isPOSMode, setOpen]);
+
+  // Auto-collapse sidebar in POS mode on toggle
   const handlePOSToggle = () => {
     togglePOSMode();
     if (!isPOSMode) {

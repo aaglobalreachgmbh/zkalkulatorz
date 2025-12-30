@@ -13,6 +13,7 @@ import { SecurityErrorBoundary } from "@/components/SecurityErrorBoundary";
 import { OfflineBoundary } from "@/components/OfflineBoundary";
 import { IdentityProvider } from "@/contexts/IdentityContext";
 import { CustomerSessionProvider } from "@/contexts/CustomerSessionContext";
+import { POSModeProvider } from "@/contexts/POSModeContext";
 import { SeatLimitGate } from "@/components/SeatLimitGate";
 import { FeatureRoute } from "@/components/FeatureRoute";
 import { MobileAccessGate } from "@/components/MobileAccessGate";
@@ -87,8 +88,9 @@ const App = () => (
             <AuthProvider>
               <IdentityProvider>
                 <CustomerSessionProvider>
-                  <OfferBasketProvider>
-                    <SeatLimitGate>
+                  <POSModeProvider>
+                    <OfferBasketProvider>
+                      <SeatLimitGate>
                       <MobileAccessGate allowedPaths={ALWAYS_ALLOWED_PATHS}>
                         <Toaster />
                         <Sonner />
@@ -315,6 +317,7 @@ const App = () => (
                       </MobileAccessGate>
                     </SeatLimitGate>
                   </OfferBasketProvider>
+                </POSModeProvider>
                 </CustomerSessionProvider>
               </IdentityProvider>
             </AuthProvider>

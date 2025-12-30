@@ -27,6 +27,9 @@ import {
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
 import { useHardwareImages } from "../../hooks/useHardwareImages";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { usePOSMode } from "@/contexts/POSModeContext";
+import { cn } from "@/lib/utils";
 
 interface HardwareStepProps {
   value: HardwareState;
@@ -45,6 +48,8 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
   const visibility = useSensitiveFieldsVisible(viewMode);
   const showHardwareEk = visibility.showHardwareEk;
   const showDealerOptions = visibility.showDealerEconomics;
+  const isMobile = useIsMobile();
+  const { isPOSMode } = usePOSMode();
   
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedBrand, setSelectedBrand] = useState<string>("all");
@@ -300,8 +305,11 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
         </div>
       )}
 
-      {/* Hardware Grid - Family Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      {/* Hardware Grid - Responsive: 2 cols on mobile, 3-4 on larger screens */}
+      <div className={cn(
+        "grid gap-3 sm:gap-4",
+        isPOSMode && isMobile ? "grid-cols-2" : "grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+      )}>
         {/* SIM Only Card */}
         {showSimOnly && simOnlyItem && (
           <button

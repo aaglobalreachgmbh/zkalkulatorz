@@ -1,8 +1,10 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Smartphone, Signal, Router, LayoutGrid, Printer, Calculator, Home, ChevronLeft, ChevronRight, Lock, AlertTriangle, XCircle, Settings } from "lucide-react";
+import { Smartphone, Signal, Router, LayoutGrid, Printer, Calculator, Home, ChevronLeft, ChevronRight, Lock, AlertTriangle, XCircle, Settings, Zap } from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { usePOSMode } from "@/contexts/POSModeContext";
 import {
   type OfferOptionState,
   type ViewMode,
@@ -32,6 +34,7 @@ import { ActionMenu } from "./components/ActionMenu";
 import { ViewModeToggle } from "./components/ViewModeToggle";
 import { CustomerSessionToggle } from "./components/CustomerSessionToggle";
 import { IdentitySelector } from "./components/IdentitySelector";
+import { POSModeToggle } from "./components/POSModeToggle";
 import { useHistory } from "../hooks/useHistory";
 import { useToast } from "@/hooks/use-toast";
 import { useIdentity } from "@/contexts/IdentityContext";
@@ -45,6 +48,7 @@ import { WizardRestoreDialog } from "@/components/WizardRestoreDialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Switch } from "@/components/ui/switch";
 
 const STEPS: { id: WizardStep; label: string; icon: typeof Smartphone }[] = [
   { id: "hardware", label: "Hardware", icon: Smartphone },
@@ -60,6 +64,8 @@ export function Wizard() {
   const { identity } = useIdentity();
   const { session: customerSession, toggleSession } = useCustomerSession();
   const policy = useEffectivePolicy();
+  const isMobile = useIsMobile();
+  const { isPOSMode, togglePOSMode } = usePOSMode();
   
   // Employee Settings & Push Provisions Hooks
   const { settings: employeeSettings } = useEmployeeSettings();
@@ -460,15 +466,22 @@ export function Wizard() {
           </div>
           
           <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-            {/* Identity Selector (Dev) - hidden on mobile */}
-            <div className="hidden lg:block">
-              <IdentitySelector />
-            </div>
+            {/* POS Mode Toggle - visible on all devices */}
+            <POSModeToggle showLabel={!isMobile} />
             
-            <div className="hidden lg:block h-6 w-px bg-border" />
+            <div className="h-6 w-px bg-border hidden sm:block" />
             
-            {/* Customer Session Toggle - Safety Lock (conditional) */}
-            {policy.showCustomerSessionToggle && <CustomerSessionToggle />}
+            {/* Identity Selector (Dev) - hidden on mobile & POS */}
+            {!isPOSMode && (
+              <div className="hidden lg:block">
+                <IdentitySelector />
+              </div>
+            )}
+            
+            {!isPOSMode && <div className="hidden lg:block h-6 w-px bg-border" />}
+            
+            {/* Customer Session Toggle - Safety Lock (conditional) - hidden in POS */}
+            {!isPOSMode && policy.showCustomerSessionToggle && <CustomerSessionToggle />}
             
             {/* View Mode Toggle with policy */}
             <ViewModeToggle 
@@ -483,31 +496,56 @@ export function Wizard() {
               </span>
             )}
             
-            <div className="h-6 w-px bg-border hidden sm:block" />
-            
-            {/* Grouped Actions Menu */}
-            <ActionMenu 
-              config={activeState} 
-              avgMonthly={avgMonthlyNet} 
-              onLoadConfig={handleLoadConfig} 
-            />
+            {/* Grouped Actions Menu - hidden in POS */}
+            {!isPOSMode && (
+              <>
+                <div className="h-6 w-px bg-border hidden sm:block" />
+                <ActionMenu 
+                  config={activeState} 
+                  avgMonthly={avgMonthlyNet} 
+                  onLoadConfig={handleLoadConfig} 
+                />
+              </>
+            )}
             
             <button 
               onClick={() => navigate("/")}
-              className="hidden sm:flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
+              className="hidden sm:flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors min-h-[44px] min-w-[44px] justify-center touch-manipulation"
             >
               <Home className="w-4 h-4" />
-              Start
+              {!isPOSMode && <span>Start</span>}
             </button>
           </div>
         </div>
       </header>
 
-      {/* Tab Navigation - Mobile-optimized */}
-      <nav className="bg-card border-b border-border overflow-x-auto">
+      {/* POS Mode Indicator Banner */}
+      {isPOSMode && (
+        <div className="bg-amber-500/10 border-b border-amber-500/30 px-4 py-2 flex items-center justify-center gap-2">
+          <Zap className="w-4 h-4 text-amber-600" />
+          <span className="text-sm font-medium text-amber-700 dark:text-amber-400">
+            POS-Modus aktiv – Schnellverkauf
+          </span>
+        </div>
+      )}
+
+      {/* Tab Navigation - Mobile stacked on small screens, horizontal on larger */}
+      <nav className={cn(
+        "bg-card border-b border-border",
+        isMobile && isPOSMode ? "overflow-hidden" : "overflow-x-auto"
+      )}>
         <div className="container mx-auto px-2 sm:px-6">
-          <div className="flex items-center justify-start sm:justify-center gap-0 sm:gap-2 min-w-max sm:min-w-0">
-            {STEPS.map((step, idx) => {
+          <div className={cn(
+            "flex items-center gap-0 sm:gap-2",
+            isMobile && isPOSMode 
+              ? "flex-wrap justify-center py-2" 
+              : "justify-start sm:justify-center min-w-max sm:min-w-0"
+          )}>
+            {/* In POS mode on mobile, only show current + next step */}
+            {STEPS.filter((step, idx) => {
+              if (!isMobile || !isPOSMode) return true;
+              return idx === currentStepIndex || idx === currentStepIndex + 1 || idx === STEPS.length - 1;
+            }).map((step) => {
               const Icon = step.icon;
               const isActiveStep = currentStep === step.id;
               
@@ -516,18 +554,19 @@ export function Wizard() {
                   key={step.id}
                   onClick={() => goToStep(step.id)}
                   data-tour={`step-${step.id}`}
-                  className={`
-                    flex items-center gap-1 sm:gap-2 px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium
-                    border-b-2 transition-all whitespace-nowrap touch-manipulation
-                    min-h-[44px] min-w-[44px]
-                    ${isActiveStep
-                      ? "border-primary text-primary"
-                      : "border-transparent text-muted-foreground hover:text-foreground active:text-foreground"
-                    }
-                  `}
+                  className={cn(
+                    "flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium",
+                    "border-b-2 transition-all whitespace-nowrap touch-manipulation",
+                    "min-h-[48px] min-w-[48px] active:scale-95",
+                    isActiveStep
+                      ? "border-primary text-primary bg-primary/5"
+                      : "border-transparent text-muted-foreground hover:text-foreground active:text-foreground hover:bg-muted/50"
+                  )}
                 >
-                  <Icon className="w-4 h-4 sm:w-4 sm:h-4" />
-                  <span className="hidden xs:inline sm:inline">{step.label}</span>
+                  <Icon className="w-5 h-5 sm:w-4 sm:h-4" />
+                  <span className={cn(isMobile && isPOSMode ? "inline" : "hidden xs:inline sm:inline")}>
+                    {step.label}
+                  </span>
                 </button>
               );
             })}
@@ -535,10 +574,17 @@ export function Wizard() {
         </div>
       </nav>
 
-      {/* Main Content */}
-      <main className="flex-1 container mx-auto px-4 lg:px-6 py-6">
-        <div className="max-w-5xl mx-auto">
-          {currentValidation && !currentValidation.valid && (
+      {/* Main Content - Adjusted padding for mobile */}
+      <main className={cn(
+        "flex-1 container mx-auto py-4 sm:py-6",
+        isMobile ? "px-3" : "px-4 lg:px-6"
+      )}>
+        <div className={cn(
+          "mx-auto",
+          isPOSMode ? "max-w-3xl" : "max-w-5xl"
+        )}>
+          {/* Validation warnings - simplified in POS mode */}
+          {currentValidation && !currentValidation.valid && !isPOSMode && (
             <div className="mb-6 animate-fade-in">
               <ValidationWarning validation={currentValidation} />
             </div>
@@ -549,56 +595,73 @@ export function Wizard() {
         </div>
       </main>
 
-      {/* Sticky Footer - Mobile-optimized */}
-      <footer className="bg-card border-t border-border sticky bottom-0 z-40 shrink-0 safe-area-inset-bottom">
-        <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-2 sm:py-3">
-          <div className="flex items-center justify-between gap-2">
+      {/* Sticky Footer - Mobile-optimized with larger touch targets */}
+      <footer className="bg-card border-t border-border sticky bottom-0 z-40 shrink-0 pb-safe">
+        <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-3 sm:py-3">
+          <div className="flex items-center justify-between gap-3">
             <Button
               variant="ghost"
-              size="sm"
+              size={isMobile ? "lg" : "sm"}
               onClick={goBack}
               disabled={currentStepIndex === 0}
-              className="gap-1 sm:gap-2 min-h-[44px] min-w-[44px] px-2 sm:px-4 touch-manipulation"
+              className={cn(
+                "gap-2 touch-manipulation active:scale-95",
+                isMobile ? "min-h-[52px] min-w-[52px] px-4" : "min-h-[44px] min-w-[44px] px-4"
+              )}
             >
-              <ChevronLeft className="w-4 h-4" />
-              <span className="hidden sm:inline">Zurück</span>
+              <ChevronLeft className={isMobile ? "w-5 h-5" : "w-4 h-4"} />
+              <span className={isMobile && isPOSMode ? "sr-only" : "hidden sm:inline"}>Zurück</span>
             </Button>
 
-            {/* Live KPI */}
-            <div className="text-center flex-1 min-w-0">
+            {/* Live KPI - Enhanced for POS mode */}
+            <div className={cn(
+              "text-center flex-1 min-w-0",
+              isPOSMode && "bg-muted/50 rounded-lg py-2 px-3"
+            )}>
               <p className="text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground truncate">
                 Ø Monatspreis
               </p>
-              <p className="text-xl sm:text-2xl font-bold text-foreground tabular-nums">
+              <p className={cn(
+                "font-bold text-foreground tabular-nums",
+                isPOSMode ? "text-2xl sm:text-3xl" : "text-xl sm:text-2xl"
+              )}>
                 {avgMonthlyNet.toFixed(2)} €
               </p>
             </div>
 
             {currentStepIndex === STEPS.length - 1 ? (
               <Button 
-                size="sm"
+                size={isMobile ? "lg" : "sm"}
                 onClick={() => window.print()} 
-                className="gap-1 sm:gap-2 min-h-[44px] min-w-[44px] px-2 sm:px-4 touch-manipulation"
+                className={cn(
+                  "gap-2 touch-manipulation active:scale-95",
+                  isMobile ? "min-h-[52px] min-w-[52px] px-4" : "min-h-[44px] min-w-[44px] px-4"
+                )}
               >
-                <Printer className="w-4 h-4" />
-                <span className="hidden sm:inline">Drucken</span>
+                <Printer className={isMobile ? "w-5 h-5" : "w-4 h-4"} />
+                <span className={isMobile && isPOSMode ? "sr-only" : "hidden sm:inline"}>Drucken</span>
               </Button>
             ) : (
               <Button 
-                size="sm"
+                size={isMobile ? "lg" : "sm"}
                 onClick={goNext} 
                 disabled={!canProceed} 
-                className="gap-1 sm:gap-2 min-h-[44px] min-w-[44px] px-2 sm:px-4 touch-manipulation"
+                className={cn(
+                  "gap-2 touch-manipulation active:scale-95",
+                  isMobile ? "min-h-[52px] min-w-[52px] px-4" : "min-h-[44px] min-w-[44px] px-4",
+                  isPOSMode && "bg-primary text-primary-foreground hover:bg-primary/90"
+                )}
               >
-                <span className="hidden sm:inline">Weiter</span>
-                <ChevronRight className="w-4 h-4" />
+                <span className={isMobile && isPOSMode ? "sr-only" : "hidden sm:inline"}>Weiter</span>
+                <ChevronRight className={isMobile ? "w-5 h-5" : "w-4 h-4"} />
               </Button>
             )}
           </div>
         </div>
       </footer>
 
-      {activeState.mobile.tariffId && (
+      {/* AI Consultant - hidden in POS mode */}
+      {!isPOSMode && activeState.mobile.tariffId && (
         <AiConsultant config={activeState} result={activeResult} />
       )}
     </div>

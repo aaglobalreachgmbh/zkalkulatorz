@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.send-offer-email]
 verify_jwt = true
+
+[functions.create-calendar-event]
+verify_jwt = true

@@ -2,16 +2,20 @@
 // Offer PDF Document Component
 // Generates customer-facing PDF (no dealer data!)
 // SECURITY: All dynamic content is sanitized before rendering
+// BRANDING: Supports dynamic tenant branding
 // ============================================
 
-import { Document, Page, Text, View } from "@react-pdf/renderer";
+import { Document, Page, Text, View, Image } from "@react-pdf/renderer";
 import type { OfferOptionState, CalculationResult } from "../engine/types";
-import { styles } from "./styles";
+import type { TenantBranding } from "@/hooks/useTenantBranding";
+import { DEFAULT_BRANDING } from "@/hooks/useTenantBranding";
+import { createPdfStyles, styles as defaultStyles } from "./styles";
 
 interface OfferPdfProps {
   option: OfferOptionState;
   result: CalculationResult;
   validDays?: number;
+  branding?: TenantBranding;
 }
 
 // SECURITY: Sanitize text content to prevent XSS and injection in PDF
@@ -31,7 +35,9 @@ function sanitizeNumber(value: number | undefined | null): number {
   return value;
 }
 
-export function OfferPdf({ option, result, validDays = 14 }: OfferPdfProps) {
+export function OfferPdf({ option, result, validDays = 14, branding = DEFAULT_BRANDING }: OfferPdfProps) {
+  const styles = branding ? createPdfStyles(branding) : defaultStyles;
+  
   const today = new Date();
   const validUntil = new Date(today.getTime() + validDays * 24 * 60 * 60 * 1000);
   
@@ -60,14 +66,24 @@ export function OfferPdf({ option, result, validDays = 14 }: OfferPdfProps) {
   // Calculate mobile-only monthly (without fixed net)
   const mobileMonthly = sanitizeNumber(result.totals.avgTermNet) - (option.fixedNet.enabled ? fixedNetMonthly : 0);
   
+  // Display name for header
+  const displayName = branding.companyName || "MargenKalkulator";
+  
   return (
     <Document>
       <Page size="A4" style={styles.page}>
         {/* Header */}
         <View style={styles.header}>
-          <View>
-            <Text style={styles.logo}>MargenKalkulator</Text>
-            <Text style={styles.logoSubtext}>Vodafone Business Partner</Text>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            {branding.logoUrl ? (
+              <View style={styles.logoContainer}>
+                <Image src={branding.logoUrl} style={styles.logoImage} />
+              </View>
+            ) : null}
+            <View>
+              <Text style={styles.logo}>{displayName}</Text>
+              <Text style={styles.logoSubtext}>Vodafone Business Partner</Text>
+            </View>
           </View>
           <View style={styles.headerRight}>
             <Text style={styles.headerTitle}>Ihr Angebot</Text>
@@ -192,7 +208,7 @@ export function OfferPdf({ option, result, validDays = 14 }: OfferPdfProps) {
         {/* Footer */}
         <View style={styles.footer}>
           <Text style={styles.footerLeft}>
-            MargenKalkulator • Vodafone Business Partner
+            {displayName} • Vodafone Business Partner
           </Text>
           <Text style={styles.footerRight}>
             Angebots-ID: {Date.now().toString(36).toUpperCase()}

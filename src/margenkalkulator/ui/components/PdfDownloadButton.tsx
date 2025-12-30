@@ -1,6 +1,7 @@
 // ============================================
 // PDF Download Button Component
 // SECURITY: Timeout protection, filename sanitization, blob validation
+// BRANDING: Supports dynamic tenant branding
 // ============================================
 
 import { useState } from "react";
@@ -9,6 +10,7 @@ import { FileText, Loader2, ShieldCheck } from "lucide-react";
 import { useActivityTracker } from "@/hooks/useActivityTracker";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
 import { useEmployeeSettings } from "@/margenkalkulator/hooks/useEmployeeSettings";
+import { useTenantBranding } from "@/hooks/useTenantBranding";
 import type { OfferOptionState, CalculationResult, ViewMode } from "../../engine/types";
 import { toast } from "sonner";
 
@@ -47,6 +49,7 @@ export function PdfDownloadButton({
   const { trackPdfExported } = useActivityTracker();
   const visibility = useSensitiveFieldsVisible(viewMode);
   const { settings } = useEmployeeSettings();
+  const { branding } = useTenantBranding();
 
   // SECURITY: Dealer PDF only allowed when:
   // 1. Not in customer mode
@@ -90,8 +93,9 @@ export function PdfDownloadButton({
         ? (pdfComponent as { DealerPdf: typeof import("../../pdf/DealerPdf").DealerPdf }).DealerPdf
         : (pdfComponent as { OfferPdf: typeof import("../../pdf/OfferPdf").OfferPdf }).OfferPdf;
 
+      // Pass branding to PDF component
       const blob = await Promise.race([
-        pdf(<PdfComponent option={option} result={result} />).toBlob(),
+        pdf(<PdfComponent option={option} result={result} branding={branding} />).toBlob(),
         timeoutPromise,
       ]);
 

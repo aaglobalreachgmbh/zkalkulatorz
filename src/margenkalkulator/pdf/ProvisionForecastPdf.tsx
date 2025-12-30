@@ -1,8 +1,12 @@
 // ============================================
 // Provision Forecast PDF Component
+// BRANDING: Supports dynamic tenant branding
 // ============================================
 
-import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import { Document, Page, Text, View, Image } from "@react-pdf/renderer";
+import type { TenantBranding } from "@/hooks/useTenantBranding";
+import { DEFAULT_BRANDING } from "@/hooks/useTenantBranding";
+import { createReportStyles } from "./styles";
 
 export interface ForecastRow {
   offerName: string;
@@ -24,159 +28,8 @@ interface ProvisionForecastPdfProps {
   };
   generatedAt: Date;
   timeRange: string;
+  branding?: TenantBranding;
 }
-
-const styles = StyleSheet.create({
-  page: {
-    padding: 40,
-    fontFamily: "Helvetica",
-    fontSize: 9,
-    backgroundColor: "#ffffff",
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 20,
-    borderBottomWidth: 2,
-    borderBottomColor: "#e4002b",
-    paddingBottom: 15,
-  },
-  logo: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#e4002b",
-  },
-  logoSubtext: {
-    fontSize: 8,
-    color: "#666666",
-    marginTop: 2,
-  },
-  headerRight: {
-    textAlign: "right",
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#1a1a1a",
-  },
-  headerDate: {
-    fontSize: 8,
-    color: "#666666",
-    marginTop: 4,
-  },
-  kpiSection: {
-    flexDirection: "row",
-    marginBottom: 20,
-    gap: 15,
-  },
-  kpiCard: {
-    flex: 1,
-    padding: 12,
-    backgroundColor: "#f8f9fa",
-    borderRadius: 4,
-    borderLeftWidth: 3,
-  },
-  kpiProvision: {
-    borderLeftColor: "#16a34a",
-  },
-  kpiEk: {
-    borderLeftColor: "#dc2626",
-  },
-  kpiMargin: {
-    borderLeftColor: "#2563eb",
-  },
-  kpiLabel: {
-    fontSize: 8,
-    color: "#666666",
-    marginBottom: 4,
-  },
-  kpiValue: {
-    fontSize: 14,
-    fontWeight: "bold",
-  },
-  kpiValuePositive: {
-    color: "#16a34a",
-  },
-  kpiValueNegative: {
-    color: "#dc2626",
-  },
-  table: {
-    width: "100%",
-  },
-  tableHeader: {
-    flexDirection: "row",
-    backgroundColor: "#1a1a1a",
-    padding: 6,
-  },
-  tableHeaderCell: {
-    color: "#ffffff",
-    fontSize: 8,
-    fontWeight: "bold",
-  },
-  tableRow: {
-    flexDirection: "row",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e5e5",
-    padding: 6,
-  },
-  tableRowAlt: {
-    backgroundColor: "#fafafa",
-  },
-  tableCell: {
-    fontSize: 8,
-    color: "#1a1a1a",
-  },
-  tableCellPositive: {
-    color: "#16a34a",
-  },
-  tableCellNegative: {
-    color: "#dc2626",
-  },
-  colCustomer: { width: "22%" },
-  colOffer: { width: "18%" },
-  colTariff: { width: "15%" },
-  colHardware: { width: "12%" },
-  colProvision: { width: "11%", textAlign: "right" },
-  colEk: { width: "11%", textAlign: "right" },
-  colMargin: { width: "11%", textAlign: "right" },
-  footer: {
-    position: "absolute",
-    bottom: 30,
-    left: 40,
-    right: 40,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    borderTopWidth: 1,
-    borderTopColor: "#e5e5e5",
-    paddingTop: 10,
-  },
-  footerText: {
-    fontSize: 7,
-    color: "#999999",
-  },
-  disclaimer: {
-    marginTop: 20,
-    padding: 10,
-    backgroundColor: "#fef3c7",
-    borderRadius: 4,
-  },
-  disclaimerText: {
-    fontSize: 7,
-    color: "#92400e",
-    lineHeight: 1.4,
-  },
-  emptyState: {
-    padding: 30,
-    backgroundColor: "#f8f9fa",
-    borderRadius: 4,
-    textAlign: "center",
-  },
-  emptyText: {
-    fontSize: 10,
-    color: "#666666",
-  },
-});
 
 function formatDate(date: Date | string) {
   const d = typeof date === "string" ? new Date(date) : date;
@@ -191,15 +44,33 @@ function formatCurrency(value: number) {
   return `${value.toFixed(2).replace(".", ",")} €`;
 }
 
-export function ProvisionForecastPdf({ rows, totals, generatedAt, timeRange }: ProvisionForecastPdfProps) {
+export function ProvisionForecastPdf({ 
+  rows, 
+  totals, 
+  generatedAt, 
+  timeRange,
+  branding = DEFAULT_BRANDING 
+}: ProvisionForecastPdfProps) {
+  const styles = createReportStyles(branding);
+  
+  // Display name for header
+  const displayName = branding.companyName || "MargenKalkulator";
+  
   return (
     <Document>
       <Page size="A4" style={styles.page}>
         {/* Header */}
         <View style={styles.header}>
-          <View>
-            <Text style={styles.logo}>MargenKalkulator</Text>
-            <Text style={styles.logoSubtext}>Provisions-Prognose</Text>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            {branding.logoUrl ? (
+              <View style={styles.logoContainer}>
+                <Image src={branding.logoUrl} style={styles.logoImage} />
+              </View>
+            ) : null}
+            <View>
+              <Text style={styles.logo}>{displayName}</Text>
+              <Text style={styles.logoSubtext}>Provisions-Prognose</Text>
+            </View>
           </View>
           <View style={styles.headerRight}>
             <Text style={styles.headerTitle}>Provisions-Prognose</Text>
@@ -282,7 +153,7 @@ export function ProvisionForecastPdf({ rows, totals, generatedAt, timeRange }: P
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text style={styles.footerText}>MargenKalkulator • Provisions-Prognose</Text>
+          <Text style={styles.footerText}>{displayName} • Provisions-Prognose</Text>
           <Text style={styles.footerText}>{rows.length} Angebote</Text>
         </View>
       </Page>

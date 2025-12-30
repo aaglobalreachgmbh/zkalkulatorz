@@ -1,200 +1,23 @@
 // ============================================
 // Customer Report PDF Component
+// BRANDING: Supports dynamic tenant branding
 // ============================================
 
-import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import { Document, Page, Text, View, Image } from "@react-pdf/renderer";
 import type { Customer } from "../hooks/useCustomers";
 import type { CustomerContract } from "../hooks/useCustomerContracts";
 import type { CloudOffer } from "../hooks/useCloudOffers";
+import type { TenantBranding } from "@/hooks/useTenantBranding";
+import { DEFAULT_BRANDING } from "@/hooks/useTenantBranding";
+import { createReportStyles } from "./styles";
 
 interface CustomerReportPdfProps {
   customer: Customer;
   contracts: CustomerContract[];
   offers: CloudOffer[];
   generatedAt: Date;
+  branding?: TenantBranding;
 }
-
-const styles = StyleSheet.create({
-  page: {
-    padding: 40,
-    fontFamily: "Helvetica",
-    fontSize: 9,
-    backgroundColor: "#ffffff",
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 20,
-    borderBottomWidth: 2,
-    borderBottomColor: "#e4002b",
-    paddingBottom: 15,
-  },
-  logo: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#e4002b",
-  },
-  logoSubtext: {
-    fontSize: 8,
-    color: "#666666",
-    marginTop: 2,
-  },
-  headerRight: {
-    textAlign: "right",
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#1a1a1a",
-  },
-  headerDate: {
-    fontSize: 8,
-    color: "#666666",
-    marginTop: 4,
-  },
-  section: {
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 12,
-    fontWeight: "bold",
-    marginBottom: 10,
-    color: "#1a1a1a",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e5e5",
-    paddingBottom: 5,
-  },
-  infoGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-  },
-  infoColumn: {
-    width: "50%",
-    marginBottom: 8,
-  },
-  infoRow: {
-    flexDirection: "row",
-    marginBottom: 3,
-  },
-  infoLabel: {
-    width: 80,
-    fontSize: 8,
-    color: "#666666",
-  },
-  infoValue: {
-    flex: 1,
-    fontSize: 8,
-    color: "#1a1a1a",
-  },
-  table: {
-    width: "100%",
-  },
-  tableHeader: {
-    flexDirection: "row",
-    backgroundColor: "#1a1a1a",
-    padding: 6,
-  },
-  tableHeaderCell: {
-    color: "#ffffff",
-    fontSize: 8,
-    fontWeight: "bold",
-  },
-  tableRow: {
-    flexDirection: "row",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e5e5",
-    padding: 6,
-  },
-  tableRowAlt: {
-    backgroundColor: "#fafafa",
-  },
-  tableCell: {
-    fontSize: 8,
-    color: "#1a1a1a",
-  },
-  badge: {
-    paddingHorizontal: 4,
-    paddingVertical: 2,
-    borderRadius: 3,
-    fontSize: 7,
-  },
-  badgeCritical: {
-    backgroundColor: "#fee2e2",
-    color: "#dc2626",
-  },
-  badgeWarning: {
-    backgroundColor: "#fef3c7",
-    color: "#d97706",
-  },
-  badgeOk: {
-    backgroundColor: "#dcfce7",
-    color: "#16a34a",
-  },
-  summary: {
-    marginTop: 20,
-    padding: 15,
-    backgroundColor: "#1a1a1a",
-    borderRadius: 4,
-  },
-  summaryRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 6,
-  },
-  summaryLabel: {
-    fontSize: 9,
-    color: "#cccccc",
-  },
-  summaryValue: {
-    fontSize: 9,
-    fontWeight: "bold",
-    color: "#ffffff",
-  },
-  summaryTotal: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: "#444444",
-  },
-  summaryTotalLabel: {
-    fontSize: 11,
-    fontWeight: "bold",
-    color: "#ffffff",
-  },
-  summaryTotalValue: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#e4002b",
-  },
-  footer: {
-    position: "absolute",
-    bottom: 30,
-    left: 40,
-    right: 40,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    borderTopWidth: 1,
-    borderTopColor: "#e5e5e5",
-    paddingTop: 10,
-  },
-  footerText: {
-    fontSize: 7,
-    color: "#999999",
-  },
-  emptyState: {
-    padding: 15,
-    backgroundColor: "#f8f9fa",
-    borderRadius: 4,
-    textAlign: "center",
-  },
-  emptyText: {
-    fontSize: 9,
-    color: "#666666",
-  },
-});
 
 function formatDate(date: Date | string | null) {
   if (!date) return "-";
@@ -219,15 +42,15 @@ function getRemainingDays(dateStr: string | null): number | null {
   return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-function getUrgencyStyle(days: number | null) {
-  if (days === null) return null;
-  if (days < 30) return styles.badgeCritical;
-  if (days < 60) return styles.badgeWarning;
-  if (days <= 90) return styles.badgeOk;
-  return null;
-}
-
-export function CustomerReportPdf({ customer, contracts, offers, generatedAt }: CustomerReportPdfProps) {
+export function CustomerReportPdf({ 
+  customer, 
+  contracts, 
+  offers, 
+  generatedAt,
+  branding = DEFAULT_BRANDING 
+}: CustomerReportPdfProps) {
+  const styles = createReportStyles(branding);
+  
   const activeContracts = contracts.filter((c) => c.status === "aktiv");
   const totalMonthly = activeContracts.reduce((sum, c) => sum + (c.monatspreis || 0), 0);
   const nextVVL = activeContracts
@@ -241,15 +64,34 @@ export function CustomerReportPdf({ customer, contracts, offers, generatedAt }: 
     customer.strasse && customer.hausnummer ? `${customer.strasse} ${customer.hausnummer}` : customer.strasse,
     customer.plz && customer.ort ? `${customer.plz} ${customer.ort}` : customer.ort,
   ].filter(Boolean).join(", ");
+  
+  // Display name for header
+  const displayName = branding.companyName || "MargenKalkulator";
+  
+  // Helper for urgency styling
+  const getUrgencyStyle = (days: number | null) => {
+    if (days === null) return null;
+    if (days < 30) return styles.badgeCritical;
+    if (days < 60) return styles.badgeWarning;
+    if (days <= 90) return styles.badgeOk;
+    return null;
+  };
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
         {/* Header */}
         <View style={styles.header}>
-          <View>
-            <Text style={styles.logo}>MargenKalkulator</Text>
-            <Text style={styles.logoSubtext}>Kunden-Report</Text>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            {branding.logoUrl ? (
+              <View style={styles.logoContainer}>
+                <Image src={branding.logoUrl} style={styles.logoImage} />
+              </View>
+            ) : null}
+            <View>
+              <Text style={styles.logo}>{displayName}</Text>
+              <Text style={styles.logoSubtext}>Kunden-Report</Text>
+            </View>
           </View>
           <View style={styles.headerRight}>
             <Text style={styles.headerTitle}>{customer.company_name}</Text>
@@ -404,7 +246,7 @@ export function CustomerReportPdf({ customer, contracts, offers, generatedAt }: 
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text style={styles.footerText}>MargenKalkulator • Kunden-Report</Text>
+          <Text style={styles.footerText}>{displayName} • Kunden-Report</Text>
           <Text style={styles.footerText}>Vertraulich</Text>
         </View>
       </Page>

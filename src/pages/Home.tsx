@@ -3,12 +3,15 @@ import { ArrowRight, Zap, CheckCircle, TrendingUp, Key, UserPlus, Search, FileTe
 import { MainLayout } from "@/components/MainLayout";
 import { useVVLCounts } from "@/margenkalkulator/hooks/useCustomerContracts";
 import { useAuth } from "@/hooks/useAuth";
+import { usePOSMode } from "@/contexts/POSModeContext";
 import { Button } from "@/components/ui/button";
 import { DashboardWidgets } from "@/margenkalkulator/ui/components/DashboardWidgets";
-
+import { RecentActivityFeed } from "@/margenkalkulator/ui/components/RecentActivityFeed";
+import { cn } from "@/lib/utils";
 const Home = () => {
   const navigate = useNavigate();
   const { user, isLoading } = useAuth();
+  const { isPOSMode } = usePOSMode();
   const vvlCounts = useVVLCounts();
   
   // Badge shows critical (< 30 days) count
@@ -101,6 +104,16 @@ const Home = () => {
 
           {/* Dashboard Widgets */}
           <DashboardWidgets />
+
+          {/* Recent Activity Feed - only for logged in users */}
+          {user && (
+            <div className={cn(
+              "max-w-5xl mx-auto w-full mb-6",
+              isPOSMode && "mb-3"
+            )}>
+              <RecentActivityFeed limit={8} compact={isPOSMode} />
+            </div>
+          )}
 
           {/* Option Cards */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 max-w-5xl mx-auto w-full mb-6 items-stretch">

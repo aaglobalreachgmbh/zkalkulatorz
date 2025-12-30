@@ -40,11 +40,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, MoreHorizontal, Pencil, Trash2, Building2, Loader2, Upload, Star, User, MapPin, Phone, Mail, Download } from "lucide-react";
+import { Plus, MoreHorizontal, Pencil, Trash2, Building2, Loader2, Upload, Star, User, MapPin, Phone, Mail, Download, Calculator, Send } from "lucide-react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { toast } from "sonner";
 import { exportToCSV, CUSTOMER_COLUMNS } from "@/lib/csvExport";
+import { usePOSMode } from "@/contexts/POSModeContext";
+import { getCustomerStatus } from "@/lib/statusBadges";
+import { cn } from "@/lib/utils";
 
 const initialFormData: CustomerInput = {
   company_name: "",
@@ -74,6 +77,7 @@ export default function Customers() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { customers, isLoading, createCustomer, updateCustomer, deleteCustomer } = useCustomers();
+  const { isPOSMode } = usePOSMode();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [formData, setFormData] = useState<CustomerInput>(initialFormData);
@@ -145,16 +149,25 @@ export default function Customers() {
   };
 
   const getStatusBadge = (status: string | null) => {
-    switch (status) {
-      case "aktiv":
-        return <Badge variant="default" className="bg-green-500/20 text-green-600 hover:bg-green-500/30">Aktiv</Badge>;
-      case "inaktiv":
-        return <Badge variant="secondary">Inaktiv</Badge>;
-      case "interessent":
-        return <Badge variant="outline" className="border-blue-500 text-blue-500">Interessent</Badge>;
-      default:
-        return <Badge variant="secondary">-</Badge>;
-    }
+    const config = getCustomerStatus(status);
+    const StatusIcon = config.icon;
+    return (
+      <Badge className={cn(config.bgColor, config.color, "gap-1")}>
+        <StatusIcon className="h-3 w-3" />
+        {config.label}
+      </Badge>
+    );
+  };
+
+  // Quick Actions
+  const handleQuickOffer = (customerId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/calculator?customerId=${customerId}`);
+  };
+
+  const handleQuickEmail = (customerId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/customers/${customerId}?tab=emails`);
   };
 
   const getFullName = (customer: Customer) => {
@@ -547,11 +560,12 @@ export default function Customers() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Firma</TableHead>
-                    <TableHead>Ansprechpartner</TableHead>
-                    <TableHead>E-Mail</TableHead>
-                    <TableHead>Telefon</TableHead>
-                    <TableHead>Ort</TableHead>
+                    <TableHead className={cn(isPOSMode && "hidden md:table-cell")}>Ansprechpartner</TableHead>
+                    <TableHead className={cn(isPOSMode && "hidden lg:table-cell")}>E-Mail</TableHead>
+                    <TableHead className={cn(isPOSMode && "hidden lg:table-cell")}>Telefon</TableHead>
+                    <TableHead className={cn(isPOSMode && "hidden xl:table-cell")}>Ort</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Quick-Actions</TableHead>
                     <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -571,14 +585,43 @@ export default function Customers() {
                         </div>
                       </TableCell>
                       <TableCell>{getFullName(customer)}</TableCell>
-                      <TableCell>{customer.email || "-"}</TableCell>
-                      <TableCell>{customer.handy_nr || customer.phone || customer.festnetz || "-"}</TableCell>
-                      <TableCell>
+                      <TableCell className={cn(isPOSMode && "hidden md:table-cell")}>{getFullName(customer)}</TableCell>
+                      <TableCell className={cn(isPOSMode && "hidden lg:table-cell")}>{customer.email || "-"}</TableCell>
+                      <TableCell className={cn(isPOSMode && "hidden lg:table-cell")}>{customer.handy_nr || customer.phone || customer.festnetz || "-"}</TableCell>
+                      <TableCell className={cn(isPOSMode && "hidden xl:table-cell")}>
                         {customer.plz && customer.ort 
                           ? `${customer.plz} ${customer.ort}` 
                           : customer.ort || "-"}
                       </TableCell>
                       <TableCell>{getStatusBadge(customer.customer_status)}</TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center gap-1">
+                          <Button 
+                            variant="ghost" 
+                            size={isPOSMode ? "default" : "sm"}
+                            className={cn(
+                              "gap-1",
+                              isPOSMode && "min-h-10 min-w-10"
+                            )}
+                            onClick={(e) => handleQuickOffer(customer.id, e)}
+                          >
+                            <Calculator className="h-4 w-4" />
+                            {!isPOSMode && <span className="hidden sm:inline">Angebot</span>}
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size={isPOSMode ? "default" : "sm"}
+                            className={cn(
+                              "gap-1",
+                              isPOSMode && "min-h-10 min-w-10"
+                            )}
+                            onClick={(e) => handleQuickEmail(customer.id, e)}
+                          >
+                            <Send className="h-4 w-4" />
+                            {!isPOSMode && <span className="hidden sm:inline">E-Mail</span>}
+                          </Button>
+                        </div>
+                      </TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>

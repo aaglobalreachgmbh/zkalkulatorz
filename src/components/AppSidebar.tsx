@@ -1,9 +1,11 @@
-import { Calculator, Users, BarChart3, Building2, FolderOpen, Shield, Database, Settings, Home, Package, ShieldCheck, CreditCard, FileText, Radar, User, ChevronDown, Activity, UserX, ImageIcon, Network, UserCheck, Palette } from "lucide-react";
+import { Calculator, Users, BarChart3, Building2, FolderOpen, Shield, Database, Settings, Home, Package, ShieldCheck, CreditCard, FileText, Radar, User, ChevronDown, Activity, UserX, ImageIcon, Network, UserCheck, Palette, Monitor } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useIdentity, MOCK_IDENTITIES } from "@/contexts/IdentityContext";
 import { useTenantAdmin } from "@/hooks/useTenantAdmin";
+import { useTenantBranding } from "@/hooks/useTenantBranding";
+import { usePOSMode } from "@/contexts/POSModeContext";
 import {
   Sidebar,
   SidebarContent,
@@ -26,6 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 
 const mainItems = [
   { title: "Home", url: "/", icon: Home },
@@ -65,15 +68,26 @@ const adminItems = [
 ];
 
 export function AppSidebar() {
-  const { state } = useSidebar();
+  const { state, setOpen } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
   const { isAdmin } = useUserRole();
   const { identity, canAccessAdmin, setMockIdentity, clearMockIdentity, isSupabaseAuth } = useIdentity();
   const { isTenantAdmin } = useTenantAdmin();
+  const { branding } = useTenantBranding();
+  const { isPOSMode, togglePOSMode } = usePOSMode();
   
   // Show admin section if user has admin role OR can access admin via identity
   const showAdminSection = isAdmin || canAccessAdmin;
+
+  // Auto-collapse sidebar in POS mode
+  const handlePOSToggle = () => {
+    togglePOSMode();
+    if (!isPOSMode) {
+      // Collapsing when entering POS mode
+      setOpen(false);
+    }
+  };
 
   const roleColors: Record<string, string> = {
     admin: "bg-primary text-primary-foreground",
@@ -89,17 +103,30 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarContent>
-        {/* Logo area */}
+        {/* Logo area with tenant branding */}
         <div className={cn(
           "flex items-center gap-2 px-4 py-4 border-b border-sidebar-border",
           collapsed && "justify-center px-2"
         )}>
-          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-            <Calculator className="h-4 w-4 text-primary-foreground" />
-          </div>
+          {branding.logoUrl ? (
+            <img 
+              src={branding.logoUrl} 
+              alt={branding.companyName || "Logo"}
+              className="h-8 w-auto object-contain"
+            />
+          ) : (
+            <div 
+              className="h-8 w-8 rounded-lg flex items-center justify-center"
+              style={{ backgroundColor: branding.primaryColor || "hsl(var(--primary))" }}
+            >
+              <Calculator className="h-4 w-4 text-white" />
+            </div>
+          )}
           {!collapsed && (
             <div className="flex flex-col">
-              <span className="font-semibold text-sm">MargenKalkulator</span>
+              <span className="font-semibold text-sm">
+                {branding.companyName || "MargenKalkulator"}
+              </span>
               <span className="text-xs text-muted-foreground">Business Partner</span>
             </div>
           )}
@@ -202,9 +229,28 @@ export function AppSidebar() {
         )}
       </SidebarContent>
       
-      {/* Identity Selector in Footer */}
-      {!isSupabaseAuth && (
-        <SidebarFooter className="border-t border-sidebar-border">
+      {/* Footer with POS Toggle and Identity Selector */}
+      <SidebarFooter className="border-t border-sidebar-border space-y-2">
+        {/* POS Mode Toggle */}
+        <div className={cn(
+          "flex items-center justify-between px-3 py-2",
+          collapsed && "justify-center px-2"
+        )}>
+          {!collapsed && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Monitor className="h-4 w-4" />
+              <span>POS-Modus</span>
+            </div>
+          )}
+          <Switch
+            checked={isPOSMode}
+            onCheckedChange={handlePOSToggle}
+            className="data-[state=checked]:bg-primary"
+          />
+        </div>
+
+        {/* Identity Selector */}
+        {!isSupabaseAuth && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className={cn(
@@ -250,8 +296,8 @@ export function AppSidebar() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </SidebarFooter>
-      )}
+        )}
+      </SidebarFooter>
     </Sidebar>
   );
 }

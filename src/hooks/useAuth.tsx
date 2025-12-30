@@ -111,30 +111,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     // THEN check for existing session - THIS is the authoritative source
-    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
-      console.log("[useAuth] Initial session check complete:", !!session, session?.user?.id, "error:", error?.message);
-      
-      // Detect corrupt session (refresh token not found)
-      if (error?.message?.includes('refresh_token') || 
-          error?.message?.includes('Refresh Token Not Found') ||
-          error?.code === 'refresh_token_not_found') {
-        await clearCorruptSession("refresh_token_not_found");
-        return;
+    const initSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        console.log("[useAuth] Initial session check complete:", !!session, session?.user?.id, "error:", error?.message);
+        
+        // Detect corrupt session (refresh token not found)
+        if (error?.message?.includes('refresh_token') || 
+            error?.message?.includes('Refresh Token Not Found') ||
+            error?.code === 'refresh_token_not_found' ||
+            (error as any)?.code === 'refresh_token_not_found') {
+          await clearCorruptSession("refresh_token_not_found");
+          return;
+        }
+        
+        // If there's any error but no session, just clear and continue
+        if (error && !session) {
+          console.warn("[useAuth] Session error without session, clearing:", error.message);
+          await clearCorruptSession("session_error_no_session");
+          return;
+        }
+        
+        setSession(session);
+        setUser(session?.user ?? null);
+        initialSessionChecked = true;
+        setIsLoading(false); // ONLY here after definitive check
+        
+        if (session?.user) {
+          await checkMFAStatus();
+        }
+      } catch (err) {
+        console.error("[useAuth] Session check failed:", err);
+        // On any session retrieval error, clear potentially corrupt data
+        await clearCorruptSession("session check exception");
       }
-      
-      setSession(session);
-      setUser(session?.user ?? null);
-      initialSessionChecked = true;
-      setIsLoading(false); // ONLY here after definitive check
-      
-      if (session?.user) {
-        await checkMFAStatus();
-      }
-    }).catch(async (err) => {
-      console.error("[useAuth] Session check failed:", err);
-      // On any session retrieval error, clear potentially corrupt data
-      await clearCorruptSession("session check exception");
-    });
+    };
+    
+    initSession();
 
     return () => subscription.unsubscribe();
   }, [checkMFAStatus]);

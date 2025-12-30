@@ -50,25 +50,25 @@ export function WelcomeWidget() {
 
   const steps: OnboardingStep[] = [
     {
-      id: "branding",
-      title: "Branding einstellen",
-      description: "Logo hochladen und Unternehmensfarben festlegen",
-      icon: Palette,
-      href: "/settings/branding",
-    },
-    {
-      id: "hardware",
-      title: "Hardware importieren",
-      description: "EK-Preise aus XLSX-Datei importieren",
-      icon: Package,
-      href: "/hardware-manager",
-    },
-    {
       id: "offer",
       title: "Erstes Angebot erstellen",
       description: "Den Kalkulator ausprobieren",
       icon: FileText,
       href: "/calculator",
+    },
+    {
+      id: "customers",
+      title: "Kunden anlegen",
+      description: "Kundendaten für Angebote hinterlegen",
+      icon: Package,
+      href: "/customers?action=new",
+    },
+    {
+      id: "branding",
+      title: "Branding einstellen",
+      description: "Logo & Farben für PDFs festlegen",
+      icon: Palette,
+      href: "/tenant-admin",
     },
   ];
 

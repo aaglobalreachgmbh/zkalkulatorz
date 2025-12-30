@@ -72,6 +72,29 @@ export const businessPromos: Promo[] = [
   },
   
   // ============================================
+  // BP-frei Aktionen (Basispreisbefreiung)
+  // Standard: 6 Monate, DGRV-Tarife: bis zu 12 Monate
+  // ============================================
+  {
+    id: "BP_FREI_6M",
+    type: "INTRO_PRICE",
+    appliesTo: "mobile",
+    label: "BP frei 6 Monate",
+    durationMonths: 6,
+    value: 0, // 0€ Basispreis für 6 Monate
+    eligibilityNote: "Standard BP-Befreiung für 6 Monate",
+  },
+  {
+    id: "BP_FREI_12M_DGRV",
+    type: "INTRO_PRICE",
+    appliesTo: "mobile",
+    label: "BP frei 12 Monate (DGRV)",
+    durationMonths: 12,
+    value: 0, // 0€ Basispreis für 12 Monate
+    eligibilityNote: "Nur für DGRV-berechtigte Tarife (Verbände, Genossenschaften)",
+  },
+  
+  // ============================================
   // Legacy Promos (kept for backward compatibility)
   // ============================================
   {

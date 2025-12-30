@@ -51,6 +51,7 @@ export function OfferPdf({ option, result, validDays = 14, branding = DEFAULT_BR
   const oneTimeTotal = result.oneTime.reduce((sum, item) => sum + sanitizeNumber(item.net), 0);
   
   // Get hardware display info (SANITIZED)
+  // WICHTIG: EK-Preis wird NIE im Kunden-PDF angezeigt!
   const hasHardware = sanitizeNumber(option.hardware.ekNet) > 0;
   const hardwareName = sanitizePdfText(option.hardware.name) || "Keine Hardware";
   
@@ -127,20 +128,12 @@ export function OfferPdf({ option, result, validDays = 14, branding = DEFAULT_BR
             <Text style={[styles.tableHeaderCell, styles.colOneTime]}>Einmalig</Text>
           </View>
           
-          {/* Hardware */}
+          {/* Hardware - KEIN EK-PREIS im Kunden-PDF! */}
           <View style={styles.tableRow}>
             <Text style={[styles.tableCell, styles.colPosition]}>{hardwareName}</Text>
-            <Text style={[styles.tableCell, styles.colMonthly]}>
-              {option.hardware.amortize && hasHardware 
-                ? formatCurrency(option.hardware.ekNet / option.hardware.amortMonths)
-                : "–"
-              }
-            </Text>
+            <Text style={[styles.tableCell, styles.colMonthly]}>–</Text>
             <Text style={[styles.tableCell, styles.colOneTime]}>
-              {!option.hardware.amortize && hasHardware
-                ? formatCurrency(option.hardware.ekNet)
-                : hasHardware ? "inkl." : "–"
-              }
+              {hasHardware ? "inklusive" : "–"}
             </Text>
           </View>
           

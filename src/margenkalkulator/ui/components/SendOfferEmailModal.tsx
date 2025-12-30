@@ -3,17 +3,20 @@
 // ============================================
 
 import { useState, useCallback } from "react";
-import { Mail, Loader2, Send, User, AtSign, Phone, MessageSquare } from "lucide-react";
+import { Mail, Loader2, Send, User, AtSign, MessageSquare, Eye, EyeOff } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSendOfferEmail } from "../../hooks/useSendOfferEmail";
+import { useOfferEmails } from "../../hooks/useOfferEmails";
 import { useAuth } from "@/hooks/useAuth";
 import { useOfferBasket } from "../../contexts/OfferBasketContext";
 import { useTenantBranding } from "@/hooks/useTenantBranding";
 import { MultiOfferPdf } from "../../pdf/MultiOfferPdf";
+import { EmailPreviewPanel } from "./EmailPreviewPanel";
 import { pdf } from "@react-pdf/renderer";
 import { toast } from "sonner";
 
@@ -28,8 +31,10 @@ export function SendOfferEmailModal({ trigger }: SendOfferEmailModalProps) {
   const [subject, setSubject] = useState("Ihr persönliches Angebot");
   const [message, setMessage] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [activeTab, setActiveTab] = useState("compose");
 
   const { sendEmail, isSending } = useSendOfferEmail();
+  const { logSentEmail } = useOfferEmails();
   const { user } = useAuth();
   const { items, customer, options, anschreiben, angebotstext } = useOfferBasket();
   const { branding } = useTenantBranding();
@@ -46,6 +51,12 @@ export function SendOfferEmailModal({ trigger }: SendOfferEmailModalProps) {
       setRecipientName(customer.firma);
     }
   }, [customer]);
+
+  // Get sender info
+  const senderName = user?.user_metadata?.display_name || 
+                     user?.email?.split("@")[0] || 
+                     "Ihr Berater";
+  const senderEmail = user?.email;
 
   // Generate PDF and send email
   const handleSend = async () => {
@@ -82,12 +93,6 @@ export function SendOfferEmailModal({ trigger }: SendOfferEmailModalProps) {
         new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), "")
       );
 
-      // Prepare sender info
-      const senderName = user?.user_metadata?.display_name || 
-                         user?.email?.split("@")[0] || 
-                         "Ihr Berater";
-      const senderEmail = user?.email;
-
       // Send email
       const result = await sendEmail({
         recipientEmail,
@@ -101,11 +106,22 @@ export function SendOfferEmailModal({ trigger }: SendOfferEmailModalProps) {
       });
 
       if (result.success) {
+        // Log to email history
+        await logSentEmail({
+          recipient_email: recipientEmail,
+          recipient_name: recipientName || undefined,
+          subject,
+          message: message || undefined,
+          offer_data: JSON.parse(JSON.stringify(items)),
+          resend_message_id: result.messageId,
+        });
+
         setIsOpen(false);
         // Reset form
         setRecipientEmail("");
         setRecipientName("");
         setMessage("");
+        setActiveTab("compose");
       }
     } catch (error) {
       console.error("Error generating PDF for email:", error);
@@ -128,7 +144,7 @@ export function SendOfferEmailModal({ trigger }: SendOfferEmailModalProps) {
         )}
       </DialogTrigger>
 
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Mail className="w-5 h-5 text-primary" />
@@ -136,88 +152,136 @@ export function SendOfferEmailModal({ trigger }: SendOfferEmailModalProps) {
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 mt-4">
-          {/* Pre-fill button */}
-          {(customer.apEmail || customer.vorname || customer.firma) && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={prefillFromBasket}
-              className="w-full text-xs"
-            >
-              Kundendaten übernehmen
-            </Button>
-          )}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="compose" className="gap-2">
+              <MessageSquare className="w-4 h-4" />
+              Verfassen
+            </TabsTrigger>
+            <TabsTrigger value="preview" className="gap-2">
+              <Eye className="w-4 h-4" />
+              Vorschau
+            </TabsTrigger>
+          </TabsList>
 
-          {/* Recipient Email */}
-          <div>
-            <Label htmlFor="recipient-email" className="flex items-center gap-1">
-              <AtSign className="w-3.5 h-3.5" />
-              E-Mail-Adresse *
-            </Label>
-            <Input
-              id="recipient-email"
-              type="email"
-              value={recipientEmail}
-              onChange={(e) => setRecipientEmail(e.target.value)}
-              placeholder="kunde@beispiel.de"
-              required
-            />
-          </div>
+          <TabsContent value="compose" className="mt-4 space-y-4">
+            {/* Pre-fill button */}
+            {(customer.apEmail || customer.vorname || customer.firma) && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={prefillFromBasket}
+                className="w-full text-xs"
+              >
+                Kundendaten übernehmen
+              </Button>
+            )}
 
-          {/* Recipient Name */}
-          <div>
-            <Label htmlFor="recipient-name" className="flex items-center gap-1">
-              <User className="w-3.5 h-3.5" />
-              Empfänger-Name
-            </Label>
-            <Input
-              id="recipient-name"
-              value={recipientName}
-              onChange={(e) => setRecipientName(e.target.value)}
-              placeholder="Max Mustermann"
-            />
-          </div>
+            {/* Recipient Email */}
+            <div>
+              <Label htmlFor="recipient-email" className="flex items-center gap-1">
+                <AtSign className="w-3.5 h-3.5" />
+                E-Mail-Adresse *
+              </Label>
+              <Input
+                id="recipient-email"
+                type="email"
+                value={recipientEmail}
+                onChange={(e) => setRecipientEmail(e.target.value)}
+                placeholder="kunde@beispiel.de"
+                required
+              />
+            </div>
 
-          {/* Subject */}
-          <div>
-            <Label htmlFor="subject">Betreff</Label>
-            <Input
-              id="subject"
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              placeholder="Ihr persönliches Angebot"
-            />
-          </div>
+            {/* Recipient Name */}
+            <div>
+              <Label htmlFor="recipient-name" className="flex items-center gap-1">
+                <User className="w-3.5 h-3.5" />
+                Empfänger-Name
+              </Label>
+              <Input
+                id="recipient-name"
+                value={recipientName}
+                onChange={(e) => setRecipientName(e.target.value)}
+                placeholder="Max Mustermann"
+              />
+            </div>
 
-          {/* Message */}
-          <div>
-            <Label htmlFor="message" className="flex items-center gap-1">
-              <MessageSquare className="w-3.5 h-3.5" />
-              Persönliche Nachricht (optional)
-            </Label>
-            <Textarea
-              id="message"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Ergänzende Informationen zum Angebot..."
-              rows={3}
-            />
-          </div>
+            {/* Subject */}
+            <div>
+              <Label htmlFor="subject">Betreff</Label>
+              <Input
+                id="subject"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                placeholder="Ihr persönliches Angebot"
+              />
+            </div>
 
-          {/* Info */}
-          <div className="bg-muted p-3 rounded-md text-sm text-muted-foreground">
-            <p>
-              <strong>{items.length} Tarife</strong> werden als PDF-Anhang gesendet.
-            </p>
-            <p className="mt-1 text-xs">
-              Absender: {user?.user_metadata?.display_name || user?.email || "Sie"}
-            </p>
-          </div>
+            {/* Message */}
+            <div>
+              <Label htmlFor="message" className="flex items-center gap-1">
+                <MessageSquare className="w-3.5 h-3.5" />
+                Persönliche Nachricht (optional)
+              </Label>
+              <Textarea
+                id="message"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Ergänzende Informationen zum Angebot..."
+                rows={3}
+              />
+            </div>
 
-          {/* Actions */}
-          <div className="flex justify-end gap-2 pt-2">
+            {/* Info */}
+            <div className="bg-muted p-3 rounded-md text-sm text-muted-foreground">
+              <p>
+                <strong>{items.length} Tarife</strong> werden als PDF-Anhang gesendet.
+              </p>
+              <p className="mt-1 text-xs">
+                Absender: {senderName}
+              </p>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="preview" className="mt-4">
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                So sieht die E-Mail für den Empfänger aus:
+              </p>
+              <EmailPreviewPanel
+                recipientName={recipientName}
+                senderName={senderName}
+                senderEmail={senderEmail}
+                message={message}
+                tariffCount={items.length}
+              />
+            </div>
+          </TabsContent>
+        </Tabs>
+
+        {/* Actions */}
+        <div className="flex justify-between gap-2 pt-4 border-t mt-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setActiveTab(activeTab === "preview" ? "compose" : "preview")}
+          >
+            {activeTab === "preview" ? (
+              <>
+                <EyeOff className="w-4 h-4 mr-1" />
+                Bearbeiten
+              </>
+            ) : (
+              <>
+                <Eye className="w-4 h-4 mr-1" />
+                Vorschau
+              </>
+            )}
+          </Button>
+          
+          <div className="flex gap-2">
             <Button
               variant="outline"
               onClick={() => setIsOpen(false)}

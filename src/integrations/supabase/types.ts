@@ -1095,6 +1095,62 @@ export type Database = {
           },
         ]
       }
+      offer_emails: {
+        Row: {
+          created_at: string
+          customer_id: string | null
+          id: string
+          message: string | null
+          offer_data: Json | null
+          recipient_email: string
+          recipient_name: string | null
+          resend_message_id: string | null
+          status: string
+          subject: string
+          tenant_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          message?: string | null
+          offer_data?: Json | null
+          recipient_email: string
+          recipient_name?: string | null
+          resend_message_id?: string | null
+          status?: string
+          subject: string
+          tenant_id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          message?: string | null
+          offer_data?: Json | null
+          recipient_email?: string
+          recipient_name?: string | null
+          resend_message_id?: string | null
+          status?: string
+          subject?: string
+          tenant_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offer_emails_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           active_team_id: string | null

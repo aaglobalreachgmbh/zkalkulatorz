@@ -1,4 +1,4 @@
-import { Calculator, Users, BarChart3, Building2, FolderOpen, Shield, Database, Settings, Home, Package, ShieldCheck, CreditCard, FileText, Radar, User, ChevronDown, Activity, UserX, ImageIcon, Network, UserCheck } from "lucide-react";
+import { Calculator, Users, BarChart3, Building2, FolderOpen, Shield, Database, Settings, Home, Package, ShieldCheck, CreditCard, FileText, Radar, User, ChevronDown, Activity, UserX, ImageIcon, Network, UserCheck, Palette } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -42,6 +42,7 @@ const settingsItems = [
   { title: "Sicherheit", url: "/settings/security", icon: Settings },
   { title: "Lizenz", url: "/license", icon: CreditCard },
   { title: "Hardware-Bilder", url: "/settings/hardware-images", icon: ImageIcon },
+  { title: "Branding", url: "/settings/branding", icon: Palette },
 ];
 
 const tenantAdminItems = [

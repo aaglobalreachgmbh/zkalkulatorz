@@ -53,6 +53,7 @@ const ActivityDashboard = lazy(() => import("./pages/ActivityDashboard"));
 const SecurityTestPage = lazy(() => import("./pages/SecurityTestPage"));
 const DistributionDashboard = lazy(() => import("./pages/DistributionDashboard"));
 const TenantAdmin = lazy(() => import("./pages/TenantAdmin"));
+const BrandingSettings = lazy(() => import("./pages/BrandingSettings"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -285,13 +286,23 @@ const App = () => (
                           </FeatureRoute>
                         }
                       />
-                      {/* Tenant Admin Route */}
+                      {/* Tenant Admin Routes */}
                       <Route
                         path="/tenant-admin"
                         element={
                           <TenantAdminRoute>
                             <TenantAdmin />
                           </TenantAdminRoute>
+                        }
+                      />
+                      <Route
+                        path="/settings/branding"
+                        element={
+                          <FeatureRoute feature="customBranding">
+                            <TenantAdminRoute>
+                              <BrandingSettings />
+                            </TenantAdminRoute>
+                          </FeatureRoute>
                         }
                       />
                       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

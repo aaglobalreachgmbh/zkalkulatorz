@@ -7,6 +7,8 @@ import { usePOSMode } from "@/contexts/POSModeContext";
 import { Button } from "@/components/ui/button";
 import { DashboardWidgets } from "@/margenkalkulator/ui/components/DashboardWidgets";
 import { RecentActivityFeed } from "@/margenkalkulator/ui/components/RecentActivityFeed";
+import { RevenueForecastWidget } from "@/margenkalkulator/ui/components/RevenueForecastWidget";
+import { FollowupReminders } from "@/margenkalkulator/ui/components/FollowupReminders";
 import { cn } from "@/lib/utils";
 const Home = () => {
   const navigate = useNavigate();
@@ -104,6 +106,17 @@ const Home = () => {
 
           {/* Dashboard Widgets */}
           <DashboardWidgets />
+
+          {/* Revenue Forecast & Followup Reminders - only for logged in users */}
+          {user && (
+            <div className={cn(
+              "grid grid-cols-1 lg:grid-cols-2 gap-4 max-w-5xl mx-auto mb-6 w-full",
+              isPOSMode && "gap-3 mb-3"
+            )}>
+              <RevenueForecastWidget />
+              <FollowupReminders />
+            </div>
+          )}
 
           {/* Recent Activity Feed - only for logged in users */}
           {user && (

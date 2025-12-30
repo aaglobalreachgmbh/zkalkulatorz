@@ -3,6 +3,7 @@ import type { CalculationResult, ViewMode, OfferOptionState } from "../../engine
 import { Eye, EyeOff, Printer, Link2Off, Smartphone, Signal, Wifi, Lock, LockKeyhole, Copy, TrendingUp, TrendingDown } from "lucide-react";
 import { DiscreteMarginIndicator } from "../components/DiscreteMarginIndicator";
 import { PdfDownloadButton } from "../components/PdfDownloadButton";
+import { AiOfferCheck } from "../components/AiOfferCheck";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
 import { useFeature } from "@/hooks/useFeature";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -286,6 +287,15 @@ export function CompareStep({
             </div>
           )}
         </div>
+      </div>
+
+      {/* KI-Angebots-Check - prominente Integration */}
+      <div className="mt-6">
+        <AiOfferCheck 
+          config={option1} 
+          result={result1} 
+          compact={false} 
+        />
       </div>
     </div>
   );

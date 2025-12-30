@@ -3,15 +3,17 @@
 // ============================================
 
 import { useState, useCallback } from "react";
-import { Mail, Loader2, Send, User, AtSign, MessageSquare, Eye, EyeOff } from "lucide-react";
+import { Mail, Loader2, Send, User, AtSign, MessageSquare, Eye, EyeOff, Save } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import { useSendOfferEmail } from "../../hooks/useSendOfferEmail";
 import { useOfferEmails } from "../../hooks/useOfferEmails";
+import { useCloudOffers } from "../../hooks/useCloudOffers";
 import { useAuth } from "@/hooks/useAuth";
 import { useOfferBasket } from "../../contexts/OfferBasketContext";
 import { useTenantBranding } from "@/hooks/useTenantBranding";
@@ -19,6 +21,7 @@ import { MultiOfferPdf } from "../../pdf/MultiOfferPdf";
 import { EmailPreviewPanel } from "./EmailPreviewPanel";
 import { pdf } from "@react-pdf/renderer";
 import { toast } from "sonner";
+
 
 interface SendOfferEmailModalProps {
   trigger?: React.ReactNode;
@@ -32,9 +35,11 @@ export function SendOfferEmailModal({ trigger }: SendOfferEmailModalProps) {
   const [message, setMessage] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeTab, setActiveTab] = useState("compose");
+  const [saveToCloud, setSaveToCloud] = useState(true);
 
   const { sendEmail, isSending } = useSendOfferEmail();
   const { logSentEmail } = useOfferEmails();
+  const { createOffer } = useCloudOffers();
   const { user } = useAuth();
   const { items, customer, options, anschreiben, angebotstext } = useOfferBasket();
   const { branding } = useTenantBranding();
@@ -115,6 +120,23 @@ export function SendOfferEmailModal({ trigger }: SendOfferEmailModalProps) {
           offer_data: JSON.parse(JSON.stringify(items)),
           resend_message_id: result.messageId,
         });
+
+        // Auto-save offer to cloud if enabled
+        if (saveToCloud && items.length > 0) {
+          const firstItem = items[0];
+          const offerName = `${customer.firma || recipientName || "Angebot"} - ${new Date().toLocaleDateString("de-DE")}`;
+          
+          // Use the config from the first basket item
+          const baseConfig = firstItem.option;
+          const avgMonthly = items.reduce((sum, item) => sum + (item.result?.totals?.avgTermNet || 0), 0) / items.length;
+          
+          createOffer.mutate({
+            name: offerName,
+            config: baseConfig,
+            avgMonthly,
+            customerId: null, // Could be enhanced to link to customer if we have ID
+          });
+        }
 
         setIsOpen(false);
         // Reset form
@@ -234,8 +256,23 @@ export function SendOfferEmailModal({ trigger }: SendOfferEmailModalProps) {
               />
             </div>
 
+            {/* Save to Cloud Option */}
+            <div className="flex items-center justify-between bg-muted p-3 rounded-md">
+              <div className="flex items-center gap-2">
+                <Save className="w-4 h-4 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">Angebot automatisch speichern</p>
+                  <p className="text-xs text-muted-foreground">Nach dem Senden in der Cloud speichern</p>
+                </div>
+              </div>
+              <Switch
+                checked={saveToCloud}
+                onCheckedChange={setSaveToCloud}
+              />
+            </div>
+
             {/* Info */}
-            <div className="bg-muted p-3 rounded-md text-sm text-muted-foreground">
+            <div className="bg-muted/50 p-3 rounded-md text-sm text-muted-foreground">
               <p>
                 <strong>{items.length} Tarife</strong> werden als PDF-Anhang gesendet.
               </p>

@@ -176,10 +176,10 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
         </div>
         {showDealerOptions && (
           <div className="flex items-center gap-4">
-            <Link to="/hardware-manager">
+            <Link to="/data-manager/hardware">
               <Button variant="outline" size="sm" className="gap-2">
                 <Upload className="w-4 h-4" />
-                Hardware-Manager (CSV)
+                Hardware-Manager
               </Button>
             </Link>
             <div className="flex items-center gap-2">

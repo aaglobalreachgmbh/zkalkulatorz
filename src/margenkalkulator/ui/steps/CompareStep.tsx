@@ -6,6 +6,7 @@ import { DiscreteMarginIndicator } from "../components/DiscreteMarginIndicator";
 import { PdfDownloadButton } from "../components/PdfDownloadButton";
 import { AiOfferCheck } from "../components/AiOfferCheck";
 import { CreateCalendarEventModal } from "../components/CreateCalendarEventModal";
+import { QuickSaveOfferButton } from "../components/QuickSaveOfferButton";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
 import { useFeature } from "@/hooks/useFeature";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -85,6 +86,12 @@ export function CompareStep({
           >
             {visibility.isCustomerSessionActive ? "Gesperrt" : "Modus wechseln"}
           </Button>
+          <QuickSaveOfferButton
+            config={option1}
+            result={result1}
+            variant="secondary"
+            size="sm"
+          />
           <PdfDownloadButton 
             option={option1} 
             result={result1} 

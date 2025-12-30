@@ -2,84 +2,21 @@
 // Dealer PDF Document Component
 // Generates dealer-facing PDF with margin details
 // SECURITY: Only accessible to users with can_view_margins permission
+// BRANDING: Supports dynamic tenant branding
 // ============================================
 
-import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import { Document, Page, Text, View, Image } from "@react-pdf/renderer";
 import type { OfferOptionState, CalculationResult } from "../engine/types";
-import { styles as baseStyles } from "./styles";
+import type { TenantBranding } from "@/hooks/useTenantBranding";
+import { DEFAULT_BRANDING } from "@/hooks/useTenantBranding";
+import { createPdfStyles, createDealerStyles, styles as defaultBaseStyles } from "./styles";
 
 interface DealerPdfProps {
   option: OfferOptionState;
   result: CalculationResult;
   validDays?: number;
+  branding?: TenantBranding;
 }
-
-// Extended styles for dealer section
-const dealerStyles = StyleSheet.create({
-  dealerSection: {
-    marginTop: 20,
-    padding: 12,
-    backgroundColor: "#f8f9fa",
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: "#e60000",
-  },
-  dealerTitle: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#e60000",
-    marginBottom: 10,
-  },
-  dealerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 4,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-  },
-  dealerLabel: {
-    fontSize: 10,
-    color: "#333",
-  },
-  dealerValue: {
-    fontSize: 10,
-    fontWeight: "bold",
-  },
-  dealerValuePositive: {
-    color: "#22c55e",
-  },
-  dealerValueNegative: {
-    color: "#ef4444",
-  },
-  marginTotal: {
-    marginTop: 10,
-    paddingTop: 10,
-    borderTopWidth: 2,
-    borderTopColor: "#e60000",
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  marginLabel: {
-    fontSize: 12,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  marginValue: {
-    fontSize: 14,
-    fontWeight: "bold",
-  },
-  confidentialBanner: {
-    backgroundColor: "#e60000",
-    padding: 6,
-    marginBottom: 10,
-  },
-  confidentialText: {
-    color: "white",
-    fontSize: 10,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-});
 
 // SECURITY: Sanitize text content
 function sanitizePdfText(text: string | undefined | null, maxLength = 200): string {
@@ -97,7 +34,10 @@ function sanitizeNumber(value: number | undefined | null): number {
   return value;
 }
 
-export function DealerPdf({ option, result, validDays = 14 }: DealerPdfProps) {
+export function DealerPdf({ option, result, validDays = 14, branding = DEFAULT_BRANDING }: DealerPdfProps) {
+  const baseStyles = branding ? createPdfStyles(branding) : defaultBaseStyles;
+  const dealerStyles = createDealerStyles(branding);
+  
   const today = new Date();
   const validUntil = new Date(today.getTime() + validDays * 24 * 60 * 60 * 1000);
   
@@ -125,6 +65,9 @@ export function DealerPdf({ option, result, validDays = 14 }: DealerPdfProps) {
   const margin = sanitizeNumber(result.dealer.margin);
   const isPositiveMargin = margin >= 0;
   
+  // Display name for header
+  const displayName = branding.companyName || "MargenKalkulator";
+  
   return (
     <Document>
       <Page size="A4" style={baseStyles.page}>
@@ -137,9 +80,16 @@ export function DealerPdf({ option, result, validDays = 14 }: DealerPdfProps) {
         
         {/* Header */}
         <View style={baseStyles.header}>
-          <View>
-            <Text style={baseStyles.logo}>MargenKalkulator</Text>
-            <Text style={baseStyles.logoSubtext}>Händler-Kalkulation</Text>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            {branding.logoUrl ? (
+              <View style={baseStyles.logoContainer}>
+                <Image src={branding.logoUrl} style={baseStyles.logoImage} />
+              </View>
+            ) : null}
+            <View>
+              <Text style={baseStyles.logo}>{displayName}</Text>
+              <Text style={baseStyles.logoSubtext}>Händler-Kalkulation</Text>
+            </View>
           </View>
           <View style={baseStyles.headerRight}>
             <Text style={baseStyles.headerTitle}>Interne Kalkulation</Text>
@@ -278,7 +228,7 @@ export function DealerPdf({ option, result, validDays = 14 }: DealerPdfProps) {
         {/* Footer */}
         <View style={baseStyles.footer}>
           <Text style={baseStyles.footerLeft}>
-            MargenKalkulator • Händler-Dokument
+            {displayName} • Händler-Dokument
           </Text>
           <Text style={baseStyles.footerRight}>
             Kalk-ID: {Date.now().toString(36).toUpperCase()}

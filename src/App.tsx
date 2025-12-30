@@ -16,6 +16,7 @@ import { CustomerSessionProvider } from "@/contexts/CustomerSessionContext";
 import { SeatLimitGate } from "@/components/SeatLimitGate";
 import { FeatureRoute } from "@/components/FeatureRoute";
 import { MobileAccessGate } from "@/components/MobileAccessGate";
+import { OfferBasketProvider } from "@/margenkalkulator/contexts";
 import { Loader2 } from "lucide-react";
 
 // Eagerly loaded pages (critical path)
@@ -86,10 +87,11 @@ const App = () => (
             <AuthProvider>
               <IdentityProvider>
                 <CustomerSessionProvider>
-                  <SeatLimitGate>
-                    <MobileAccessGate allowedPaths={ALWAYS_ALLOWED_PATHS}>
-                      <Toaster />
-                      <Sonner />
+                  <OfferBasketProvider>
+                    <SeatLimitGate>
+                      <MobileAccessGate allowedPaths={ALWAYS_ALLOWED_PATHS}>
+                        <Toaster />
+                        <Sonner />
                       <BrowserRouter>
                     <Suspense fallback={<PageLoader />}>
                     <Routes>
@@ -310,8 +312,9 @@ const App = () => (
                     </Routes>
                     </Suspense>
                     </BrowserRouter>
-                    </MobileAccessGate>
-                  </SeatLimitGate>
+                      </MobileAccessGate>
+                    </SeatLimitGate>
+                  </OfferBasketProvider>
                 </CustomerSessionProvider>
               </IdentityProvider>
             </AuthProvider>

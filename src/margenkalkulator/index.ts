@@ -111,3 +111,13 @@ export {
   isSubVariantAllowed,
   getBestAllowedSubVariant,
 } from "./lib/subVariantInference";
+
+// === OFFER BASKET CONTEXT ===
+export { 
+  OfferBasketProvider, 
+  useOfferBasket,
+  type BasketItem,
+  type OfferCustomerInfo,
+  type OfferOptions,
+  type OfferConfig,
+} from "./contexts";

@@ -86,7 +86,7 @@ export function CreateCalendarEventModal({ trigger }: CreateCalendarEventModalPr
 
   // Calculate total monthly from basket items
   const totalMonthly = items.reduce((sum, item) => {
-    return sum + (item.result.customer?.avg24 || 0);
+    return sum + (item.result.totals?.avgTermNet || 0);
   }, 0);
 
   // Create event handler

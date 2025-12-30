@@ -881,6 +881,54 @@ export type Database = {
         }
         Relationships: []
       }
+      hardware_imports: {
+        Row: {
+          added_count: number
+          changed_count: number
+          created_at: string
+          error_count: number
+          file_name: string
+          file_type: string
+          id: string
+          removed_count: number
+          status: string
+          tenant_id: string
+          total_rows: number
+          user_id: string
+          warnings: Json | null
+        }
+        Insert: {
+          added_count?: number
+          changed_count?: number
+          created_at?: string
+          error_count?: number
+          file_name: string
+          file_type?: string
+          id?: string
+          removed_count?: number
+          status?: string
+          tenant_id: string
+          total_rows?: number
+          user_id: string
+          warnings?: Json | null
+        }
+        Update: {
+          added_count?: number
+          changed_count?: number
+          created_at?: string
+          error_count?: number
+          file_name?: string
+          file_type?: string
+          id?: string
+          removed_count?: number
+          status?: string
+          tenant_id?: string
+          total_rows?: number
+          user_id?: string
+          warnings?: Json | null
+        }
+        Relationships: []
+      }
       honeypot_submissions: {
         Row: {
           created_at: string

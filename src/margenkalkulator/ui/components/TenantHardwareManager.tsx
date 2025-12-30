@@ -3,7 +3,7 @@
 // CSV/XLSX Upload für mandantenspezifische Hardware-EK-Preise
 // ============================================
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,9 +11,23 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Upload, FileSpreadsheet, Trash2, Check, AlertTriangle, Download, Loader2 } from "lucide-react";
+import { 
+  Upload, FileSpreadsheet, Trash2, Check, AlertTriangle, Download, Loader2, 
+  Plus, Minus, RefreshCw, History, Clock 
+} from "lucide-react";
 import { useTenantHardware, type TenantHardwareInput } from "@/margenkalkulator/hooks/useTenantHardware";
-import Papa from "papaparse";
+import { useHardwareImports, type HardwareImportInput } from "@/margenkalkulator/hooks/useHardwareImports";
+import { 
+  parseHardwareXLSX, 
+  parseHardwareCSV, 
+  validateHardwareRows, 
+  diffHardware,
+  generateHardwareTemplate,
+  type HardwareItemRow,
+  type HardwareDiffResult
+} from "@/margenkalkulator/dataManager/importers/hardwareImporter";
+import { format } from "date-fns";
+import { de } from "date-fns/locale";
 
 interface ParsedRow {
   hardware_id: string;
@@ -31,103 +45,100 @@ interface ValidationResult {
 
 export function TenantHardwareManager() {
   const { hardware, isLoading, bulkImport, clearAll, isUploading, hasData } = useTenantHardware();
+  const { history, isLoading: historyLoading, logImport } = useHardwareImports();
   const [parseResult, setParseResult] = useState<ValidationResult | null>(null);
+  const [diffResult, setDiffResult] = useState<HardwareDiffResult | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [fileName, setFileName] = useState<string>("");
+  const [fileType, setFileType] = useState<"csv" | "xlsx">("csv");
 
-  const validateRows = (rows: Record<string, unknown>[]): ValidationResult => {
-    const valid: ParsedRow[] = [];
-    const errors: string[] = [];
-    const warnings: string[] = [];
-    const seenIds = new Set<string>();
+  // Convert current hardware to HardwareItemRow format for diffing
+  const currentHardwareRows = useMemo((): HardwareItemRow[] => {
+    return hardware.map(h => ({
+      id: h.hardware_id,
+      brand: h.brand,
+      model: h.model,
+      category: (h.category ?? "smartphone") as HardwareItemRow["category"],
+      ek_net: h.ek_net,
+      active: true,
+    }));
+  }, [hardware]);
 
-    rows.forEach((row, index) => {
-      const lineNum = index + 2; // +2 for header and 0-indexing
+  const validateAndConvert = (rows: HardwareItemRow[]): ValidationResult => {
+    const validation = validateHardwareRows(rows);
+    
+    // Convert error objects to strings
+    const errorStrings = validation.errors.map(e => 
+      e.row ? `Zeile ${e.row}: ${e.message}` : e.message
+    );
 
-      // Extract values with flexible column names
-      const hardwareId = String(row.hardware_id || row.id || row.artikelnummer || row.sku || "").trim();
-      const brand = String(row.brand || row.marke || row.hersteller || "").trim();
-      const model = String(row.model || row.modell || row.gerät || row.name || "").trim();
-      const category = String(row.category || row.kategorie || "smartphone").trim();
-      
-      // Parse EK price with German number format support
-      let ekNet = 0;
-      const ekRaw = row.ek_net || row.ek || row.einkaufspreis || row.preis || row.price || 0;
-      if (typeof ekRaw === "string") {
-        ekNet = parseFloat(ekRaw.replace(/\./g, "").replace(",", ".")) || 0;
-      } else {
-        ekNet = Number(ekRaw) || 0;
-      }
+    const valid: ParsedRow[] = validation.isValid
+      ? rows.map(row => ({
+          hardware_id: row.id,
+          brand: row.brand,
+          model: row.model,
+          category: row.category ?? "smartphone",
+          ek_net: row.ek_net,
+        }))
+      : [];
 
-      // Validation
-      if (!hardwareId) {
-        errors.push(`Zeile ${lineNum}: hardware_id fehlt`);
-        return;
-      }
-
-      if (seenIds.has(hardwareId)) {
-        warnings.push(`Zeile ${lineNum}: Duplikat '${hardwareId}' übersprungen`);
-        return;
-      }
-
-      if (!brand) {
-        errors.push(`Zeile ${lineNum}: Marke (brand) fehlt für ${hardwareId}`);
-        return;
-      }
-
-      if (!model) {
-        errors.push(`Zeile ${lineNum}: Modell (model) fehlt für ${hardwareId}`);
-        return;
-      }
-
-      if (ekNet < 0) {
-        errors.push(`Zeile ${lineNum}: EK-Preis negativ für ${hardwareId}`);
-        return;
-      }
-
-      if (ekNet === 0) {
-        warnings.push(`Zeile ${lineNum}: EK-Preis ist 0 für ${hardwareId}`);
-      }
-
-      seenIds.add(hardwareId);
-      valid.push({
-        hardware_id: hardwareId,
-        brand,
-        model,
-        category,
-        ek_net: ekNet,
-      });
-    });
-
-    return { valid, errors, warnings };
+    return {
+      valid,
+      errors: errorStrings,
+      warnings: validation.warnings,
+    };
   };
 
   const handleFile = useCallback(async (file: File) => {
-    const text = await file.text();
+    setFileName(file.name);
     
-    Papa.parse(text, {
-      header: true,
-      skipEmptyLines: true,
-      transformHeader: (header) => header.toLowerCase().trim().replace(/\s+/g, "_"),
-      complete: (results) => {
-        const validation = validateRows(results.data as Record<string, unknown>[]);
-        setParseResult(validation);
-      },
-      error: (error) => {
-        setParseResult({
-          valid: [],
-          errors: [`CSV-Parsing-Fehler: ${error.message}`],
-          warnings: [],
-        });
-      },
-    });
-  }, []);
+    try {
+      let rows: HardwareItemRow[];
+      
+      // Detect file type and parse accordingly
+      if (file.name.endsWith(".xlsx") || file.name.endsWith(".xls")) {
+        setFileType("xlsx");
+        rows = await parseHardwareXLSX(file);
+      } else {
+        setFileType("csv");
+        rows = await parseHardwareCSV(file);
+      }
+
+      // Validate rows
+      const validation = validateAndConvert(rows);
+      setParseResult(validation);
+
+      // Calculate diff if we have existing data
+      if (currentHardwareRows.length > 0 && validation.valid.length > 0) {
+        const parsedAsHardwareRows: HardwareItemRow[] = validation.valid.map(v => ({
+          id: v.hardware_id,
+          brand: v.brand,
+          model: v.model,
+          category: v.category as HardwareItemRow["category"],
+          ek_net: v.ek_net,
+          active: true,
+        }));
+        const diff = diffHardware(currentHardwareRows, parsedAsHardwareRows);
+        setDiffResult(diff);
+      } else {
+        setDiffResult(null);
+      }
+    } catch (error) {
+      setParseResult({
+        valid: [],
+        errors: [`Datei-Parsing-Fehler: ${error instanceof Error ? error.message : "Unbekannter Fehler"}`],
+        warnings: [],
+      });
+      setDiffResult(null);
+    }
+  }, [currentHardwareRows]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
     
     const file = e.dataTransfer.files[0];
-    if (file && (file.name.endsWith(".csv") || file.name.endsWith(".xlsx"))) {
+    if (file && (file.name.endsWith(".csv") || file.name.endsWith(".xlsx") || file.name.endsWith(".xls"))) {
       handleFile(file);
     }
   }, [handleFile]);
@@ -139,7 +150,7 @@ export function TenantHardwareManager() {
     }
   };
 
-  const handleImport = () => {
+  const handleImport = async () => {
     if (!parseResult?.valid.length) return;
     
     const items: TenantHardwareInput[] = parseResult.valid.map((row, index) => ({
@@ -151,22 +162,49 @@ export function TenantHardwareManager() {
       sort_order: index,
     }));
 
-    bulkImport(items);
-    setParseResult(null);
+    try {
+      await bulkImport(items);
+      
+      // Log the import
+      const importLog: HardwareImportInput = {
+        file_name: fileName,
+        file_type: fileType,
+        status: "completed",
+        total_rows: parseResult.valid.length,
+        added_count: diffResult?.summary.added ?? parseResult.valid.length,
+        changed_count: diffResult?.summary.changed ?? 0,
+        removed_count: diffResult?.summary.removed ?? 0,
+        error_count: parseResult.errors.length,
+        warnings: parseResult.warnings,
+      };
+      
+      await logImport(importLog);
+      
+      setParseResult(null);
+      setDiffResult(null);
+      setFileName("");
+    } catch (error) {
+      // Log failed import
+      await logImport({
+        file_name: fileName,
+        file_type: fileType,
+        status: "failed",
+        total_rows: 0,
+        added_count: 0,
+        changed_count: 0,
+        removed_count: 0,
+        error_count: 1,
+        warnings: [error instanceof Error ? error.message : "Import failed"],
+      });
+    }
   };
 
   const downloadTemplate = () => {
-    const template = `hardware_id,brand,model,category,ek_net
-IPHONE_16_128,Apple,iPhone 16 128GB,smartphone,779.00
-IPHONE_16_256,Apple,iPhone 16 256GB,smartphone,899.00
-SAMSUNG_S24_128,Samsung,Galaxy S24 128GB,smartphone,649.00
-SIM_ONLY,SIM,SIM-Only,,0.00`;
-    
-    const blob = new Blob([template], { type: "text/csv;charset=utf-8;" });
+    const blob = generateHardwareTemplate();
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "hardware_vorlage.csv";
+    a.download = "hardware_vorlage.xlsx";
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -252,14 +290,14 @@ SIM_ONLY,SIM,SIM-Only,,0.00`;
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>CSV Import</CardTitle>
+            <CardTitle>CSV / Excel Import</CardTitle>
             <Button variant="outline" size="sm" onClick={downloadTemplate}>
               <Download className="h-4 w-4 mr-2" />
-              Vorlage
+              XLSX-Vorlage
             </Button>
           </div>
           <CardDescription>
-            Laden Sie eine CSV-Datei mit Spalten: hardware_id, brand, model, category, ek_net
+            Laden Sie eine CSV- oder Excel-Datei mit Spalten: hardware_id, brand, model, category, ek_net
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -276,13 +314,13 @@ SIM_ONLY,SIM,SIM-Only,,0.00`;
           >
             <Upload className="h-10 w-10 mx-auto mb-4 text-muted-foreground" />
             <p className="text-sm text-muted-foreground mb-4">
-              CSV-Datei hierher ziehen oder
+              CSV- oder Excel-Datei hierher ziehen oder
             </p>
             <Label htmlFor="hardware-upload" className="cursor-pointer">
               <Input
                 id="hardware-upload"
                 type="file"
-                accept=".csv"
+                accept=".csv,.xlsx,.xls"
                 className="hidden"
                 onChange={handleFileInput}
               />
@@ -290,15 +328,124 @@ SIM_ONLY,SIM,SIM-Only,,0.00`;
                 <span>Datei auswählen</span>
               </Button>
             </Label>
+            <p className="text-xs text-muted-foreground mt-2">
+              Unterstützte Formate: .csv, .xlsx, .xls
+            </p>
           </div>
         </CardContent>
       </Card>
+
+      {/* Diff Preview */}
+      {diffResult && diffResult.items.length > 0 && (
+        <Card className="border-blue-500/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <RefreshCw className="h-5 w-5" />
+              Änderungsvorschau
+            </CardTitle>
+            <CardDescription>
+              Vergleich mit aktuellen Daten
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Summary Badges */}
+            <div className="flex flex-wrap gap-2">
+              {diffResult.summary.added > 0 && (
+                <Badge className="bg-green-500 hover:bg-green-600">
+                  <Plus className="h-3 w-3 mr-1" />
+                  {diffResult.summary.added} neu
+                </Badge>
+              )}
+              {diffResult.summary.changed > 0 && (
+                <Badge className="bg-yellow-500 hover:bg-yellow-600">
+                  <RefreshCw className="h-3 w-3 mr-1" />
+                  {diffResult.summary.changed} geändert
+                </Badge>
+              )}
+              {diffResult.summary.removed > 0 && (
+                <Badge className="bg-red-500 hover:bg-red-600">
+                  <Minus className="h-3 w-3 mr-1" />
+                  {diffResult.summary.removed} entfernt
+                </Badge>
+              )}
+            </div>
+
+            {/* Diff Table */}
+            <div className="max-h-64 overflow-auto border rounded-md">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-16">Status</TableHead>
+                    <TableHead>Marke</TableHead>
+                    <TableHead>Modell</TableHead>
+                    <TableHead className="text-right">Änderung</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {diffResult.items.slice(0, 15).map((item) => (
+                    <TableRow 
+                      key={item.id}
+                      className={
+                        item.type === "added" ? "bg-green-500/10" :
+                        item.type === "removed" ? "bg-red-500/10" :
+                        "bg-yellow-500/10"
+                      }
+                    >
+                      <TableCell>
+                        <Badge 
+                          variant="outline"
+                          className={
+                            item.type === "added" ? "border-green-500 text-green-600" :
+                            item.type === "removed" ? "border-red-500 text-red-600" :
+                            "border-yellow-500 text-yellow-600"
+                          }
+                        >
+                          {item.type === "added" ? <Plus className="h-3 w-3" /> :
+                           item.type === "removed" ? <Minus className="h-3 w-3" /> :
+                           <RefreshCw className="h-3 w-3" />}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{item.brand}</TableCell>
+                      <TableCell>{item.model}</TableCell>
+                      <TableCell className="text-right text-sm">
+                        {item.type === "added" && (
+                          <span className="text-green-600">+{item.newEkNet?.toFixed(2)} €</span>
+                        )}
+                        {item.type === "removed" && (
+                          <span className="text-red-600 line-through">{item.oldEkNet?.toFixed(2)} €</span>
+                        )}
+                        {item.type === "changed" && item.changes && (
+                          <span className="text-yellow-600">
+                            {item.oldEkNet?.toFixed(2)} € → {item.newEkNet?.toFixed(2)} €
+                          </span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {diffResult.items.length > 15 && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center text-muted-foreground">
+                        ... und {diffResult.items.length - 15} weitere Änderungen
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Parse Result */}
       {parseResult && (
         <Card>
           <CardHeader>
             <CardTitle>Import-Vorschau</CardTitle>
+            {fileName && (
+              <CardDescription>
+                Datei: {fileName}
+              </CardDescription>
+            )}
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Errors */}
@@ -360,13 +507,91 @@ SIM_ONLY,SIM,SIM-Only,,0.00`;
                   </Button>
                   <Button 
                     variant="outline" 
-                    onClick={() => setParseResult(null)}
+                    onClick={() => {
+                      setParseResult(null);
+                      setDiffResult(null);
+                      setFileName("");
+                    }}
                   >
                     Abbrechen
                   </Button>
                 </div>
               </>
             )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Import History */}
+      {history.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <History className="h-5 w-5" />
+              Import-Historie
+            </CardTitle>
+            <CardDescription>
+              Letzte 10 Importe
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="border rounded-md">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Datum</TableHead>
+                    <TableHead>Datei</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Änderungen</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {history.map((log) => (
+                    <TableRow key={log.id}>
+                      <TableCell className="text-sm">
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-3 w-3 text-muted-foreground" />
+                          {format(new Date(log.created_at), "dd.MM.yyyy HH:mm", { locale: de })}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs">
+                            {log.file_type.toUpperCase()}
+                          </Badge>
+                          <span className="text-sm truncate max-w-32">{log.file_name}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant={log.status === "completed" ? "default" : 
+                                   log.status === "partial" ? "secondary" : "destructive"}
+                        >
+                          {log.status === "completed" ? "Erfolgreich" :
+                           log.status === "partial" ? "Teilweise" : "Fehlgeschlagen"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2 text-xs">
+                          {log.added_count > 0 && (
+                            <span className="text-green-600">+{log.added_count}</span>
+                          )}
+                          {log.changed_count > 0 && (
+                            <span className="text-yellow-600">~{log.changed_count}</span>
+                          )}
+                          {log.removed_count > 0 && (
+                            <span className="text-red-600">-{log.removed_count}</span>
+                          )}
+                          {log.added_count === 0 && log.changed_count === 0 && log.removed_count === 0 && (
+                            <span className="text-muted-foreground">Keine Änderungen</span>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
       )}

@@ -33,6 +33,11 @@ export interface OfferDraft {
 }
 
 /**
+ * Offer status types
+ */
+export type OfferStatus = "offen" | "gesendet" | "angenommen" | "abgelehnt";
+
+/**
  * Cloud-gespeichertes Angebot (mit DB-Feldern)
  */
 export interface CloudOffer {
@@ -48,6 +53,7 @@ export interface CloudOffer {
   team_id: string | null;
   visibility: "private" | "team";
   dataset_version_id: string | null;
+  status: OfferStatus;
 }
 
 /**

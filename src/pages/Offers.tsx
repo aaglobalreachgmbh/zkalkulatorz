@@ -21,6 +21,9 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
   Dialog,
@@ -50,6 +53,10 @@ import {
   Users,
   Lock,
   Download,
+  Circle,
+  Send,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
@@ -58,6 +65,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { exportToCSV, OFFER_COLUMNS } from "@/lib/csvExport";
+import type { OfferStatus } from "@/margenkalkulator/storage/types";
 
 export default function Offers() {
   const navigate = useNavigate();
@@ -120,7 +128,7 @@ export default function Offers() {
   const handleLoad = (offer: CloudOffer) => {
     // Store in sessionStorage for the Wizard to pick up
     sessionStorage.setItem("loadOffer", JSON.stringify(offer.config));
-    navigate("/");
+    navigate("/calculator");
   };
 
   const getCustomerName = (customerId: string | null) => {
@@ -135,11 +143,72 @@ export default function Offers() {
     return team?.name;
   };
 
+  const handleStatusChange = async (offerId: string, newStatus: OfferStatus) => {
+    try {
+      const { error } = await supabase
+        .from("saved_offers")
+        .update({ status: newStatus })
+        .eq("id", offerId);
+
+      if (error) throw error;
+      toast.success(`Status auf "${getStatusLabel(newStatus)}" geändert`);
+      queryClient.invalidateQueries({ queryKey: ["cloudOffers"] });
+    } catch (error) {
+      toast.error("Fehler beim Ändern des Status");
+    }
+  };
+
+  const getStatusLabel = (status: OfferStatus): string => {
+    switch (status) {
+      case "offen": return "Offen";
+      case "gesendet": return "Gesendet";
+      case "angenommen": return "Angenommen";
+      case "abgelehnt": return "Abgelehnt";
+      default: return status;
+    }
+  };
+
+  const getStatusBadge = (status: OfferStatus) => {
+    switch (status) {
+      case "offen":
+        return (
+          <Badge variant="outline" className="gap-1">
+            <Circle className="h-3 w-3" />
+            Offen
+          </Badge>
+        );
+      case "gesendet":
+        return (
+          <Badge variant="secondary" className="gap-1 bg-blue-500/10 text-blue-600 border-blue-500/30">
+            <Send className="h-3 w-3" />
+            Gesendet
+          </Badge>
+        );
+      case "angenommen":
+        return (
+          <Badge className="gap-1 bg-green-500/10 text-green-600 border-green-500/30">
+            <CheckCircle2 className="h-3 w-3" />
+            Angenommen
+          </Badge>
+        );
+      case "abgelehnt":
+        return (
+          <Badge variant="destructive" className="gap-1">
+            <XCircle className="h-3 w-3" />
+            Abgelehnt
+          </Badge>
+        );
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
   const handleExportCSV = () => {
     const exportData = filteredOffers.map(offer => ({
       name: offer.name,
       created_at: format(new Date(offer.created_at), "dd.MM.yyyy HH:mm", { locale: de }),
       visibility: offer.visibility === "team" ? "Team" : "Privat",
+      status: getStatusLabel(offer.status),
       tariff: offer.preview?.tariff || "-",
       hardware: offer.preview?.hardware || "-",
       avgMonthly: offer.preview?.avgMonthly?.toFixed(2) || "-",
@@ -276,6 +345,7 @@ export default function Offers() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Name</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>Tarif</TableHead>
                     <TableHead>Kunde</TableHead>
                     <TableHead>Sichtbarkeit</TableHead>
@@ -288,6 +358,9 @@ export default function Offers() {
                   {filteredOffers.map((offer) => (
                     <TableRow key={offer.id} className="cursor-pointer" onClick={() => handleLoad(offer)}>
                       <TableCell className="font-medium">{offer.name}</TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        {getStatusBadge(offer.status)}
+                      </TableCell>
                       <TableCell>
                         {offer.preview?.tariff || "-"}
                         {offer.preview?.hardware && offer.preview.hardware !== "SIM Only" && (
@@ -345,6 +418,30 @@ export default function Offers() {
                               <Share2 className="h-4 w-4 mr-2" />
                               Mit Team teilen
                             </DropdownMenuItem>
+                            <DropdownMenuSub>
+                              <DropdownMenuSubTrigger>
+                                <Circle className="h-4 w-4 mr-2" />
+                                Status ändern
+                              </DropdownMenuSubTrigger>
+                              <DropdownMenuSubContent>
+                                <DropdownMenuItem onClick={() => handleStatusChange(offer.id, "offen")}>
+                                  <Circle className="h-4 w-4 mr-2" />
+                                  Offen
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleStatusChange(offer.id, "gesendet")}>
+                                  <Send className="h-4 w-4 mr-2" />
+                                  Gesendet
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleStatusChange(offer.id, "angenommen")}>
+                                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                                  Angenommen
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleStatusChange(offer.id, "abgelehnt")}>
+                                  <XCircle className="h-4 w-4 mr-2" />
+                                  Abgelehnt
+                                </DropdownMenuItem>
+                              </DropdownMenuSubContent>
+                            </DropdownMenuSub>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               onClick={() => handleDelete(offer)}

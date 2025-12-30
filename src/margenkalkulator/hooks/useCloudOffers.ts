@@ -67,6 +67,7 @@ export function useCloudOffers() {
         team_id: row.team_id ?? null,
         visibility: (row.visibility as "private" | "team") ?? "private",
         dataset_version_id: row.dataset_version_id ?? null,
+        status: ((row as any).status as "offen" | "gesendet" | "angenommen" | "abgelehnt") ?? "offen",
       }));
     },
     enabled: !!user,
@@ -122,6 +123,7 @@ export function useCloudOffers() {
         team_id: data.team_id ?? null,
         visibility: (data.visibility as "private" | "team") ?? "private",
         dataset_version_id: data.dataset_version_id ?? null,
+        status: ((data as any).status as "offen" | "gesendet" | "angenommen" | "abgelehnt") ?? "offen",
       };
     },
     onSuccess: (newOffer) => {

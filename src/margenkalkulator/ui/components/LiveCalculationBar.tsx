@@ -1,0 +1,196 @@
+import { useMemo } from "react";
+import { TrendingUp, TrendingDown, ShoppingCart, Euro } from "lucide-react";
+import type { CalculationResult, ViewMode } from "../../engine/types";
+import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
+import { cn } from "@/lib/utils";
+
+interface LiveCalculationBarProps {
+  result: CalculationResult;
+  viewMode: ViewMode;
+  quantity: number;
+  className?: string;
+}
+
+export function LiveCalculationBar({ 
+  result, 
+  viewMode,
+  quantity,
+  className 
+}: LiveCalculationBarProps) {
+  const visibility = useSensitiveFieldsVisible(viewMode);
+  const showDealerEconomics = visibility.showDealerEconomics;
+  
+  const avgMonthly = result.totals.avgTermNet;
+  const margin = result.dealer.margin;
+  const provision = result.dealer.provisionBase;
+  const hardwareEk = result.dealer.hardwareEkNet;
+  const total24M = avgMonthly * 24 * quantity;
+  
+  const marginColor = useMemo(() => {
+    if (margin >= 100) return "text-emerald-600 dark:text-emerald-400";
+    if (margin >= 0) return "text-amber-600 dark:text-amber-400";
+    return "text-destructive";
+  }, [margin]);
+  
+  const marginBgColor = useMemo(() => {
+    if (margin >= 100) return "bg-emerald-50 dark:bg-emerald-950/30";
+    if (margin >= 0) return "bg-amber-50 dark:bg-amber-950/30";
+    return "bg-destructive/10";
+  }, [margin]);
+
+  if (showDealerEconomics) {
+    // Dealer View: Provision, HW-EK, Marge
+    return (
+      <div className={cn(
+        "bg-slate-900 text-white rounded-xl p-4",
+        className
+      )}>
+        <div className="grid grid-cols-4 gap-4">
+          {/* Avg Monthly */}
+          <div className="text-center">
+            <p className="text-[10px] uppercase tracking-wider text-slate-400 mb-1">
+              Ø Monat
+            </p>
+            <p className="text-2xl font-bold tabular-nums">
+              {avgMonthly.toFixed(2)} €
+            </p>
+          </div>
+          
+          {/* Provision */}
+          <div className="text-center">
+            <p className="text-[10px] uppercase tracking-wider text-slate-400 mb-1">
+              Provision
+            </p>
+            <p className="text-2xl font-bold tabular-nums text-emerald-400">
+              +{provision.toFixed(0)} €
+            </p>
+          </div>
+          
+          {/* Hardware EK */}
+          <div className="text-center">
+            <p className="text-[10px] uppercase tracking-wider text-slate-400 mb-1">
+              HW-EK
+            </p>
+            <p className="text-2xl font-bold tabular-nums text-amber-400">
+              -{hardwareEk.toFixed(0)} €
+            </p>
+          </div>
+          
+          {/* Margin */}
+          <div className={cn(
+            "text-center rounded-lg py-2 -my-2",
+            marginBgColor
+          )}>
+            <p className="text-[10px] uppercase tracking-wider text-slate-300 mb-1">
+              Marge
+            </p>
+            <div className="flex items-center justify-center gap-1.5">
+              {margin >= 0 ? (
+                <TrendingUp className={cn("w-4 h-4", marginColor)} />
+              ) : (
+                <TrendingDown className={cn("w-4 h-4", marginColor)} />
+              )}
+              <p className={cn("text-2xl font-bold tabular-nums", marginColor)}>
+                {margin >= 0 ? "+" : ""}{margin.toFixed(0)} €
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Customer View: Avg Monthly, Total 24M, Per Card
+  return (
+    <div className={cn(
+      "bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-xl p-4",
+      className
+    )}>
+      <div className="grid grid-cols-3 gap-4">
+        {/* Avg Monthly */}
+        <div className="text-center">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+            Ø Monatspreis
+          </p>
+          <div className="flex items-center justify-center gap-1.5">
+            <Euro className="w-4 h-4 text-primary" />
+            <p className="text-2xl font-bold tabular-nums text-foreground">
+              {avgMonthly.toFixed(2)}
+            </p>
+          </div>
+        </div>
+        
+        {/* Quantity */}
+        <div className="text-center">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+            Verträge
+          </p>
+          <div className="flex items-center justify-center gap-1.5">
+            <ShoppingCart className="w-4 h-4 text-muted-foreground" />
+            <p className="text-2xl font-bold tabular-nums text-foreground">
+              {quantity}x
+            </p>
+          </div>
+        </div>
+        
+        {/* Total 24 Months */}
+        <div className="text-center">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+            24 Monate Gesamt
+          </p>
+          <p className="text-2xl font-bold tabular-nums text-foreground">
+            {total24M.toFixed(0)} €
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Helper to get summary text for the accordion
+export function getStepSummary(
+  step: "hardware" | "mobile" | "fixedNet",
+  state: {
+    hardware?: { name: string; ekNet: number };
+    mobile?: { tariffId: string; quantity: number; contractType: string };
+    fixedNet?: { enabled: boolean; productId: string };
+  }
+): string {
+  switch (step) {
+    case "hardware":
+      if (!state.hardware?.name || state.hardware.name === "KEINE HARDWARE") {
+        return "SIM Only";
+      }
+      return state.hardware.name;
+      
+    case "mobile":
+      if (!state.mobile?.tariffId) {
+        return "Kein Tarif gewählt";
+      }
+      const qty = state.mobile.quantity > 1 ? ` • ${state.mobile.quantity}x` : "";
+      const type = state.mobile.contractType === "renewal" ? " (VVL)" : "";
+      // Extract tariff name from ID (simplified)
+      const tariffName = state.mobile.tariffId
+        .replace(/_/g, " ")
+        .replace(/prime/i, "Prime")
+        .replace(/smart/i, "Smart");
+      return `${tariffName}${qty}${type}`;
+      
+    case "fixedNet":
+      if (!state.fixedNet?.enabled) {
+        return "Nicht aktiv";
+      }
+      if (!state.fixedNet.productId) {
+        return "Produkt wählen...";
+      }
+      // Extract product name from ID (simplified)
+      return state.fixedNet.productId
+        .replace(/_/g, " ")
+        .replace(/CABLE/i, "Kabel")
+        .replace(/DSL/i, "DSL")
+        .replace(/FIBER/i, "Glasfaser");
+      
+    default:
+      return "";
+  }
+}

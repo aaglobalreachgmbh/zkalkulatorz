@@ -1,10 +1,19 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Smartphone, Signal, Router, LayoutGrid, Printer, Calculator, Home, ChevronLeft, ChevronRight, Lock, AlertTriangle, XCircle, Settings, Zap } from "lucide-react";
+import { 
+  Smartphone, Signal, Router, LayoutGrid, Printer, Calculator, Home, 
+  ChevronDown, Lock, AlertTriangle, XCircle, Settings, Zap 
+} from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePOSMode } from "@/contexts/POSModeContext";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import {
   type OfferOptionState,
   type ViewMode,
@@ -21,20 +30,18 @@ import { HardwareStep } from "./steps/HardwareStep";
 import { MobileStep } from "./steps/MobileStep";
 import { FixedNetStep } from "./steps/FixedNetStep";
 import { CompareStep } from "./steps/CompareStep";
-import { GlobalControls } from "./components/GlobalControls";
 import { ValidationWarning } from "./components/ValidationWarning";
 import { AiConsultant } from "./components/AiConsultant";
-import { SaveDraftButton } from "./components/SaveDraftButton";
-import { SaveTemplateButton } from "./components/SaveTemplateButton";
-import { SaveBundleButton } from "./components/SaveBundleButton";
-import { DraftManager } from "./components/DraftManager";
-import { HistoryDropdown } from "./components/HistoryDropdown";
-import { CloudOfferManager } from "./components/CloudOfferManager";
 import { ActionMenu } from "./components/ActionMenu";
 import { ViewModeToggle } from "./components/ViewModeToggle";
 import { CustomerSessionToggle } from "./components/CustomerSessionToggle";
 import { IdentitySelector } from "./components/IdentitySelector";
 import { POSModeToggle } from "./components/POSModeToggle";
+import { LiveCalculationBar, getStepSummary } from "./components/LiveCalculationBar";
+import { SummarySidebar } from "./components/SummarySidebar";
+import { GigaKombiBanner } from "./components/GigaKombiBanner";
+import { SavingsBreakdown } from "./components/SavingsBreakdown";
+import { QuickStartDialog, shouldShowQuickStart } from "./components/QuickStartDialog";
 import { useHistory } from "../hooks/useHistory";
 import { useToast } from "@/hooks/use-toast";
 import { useIdentity } from "@/contexts/IdentityContext";
@@ -47,8 +54,7 @@ import { OnboardingTour, OnboardingPrompt } from "@/components/OnboardingTour";
 import { WizardRestoreDialog } from "@/components/WizardRestoreDialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 
 const STEPS: { id: WizardStep; label: string; icon: typeof Smartphone }[] = [
   { id: "hardware", label: "Hardware", icon: Smartphone },
@@ -75,24 +81,23 @@ export function Wizard() {
   // Onboarding Tour Hook
   const tour = useOnboardingTour();
   
-  // Auto-Save Hook (Phase 5: Offline-Sync)
+  // Auto-Save Hook
   const autoSave = useWizardAutoSave();
   const [showRestoreDialog, setShowRestoreDialog] = useState(false);
   const hasCheckedAutoSave = useRef(false);
   
-  // Dataset Versions - Auto-seed if none exist (only for authenticated admins)
+  // QuickStart Dialog
+  const [showQuickStart, setShowQuickStart] = useState(false);
+  
+  // Dataset Versions - Auto-seed if none exist
   const { versions, isLoading: isLoadingVersions, seedDefaultVersion, isSeeding } = useDatasetVersions();
   const hasSeeded = useRef(false);
   const { canAccessAdmin, isSupabaseAuth } = useIdentity();
   
-  // Phase 7: Tenant Data Status Check
+  // Tenant Data Status Check
   const { status: tenantDataStatus, isLoading: isLoadingTenantData } = useTenantDataStatus();
   
   useEffect(() => {
-    // Auto-seed v2025_10 if:
-    // - No versions exist for this tenant
-    // - User is authenticated via Supabase AND has admin access
-    // - Not already seeding
     const shouldSeed = !isLoadingVersions 
       && versions.length === 0 
       && !hasSeeded.current 
@@ -103,13 +108,13 @@ export function Wizard() {
     if (shouldSeed) {
       hasSeeded.current = true;
       seedDefaultVersion().catch(() => {
-        // Reset flag on error so user can retry
         hasSeeded.current = false;
       });
     }
   }, [isLoadingVersions, versions.length, seedDefaultVersion, isSeeding, isSupabaseAuth, canAccessAdmin]);
   
-  const [currentStep, setCurrentStep] = useState<WizardStep>("hardware");
+  // Accordion open sections (multiple can be open)
+  const [openSections, setOpenSections] = useState<string[]>(["hardware", "mobile"]);
   const [activeOption, setActiveOption] = useState<1 | 2>(1);
   const [viewMode, setViewMode] = useState<ViewMode>(policy.defaultViewMode);
   
@@ -124,6 +129,9 @@ export function Wizard() {
     if (!hasCheckedAutoSave.current && autoSave.hasSavedDraft) {
       hasCheckedAutoSave.current = true;
       setShowRestoreDialog(true);
+    } else if (!hasCheckedAutoSave.current && shouldShowQuickStart()) {
+      hasCheckedAutoSave.current = true;
+      setShowQuickStart(true);
     }
   }, [autoSave.hasSavedDraft]);
   
@@ -134,7 +142,11 @@ export function Wizard() {
       setOption1(draft.option1);
       setOption2(draft.option2);
       setActiveOption(draft.activeOption);
-      setCurrentStep(draft.currentStep);
+      // Open relevant sections based on config
+      const sections = ["mobile"];
+      if (draft.option1.hardware.ekNet > 0) sections.unshift("hardware");
+      if (draft.option1.fixedNet.enabled) sections.push("fixedNet");
+      setOpenSections(sections);
       toast({
         title: "Entwurf wiederhergestellt",
         description: "Deine letzte Konfiguration wurde geladen.",
@@ -147,20 +159,48 @@ export function Wizard() {
   const handleDiscardDraft = useCallback(() => {
     autoSave.discardDraft();
     setShowRestoreDialog(false);
+    if (shouldShowQuickStart()) {
+      setShowQuickStart(true);
+    }
   }, [autoSave]);
   
-  // Auto-save on state changes (debounced in hook)
+  // Handle QuickStart selection
+  const handleQuickStartSelect = useCallback((option: string) => {
+    switch (option) {
+      case "sim_only":
+        setOpenSections(["mobile"]);
+        break;
+      case "with_hardware":
+        setOpenSections(["hardware", "mobile"]);
+        break;
+      case "with_fixednet":
+        setOpenSections(["hardware", "mobile", "fixedNet"]);
+        setOption1(prev => ({
+          ...prev,
+          fixedNet: { ...prev.fixedNet, enabled: true }
+        }));
+        break;
+      case "team_deal":
+        setOpenSections(["hardware", "mobile"]);
+        setOption1(prev => ({
+          ...prev,
+          mobile: { ...prev.mobile, quantity: 3 }
+        }));
+        break;
+    }
+  }, []);
+  
+  // Auto-save on state changes
   useEffect(() => {
-    // Only auto-save if user has made some configuration
     if (option1.mobile.tariffId || option2.mobile.tariffId) {
       autoSave.saveDraft({
         option1,
         option2,
         activeOption,
-        currentStep,
+        currentStep: "hardware", // Accordion mode - no single step
       });
     }
-  }, [option1, option2, activeOption, currentStep, autoSave]);
+  }, [option1, option2, activeOption, autoSave]);
   
   // Force back to Option 1 if Option 2 is disabled
   useEffect(() => {
@@ -168,8 +208,6 @@ export function Wizard() {
       setActiveOption(1);
     }
   }, [option2Enabled, activeOption]);
-
-  // Sync happens automatically via Cloud hooks - no manual scope setting needed
 
   // Load bundle or template config from route state
   useEffect(() => {
@@ -195,7 +233,6 @@ export function Wizard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const currentStepIndex = STEPS.findIndex((s) => s.id === currentStep);
   const activeState = activeOption === 1 ? option1 : option2;
   const setActiveState = activeOption === 1 ? setOption1 : setOption2;
 
@@ -207,7 +244,7 @@ export function Wizard() {
     } : null,
   }), [employeeSettings]);
 
-  // Build push provision context from option state
+  // Build push provision context
   const buildPushContext = useCallback((option: OfferOptionState) => ({
     hasHardware: option.hardware.ekNet > 0,
     hardwareEkNet: option.hardware.ekNet,
@@ -218,7 +255,7 @@ export function Wizard() {
     contractType: option.mobile.contractType,
   }), []);
 
-  // Calculate results (memoized) with employee options and push context
+  // Calculate results (memoized)
   const result1 = useMemo(() => {
     const context = buildPushContext(option1);
     const pushBonus = getBonusAmount(option1.mobile.tariffId, option1.mobile.contractType, 0, context);
@@ -234,15 +271,7 @@ export function Wizard() {
   // Validation
   const validation = useWizardValidation(activeState);
 
-  // Auto-save to history on step change (only if we have a tariff selected)
-  useEffect(() => {
-    if (activeState.mobile.tariffId) {
-      const result = activeOption === 1 ? result1 : result2;
-      addToHistory(activeState, result.totals.avgTermNet, result.dealer.margin);
-    }
-  }, [currentStep]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Load draft/history handler
+  // Load config handler
   const handleLoadConfig = useCallback((config: OfferOptionState) => {
     if (activeOption === 1) {
       setOption1(config);
@@ -253,14 +282,12 @@ export function Wizard() {
 
   // Handle view mode change with policy checks
   const handleViewModeChange = useCallback((newMode: ViewMode) => {
-    // requireConfirmOnDealerSwitch: confirm when switching from customer to dealer
     if (newMode === "dealer" && viewMode === "customer" && policy.requireConfirmOnDealerSwitch) {
       if (!window.confirm("Wechsel in den Händler-Modus?")) {
         return;
       }
     }
     
-    // requireCustomerSessionWhenCustomerMode: auto-activate session when switching to customer
     if (newMode === "customer" && policy.requireCustomerSessionWhenCustomerMode && !customerSession.isActive) {
       toggleSession();
       toast({ title: "Kundensitzung aktiviert", description: "Sensible Daten werden ausgeblendet." });
@@ -269,24 +296,7 @@ export function Wizard() {
     setViewMode(newMode);
   }, [viewMode, policy, customerSession.isActive, toggleSession, toast]);
 
-  // Navigation
-  const goToStep = (step: WizardStep) => {
-    setCurrentStep(step);
-  };
-
-  const goNext = () => {
-    if (currentStepIndex < STEPS.length - 1) {
-      setCurrentStep(STEPS[currentStepIndex + 1].id);
-    }
-  };
-
-  const goBack = () => {
-    if (currentStepIndex > 0) {
-      setCurrentStep(STEPS[currentStepIndex - 1].id);
-    }
-  };
-
-  // Copy option (blocked if Option 2 disabled)
+  // Copy option
   const copyOption = (from: 1 | 2, to: 1 | 2) => {
     if (!option2Enabled && to === 2) {
       toast({
@@ -305,63 +315,15 @@ export function Wizard() {
     });
   };
 
-  const canProceed = validation.canProceed(currentStep);
-  const currentValidation = validation.steps[currentStep];
-
-  // Render current step
-  const renderStep = () => {
-    switch (currentStep) {
-      case "hardware":
-        return (
-          <HardwareStep
-            value={activeState.hardware}
-            onChange={(hardware) => setActiveState({ ...activeState, hardware })}
-            viewMode={viewMode}
-          />
-        );
-      case "mobile":
-        return (
-          <MobileStep
-            value={activeState.mobile}
-            onChange={(mobile) => setActiveState({ ...activeState, mobile })}
-            datasetVersion={activeState.meta.datasetVersion}
-            fixedNetEnabled={activeState.fixedNet.enabled}
-            viewMode={viewMode}
-          />
-        );
-      case "fixedNet":
-        return (
-          <FixedNetStep
-            value={activeState.fixedNet}
-            onChange={(fixedNet) => setActiveState({ ...activeState, fixedNet })}
-            datasetVersion={activeState.meta.datasetVersion}
-          />
-        );
-      case "compare":
-        return (
-          <CompareStep
-            option1={option1}
-            option2={option2}
-            result1={result1}
-            result2={result2}
-            activeOption={activeOption}
-            viewMode={viewMode}
-            onActiveOptionChange={setActiveOption}
-            onViewModeChange={setViewMode}
-            onCopyOption={copyOption}
-          />
-        );
-      default:
-        return null;
-    }
-  };
-
-  // Get active result for footer KPI
+  // Get active result
   const activeResult = activeOption === 1 ? result1 : result2;
   const avgMonthlyNet = activeResult.totals.avgTermNet;
 
-  // Phase 7: Block wizard if tenant data incomplete (only for Supabase auth)
-  // Super-Admin (Plattform-Admin) kann die Blockierung umgehen
+  // GigaKombi eligibility check
+  const isGigaKombiEligible = option1.fixedNet.enabled && 
+    option1.mobile.tariffId.toLowerCase().includes("prime");
+
+  // Super-Admin bypass
   const { isAdmin: isSuperAdmin } = useUserRole();
   
   if (isSupabaseAuth && !isSuperAdmin && !isLoadingTenantData && tenantDataStatus && !tenantDataStatus.isComplete) {
@@ -429,6 +391,13 @@ export function Wizard() {
         onDiscard={handleDiscardDraft}
       />
       
+      {/* QuickStart Dialog */}
+      <QuickStartDialog
+        open={showQuickStart}
+        onOpenChange={setShowQuickStart}
+        onSelect={handleQuickStartSelect}
+      />
+      
       {/* Onboarding Tour */}
       <OnboardingTour
         isActive={tour.isActive}
@@ -442,7 +411,6 @@ export function Wizard() {
         onEnd={() => tour.endTour(true)}
       />
       
-      {/* Onboarding Prompt (first visit) */}
       {tour.shouldShowTour && !tour.isActive && (
         <OnboardingPrompt
           onStart={tour.startTour}
@@ -451,7 +419,7 @@ export function Wizard() {
       )}
       
       {/* Header */}
-      <header className="border-b border-border bg-card shrink-0" data-tour="header">
+      <header className="border-b border-border bg-card shrink-0">
         <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-2 sm:py-3 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <div className="w-8 h-8 sm:w-10 sm:h-10 bg-primary rounded-lg flex items-center justify-center shrink-0">
@@ -461,17 +429,15 @@ export function Wizard() {
               <h1 className="text-base sm:text-lg font-bold text-foreground truncate">
                 Margen<span className="text-primary">Kalkulator</span>
               </h1>
-              <p className="text-[10px] sm:text-xs text-muted-foreground hidden sm:block">Konfigurator Modus</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground hidden sm:block">Konfigurator</p>
             </div>
           </div>
           
           <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-            {/* POS Mode Toggle - visible on all devices */}
             <POSModeToggle showLabel={!isMobile} />
             
             <div className="h-6 w-px bg-border hidden sm:block" />
             
-            {/* Identity Selector (Dev) - hidden on mobile & POS */}
             {!isPOSMode && (
               <div className="hidden lg:block">
                 <IdentitySelector />
@@ -480,10 +446,8 @@ export function Wizard() {
             
             {!isPOSMode && <div className="hidden lg:block h-6 w-px bg-border" />}
             
-            {/* Customer Session Toggle - Safety Lock (conditional) - hidden in POS */}
             {!isPOSMode && policy.showCustomerSessionToggle && <CustomerSessionToggle />}
             
-            {/* View Mode Toggle with policy */}
             <ViewModeToggle 
               value={viewMode} 
               onChange={handleViewModeChange}
@@ -496,7 +460,6 @@ export function Wizard() {
               </span>
             )}
             
-            {/* Grouped Actions Menu - hidden in POS */}
             {!isPOSMode && (
               <>
                 <div className="h-6 w-px bg-border hidden sm:block" />
@@ -519,7 +482,7 @@ export function Wizard() {
         </div>
       </header>
 
-      {/* POS Mode Indicator Banner */}
+      {/* POS Mode Indicator */}
       {isPOSMode && (
         <div className="bg-amber-500/10 border-b border-amber-500/30 px-4 py-2 flex items-center justify-center gap-2">
           <Zap className="w-4 h-4 text-amber-600" />
@@ -529,138 +492,196 @@ export function Wizard() {
         </div>
       )}
 
-      {/* Tab Navigation - Mobile stacked on small screens, horizontal on larger */}
-      <nav className={cn(
-        "bg-card border-b border-border",
-        isMobile && isPOSMode ? "overflow-hidden" : "overflow-x-auto"
-      )}>
-        <div className="container mx-auto px-2 sm:px-6">
+      {/* Main Content with Sidebar */}
+      <main className="flex-1 container mx-auto py-4 sm:py-6 px-3 sm:px-4 lg:px-6">
+        <div className="flex gap-6">
+          {/* Accordion Sections */}
           <div className={cn(
-            "flex items-center gap-0 sm:gap-2",
-            isMobile && isPOSMode 
-              ? "flex-wrap justify-center py-2" 
-              : "justify-start sm:justify-center min-w-max sm:min-w-0"
+            "flex-1 min-w-0",
+            !isMobile && "max-w-4xl"
           )}>
-            {/* In POS mode on mobile, only show current + next step */}
-            {STEPS.filter((step, idx) => {
-              if (!isMobile || !isPOSMode) return true;
-              return idx === currentStepIndex || idx === currentStepIndex + 1 || idx === STEPS.length - 1;
-            }).map((step) => {
-              const Icon = step.icon;
-              const isActiveStep = currentStep === step.id;
-              
-              return (
-                <button
-                  key={step.id}
-                  onClick={() => goToStep(step.id)}
-                  data-tour={`step-${step.id}`}
-                  className={cn(
-                    "flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium",
-                    "border-b-2 transition-all whitespace-nowrap touch-manipulation",
-                    "min-h-[48px] min-w-[48px] active:scale-95",
-                    isActiveStep
-                      ? "border-primary text-primary bg-primary/5"
-                      : "border-transparent text-muted-foreground hover:text-foreground active:text-foreground hover:bg-muted/50"
-                  )}
-                >
-                  <Icon className="w-5 h-5 sm:w-4 sm:h-4" />
-                  <span className={cn(isMobile && isPOSMode ? "inline" : "hidden xs:inline sm:inline")}>
-                    {step.label}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </nav>
+            <Accordion 
+              type="multiple" 
+              value={openSections}
+              onValueChange={setOpenSections}
+              className="space-y-3"
+            >
+              {/* Hardware Section */}
+              <AccordionItem value="hardware" className="border rounded-xl overflow-hidden">
+                <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50 [&[data-state=open]]:bg-muted/30">
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className={cn(
+                      "w-8 h-8 rounded-lg flex items-center justify-center",
+                      option1.hardware.ekNet > 0 || option1.hardware.name === "KEINE HARDWARE" 
+                        ? "bg-primary/10" 
+                        : "bg-muted"
+                    )}>
+                      <Smartphone className={cn(
+                        "w-4 h-4",
+                        option1.hardware.ekNet > 0 || option1.hardware.name === "KEINE HARDWARE"
+                          ? "text-primary" 
+                          : "text-muted-foreground"
+                      )} />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-medium">Hardware</p>
+                      <p className="text-xs text-muted-foreground">
+                        {getStepSummary("hardware", { hardware: option1.hardware })}
+                      </p>
+                    </div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-4 pt-2">
+                  <HardwareStep
+                    value={activeState.hardware}
+                    onChange={(hardware) => setActiveState({ ...activeState, hardware })}
+                    viewMode={viewMode}
+                  />
+                </AccordionContent>
+              </AccordionItem>
 
-      {/* Main Content - Adjusted padding for mobile */}
-      <main className={cn(
-        "flex-1 container mx-auto py-4 sm:py-6",
-        isMobile ? "px-3" : "px-4 lg:px-6"
-      )}>
-        <div className={cn(
-          "mx-auto",
-          isPOSMode ? "max-w-3xl" : "max-w-5xl"
-        )}>
-          {/* Validation warnings - simplified in POS mode */}
-          {currentValidation && !currentValidation.valid && !isPOSMode && (
-            <div className="mb-6 animate-fade-in">
-              <ValidationWarning validation={currentValidation} />
+              {/* Mobile Section */}
+              <AccordionItem value="mobile" className="border rounded-xl overflow-hidden">
+                <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50 [&[data-state=open]]:bg-muted/30">
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className={cn(
+                      "w-8 h-8 rounded-lg flex items-center justify-center",
+                      option1.mobile.tariffId ? "bg-primary/10" : "bg-muted"
+                    )}>
+                      <Signal className={cn(
+                        "w-4 h-4",
+                        option1.mobile.tariffId ? "text-primary" : "text-muted-foreground"
+                      )} />
+                    </div>
+                    <div className="text-left flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium">Mobilfunk</p>
+                        {option1.mobile.quantity > 1 && (
+                          <Badge variant="secondary" className="text-xs">
+                            {option1.mobile.quantity}x
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {getStepSummary("mobile", { mobile: option1.mobile })}
+                      </p>
+                    </div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-4 pt-2">
+                  <MobileStep
+                    value={activeState.mobile}
+                    onChange={(mobile) => setActiveState({ ...activeState, mobile })}
+                    datasetVersion={activeState.meta.datasetVersion}
+                    fixedNetEnabled={activeState.fixedNet.enabled}
+                    viewMode={viewMode}
+                  />
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Fixed Net Section */}
+              <AccordionItem value="fixedNet" className="border rounded-xl overflow-hidden">
+                <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50 [&[data-state=open]]:bg-muted/30">
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className={cn(
+                      "w-8 h-8 rounded-lg flex items-center justify-center",
+                      option1.fixedNet.enabled ? "bg-emerald-500/10" : "bg-muted"
+                    )}>
+                      <Router className={cn(
+                        "w-4 h-4",
+                        option1.fixedNet.enabled ? "text-emerald-600" : "text-muted-foreground"
+                      )} />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-medium">Festnetz</p>
+                      <p className="text-xs text-muted-foreground">
+                        {getStepSummary("fixedNet", { fixedNet: option1.fixedNet })}
+                      </p>
+                    </div>
+                    {option1.fixedNet.enabled && (
+                      <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-200">
+                        GigaKombi
+                      </Badge>
+                    )}
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-4 pt-2">
+                  <FixedNetStep
+                    value={activeState.fixedNet}
+                    onChange={(fixedNet) => setActiveState({ ...activeState, fixedNet })}
+                    datasetVersion={activeState.meta.datasetVersion}
+                  />
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+
+            {/* GigaKombi Banner */}
+            {isGigaKombiEligible && (
+              <div className="mt-4">
+                <GigaKombiBanner isEligible={isGigaKombiEligible} />
+              </div>
+            )}
+
+            {/* Savings Breakdown */}
+            {result1.periods.length > 1 && (
+              <div className="mt-4">
+                <SavingsBreakdown result={result1} />
+              </div>
+            )}
+
+            {/* Live Calculation Bar */}
+            <div className="mt-4">
+              <LiveCalculationBar
+                result={activeResult}
+                viewMode={viewMode}
+                quantity={activeState.mobile.quantity}
+              />
             </div>
-          )}
-          <div className="animate-fade-in">
-            {renderStep()}
+
+            {/* Validation Warnings */}
+            {!validation.steps.mobile.valid && (
+              <div className="mt-4">
+                <ValidationWarning validation={validation.steps.mobile} />
+              </div>
+            )}
           </div>
+
+          {/* Summary Sidebar - Desktop only */}
+          {!isMobile && (
+            <aside className="w-80 flex-shrink-0 hidden lg:block">
+              <SummarySidebar
+                option={option1}
+                result={result1}
+                viewMode={viewMode}
+              />
+            </aside>
+          )}
         </div>
       </main>
 
-      {/* Sticky Footer - Mobile-optimized with larger touch targets */}
-      <footer className="bg-card border-t border-border sticky bottom-0 z-40 shrink-0 pb-safe">
-        <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-3 sm:py-3">
-          <div className="flex items-center justify-between gap-3">
-            <Button
-              variant="ghost"
-              size={isMobile ? "lg" : "sm"}
-              onClick={goBack}
-              disabled={currentStepIndex === 0}
-              className={cn(
-                "gap-2 touch-manipulation active:scale-95",
-                isMobile ? "min-h-[52px] min-w-[52px] px-4" : "min-h-[44px] min-w-[44px] px-4"
-              )}
-            >
-              <ChevronLeft className={isMobile ? "w-5 h-5" : "w-4 h-4"} />
-              <span className={isMobile && isPOSMode ? "sr-only" : "hidden sm:inline"}>Zurück</span>
-            </Button>
-
-            {/* Live KPI - Enhanced for POS mode */}
-            <div className={cn(
-              "text-center flex-1 min-w-0",
-              isPOSMode && "bg-muted/50 rounded-lg py-2 px-3"
-            )}>
-              <p className="text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground truncate">
-                Ø Monatspreis
-              </p>
-              <p className={cn(
-                "font-bold text-foreground tabular-nums",
-                isPOSMode ? "text-2xl sm:text-3xl" : "text-xl sm:text-2xl"
-              )}>
-                {avgMonthlyNet.toFixed(2)} €
-              </p>
+      {/* Mobile Footer with Print */}
+      {isMobile && (
+        <footer className="bg-card border-t border-border sticky bottom-0 z-40 shrink-0 pb-safe">
+          <div className="container mx-auto px-3 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-center flex-1 min-w-0">
+                <p className="text-[9px] uppercase tracking-widest text-muted-foreground">
+                  Ø Monatspreis
+                </p>
+                <p className="text-2xl font-bold text-foreground tabular-nums">
+                  {avgMonthlyNet.toFixed(2)} €
+                </p>
+              </div>
+              <Button onClick={() => window.print()} className="gap-2">
+                <Printer className="w-4 h-4" />
+                Drucken
+              </Button>
             </div>
-
-            {currentStepIndex === STEPS.length - 1 ? (
-              <Button 
-                size={isMobile ? "lg" : "sm"}
-                onClick={() => window.print()} 
-                className={cn(
-                  "gap-2 touch-manipulation active:scale-95",
-                  isMobile ? "min-h-[52px] min-w-[52px] px-4" : "min-h-[44px] min-w-[44px] px-4"
-                )}
-              >
-                <Printer className={isMobile ? "w-5 h-5" : "w-4 h-4"} />
-                <span className={isMobile && isPOSMode ? "sr-only" : "hidden sm:inline"}>Drucken</span>
-              </Button>
-            ) : (
-              <Button 
-                size={isMobile ? "lg" : "sm"}
-                onClick={goNext} 
-                disabled={!canProceed} 
-                className={cn(
-                  "gap-2 touch-manipulation active:scale-95",
-                  isMobile ? "min-h-[52px] min-w-[52px] px-4" : "min-h-[44px] min-w-[44px] px-4",
-                  isPOSMode && "bg-primary text-primary-foreground hover:bg-primary/90"
-                )}
-              >
-                <span className={isMobile && isPOSMode ? "sr-only" : "hidden sm:inline"}>Weiter</span>
-                <ChevronRight className={isMobile ? "w-5 h-5" : "w-4 h-4"} />
-              </Button>
-            )}
           </div>
-        </div>
-      </footer>
+        </footer>
+      )}
 
-      {/* AI Consultant - hidden in POS mode */}
+      {/* AI Consultant */}
       {!isPOSMode && activeState.mobile.tariffId && (
         <AiConsultant config={activeState} result={activeResult} />
       )}

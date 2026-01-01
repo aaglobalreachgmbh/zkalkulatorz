@@ -10,6 +10,10 @@ import { RecentActivityFeed } from "@/margenkalkulator/ui/components/RecentActiv
 import { RevenueForecastWidget } from "@/margenkalkulator/ui/components/RevenueForecastWidget";
 import { FollowupReminders } from "@/margenkalkulator/ui/components/FollowupReminders";
 import { WelcomeWidget } from "@/margenkalkulator/ui/components/WelcomeWidget";
+import { AverageMarginWidget } from "@/margenkalkulator/ui/components/AverageMarginWidget";
+import { ProvisionSourcesWidget } from "@/margenkalkulator/ui/components/ProvisionSourcesWidget";
+import { DiscountUsageWidget } from "@/margenkalkulator/ui/components/DiscountUsageWidget";
+import { CriticalOffersWidget } from "@/margenkalkulator/ui/components/CriticalOffersWidget";
 import { cn } from "@/lib/utils";
 const Home = () => {
   const navigate = useNavigate();
@@ -110,6 +114,22 @@ const Home = () => {
 
           {/* Dashboard Widgets */}
           <DashboardWidgets />
+
+          {/* Margen-Analytics Widgets - only for logged in users */}
+          {user && (
+            <section className={cn(
+              "max-w-5xl mx-auto w-full mb-6",
+              isPOSMode && "mb-3"
+            )}>
+              <h2 className="text-lg font-semibold mb-4">Margen-Analytics</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <AverageMarginWidget />
+                <ProvisionSourcesWidget />
+                <DiscountUsageWidget />
+                <CriticalOffersWidget />
+              </div>
+            </section>
+          )}
 
           {/* Revenue Forecast & Followup Reminders - only for logged in users */}
           {user && (

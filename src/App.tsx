@@ -38,6 +38,7 @@ const MoccaImport = lazy(() => import("./pages/MoccaImport"));
 const Contracts = lazy(() => import("./pages/Contracts"));
 const Team = lazy(() => import("./pages/Team"));
 const Offers = lazy(() => import("./pages/Offers"));
+const OfferDetail = lazy(() => import("./pages/OfferDetail"));
 const Reporting = lazy(() => import("./pages/Reporting"));
 const SecuritySettings = lazy(() => import("./pages/SecuritySettings"));
 const Admin = lazy(() => import("./pages/Admin"));
@@ -119,6 +120,14 @@ const App = () => (
                         element={
                           <ProtectedRoute>
                             <Offers />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/offers/:id"
+                        element={
+                          <ProtectedRoute>
+                            <OfferDetail />
                           </ProtectedRoute>
                         }
                       />

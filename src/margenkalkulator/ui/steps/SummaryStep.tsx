@@ -230,12 +230,12 @@ export function SummaryStep({
                 </CardHeader>
               </CollapsibleTrigger>
               <CollapsibleContent>
-                <CardContent className="pt-0">
+              <CardContent className="pt-0">
                   <ProvisionBreakdown
-                    airtimeProvision={result.dealer.airtimeTotal || 0}
-                    airtimeMonthly={(result.dealer.airtimeTotal || 0) / option.meta.termMonths}
+                    airtimeProvision={result.dealer.provisionAfter}
+                    airtimeMonthly={result.dealer.provisionAfter / option.meta.termMonths}
                     oneTimeProvision={result.dealer.provisionBase}
-                    hardwareProvision={result.dealer.hardwareProvision || 0}
+                    hardwareProvision={result.dealer.fixedNetProvision || 0}
                     termMonths={option.meta.termMonths as 24 | 36}
                     contractCount={quantity}
                     compact
@@ -278,8 +278,10 @@ export function SummaryStep({
                     <span className="font-medium">{formatCurrency(marginPerContract)}</span>
                   </div>
                   <ProfitabilityTrafficLight
-                    status={status}
-                    marginPerContract={marginPerContract}
+                    marginTotal={margin}
+                    marginPercentage={marginPercent}
+                    profitabilityStatus={status}
+                    contractCount={quantity}
                     compact
                   />
                 </CardContent>
@@ -321,18 +323,16 @@ export function SummaryStep({
           <CardTitle className="text-sm font-medium">Aktionen</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
-          <QuickSaveOfferButton
-            config={option}
-            result={result}
-            variant="default"
-            className="w-full"
-          />
+          <div className="w-full">
+            <QuickSaveOfferButton
+              config={option}
+              result={result}
+              variant="default"
+            />
+          </div>
           
           <div className="grid grid-cols-2 gap-2">
             <SendOfferEmailModal
-              config={option}
-              result={result}
-              customer={customer}
               trigger={
                 <Button variant="outline" size="sm" className="w-full gap-2">
                   <Mail className="w-4 h-4" />

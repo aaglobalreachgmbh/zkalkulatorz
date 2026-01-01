@@ -1,4 +1,4 @@
-import { Smartphone, Signal, Wifi, Check, X, Save, FileText, Mail, Calendar } from "lucide-react";
+import { Smartphone, Signal, Wifi, Check, X, Save, FileText, Mail, Calendar, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { OfferOptionState, CalculationResult, ViewMode } from "../../engine/types";
@@ -6,7 +6,9 @@ import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
 import { PdfDownloadButton } from "./PdfDownloadButton";
 import { QuickSaveOfferButton } from "./QuickSaveOfferButton";
 import { CreateCalendarEventModal } from "./CreateCalendarEventModal";
+import { MarginBadge } from "./MarginBadge";
 import { cn } from "@/lib/utils";
+import { getProfitabilityStatus, calculateMarginPercent } from "../../lib/formatters";
 
 interface SummarySidebarProps {
   option: OfferOptionState;
@@ -35,6 +37,16 @@ export function SummarySidebar({
   // Check if GigaKombi is eligible
   const isGigaKombiEligible = hasFixedNet && 
     option.mobile.tariffId.toLowerCase().includes("prime");
+  
+  // TeamDeal check
+  const quantity = option.mobile.quantity;
+  const teamDealActive = quantity >= 3;
+  const teamDealPercentage = quantity >= 5 ? 10 : quantity >= 3 ? 5 : 0;
+  
+  // Profitability status
+  const marginPerContract = margin / quantity;
+  const profitabilityStatus = getProfitabilityStatus(marginPerContract);
+  const marginPercent = calculateMarginPercent(margin, result.totals.sumTermNet);
 
   return (
     <div className={cn(
@@ -140,6 +152,28 @@ export function SummarySidebar({
         </div>
       )}
       
+      {/* Active Discounts Section */}
+      {(teamDealActive || isGigaKombiEligible) && (
+        <div className="space-y-2">
+          <p className="text-xs text-muted-foreground font-medium flex items-center gap-1">
+            <Tag className="w-3 h-3" />
+            Aktive Rabatte
+          </p>
+          {teamDealActive && (
+            <div className="flex justify-between text-sm">
+              <span>TeamDeal ({quantity}x)</span>
+              <span className="text-emerald-600 font-medium">-{teamDealPercentage}%</span>
+            </div>
+          )}
+          {isGigaKombiEligible && (
+            <div className="flex justify-between text-sm">
+              <span>GigaKombi</span>
+              <span className="text-emerald-600 font-medium">-5€/Monat</span>
+            </div>
+          )}
+        </div>
+      )}
+      
       {/* Divider */}
       <div className="border-t border-border" />
       
@@ -158,13 +192,13 @@ export function SummarySidebar({
             </div>
             <div className="flex justify-between items-center pt-2 border-t border-border">
               <span className="font-semibold">Marge</span>
-              <span className={cn(
-                "text-xl font-bold",
-                margin >= 0 ? "text-emerald-600" : "text-destructive"
-              )}>
-                {margin >= 0 ? "+" : ""}{margin.toFixed(0)} €
-              </span>
+              <MarginBadge margin={margin} marginPercentage={marginPercent} size="lg" />
             </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {profitabilityStatus === "critical" && "⚠️ Verlustrisiko!"}
+              {profitabilityStatus === "warning" && "💡 Optimierungspotenzial"}
+              {profitabilityStatus === "positive" && "✅ Gute Marge"}
+            </p>
           </>
         )}
       </div>

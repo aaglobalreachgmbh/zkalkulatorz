@@ -55,9 +55,17 @@ import {
   XCircle,
   ScrollText,
   History,
+  TrendingUp,
 } from "lucide-react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
+import { useCustomerMargins } from "@/margenkalkulator/hooks/useCustomerMargins";
+import { MarginBadge } from "@/margenkalkulator/ui/components/MarginBadge";
+import { 
+  formatCurrency, 
+  getProfitabilityStatus, 
+  getStatusColors 
+} from "@/margenkalkulator/lib/formatters";
 
 const NOTE_TYPE_CONFIG = {
   info: { label: "Info", icon: "💬", color: "bg-blue-500/20 text-blue-600" },
@@ -88,6 +96,7 @@ export default function CustomerDetail() {
   const { offers, isLoading: offersLoading } = useCloudOffers();
   const { contracts, isLoading: contractsLoading, createContract, updateContract, deleteContract } = useCustomerContracts(id);
   const { emails, isLoading: emailsLoading } = useCustomerEmails(id);
+  const { entries: marginEntries, stats: marginStats, isLoading: marginsLoading } = useCustomerMargins(id || "");
 
   const [newNoteContent, setNewNoteContent] = useState("");
   const [newNoteType, setNewNoteType] = useState<NoteType>("info");
@@ -240,7 +249,7 @@ export default function CustomerDetail() {
 
         {/* Tabs */}
         <Tabs defaultValue="timeline" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-6 max-w-3xl">
+          <TabsList className="grid w-full grid-cols-7 max-w-4xl">
             <TabsTrigger value="timeline" className="flex items-center gap-2">
               <History className="h-4 w-4" />
               Timeline
@@ -256,6 +265,10 @@ export default function CustomerDetail() {
             <TabsTrigger value="angebote" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
               Angebote ({customerOffers.length})
+            </TabsTrigger>
+            <TabsTrigger value="margen" className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Margen
             </TabsTrigger>
             <TabsTrigger value="emails" className="flex items-center gap-2">
               <Mail className="h-4 w-4" />
@@ -625,6 +638,101 @@ export default function CustomerDetail() {
                     </Card>
                   );
                 })}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Margen Tab */}
+          <TabsContent value="margen" className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-medium">Margen-Historie</h3>
+              <p className="text-sm text-muted-foreground">
+                Profitabilität aller Angebote für diesen Kunden
+              </p>
+            </div>
+
+            {marginsLoading ? (
+              <div className="flex items-center justify-center h-32">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : marginEntries.length === 0 ? (
+              <Card>
+                <CardContent className="py-8 text-center text-muted-foreground">
+                  Noch keine Angebote mit Marge-Daten vorhanden.
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {/* Statistics Cards */}
+                <div className="grid gap-4 md:grid-cols-4">
+                  <Card>
+                    <CardContent className="pt-4">
+                      <p className="text-sm text-muted-foreground">Durchschnitt</p>
+                      <p className="text-2xl font-bold">{formatCurrency(marginStats.averageMargin)}</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="pt-4">
+                      <p className="text-sm text-muted-foreground">Beste Marge</p>
+                      <p className="text-2xl font-bold text-emerald-600">{formatCurrency(marginStats.bestMargin)}</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="pt-4">
+                      <p className="text-sm text-muted-foreground">Schlechteste</p>
+                      <p className="text-2xl font-bold text-red-600">{formatCurrency(marginStats.worstMargin)}</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="pt-4">
+                      <p className="text-sm text-muted-foreground">Angebote</p>
+                      <p className="text-2xl font-bold">{marginStats.totalOffers}</p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Margin Entries Table */}
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b">
+                            <th className="text-left py-2 px-2 font-medium">Datum</th>
+                            <th className="text-left py-2 px-2 font-medium">Angebot</th>
+                            <th className="text-right py-2 px-2 font-medium">Marge</th>
+                            <th className="text-right py-2 px-2 font-medium">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {marginEntries.map((entry) => {
+                            const statusColors = getStatusColors(entry.status);
+                            return (
+                              <tr 
+                                key={entry.offerId} 
+                                className="border-b hover:bg-muted/30 cursor-pointer"
+                                onClick={() => navigate(`/offers/${entry.offerId}`)}
+                              >
+                                <td className="py-2 px-2 text-muted-foreground">
+                                  {format(new Date(entry.date), "dd.MM.yyyy", { locale: de })}
+                                </td>
+                                <td className="py-2 px-2 font-medium">{entry.offerName}</td>
+                                <td className="py-2 px-2 text-right">
+                                  <MarginBadge margin={entry.margin} size="sm" />
+                                </td>
+                                <td className="py-2 px-2 text-right">
+                                  <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${statusColors.bg} ${statusColors.text}`}>
+                                    {entry.status === "positive" ? "✓" : entry.status === "warning" ? "⚠" : "✗"}
+                                  </span>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             )}
           </TabsContent>

@@ -245,10 +245,10 @@ export default function OfferDetail() {
           {/* Provisions Tab */}
           <TabsContent value="provisions">
             <ProvisionBreakdown
-              airtimeProvision={result.dealer.airtimeTotal || 0}
-              airtimeMonthly={(result.dealer.airtimeTotal || 0) / config.meta.termMonths}
+              airtimeProvision={result.dealer.provisionAfter}
+              airtimeMonthly={result.dealer.provisionAfter / config.meta.termMonths}
               oneTimeProvision={result.dealer.provisionBase}
-              hardwareProvision={result.dealer.hardwareProvision || 0}
+              hardwareProvision={result.dealer.fixedNetProvision || 0}
               termMonths={config.meta.termMonths as 24 | 36}
               contractCount={quantity}
             />
@@ -265,7 +265,12 @@ export default function OfferDetail() {
                   </div>
                   <MarginBadge margin={margin} marginPercentage={marginPercent} size="lg" showLabel />
                 </div>
-                <ProfitabilityTrafficLight status={status} marginPerContract={marginPerContract} />
+                <ProfitabilityTrafficLight 
+                  marginTotal={margin}
+                  marginPercentage={marginPercent}
+                  profitabilityStatus={status}
+                  contractCount={quantity}
+                />
               </CardContent>
             </Card>
             

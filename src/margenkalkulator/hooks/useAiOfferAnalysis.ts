@@ -121,8 +121,16 @@ export function useAiOfferAnalysis(
     setError(null);
 
     try {
-      // Build margin data for AI
-      const marginOutput = bridgeToMarginOutput(result, config);
+      // Build margin data for AI using bridge
+      const bridgeOptions: BridgeOptions = {
+        tariffId: config.mobile.tariffId,
+        quantity: config.mobile.quantity,
+        hardwareEK: config.hardware.ekNet,
+        termMonths: 24,
+        hasFixedNetContract: config.fixedNet.enabled,
+        isSOHO: false,
+      };
+      const marginOutput = bridgeToMarginWaterfall(bridgeOptions);
       
       const hw = config.hardware as { selectedId?: string; id?: string; brand?: string; model?: string; ekNet?: number };
       
@@ -153,15 +161,15 @@ export function useAiOfferAnalysis(
             dealer: result.dealer,
             gkEligible: result.gkEligible,
           },
-          marginData: {
+          marginData: marginOutput ? {
             netMarginTotal: marginOutput.netMarginTotal,
-            marginPerContract: marginOutput.marginPerContract,
+            marginPerContract: marginOutput.netMarginPerContract,
             profitabilityStatus: marginOutput.profitabilityStatus,
             airtimeProvisionTotal: marginOutput.airtimeProvisionTotal,
-            oneTimeProvisionTotal: marginOutput.oneTimeProvisionTotal,
-            hardwareProvisionTotal: marginOutput.hardwareProvisionTotal,
-            hardwareEKTotal: marginOutput.hardwareEKTotal,
-          },
+            activationFeeTotal: marginOutput.activationFeeTotal,
+            hardwareProvisionTotal: marginOutput.hardwareProvision,
+            hardwareEKTotal: marginOutput.hardwareEK,
+          } : null,
           localRecommendations: localRecommendations.map(rec => ({
             type: rec.type,
             title: rec.title,

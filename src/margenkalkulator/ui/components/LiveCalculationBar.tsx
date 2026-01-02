@@ -9,13 +9,17 @@ interface LiveCalculationBarProps {
   viewMode: ViewMode;
   quantity: number;
   className?: string;
+  sticky?: boolean;
+  compact?: boolean;
 }
 
 export function LiveCalculationBar({ 
   result, 
   viewMode,
   quantity,
-  className 
+  className,
+  sticky = false,
+  compact = false,
 }: LiveCalculationBarProps) {
   const visibility = useSensitiveFieldsVisible(viewMode);
   const showDealerEconomics = visibility.showDealerEconomics;
@@ -38,8 +42,87 @@ export function LiveCalculationBar({
     return "bg-destructive/10";
   }, [margin]);
 
+  // Compact sticky version for bottom bar
+  if (compact) {
+    if (showDealerEconomics) {
+      return (
+        <div className={cn(
+          "bg-slate-900 text-white p-3",
+          sticky && "border-t border-slate-700 shadow-lg",
+          className
+        )}>
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4 sm:gap-6">
+              <div className="text-center">
+                <p className="text-[9px] uppercase tracking-wider text-slate-400">Ø Monat</p>
+                <p className="text-lg sm:text-xl font-bold tabular-nums">{avgMonthly.toFixed(2)} €</p>
+              </div>
+              <div className="text-center">
+                <p className="text-[9px] uppercase tracking-wider text-slate-400">Provision</p>
+                <p className="text-lg sm:text-xl font-bold tabular-nums text-emerald-400">+{provision.toFixed(0)} €</p>
+              </div>
+              {hardwareEk > 0 && (
+                <div className="text-center hidden sm:block">
+                  <p className="text-[9px] uppercase tracking-wider text-slate-400">HW-EK</p>
+                  <p className="text-lg font-bold tabular-nums text-amber-400">-{hardwareEk.toFixed(0)} €</p>
+                </div>
+              )}
+            </div>
+            <div className={cn("text-center rounded-lg px-3 py-1.5", marginBgColor)}>
+              <p className="text-[9px] uppercase tracking-wider text-slate-300">Marge</p>
+              <div className="flex items-center justify-center gap-1">
+                {margin >= 0 ? (
+                  <TrendingUp className={cn("w-3.5 h-3.5", marginColor)} />
+                ) : (
+                  <TrendingDown className={cn("w-3.5 h-3.5", marginColor)} />
+                )}
+                <p className={cn("text-lg sm:text-xl font-bold tabular-nums", marginColor)}>
+                  {margin >= 0 ? "+" : ""}{margin.toFixed(0)} €
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    
+    // Compact customer view
+    return (
+      <div className={cn(
+        "bg-gradient-to-r from-primary/10 to-primary/5 border-t border-primary/20 p-3",
+        sticky && "shadow-lg",
+        className
+      )}>
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4 sm:gap-6">
+            <div className="text-center">
+              <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Ø Monat</p>
+              <div className="flex items-center justify-center gap-1">
+                <Euro className="w-3.5 h-3.5 text-primary" />
+                <p className="text-lg sm:text-xl font-bold tabular-nums text-foreground">{avgMonthly.toFixed(2)}</p>
+              </div>
+            </div>
+            {quantity > 1 && (
+              <div className="text-center">
+                <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Verträge</p>
+                <div className="flex items-center justify-center gap-1">
+                  <ShoppingCart className="w-3.5 h-3.5 text-muted-foreground" />
+                  <p className="text-lg font-bold tabular-nums text-foreground">{quantity}x</p>
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="text-center">
+            <p className="text-[9px] uppercase tracking-wider text-muted-foreground">24 Mon. Gesamt</p>
+            <p className="text-lg sm:text-xl font-bold tabular-nums text-foreground">{total24M.toFixed(0)} €</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Full dealer view
   if (showDealerEconomics) {
-    // Dealer View: Provision, HW-EK, Marge
     return (
       <div className={cn(
         "bg-slate-900 text-white rounded-xl p-4",
@@ -100,7 +183,7 @@ export function LiveCalculationBar({
     );
   }
 
-  // Customer View: Avg Monthly, Total 24M, Per Card
+  // Full customer view
   return (
     <div className={cn(
       "bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-xl p-4",

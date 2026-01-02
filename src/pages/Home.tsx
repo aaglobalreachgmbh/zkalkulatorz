@@ -61,7 +61,7 @@ const Home = () => {
           </div>
 
           {/* Quickstart Icons */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto mb-8 animate-fade-in">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 max-w-3xl mx-auto mb-8 animate-fade-in">
             <button
               onClick={() => navigate("/customers?action=new")}
               className="group flex flex-col items-center gap-3 p-5 bg-card border border-border rounded-xl hover:border-primary/30 hover:shadow-lg transition-all duration-200"
@@ -122,7 +122,7 @@ const Home = () => {
               isPOSMode && "mb-3"
             )}>
               <h2 className="text-lg font-semibold mb-4">Margen-Analytics</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
                 <AverageMarginWidget />
                 <ProvisionSourcesWidget />
                 <DiscountUsageWidget />
@@ -286,7 +286,7 @@ const Home = () => {
               <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-4">
                 Aktueller Systemstatus
               </p>
-              <div className="flex items-center justify-center gap-8 text-sm">
+              <div className="flex flex-wrap items-center justify-center gap-4 lg:gap-8 text-sm">
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 bg-success rounded-full" />
                   <span className="text-muted-foreground">API Verbunden</span>

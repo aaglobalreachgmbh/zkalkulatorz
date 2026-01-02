@@ -199,8 +199,8 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
       {/* Filter Section */}
       <div className="bg-card rounded-xl border border-border p-4 space-y-4">
         {/* Search and Category Row */}
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="relative flex-1 min-w-[200px]">
+        <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 sm:gap-4">
+          <div className="relative w-full sm:flex-1 sm:min-w-[180px] lg:min-w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder="Gerät suchen..."
@@ -210,7 +210,7 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
             />
           </div>
 
-          <div className="flex bg-muted rounded-lg p-1">
+          <div className="flex bg-muted rounded-lg p-1 overflow-x-auto">
             <button
               onClick={() => setSelectedCategory("all")}
               className={`px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2 ${
@@ -247,7 +247,7 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
         </div>
 
         {/* Brand Tabs */}
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 overflow-x-auto pb-1">
           <button
             onClick={() => setSelectedBrand("all")}
             className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${

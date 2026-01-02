@@ -45,7 +45,7 @@ export function LiveCalculationBar({
         "bg-slate-900 text-white rounded-xl p-4",
         className
       )}>
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
           {/* Avg Monthly */}
           <div className="text-center">
             <p className="text-[10px] uppercase tracking-wider text-slate-400 mb-1">
@@ -106,7 +106,7 @@ export function LiveCalculationBar({
       "bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-xl p-4",
       className
     )}>
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 lg:gap-4">
         {/* Avg Monthly */}
         <div className="text-center">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">

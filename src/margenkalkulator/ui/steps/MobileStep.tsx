@@ -130,7 +130,7 @@ export function MobileStep({
     <div className="space-y-8">
       {/* Contract Type & Quantity Row */}
       <div className="bg-card rounded-xl border border-border p-6">
-        <div className="flex flex-wrap items-center justify-between gap-6">
+        <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-between gap-4 sm:gap-6">
           {/* Contract Type Toggle */}
           <div className="space-y-2">
             <Label className="text-sm text-muted-foreground flex items-center gap-1.5">
@@ -233,7 +233,7 @@ export function MobileStep({
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 lg:gap-4">
           {filteredTariffs.map((tariff) => {
             const isSelected = value.tariffId === tariff.id;
             const familyLabel = FAMILY_LABELS[tariff.family || "prime"];
@@ -370,7 +370,7 @@ export function MobileStep({
                 </Button>
               </CollapsibleTrigger>
               <CollapsibleContent className="pt-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-card rounded-xl border border-border">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 p-4 lg:p-6 bg-card rounded-xl border border-border">
                   {showOmoSelector && (
                     <div className="space-y-2">
                       <Label className="text-sm text-muted-foreground flex items-center gap-1.5">

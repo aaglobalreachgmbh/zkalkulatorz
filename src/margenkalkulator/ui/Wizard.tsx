@@ -419,8 +419,8 @@ export function Wizard() {
       )}
       
       {/* Header */}
-      <header className="border-b border-border bg-card shrink-0">
-        <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-2 sm:py-3 flex items-center justify-between gap-2">
+      <header className="border-b border-border bg-card shrink-0 sticky top-0 z-40 bg-card/95 backdrop-blur-sm">
+        <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-2 sm:py-3 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <div className="w-8 h-8 sm:w-10 sm:h-10 bg-primary rounded-lg flex items-center justify-center shrink-0">
               <Calculator className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />
@@ -493,7 +493,7 @@ export function Wizard() {
       )}
 
       {/* Main Content with Sidebar */}
-      <main className="flex-1 container mx-auto py-4 sm:py-6 px-3 sm:px-4 lg:px-6">
+      <main className="flex-1 container mx-auto py-4 sm:py-6 px-3 sm:px-4 lg:px-6 max-w-screen-2xl overflow-y-auto">
         <div className="flex gap-6">
           {/* Accordion Sections */}
           <div className={cn(
@@ -648,7 +648,7 @@ export function Wizard() {
 
           {/* Summary Sidebar - Desktop only */}
           {!isMobile && (
-            <aside className="w-80 flex-shrink-0 hidden lg:block">
+            <aside className="w-72 xl:w-80 flex-shrink-0 hidden lg:block">
               <SummarySidebar
                 option={option1}
                 result={result1}

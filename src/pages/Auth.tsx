@@ -290,12 +290,13 @@ export default function Auth() {
                   <Label htmlFor="login-email">E-Mail</Label>
                   <SecureInput
                     id="login-email"
+                    name="email"
                     type="email"
                     placeholder="name@firma.de"
                     value={loginEmail}
                     onChange={(e, sanitized) => setLoginEmail(sanitized)}
                     disabled={isLoading || isLockedOut}
-                    autoComplete="email"
+                    autoComplete="username email"
                     maxLength={255}
                     className={errors.loginEmail ? "border-destructive" : ""}
                   />
@@ -311,6 +312,7 @@ export default function Auth() {
                   <div className="relative">
                     <SecureInput
                       id="login-password"
+                      name="password"
                       type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
                       value={loginPassword}
@@ -368,6 +370,7 @@ export default function Auth() {
                   <Label htmlFor="signup-name">Name (optional)</Label>
                   <SecureInput
                     id="signup-name"
+                    name="name"
                     type="text"
                     placeholder="Max Mustermann"
                     value={signupDisplayName}
@@ -388,6 +391,7 @@ export default function Auth() {
                   <Label htmlFor="signup-email">E-Mail</Label>
                   <SecureInput
                     id="signup-email"
+                    name="email"
                     type="email"
                     placeholder="name@firma.de"
                     value={signupEmail}
@@ -409,6 +413,7 @@ export default function Auth() {
                   <div className="relative">
                     <SecureInput
                       id="signup-password"
+                      name="new-password"
                       type={showPassword ? "text" : "password"}
                       placeholder="Mindestens 6 Zeichen"
                       value={signupPassword}

@@ -144,7 +144,7 @@ const SecureInput = React.forwardRef<HTMLInputElement, SecureInputProps>(
         maxLength={maxLength}
         onChange={handleChange}
         onPaste={handlePaste}
-        autoComplete={props.autoComplete || "off"}
+        autoComplete={props.autoComplete}
         {...props}
       />
     );

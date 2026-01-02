@@ -34,6 +34,7 @@ import { cn } from "@/lib/utils";
 interface HardwareStepProps {
   value: HardwareState;
   onChange: (value: HardwareState) => void;
+  onHardwareSelected?: () => void;
   datasetVersion?: DatasetVersion;
   viewMode?: ViewMode;
 }
@@ -44,7 +45,7 @@ const SIM_ONLY_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/
 
 type CategoryFilter = "all" | "smartphone" | "tablet";
 
-export function HardwareStep({ value, onChange, datasetVersion = "business-2025-09", viewMode = "dealer" }: HardwareStepProps) {
+export function HardwareStep({ value, onChange, onHardwareSelected, datasetVersion = "business-2025-09", viewMode = "dealer" }: HardwareStepProps) {
   const visibility = useSensitiveFieldsVisible(viewMode);
   const showHardwareEk = visibility.showHardwareEk;
   const showDealerOptions = visibility.showDealerEconomics;
@@ -142,6 +143,7 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
       ekNet: 0,
     });
     setOpenPopoverId(null);
+    onHardwareSelected?.();
   };
 
   const handleConfigSelect = (config: HardwareConfig, brand: string) => {
@@ -151,6 +153,7 @@ export function HardwareStep({ value, onChange, datasetVersion = "business-2025-
       ekNet: config.ekNet,
     });
     setOpenPopoverId(null);
+    onHardwareSelected?.();
   };
 
   const updateField = <K extends keyof HardwareState>(

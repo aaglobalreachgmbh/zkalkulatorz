@@ -493,155 +493,169 @@ export function Wizard() {
       )}
 
       {/* Main Content with Sidebar */}
-      <main className="flex-1 container mx-auto py-4 sm:py-6 px-3 sm:px-4 lg:px-6 max-w-screen-2xl overflow-y-auto">
-        <div className="flex gap-6">
-          {/* Accordion Sections */}
+      <main className="flex-1 container mx-auto py-4 sm:py-6 px-3 sm:px-4 lg:px-6 max-w-screen-2xl flex flex-col min-h-0">
+        <div className="flex gap-6 flex-1 min-h-0">
+          {/* Accordion Sections with sticky footer */}
           <div className={cn(
-            "flex-1 min-w-0",
+            "flex-1 min-w-0 flex flex-col",
             !isMobile && "max-w-4xl"
           )}>
-            <Accordion 
-              type="multiple" 
-              value={openSections}
-              onValueChange={setOpenSections}
-              className="space-y-3"
-            >
-              {/* Hardware Section */}
-              <AccordionItem value="hardware" className="border rounded-xl overflow-hidden">
-                <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50 [&[data-state=open]]:bg-muted/30">
-                  <div className="flex items-center gap-3 flex-1">
-                    <div className={cn(
-                      "w-8 h-8 rounded-lg flex items-center justify-center",
-                      option1.hardware.ekNet > 0 || option1.hardware.name === "KEINE HARDWARE" 
-                        ? "bg-primary/10" 
-                        : "bg-muted"
-                    )}>
-                      <Smartphone className={cn(
-                        "w-4 h-4",
-                        option1.hardware.ekNet > 0 || option1.hardware.name === "KEINE HARDWARE"
-                          ? "text-primary" 
-                          : "text-muted-foreground"
-                      )} />
-                    </div>
-                    <div className="text-left">
-                      <p className="font-medium">Hardware</p>
-                      <p className="text-xs text-muted-foreground">
-                        {getStepSummary("hardware", { hardware: option1.hardware })}
-                      </p>
-                    </div>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4 pt-2">
-                  <HardwareStep
-                    value={activeState.hardware}
-                    onChange={(hardware) => setActiveState({ ...activeState, hardware })}
-                    viewMode={viewMode}
-                  />
-                </AccordionContent>
-              </AccordionItem>
-
-              {/* Mobile Section */}
-              <AccordionItem value="mobile" className="border rounded-xl overflow-hidden">
-                <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50 [&[data-state=open]]:bg-muted/30">
-                  <div className="flex items-center gap-3 flex-1">
-                    <div className={cn(
-                      "w-8 h-8 rounded-lg flex items-center justify-center",
-                      option1.mobile.tariffId ? "bg-primary/10" : "bg-muted"
-                    )}>
-                      <Signal className={cn(
-                        "w-4 h-4",
-                        option1.mobile.tariffId ? "text-primary" : "text-muted-foreground"
-                      )} />
-                    </div>
-                    <div className="text-left flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium">Mobilfunk</p>
-                        {option1.mobile.quantity > 1 && (
-                          <Badge variant="secondary" className="text-xs">
-                            {option1.mobile.quantity}x
-                          </Badge>
-                        )}
+            {/* Scrollable content area */}
+            <div className="flex-1 overflow-y-auto min-h-0 pb-4">
+              <Accordion 
+                type="multiple" 
+                value={openSections}
+                onValueChange={setOpenSections}
+                className="space-y-3"
+              >
+                {/* Hardware Section */}
+                <AccordionItem value="hardware" className="border rounded-xl overflow-hidden">
+                  <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50 [&[data-state=open]]:bg-muted/30">
+                    <div className="flex items-center gap-3 flex-1">
+                      <div className={cn(
+                        "w-8 h-8 rounded-lg flex items-center justify-center",
+                        option1.hardware.ekNet > 0 || option1.hardware.name === "KEINE HARDWARE" 
+                          ? "bg-primary/10" 
+                          : "bg-muted"
+                      )}>
+                        <Smartphone className={cn(
+                          "w-4 h-4",
+                          option1.hardware.ekNet > 0 || option1.hardware.name === "KEINE HARDWARE"
+                            ? "text-primary" 
+                            : "text-muted-foreground"
+                        )} />
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        {getStepSummary("mobile", { mobile: option1.mobile })}
-                      </p>
+                      <div className="text-left">
+                        <p className="font-medium">Hardware</p>
+                        <p className="text-xs text-muted-foreground">
+                          {getStepSummary("hardware", { hardware: option1.hardware })}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4 pt-2">
-                  <MobileStep
-                    value={activeState.mobile}
-                    onChange={(mobile) => setActiveState({ ...activeState, mobile })}
-                    datasetVersion={activeState.meta.datasetVersion}
-                    fixedNetEnabled={activeState.fixedNet.enabled}
-                    viewMode={viewMode}
-                  />
-                </AccordionContent>
-              </AccordionItem>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-4 pb-4 pt-2">
+                    <HardwareStep
+                      value={activeState.hardware}
+                      onChange={(hardware) => setActiveState({ ...activeState, hardware })}
+                      onHardwareSelected={() => {
+                        // Auto-collapse hardware and open mobile
+                        setOpenSections(prev => {
+                          const without = prev.filter(s => s !== "hardware");
+                          return without.includes("mobile") ? without : [...without, "mobile"];
+                        });
+                      }}
+                      viewMode={viewMode}
+                    />
+                  </AccordionContent>
+                </AccordionItem>
 
-              {/* Fixed Net Section */}
-              <AccordionItem value="fixedNet" className="border rounded-xl overflow-hidden">
-                <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50 [&[data-state=open]]:bg-muted/30">
-                  <div className="flex items-center gap-3 flex-1">
-                    <div className={cn(
-                      "w-8 h-8 rounded-lg flex items-center justify-center",
-                      option1.fixedNet.enabled ? "bg-emerald-500/10" : "bg-muted"
-                    )}>
-                      <Router className={cn(
-                        "w-4 h-4",
-                        option1.fixedNet.enabled ? "text-emerald-600" : "text-muted-foreground"
-                      )} />
+                {/* Mobile Section */}
+                <AccordionItem value="mobile" className="border rounded-xl overflow-hidden">
+                  <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50 [&[data-state=open]]:bg-muted/30">
+                    <div className="flex items-center gap-3 flex-1">
+                      <div className={cn(
+                        "w-8 h-8 rounded-lg flex items-center justify-center",
+                        option1.mobile.tariffId ? "bg-primary/10" : "bg-muted"
+                      )}>
+                        <Signal className={cn(
+                          "w-4 h-4",
+                          option1.mobile.tariffId ? "text-primary" : "text-muted-foreground"
+                        )} />
+                      </div>
+                      <div className="text-left flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium">Mobilfunk</p>
+                          {option1.mobile.quantity > 1 && (
+                            <Badge variant="secondary" className="text-xs">
+                              {option1.mobile.quantity}x
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {getStepSummary("mobile", { mobile: option1.mobile })}
+                        </p>
+                      </div>
                     </div>
-                    <div className="text-left">
-                      <p className="font-medium">Festnetz</p>
-                      <p className="text-xs text-muted-foreground">
-                        {getStepSummary("fixedNet", { fixedNet: option1.fixedNet })}
-                      </p>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-4 pb-4 pt-2">
+                    <MobileStep
+                      value={activeState.mobile}
+                      onChange={(mobile) => setActiveState({ ...activeState, mobile })}
+                      datasetVersion={activeState.meta.datasetVersion}
+                      fixedNetEnabled={activeState.fixedNet.enabled}
+                      viewMode={viewMode}
+                    />
+                  </AccordionContent>
+                </AccordionItem>
+
+                {/* Fixed Net Section */}
+                <AccordionItem value="fixedNet" className="border rounded-xl overflow-hidden">
+                  <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50 [&[data-state=open]]:bg-muted/30">
+                    <div className="flex items-center gap-3 flex-1">
+                      <div className={cn(
+                        "w-8 h-8 rounded-lg flex items-center justify-center",
+                        option1.fixedNet.enabled ? "bg-emerald-500/10" : "bg-muted"
+                      )}>
+                        <Router className={cn(
+                          "w-4 h-4",
+                          option1.fixedNet.enabled ? "text-emerald-600" : "text-muted-foreground"
+                        )} />
+                      </div>
+                      <div className="text-left">
+                        <p className="font-medium">Festnetz</p>
+                        <p className="text-xs text-muted-foreground">
+                          {getStepSummary("fixedNet", { fixedNet: option1.fixedNet })}
+                        </p>
+                      </div>
+                      {option1.fixedNet.enabled && (
+                        <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-200">
+                          GigaKombi
+                        </Badge>
+                      )}
                     </div>
-                    {option1.fixedNet.enabled && (
-                      <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-200">
-                        GigaKombi
-                      </Badge>
-                    )}
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4 pt-2">
-                  <FixedNetStep
-                    value={activeState.fixedNet}
-                    onChange={(fixedNet) => setActiveState({ ...activeState, fixedNet })}
-                    datasetVersion={activeState.meta.datasetVersion}
-                  />
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-4 pb-4 pt-2">
+                    <FixedNetStep
+                      value={activeState.fixedNet}
+                      onChange={(fixedNet) => setActiveState({ ...activeState, fixedNet })}
+                      datasetVersion={activeState.meta.datasetVersion}
+                    />
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
 
-            {/* GigaKombi Banner */}
-            {isGigaKombiEligible && (
-              <div className="mt-4">
-                <GigaKombiBanner isEligible={isGigaKombiEligible} />
-              </div>
-            )}
+              {/* GigaKombi Banner */}
+              {isGigaKombiEligible && (
+                <div className="mt-4">
+                  <GigaKombiBanner isEligible={isGigaKombiEligible} />
+                </div>
+              )}
 
-            {/* Savings Breakdown */}
-            {result1.periods.length > 1 && (
-              <div className="mt-4">
-                <SavingsBreakdown result={result1} />
-              </div>
-            )}
+              {/* Savings Breakdown */}
+              {result1.periods.length > 1 && (
+                <div className="mt-4">
+                  <SavingsBreakdown result={result1} />
+                </div>
+              )}
 
-            {/* Live Calculation Bar */}
-            <div className="mt-4">
-              <LiveCalculationBar
-                result={activeResult}
-                viewMode={viewMode}
-                quantity={activeState.mobile.quantity}
-              />
+              {/* Validation Warnings */}
+              {!validation.steps.mobile.valid && (
+                <div className="mt-4">
+                  <ValidationWarning validation={validation.steps.mobile} />
+                </div>
+              )}
             </div>
 
-            {/* Validation Warnings */}
-            {!validation.steps.mobile.valid && (
-              <div className="mt-4">
-                <ValidationWarning validation={validation.steps.mobile} />
+            {/* Sticky Live Calculation Bar - Desktop */}
+            {!isMobile && (
+              <div className="sticky bottom-0 z-30 -mx-3 sm:-mx-4 lg:-mx-6 mt-auto">
+                <LiveCalculationBar
+                  result={activeResult}
+                  viewMode={viewMode}
+                  quantity={activeState.mobile.quantity}
+                  sticky
+                  compact
+                />
               </div>
             )}
           </div>
@@ -659,25 +673,16 @@ export function Wizard() {
         </div>
       </main>
 
-      {/* Mobile Footer with Print */}
+      {/* Mobile Footer with Sticky Price Bar */}
       {isMobile && (
         <footer className="bg-card border-t border-border sticky bottom-0 z-40 shrink-0 pb-safe">
-          <div className="container mx-auto px-3 py-3">
-            <div className="flex items-center justify-between gap-3">
-              <div className="text-center flex-1 min-w-0">
-                <p className="text-[9px] uppercase tracking-widest text-muted-foreground">
-                  Ø Monatspreis
-                </p>
-                <p className="text-2xl font-bold text-foreground tabular-nums">
-                  {avgMonthlyNet.toFixed(2)} €
-                </p>
-              </div>
-              <Button onClick={() => window.print()} className="gap-2">
-                <Printer className="w-4 h-4" />
-                Drucken
-              </Button>
-            </div>
-          </div>
+          <LiveCalculationBar
+            result={activeResult}
+            viewMode={viewMode}
+            quantity={activeState.mobile.quantity}
+            sticky
+            compact
+          />
         </footer>
       )}
 

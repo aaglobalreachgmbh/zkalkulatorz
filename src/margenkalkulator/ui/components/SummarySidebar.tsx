@@ -50,7 +50,7 @@ export function SummarySidebar({
 
   return (
     <div className={cn(
-      "bg-card border border-border rounded-xl p-5 space-y-5 sticky top-4",
+      "bg-card border border-border rounded-xl p-5 space-y-5 sticky top-4 max-h-[calc(100vh-6rem)] overflow-y-auto",
       className
     )}>
       <h3 className="font-semibold text-lg">Zusammenfassung</h3>

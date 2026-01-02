@@ -49,8 +49,8 @@ export function CompareStep({
   return (
     <div className="space-y-6">
       {/* Dark Header Bar */}
-      <div className="bg-slate-900 text-white rounded-xl p-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="bg-slate-900 text-white rounded-xl p-3 lg:p-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2 lg:gap-3">
           <div className="w-10 h-10 bg-slate-700 rounded-lg flex items-center justify-center">
             {isCustomerMode ? (
               visibility.isCustomerSessionActive ? (
@@ -76,12 +76,12 @@ export function CompareStep({
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 lg:gap-3">
           <Button
             variant="secondary"
             size="sm"
             onClick={() => onViewModeChange(isCustomerMode ? "dealer" : "customer")}
-            className="bg-slate-700 hover:bg-slate-600 text-white border-0"
+            className="bg-slate-700 hover:bg-slate-600 text-white border-0 text-xs lg:text-sm"
             disabled={visibility.isCustomerSessionActive}
           >
             {visibility.isCustomerSessionActive ? "Gesperrt" : "Modus wechseln"}
@@ -110,16 +110,16 @@ export function CompareStep({
             variant="outline"
             size="sm"
             onClick={() => window.print()}
-            className="bg-white text-slate-900 hover:bg-slate-100 border-0 gap-2"
+            className="bg-white text-slate-900 hover:bg-slate-100 border-0 gap-2 text-xs lg:text-sm"
           >
             <Printer className="w-4 h-4" />
-            Drucken
+            <span className="hidden sm:inline">Drucken</span>
           </Button>
           <CreateCalendarEventModal
             trigger={
-              <Button variant="secondary" size="sm" className="gap-2">
+              <Button variant="secondary" size="sm" className="gap-2 text-xs lg:text-sm">
                 <Calendar className="w-4 h-4" />
-                Termin
+                <span className="hidden sm:inline">Termin</span>
               </Button>
             }
           />
@@ -127,7 +127,7 @@ export function CompareStep({
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
         {/* Offer Card */}
         <div className="lg:col-span-2">
           <div className="bg-card rounded-xl border-2 border-primary/30 overflow-hidden">

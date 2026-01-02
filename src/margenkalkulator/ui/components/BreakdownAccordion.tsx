@@ -33,11 +33,11 @@ export function BreakdownAccordion({ result, viewMode }: BreakdownAccordionProps
           Monatliche Kosten nach Zeitraum
         </AccordionTrigger>
         <AccordionContent>
-          <div className="space-y-2">
+          <div className="space-y-2 overflow-x-auto">
             {periods.map((period, idx) => (
               <div
                 key={idx}
-                className="flex justify-between items-center py-2 px-3 bg-muted/50 rounded-md"
+                className="flex justify-between items-center py-2 px-3 bg-muted/50 rounded-md min-w-[280px]"
               >
                 <span className="text-sm">{period.label}</span>
                 <div className="text-right">

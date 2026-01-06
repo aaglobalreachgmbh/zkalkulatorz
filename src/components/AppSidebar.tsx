@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Calculator, Users, BarChart3, Building2, FolderOpen, Shield, Database, Settings, Home, Package, ShieldCheck, User, ChevronDown, ChevronRight, Monitor } from "lucide-react";
+import { Calculator, Users, BarChart3, Building2, FolderOpen, Shield, Database, Settings, Home, Package, ShieldCheck, User, ChevronDown, ChevronRight, Monitor, FileSpreadsheet } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -41,6 +41,7 @@ import { Switch } from "@/components/ui/switch";
 const mainItems = [
   { title: "Home", url: "/", icon: Home },
   { title: "Kalkulator", url: "/calculator", icon: Calculator },
+  { title: "Meine Daten", url: "/daten", icon: FileSpreadsheet },
   { title: "Meine Angebote", url: "/offers", icon: FolderOpen },
   { title: "Kunden", url: "/customers", icon: Building2 },
   { title: "Team", url: "/team", icon: Users },

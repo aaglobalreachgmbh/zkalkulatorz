@@ -116,6 +116,41 @@
   }
 }
 
+/* ============================================================================
+   GLOBALE UI-REGEL: Container-Overflow-Schutz
+   Verhindert, dass Elemente (Buttons, etc.) ihre Container überlaufen.
+   ============================================================================ */
+@layer components {
+  /* Cards, Dialogs, Popovers: Overflow hidden + proper containment */
+  .card,
+  [role="dialog"],
+  [data-radix-popper-content-wrapper] > *,
+  .popover-content,
+  .dialog-content {
+    overflow: hidden;
+  }
+  
+  /* Button-Container: Flex-wrap und gap für sichere Abstände */
+  .button-group,
+  .flex:has(> button + button) {
+    gap: 0.5rem;
+  }
+  
+  /* Buttons: Niemals schrumpfen unter Mindestgröße */
+  button {
+    flex-shrink: 0;
+    max-width: 100%;
+  }
+  
+  /* Action-Footer in Dialogen/Cards: Sichere Abstände */
+  .card-footer,
+  .dialog-footer,
+  [class*="flex"][class*="justify-between"]:has(button) {
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+}
+
 /* Touch-Feedback for Mobile Buttons */
 .touch-feedback {
   transition: transform 0.1s ease, opacity 0.1s ease;

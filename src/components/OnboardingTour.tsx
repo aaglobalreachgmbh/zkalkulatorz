@@ -247,14 +247,14 @@ export function OnboardingTour({
             Überspringen
           </Button>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {!isFirstStep && (
               <Button variant="outline" size="sm" onClick={onPrev}>
                 <ChevronLeft className="w-4 h-4 mr-1" />
                 Zurück
               </Button>
             )}
-            <Button size="sm" onClick={onNext}>
+            <Button size="sm" onClick={onNext} className="min-w-[90px]">
               {isLastStep ? (
                 "Fertig!"
               ) : (

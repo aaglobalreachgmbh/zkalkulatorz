@@ -562,7 +562,12 @@ export type Database = {
           mobile_tariffs: Json
           omo_matrix: Json
           provisions: Json
+          published_at: string | null
+          published_by: string | null
+          source_date: string | null
           source_file: string | null
+          source_type: string | null
+          status: string
           sub_variants: Json
           tenant_id: string
           updated_at: string
@@ -579,7 +584,12 @@ export type Database = {
           mobile_tariffs?: Json
           omo_matrix?: Json
           provisions?: Json
+          published_at?: string | null
+          published_by?: string | null
+          source_date?: string | null
           source_file?: string | null
+          source_type?: string | null
+          status?: string
           sub_variants?: Json
           tenant_id: string
           updated_at?: string
@@ -596,7 +606,12 @@ export type Database = {
           mobile_tariffs?: Json
           omo_matrix?: Json
           provisions?: Json
+          published_at?: string | null
+          published_by?: string | null
+          source_date?: string | null
           source_file?: string | null
+          source_type?: string | null
+          status?: string
           sub_variants?: Json
           tenant_id?: string
           updated_at?: string

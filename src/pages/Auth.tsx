@@ -351,10 +351,7 @@ export default function Auth() {
                   )}
                 </div>
                 
-                {/* Turnstile Widget - only show if configured and working */}
-                {turnstileEnabled && !loginTurnstile.loadFailed && (
-                  <Turnstile {...loginTurnstile.turnstileProps} />
-                )}
+{/* Turnstile komplett deaktiviert - blockiert Login */}
                 
                 <Button type="submit" className="w-full" disabled={isLoading || isLockedOut}>
                   {isLoading ? (
@@ -453,11 +450,7 @@ export default function Auth() {
                   )}
                 </div>
                 
-                {/* Turnstile Widget - only show if configured */}
-                {/* Turnstile Widget - only show if configured and working */}
-                {turnstileEnabled && !signupTurnstile.loadFailed && (
-                  <Turnstile {...signupTurnstile.turnstileProps} />
-                )}
+{/* Turnstile komplett deaktiviert - blockiert Login */}
                 
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? (

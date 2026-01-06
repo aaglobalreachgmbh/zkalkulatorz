@@ -115,35 +115,7 @@ export default function Auth() {
       return;
     }
 
-    // Check Turnstile verification (skip if not configured or in fallback mode)
-    if (turnstileEnabled) {
-      const isFallbackMode = loginTurnstile.loadFailed && loginTurnstile.token === "FALLBACK_MODE";
-      if (!loginTurnstile.isVerified || (!loginTurnstile.token && !isFallbackMode)) {
-        toast.error("Bitte bestätige, dass du kein Roboter bist.");
-        return;
-      }
-
-      // Verify Turnstile token server-side (skip if in fallback mode)
-      if (!isFallbackMode) {
-        try {
-          const { data: verifyResult, error: verifyError } = await supabase.functions.invoke("verify-turnstile", {
-            body: { token: loginTurnstile.token },
-          });
-
-          if (verifyError || !verifyResult?.success) {
-            console.error("Turnstile verification failed:", verifyError || verifyResult);
-            toast.error("Sicherheitsüberprüfung fehlgeschlagen. Bitte lade die Seite neu.");
-            loginTurnstile.reset();
-            return;
-          }
-        } catch (err) {
-          console.error("Turnstile verification error:", err);
-          toast.error("Sicherheitsüberprüfung fehlgeschlagen.");
-          loginTurnstile.reset();
-          return;
-        }
-      }
-    }
+// Turnstile komplett deaktiviert - siehe REGEL oben
 
     // Sanitize inputs
     const sanitizedEmail = sanitizeInput(loginEmail.toLowerCase(), 255);
@@ -188,35 +160,7 @@ export default function Auth() {
     e.preventDefault();
     setErrors({});
 
-    // Check Turnstile verification (skip if not configured or in fallback mode)
-    if (turnstileEnabled) {
-      const isFallbackMode = signupTurnstile.loadFailed && signupTurnstile.token === "FALLBACK_MODE";
-      if (!signupTurnstile.isVerified || (!signupTurnstile.token && !isFallbackMode)) {
-        toast.error("Bitte bestätige, dass du kein Roboter bist.");
-        return;
-      }
-
-      // Verify Turnstile token server-side (skip if in fallback mode)
-      if (!isFallbackMode) {
-        try {
-          const { data: verifyResult, error: verifyError } = await supabase.functions.invoke("verify-turnstile", {
-            body: { token: signupTurnstile.token },
-          });
-
-          if (verifyError || !verifyResult?.success) {
-            console.error("Turnstile verification failed:", verifyError || verifyResult);
-            toast.error("Sicherheitsüberprüfung fehlgeschlagen. Bitte lade die Seite neu.");
-            signupTurnstile.reset();
-            return;
-          }
-        } catch (err) {
-          console.error("Turnstile verification error:", err);
-          toast.error("Sicherheitsüberprüfung fehlgeschlagen.");
-          signupTurnstile.reset();
-          return;
-        }
-      }
-    }
+// Turnstile komplett deaktiviert - siehe REGEL oben
 
     // Sanitize inputs
     const sanitizedEmail = sanitizeInput(signupEmail.toLowerCase(), 255);

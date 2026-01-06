@@ -1,5 +1,8 @@
 project_id = "mexrgeafzvcestcccmiy"
 
+[functions.ai-data-import]
+verify_jwt = true
+
 [functions.ai-consultant]
 verify_jwt = true
 

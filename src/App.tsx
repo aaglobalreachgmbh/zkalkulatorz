@@ -29,6 +29,7 @@ import NotFound from "./pages/NotFound";
 const Index = lazy(() => import("./pages/Index"));
 const Bundles = lazy(() => import("./pages/Bundles"));
 const DataManager = lazy(() => import("./pages/DataManager"));
+const DataHub = lazy(() => import("./pages/DataHub"));
 const HardwareManager = lazy(() => import("./pages/HardwareManager"));
 const HardwareImages = lazy(() => import("./pages/HardwareImages"));
 const SecurityDashboard = lazy(() => import("./pages/SecurityDashboard"));
@@ -107,6 +108,7 @@ const App = () => (
                       <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
                       <Route path="/calculator" element={<ProtectedRoute><Index /></ProtectedRoute>} />
                       <Route path="/bundles" element={<ProtectedRoute><Bundles /></ProtectedRoute>} />
+                      <Route path="/daten" element={<ProtectedRoute><DataHub /></ProtectedRoute>} />
                       <Route path="/license" element={<ProtectedRoute><License /></ProtectedRoute>} />
                       
                       {/* Admin routes */}

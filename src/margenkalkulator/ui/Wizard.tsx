@@ -2,8 +2,7 @@ import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
-  Smartphone, Signal, Router, LayoutGrid, Printer, Calculator, Home, 
-  ChevronDown, Lock, AlertTriangle, XCircle, Settings, Zap 
+  Smartphone, Signal, Router, LayoutGrid, Lock, AlertTriangle, XCircle, Settings, Zap 
 } from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -35,8 +34,6 @@ import { AiConsultant } from "./components/AiConsultant";
 import { ActionMenu } from "./components/ActionMenu";
 import { ViewModeToggle } from "./components/ViewModeToggle";
 import { CustomerSessionToggle } from "./components/CustomerSessionToggle";
-import { IdentitySelector } from "./components/IdentitySelector";
-import { POSModeToggle } from "./components/POSModeToggle";
 import { LiveCalculationBar, getStepSummary } from "./components/LiveCalculationBar";
 import { SummarySidebar } from "./components/SummarySidebar";
 import { GigaKombiBanner } from "./components/GigaKombiBanner";
@@ -418,35 +415,25 @@ export function Wizard() {
         />
       )}
       
-      {/* Header */}
+      {/* Header - Simplified: No logo/POS/Identity (already in Sidebar) */}
       <header className="border-b border-border bg-card shrink-0 sticky top-0 z-40 bg-card/95 backdrop-blur-sm">
-        <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-2 sm:py-3 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-primary rounded-lg flex items-center justify-center shrink-0">
-              <Calculator className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-base sm:text-lg font-bold text-foreground truncate">
-                Margen<span className="text-primary">Kalkulator</span>
-              </h1>
-              <p className="text-[10px] sm:text-xs text-muted-foreground hidden sm:block">Konfigurator</p>
-            </div>
+        <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-2 sm:py-3 flex items-center justify-between gap-2">
+          {/* Left: Step context badge */}
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="text-xs">
+              Option {activeOption}
+            </Badge>
+            {customerSession.isActive && (
+              <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 gap-1">
+                <Lock className="w-3 h-3" />
+                Kundensitzung
+              </Badge>
+            )}
           </div>
           
-          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-            <POSModeToggle showLabel={!isMobile} />
-            
-            <div className="h-6 w-px bg-border hidden sm:block" />
-            
-            {!isPOSMode && (
-              <div className="hidden lg:block">
-                <IdentitySelector />
-              </div>
-            )}
-            
-            {!isPOSMode && <div className="hidden lg:block h-6 w-px bg-border" />}
-            
-            {!isPOSMode && policy.showCustomerSessionToggle && <CustomerSessionToggle />}
+          {/* Right: Essential controls only */}
+          <div className="flex items-center gap-2">
+            {policy.showCustomerSessionToggle && <CustomerSessionToggle />}
             
             <ViewModeToggle 
               value={viewMode} 
@@ -454,30 +441,13 @@ export function Wizard() {
               allowCustomerMode={policy.allowCustomerMode}
             />
             
-            {customerSession.isActive && (
-              <span className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-medium">
-                🔒 <span className="hidden sm:inline">Gesperrt</span>
-              </span>
-            )}
-            
             {!isPOSMode && (
-              <>
-                <div className="h-6 w-px bg-border hidden sm:block" />
-                <ActionMenu 
-                  config={activeState} 
-                  avgMonthly={avgMonthlyNet} 
-                  onLoadConfig={handleLoadConfig} 
-                />
-              </>
+              <ActionMenu 
+                config={activeState} 
+                avgMonthly={avgMonthlyNet} 
+                onLoadConfig={handleLoadConfig} 
+              />
             )}
-            
-            <button 
-              onClick={() => navigate("/")}
-              className="hidden sm:flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors min-h-[44px] min-w-[44px] justify-center touch-manipulation"
-            >
-              <Home className="w-4 h-4" />
-              {!isPOSMode && <span>Start</span>}
-            </button>
           </div>
         </div>
       </header>
@@ -509,25 +479,28 @@ export function Wizard() {
                 className="space-y-3"
               >
                 {/* Hardware Section */}
-                <AccordionItem value="hardware" className="border rounded-xl overflow-hidden">
+                <AccordionItem value="hardware" className={cn(
+                  "border rounded-xl overflow-hidden transition-opacity",
+                  !openSections.includes("hardware") && "opacity-60 hover:opacity-100"
+                )}>
                   <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50 [&[data-state=open]]:bg-muted/30">
                     <div className="flex items-center gap-3 flex-1">
                       <div className={cn(
                         "w-8 h-8 rounded-lg flex items-center justify-center",
                         option1.hardware.ekNet > 0 || option1.hardware.name === "KEINE HARDWARE" 
                           ? "bg-primary/10" 
-                          : "bg-muted"
+                          : "bg-muted/50"
                       )}>
                         <Smartphone className={cn(
                           "w-4 h-4",
                           option1.hardware.ekNet > 0 || option1.hardware.name === "KEINE HARDWARE"
                             ? "text-primary" 
-                            : "text-muted-foreground"
+                            : "text-muted-foreground/50"
                         )} />
                       </div>
                       <div className="text-left">
                         <p className="font-medium">Hardware</p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-muted-foreground/70">
                           {getStepSummary("hardware", { hardware: option1.hardware })}
                         </p>
                       </div>
@@ -550,16 +523,19 @@ export function Wizard() {
                 </AccordionItem>
 
                 {/* Mobile Section */}
-                <AccordionItem value="mobile" className="border rounded-xl overflow-hidden">
+                <AccordionItem value="mobile" className={cn(
+                  "border rounded-xl overflow-hidden transition-opacity",
+                  !openSections.includes("mobile") && "opacity-60 hover:opacity-100"
+                )}>
                   <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50 [&[data-state=open]]:bg-muted/30">
                     <div className="flex items-center gap-3 flex-1">
                       <div className={cn(
                         "w-8 h-8 rounded-lg flex items-center justify-center",
-                        option1.mobile.tariffId ? "bg-primary/10" : "bg-muted"
+                        option1.mobile.tariffId ? "bg-primary/10" : "bg-muted/50"
                       )}>
                         <Signal className={cn(
                           "w-4 h-4",
-                          option1.mobile.tariffId ? "text-primary" : "text-muted-foreground"
+                          option1.mobile.tariffId ? "text-primary" : "text-muted-foreground/50"
                         )} />
                       </div>
                       <div className="text-left flex-1">
@@ -571,7 +547,7 @@ export function Wizard() {
                             </Badge>
                           )}
                         </div>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-muted-foreground/70">
                           {getStepSummary("mobile", { mobile: option1.mobile })}
                         </p>
                       </div>
@@ -589,21 +565,24 @@ export function Wizard() {
                 </AccordionItem>
 
                 {/* Fixed Net Section */}
-                <AccordionItem value="fixedNet" className="border rounded-xl overflow-hidden">
+                <AccordionItem value="fixedNet" className={cn(
+                  "border rounded-xl overflow-hidden transition-opacity",
+                  !openSections.includes("fixedNet") && "opacity-60 hover:opacity-100"
+                )}>
                   <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50 [&[data-state=open]]:bg-muted/30">
                     <div className="flex items-center gap-3 flex-1">
                       <div className={cn(
                         "w-8 h-8 rounded-lg flex items-center justify-center",
-                        option1.fixedNet.enabled ? "bg-emerald-500/10" : "bg-muted"
+                        option1.fixedNet.enabled ? "bg-emerald-500/10" : "bg-muted/50"
                       )}>
                         <Router className={cn(
                           "w-4 h-4",
-                          option1.fixedNet.enabled ? "text-emerald-600" : "text-muted-foreground"
+                          option1.fixedNet.enabled ? "text-emerald-600" : "text-muted-foreground/50"
                         )} />
                       </div>
                       <div className="text-left">
                         <p className="font-medium">Festnetz</p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-muted-foreground/70">
                           {getStepSummary("fixedNet", { fixedNet: option1.fixedNet })}
                         </p>
                       </div>

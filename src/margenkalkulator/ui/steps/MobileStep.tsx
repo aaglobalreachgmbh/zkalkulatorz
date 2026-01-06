@@ -37,6 +37,7 @@ interface MobileStepProps {
   fixedNetEnabled?: boolean;
   hardwareName?: string;
   viewMode?: ViewMode;
+  onTariffSelected?: () => void;
 }
 
 const FAMILY_LABELS: Record<TariffFamily, string> = {
@@ -60,6 +61,7 @@ export function MobileStep({
   fixedNetEnabled = false,
   hardwareName = "",
   viewMode = "dealer",
+  onTariffSelected,
 }: MobileStepProps) {
   // Use centralized visibility hook instead of direct viewMode check
   const visibility = useSensitiveFieldsVisible(viewMode);
@@ -243,7 +245,13 @@ export function MobileStep({
             return (
               <button
                 key={tariff.id}
-                onClick={() => updateField("tariffId", tariff.id)}
+                onClick={() => {
+                  updateField("tariffId", tariff.id);
+                  // Trigger auto-collapse after tariff selection
+                  if (onTariffSelected) {
+                    setTimeout(() => onTariffSelected(), 300);
+                  }
+                }}
                 className={`
                   relative p-5 rounded-xl border-2 bg-card text-left transition-all
                   hover:shadow-md hover:border-primary/50

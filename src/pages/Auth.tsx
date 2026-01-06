@@ -253,7 +253,8 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/30 p-4">
-      <Card className="w-full max-w-md shadow-elevated animate-fade-in">
+      <div className="w-full max-w-md flex flex-col items-center">
+      <Card className="w-full shadow-elevated animate-fade-in">
         <CardHeader className="text-center space-y-4">
           <div className="mx-auto w-16 h-16 rounded-2xl bg-primary flex items-center justify-center shadow-lg">
             <Calculator className="w-8 h-8 text-primary-foreground" />
@@ -469,8 +470,8 @@ export default function Auth() {
         </CardContent>
       </Card>
       
-      {/* Publisher Footer */}
-      <div className="mt-6 text-center space-y-2">
+      {/* Publisher Footer - below login card */}
+      <div className="mt-6 text-center space-y-2 w-full">
         <p className="text-xs text-muted-foreground">
           {PUBLISHER.getCopyright()} — interner Zugang
         </p>
@@ -501,6 +502,7 @@ export default function Auth() {
             <ExternalLink className="h-3 w-3" />
           </a>
         </div>
+      </div>
       </div>
     </div>
   );

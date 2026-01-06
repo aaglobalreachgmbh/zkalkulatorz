@@ -15,6 +15,9 @@ export interface TenantBranding {
   primaryColor: string;
   secondaryColor: string;
   companyName: string | null;
+  // Tenant profile (optional, for licensing display)
+  tenantDisplayName?: string;
+  departmentNames?: string[];
 }
 
 /**

@@ -1,5 +1,7 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { AppFooter } from "@/components/AppFooter";
+import { PublisherModal } from "@/components/PublisherModal";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenantBranding } from "@/hooks/useTenantBranding";
 import { usePOSMode } from "@/contexts/POSModeContext";
@@ -15,6 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { VVLNotificationBanner } from "@/components/VVLNotificationBanner";
 import { FollowupReminders } from "@/margenkalkulator/ui/components/FollowupReminders";
+import { PUBLISHER } from "@/margenkalkulator/publisherConfig";
 import { cn } from "@/lib/utils";
 
 interface MainLayoutProps {
@@ -44,21 +47,28 @@ export function MainLayout({ children }: MainLayoutProps) {
             "h-14 border-b border-border bg-card/80 backdrop-blur-sm flex items-center justify-between px-4 sticky top-0 z-40",
             isPOSMode && "h-12 px-2"
           )}>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <SidebarTrigger />
-              {branding.logoUrl ? (
-                <img 
-                  src={branding.logoUrl} 
-                  alt={branding.companyName || "Logo"} 
-                  className="h-7 w-auto object-contain"
-                />
-              ) : (
-                <span className="font-semibold text-foreground">
-                  {branding.companyName || "MargenKalkulator"}
-                </span>
-              )}
+              <div className="flex flex-col">
+                {branding.logoUrl ? (
+                  <img 
+                    src={branding.logoUrl} 
+                    alt={branding.companyName || "Logo"} 
+                    className="h-7 w-auto object-contain"
+                  />
+                ) : (
+                  <span className="font-semibold text-foreground">
+                    {branding.companyName || PUBLISHER.displayName}
+                  </span>
+                )}
+                {!isPOSMode && (
+                  <span className="text-[10px] text-muted-foreground leading-tight">
+                    {PUBLISHER.subline}
+                  </span>
+                )}
+              </div>
               {isPOSMode && (
-                <Badge variant="secondary" className="ml-2 gap-1 text-xs">
+                <Badge variant="secondary" className="gap-1 text-xs">
                   <Monitor className="h-3 w-3" />
                   POS
                 </Badge>
@@ -70,6 +80,9 @@ export function MainLayout({ children }: MainLayoutProps) {
               {user && !isPOSMode && (
                 <FollowupReminders compact />
               )}
+              
+              {/* About/Publisher Info */}
+              {!isPOSMode && <PublisherModal />}
               
               <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -103,6 +116,9 @@ export function MainLayout({ children }: MainLayoutProps) {
               {children}
             </div>
           </main>
+          
+          {/* Global Footer */}
+          {!isPOSMode && <AppFooter />}
         </div>
       </div>
     </SidebarProvider>

@@ -37,7 +37,13 @@ export default function Auth() {
   // Brute-force protection state
   const [lockoutSeconds, setLockoutSeconds] = useState<number | null>(null);
 
-  // Check if Turnstile is configured
+// ============================================================================
+  // REGEL: Turnstile darf NIEMALS den Login-Button blockieren!
+  // Turnstile ist optional und dient nur als zusätzlicher Schutz.
+  // Wenn Turnstile nicht konfiguriert, fehlschlägt oder nicht verifiziert ist,
+  // MUSS der Login trotzdem möglich sein.
+  // Button disabled-Logik darf NUR isLoading und isLockedOut prüfen!
+  // ============================================================================
   const turnstileEnabled = !!import.meta.env.VITE_TURNSTILE_SITE_KEY;
 
   // Turnstile state - with fallback enabled for network restrictions

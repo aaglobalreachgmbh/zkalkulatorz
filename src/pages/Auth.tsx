@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Turnstile, useTurnstile } from "@/components/ui/turnstile";
-import { Calculator, Loader2, Eye, EyeOff, AlertCircle, ShieldAlert } from "lucide-react";
+import { Calculator, Loader2, Eye, EyeOff, AlertCircle, ShieldAlert, ExternalLink } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +18,8 @@ import {
   sanitizeInput,
   logSecurityEvent 
 } from "@/lib/securityUtils";
+import { PUBLISHER } from "@/margenkalkulator/publisherConfig";
+import { PublisherModal } from "@/components/PublisherModal";
 
 // Validation schemas
 const emailSchema = z.string().email("Ungültige E-Mail-Adresse").max(255, "E-Mail zu lang");
@@ -466,6 +468,40 @@ export default function Auth() {
           </Tabs>
         </CardContent>
       </Card>
+      
+      {/* Publisher Footer */}
+      <div className="mt-6 text-center space-y-2">
+        <p className="text-xs text-muted-foreground">
+          {PUBLISHER.getCopyright()} — interner Zugang
+        </p>
+        <div className="flex items-center justify-center gap-4 text-xs">
+          <PublisherModal 
+            trigger={
+              <button className="text-muted-foreground hover:text-foreground transition-colors">
+                Über diese App
+              </button>
+            } 
+          />
+          <a
+            href={PUBLISHER.links.impressum}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1"
+          >
+            Impressum
+            <ExternalLink className="h-3 w-3" />
+          </a>
+          <a
+            href={PUBLISHER.links.datenschutz}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1"
+          >
+            Datenschutz
+            <ExternalLink className="h-3 w-3" />
+          </a>
+        </div>
+      </div>
     </div>
   );
 }

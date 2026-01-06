@@ -7,6 +7,7 @@ import { useIdentity, MOCK_IDENTITIES } from "@/contexts/IdentityContext";
 import { useTenantAdmin } from "@/hooks/useTenantAdmin";
 import { useTenantBranding } from "@/hooks/useTenantBranding";
 import { usePOSMode } from "@/contexts/POSModeContext";
+import { PUBLISHER } from "@/margenkalkulator/publisherConfig";
 import {
   Sidebar,
   SidebarContent,
@@ -135,9 +136,9 @@ export function AppSidebar() {
           {!collapsed && (
             <div className="flex flex-col">
               <span className="font-semibold text-sm">
-                {branding.companyName || "MargenKalkulator"}
+                {branding.companyName || PUBLISHER.displayName}
               </span>
-              <span className="text-xs text-muted-foreground/70">Business Partner</span>
+              <span className="text-xs text-muted-foreground/70">by {PUBLISHER.name}</span>
             </div>
           )}
         </div>

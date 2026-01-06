@@ -345,10 +345,12 @@ export default function Auth() {
                   )}
                 </div>
                 
-                {/* Turnstile Widget - only show if configured */}
-                {turnstileEnabled && <Turnstile {...loginTurnstile.turnstileProps} />}
+                {/* Turnstile Widget - only show if configured and working */}
+                {turnstileEnabled && !loginTurnstile.loadFailed && (
+                  <Turnstile {...loginTurnstile.turnstileProps} />
+                )}
                 
-                <Button type="submit" className="w-full" disabled={isLoading || isLockedOut || (turnstileEnabled && !loginTurnstile.isVerified)}>
+                <Button type="submit" className="w-full" disabled={isLoading || isLockedOut}>
                   {isLoading ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -446,9 +448,12 @@ export default function Auth() {
                 </div>
                 
                 {/* Turnstile Widget - only show if configured */}
-                {turnstileEnabled && <Turnstile {...signupTurnstile.turnstileProps} />}
+                {/* Turnstile Widget - only show if configured and working */}
+                {turnstileEnabled && !signupTurnstile.loadFailed && (
+                  <Turnstile {...signupTurnstile.turnstileProps} />
+                )}
                 
-                <Button type="submit" className="w-full" disabled={isLoading || (turnstileEnabled && !signupTurnstile.isVerified)}>
+                <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />

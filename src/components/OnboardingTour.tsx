@@ -204,7 +204,7 @@ export function OnboardingTour({
 
       {/* Tooltip */}
       <div
-        className="absolute w-80 bg-card border border-border rounded-xl shadow-2xl p-5 animate-in fade-in slide-in-from-bottom-4 duration-300"
+        className="absolute w-80 max-w-[calc(100vw-32px)] bg-card border border-border rounded-xl shadow-2xl p-5 animate-in fade-in slide-in-from-bottom-4 duration-300 overflow-hidden"
         style={tooltipStyle}
       >
         {/* Header */}
@@ -237,24 +237,24 @@ export function OnboardingTour({
         </p>
 
         {/* Actions */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
           <Button
             variant="ghost"
             size="sm"
             onClick={onSkip}
-            className="text-muted-foreground"
+            className="text-muted-foreground shrink-0"
           >
             Überspringen
           </Button>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 shrink-0">
             {!isFirstStep && (
-              <Button variant="outline" size="sm" onClick={onPrev}>
+              <Button variant="outline" size="sm" onClick={onPrev} className="shrink-0">
                 <ChevronLeft className="w-4 h-4 mr-1" />
                 Zurück
               </Button>
             )}
-            <Button size="sm" onClick={onNext} className="min-w-[90px]">
+            <Button size="sm" onClick={onNext} className="shrink-0">
               {isLastStep ? (
                 "Fertig!"
               ) : (

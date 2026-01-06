@@ -32,6 +32,12 @@ export interface DatasetVersion {
   createdAt: string;
   updatedAt: string;
   createdBy: string | null;
+  // New fields for status tracking
+  status: "draft" | "review" | "published" | "archived";
+  sourceType: "xlsx" | "csv" | "pdf" | "manual" | "seed" | null;
+  sourceDate: string | null;
+  publishedAt: string | null;
+  publishedBy: string | null;
 }
 
 interface CreateVersionInput {
@@ -88,6 +94,12 @@ export function useDatasetVersions() {
         createdAt: row.created_at,
         updatedAt: row.updated_at,
         createdBy: row.created_by,
+        // New fields
+        status: row.status as DatasetVersion["status"],
+        sourceType: row.source_type as DatasetVersion["sourceType"],
+        sourceDate: row.source_date,
+        publishedAt: row.published_at,
+        publishedBy: row.published_by,
       })) as DatasetVersion[];
     },
     enabled: !!tenantId,
@@ -193,9 +205,9 @@ export function useDatasetVersions() {
     },
   });
 
-  // Update version
+  // Update version (including status changes)
   const updateMutation = useMutation({
-    mutationFn: async ({ id, ...updates }: Partial<DatasetVersion> & { id: string }) => {
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Omit<DatasetVersion, "id">> }) => {
       const updateData: Record<string, unknown> = {};
       if (updates.versionName !== undefined) updateData.version_name = updates.versionName;
       if (updates.validFrom !== undefined) updateData.valid_from = updates.validFrom;
@@ -205,6 +217,16 @@ export function useDatasetVersions() {
       if (updates.hardwareCatalog !== undefined) updateData.hardware_catalog = updates.hardwareCatalog;
       if (updates.mobileTariffs !== undefined) updateData.mobile_tariffs = updates.mobileTariffs;
       if (updates.subVariants !== undefined) updateData.sub_variants = updates.subVariants;
+      if (updates.status !== undefined) {
+        updateData.status = updates.status;
+        // If publishing, set published_at and published_by
+        if (updates.status === "published") {
+          updateData.published_at = new Date().toISOString();
+          updateData.published_by = createdByUserId;
+        }
+      }
+      if (updates.sourceType !== undefined) updateData.source_type = updates.sourceType;
+      if (updates.sourceDate !== undefined) updateData.source_date = updates.sourceDate;
 
       const { data, error } = await supabase
         .from("dataset_versions")
@@ -218,9 +240,6 @@ export function useDatasetVersions() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dataset-versions", tenantId] });
-      toast({
-        title: "Version aktualisiert",
-      });
     },
     onError: (error) => {
       toast({

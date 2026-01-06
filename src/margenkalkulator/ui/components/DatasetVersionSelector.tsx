@@ -17,6 +17,7 @@ import { Database, Check, Loader2, Info } from "lucide-react";
 import { useDatasetVersions, type DatasetVersion } from "@/margenkalkulator/hooks/useDatasetVersions";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
+import { DatasetStatusBadge, type DatasetStatus, type SourceType } from "./DatasetStatusBadge";
 
 interface DatasetVersionSelectorProps {
   compact?: boolean;
@@ -75,26 +76,31 @@ export function DatasetVersionSelector({
   }
 
   if (compact) {
+    const status = (selectedVersion?.status as DatasetStatus) || (selectedVersion?.isActive ? "published" : "draft");
+    const sourceType = (selectedVersion?.sourceType as SourceType) || "manual";
+    
     return (
       <div className="flex items-center gap-2">
-        <Database className="h-4 w-4 text-muted-foreground" />
         <Select value={selectedId} onValueChange={handleValueChange}>
           <SelectTrigger className="w-[180px] h-8 text-sm">
             <SelectValue placeholder="Version wählen" />
           </SelectTrigger>
           <SelectContent className="bg-popover">
-            {versions.map((version) => (
-              <SelectItem key={version.id} value={version.id}>
-                <div className="flex items-center gap-2">
-                  <span>{version.versionName}</span>
-                  {version.isActive && (
-                    <Badge variant="secondary" className="h-4 text-[10px] px-1">
-                      Aktiv
-                    </Badge>
-                  )}
-                </div>
-              </SelectItem>
-            ))}
+            {versions.map((version) => {
+              const vStatus = (version.status as DatasetStatus) || (version.isActive ? "published" : "draft");
+              return (
+                <SelectItem key={version.id} value={version.id}>
+                  <div className="flex items-center gap-2">
+                    <span>{version.versionName}</span>
+                    <DatasetStatusBadge
+                      status={vStatus}
+                      versionName={version.versionName}
+                      compact
+                    />
+                  </div>
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
       </div>

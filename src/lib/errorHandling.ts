@@ -179,3 +179,68 @@ export async function withRetry<T>(
   
   throw lastError;
 }
+
+// ============================================
+// Import-specific Toast Functions
+// ============================================
+
+export interface ImportToastResult {
+  added: number;
+  changed: number;
+  removed: number;
+  total: number;
+}
+
+/**
+ * Show success toast for import operations
+ */
+export function showImportSuccessToast(result: ImportToastResult): void {
+  const parts: string[] = [];
+  if (result.added > 0) parts.push(`${result.added} neu`);
+  if (result.changed > 0) parts.push(`${result.changed} geändert`);
+  if (result.removed > 0) parts.push(`${result.removed} entfernt`);
+  
+  const summary = parts.length > 0 ? parts.join(", ") : `${result.total} Zeilen`;
+  
+  toast.success(`Import erfolgreich: ${summary}`, {
+    duration: 4000,
+  });
+}
+
+/**
+ * Show error toast for import operations
+ */
+export function showImportErrorToast(errorCount: number, fileName: string): void {
+  toast.error(`Import fehlgeschlagen: ${errorCount} Fehler in ${fileName}`, {
+    duration: 6000,
+  });
+}
+
+/**
+ * Show success toast for publish operations
+ */
+export function showPublishSuccessToast(versionName: string): void {
+  toast.success(`"${versionName}" wurde veröffentlicht`, {
+    description: "Alle Berechnungen verwenden jetzt diese Version.",
+    duration: 4000,
+  });
+}
+
+/**
+ * Show toast for version activation
+ */
+export function showVersionActivatedToast(versionName: string): void {
+  toast.success(`Version "${versionName}" aktiviert`, {
+    duration: 3000,
+  });
+}
+
+/**
+ * Show warning toast for partial import success
+ */
+export function showImportWarningToast(successCount: number, warningCount: number): void {
+  toast.warning(`Import abgeschlossen mit ${warningCount} Warnungen`, {
+    description: `${successCount} Einträge erfolgreich importiert.`,
+    duration: 5000,
+  });
+}

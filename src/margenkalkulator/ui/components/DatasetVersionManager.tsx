@@ -42,6 +42,7 @@ import {
   Calendar,
   Power,
   FileUp,
+  Send,
 } from "lucide-react";
 import { useDatasetVersions } from "@/margenkalkulator/hooks/useDatasetVersions";
 import { format } from "date-fns";
@@ -51,6 +52,8 @@ import { parseProvisionPdf } from "@/margenkalkulator/dataManager/importers/pdfP
 import type { ProvisionRow, OMOMatrixRow } from "@/margenkalkulator/dataManager/types";
 import type { Json } from "@/integrations/supabase/types";
 import { toast } from "@/hooks/use-toast";
+import { showPublishSuccessToast, showVersionActivatedToast } from "@/lib/errorHandling";
+import { DatasetStatusBadge, type DatasetStatus, type SourceType } from "./DatasetStatusBadge";
 
 export function DatasetVersionManager() {
   const { 
@@ -59,6 +62,7 @@ export function DatasetVersionManager() {
     createVersion,
     activateVersion,
     deleteVersion,
+    updateVersion,
     seedDefaultVersion,
     isCreating,
     isActivating,
@@ -74,6 +78,8 @@ export function DatasetVersionManager() {
   });
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [activatingId, setActivatingId] = useState<string | null>(null);
+  const [publishingId, setPublishingId] = useState<string | null>(null);
+  const [isPublishing, setIsPublishing] = useState(false);
   
   // PDF Import state
   const [isDragging, setIsDragging] = useState(false);
@@ -107,8 +113,27 @@ export function DatasetVersionManager() {
     setActivatingId(id);
     try {
       await activateVersion(id);
+      const version = versions.find(v => v.id === id);
+      if (version) {
+        showVersionActivatedToast(version.versionName);
+      }
     } finally {
       setActivatingId(null);
+    }
+  };
+
+  const handlePublish = async (id: string) => {
+    setPublishingId(id);
+    setIsPublishing(true);
+    try {
+      await updateVersion({ id, updates: { status: "published" as const } });
+      const version = versions.find(v => v.id === id);
+      if (version) {
+        showPublishSuccessToast(version.versionName);
+      }
+    } finally {
+      setPublishingId(null);
+      setIsPublishing(false);
     }
   };
 
@@ -425,7 +450,14 @@ export function DatasetVersionManager() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {versions.map((version) => (
+              {versions.map((version) => {
+                const status = (version.status as DatasetStatus) || (version.isActive ? "published" : "draft");
+                const sourceType = (version.sourceType as SourceType) || (version.sourceFile ? "pdf" : "manual");
+                const sourceDate = version.sourceDate || version.validFrom;
+                const provisionsCount = Array.isArray(version.provisions) ? version.provisions.length : 0;
+                const omoCount = Array.isArray(version.omoMatrix) ? version.omoMatrix.length : 0;
+                
+                return (
                 <TableRow key={version.id}>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
@@ -456,17 +488,62 @@ export function DatasetVersionManager() {
                     )}
                   </TableCell>
                   <TableCell>
-                    {version.isActive ? (
-                      <Badge variant="outline" className="border-green-600 text-green-600">
-                        <Check className="h-3 w-3 mr-1" />
-                        Aktiv
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline">Inaktiv</Badge>
-                    )}
+                    <DatasetStatusBadge
+                      status={status}
+                      versionName={version.versionName}
+                      sourceType={sourceType}
+                      sourceDate={sourceDate}
+                      compact
+                    />
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
+                      {/* Publish Button - only for draft/review status */}
+                      {status !== "published" && status !== "archived" && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button size="sm" variant="outline">
+                              <Send className="h-4 w-4 mr-1" />
+                              Veröffentlichen
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Version veröffentlichen?</AlertDialogTitle>
+                              <AlertDialogDescription asChild>
+                                <div className="space-y-3">
+                                  <p>
+                                    <strong>"{version.versionName}"</strong> wird zur aktiven Version.
+                                    Alle Kalkulationen verwenden ab sofort diese Daten.
+                                  </p>
+                                  <div className="p-3 bg-muted rounded-lg">
+                                    <p className="text-sm font-medium mb-2">Enthaltene Daten:</p>
+                                    <ul className="text-sm space-y-1">
+                                      <li>• {provisionsCount} Provisionen</li>
+                                      <li>• {omoCount} OMO-Einträge</li>
+                                    </ul>
+                                  </div>
+                                </div>
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handlePublish(version.id)}
+                                disabled={isPublishing && publishingId === version.id}
+                              >
+                                {isPublishing && publishingId === version.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                ) : (
+                                  <Send className="h-4 w-4 mr-2" />
+                                )}
+                                Jetzt veröffentlichen
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                      
                       {!version.isActive && (
                         <Button
                           size="sm"
@@ -523,7 +600,8 @@ export function DatasetVersionManager() {
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
+                );
+              })}
             </TableBody>
           </Table>
         )}

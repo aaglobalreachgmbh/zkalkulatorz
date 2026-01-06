@@ -19,9 +19,11 @@ import {
   XCircle,
   Sparkles,
   ArrowRight,
+  ArrowLeft,
   HelpCircle,
   FileSpreadsheet
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useTenantHardware } from "@/margenkalkulator/hooks/useTenantHardware";
 import { useTenantProvisions } from "@/margenkalkulator/hooks/useTenantProvisions";
 import { SmartImporter } from "@/margenkalkulator/ui/components/SmartImporter";
@@ -127,6 +129,7 @@ function DataStatusCard({
 }
 
 export default function DataHub() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<DataCategory>("hardware");
   const [showSmartImporter, setShowSmartImporter] = useState(false);
   
@@ -176,6 +179,15 @@ export default function DataHub() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="gap-1 mb-2 -ml-2 text-muted-foreground hover:text-foreground"
+              onClick={() => navigate("/")}
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Zurück zum Dashboard
+            </Button>
             <h1 className="text-3xl font-bold flex items-center gap-3">
               <FileSpreadsheet className="h-8 w-8 text-primary" />
               Meine Daten

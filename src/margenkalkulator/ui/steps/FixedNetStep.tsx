@@ -24,9 +24,10 @@ interface FixedNetStepProps {
   value: FixedNetState;
   onChange: (value: FixedNetState) => void;
   datasetVersion: DatasetVersion;
+  onFixedNetEnabled?: () => void;
 }
 
-export function FixedNetStep({ value, onChange, datasetVersion }: FixedNetStepProps) {
+export function FixedNetStep({ value, onChange, datasetVersion, onFixedNetEnabled }: FixedNetStepProps) {
   const { enabled: fixedNetEnabled, reason: fixedNetReason } = useFeature("fixedNetModule");
   const [selectedAccessType, setSelectedAccessType] = useState<FixedNetAccessType>(
     value.accessType || "CABLE"
@@ -112,8 +113,14 @@ export function FixedNetStep({ value, onChange, datasetVersion }: FixedNetStepPr
             checked={value.enabled}
             onCheckedChange={(checked) => {
               updateField("enabled", checked);
-              if (checked && !value.accessType) {
-                handleAccessTypeChange("CABLE");
+              if (checked) {
+                if (!value.accessType) {
+                  handleAccessTypeChange("CABLE");
+                }
+                // Trigger auto-collapse after enabling
+                if (onFixedNetEnabled) {
+                  setTimeout(() => onFixedNetEnabled(), 300);
+                }
               }
             }}
           />

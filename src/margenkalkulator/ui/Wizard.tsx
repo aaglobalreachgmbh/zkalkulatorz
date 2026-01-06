@@ -560,6 +560,13 @@ export function Wizard() {
                       datasetVersion={activeState.meta.datasetVersion}
                       fixedNetEnabled={activeState.fixedNet.enabled}
                       viewMode={viewMode}
+                      onTariffSelected={() => {
+                        // Auto-collapse mobile and open fixedNet
+                        setOpenSections(prev => {
+                          const without = prev.filter(s => s !== "mobile");
+                          return without.includes("fixedNet") ? without : [...without, "fixedNet"];
+                        });
+                      }}
                     />
                   </AccordionContent>
                 </AccordionItem>
@@ -598,6 +605,10 @@ export function Wizard() {
                       value={activeState.fixedNet}
                       onChange={(fixedNet) => setActiveState({ ...activeState, fixedNet })}
                       datasetVersion={activeState.meta.datasetVersion}
+                      onFixedNetEnabled={() => {
+                        // Auto-collapse fixedNet
+                        setOpenSections(prev => prev.filter(s => s !== "fixedNet"));
+                      }}
                     />
                   </AccordionContent>
                 </AccordionItem>

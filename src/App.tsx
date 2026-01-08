@@ -338,6 +338,7 @@ const App = () => (
                       <Route path="/settings" element={<Navigate to="/settings/security" replace />} />
                       <Route path="/profile" element={<Navigate to="/" replace />} />
                       <Route path="/reports" element={<Navigate to="/reporting" replace />} />
+                      <Route path="/wizard" element={<Navigate to="/calculator" replace />} />
                       
                       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                       <Route path="*" element={<NotFound />} />

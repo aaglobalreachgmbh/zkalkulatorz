@@ -53,13 +53,13 @@ const PHASES: DayPhase[] = [
   },
   { 
     id: "closed", 
-    name: "Geschlossen", 
+    name: "Feierabend", 
     startHour: 22, 
     endHour: 8, 
     colorClass: "text-muted-foreground", 
     bgClass: "bg-muted",
     icon: Moon,
-    description: "Außerhalb der Arbeitszeit"
+    description: "Shop geschlossen – App weiterhin nutzbar"
   },
 ];
 

@@ -20,28 +20,26 @@ import { cn } from "@/lib/utils";
 
 export function OfferBasketPanel() {
   const { items, itemCount, removeItem, openModal } = useOfferBasket();
-  const [isOpen, setIsOpen] = useState(false);
+  // Auto-open when items exist
+  const [isOpen, setIsOpen] = useState(items.length > 0);
 
   return (
-    <div className="w-full max-w-xs rounded-lg overflow-hidden shadow-lg border-2 border-amber-400 bg-card">
+    <div className="w-full rounded-lg overflow-hidden shadow-lg border-2 border-amber-400 bg-card">
       {/* Header - Amber/Orange like reference */}
-      <div className="bg-amber-400 px-4 py-3">
+      <div className="bg-amber-400 px-4 py-3 flex items-center justify-between">
         <h3 className="text-white font-bold text-lg flex items-center gap-2">
           <FileText className="w-5 h-5" />
-          Angebotsdruck
+          Angebots-Korb
         </h3>
+        {itemCount > 0 && (
+          <span className="bg-white text-amber-600 text-sm font-bold px-2 py-0.5 rounded-full">
+            {itemCount}
+          </span>
+        )}
       </div>
       
       {/* Content */}
       <div className="p-4">
-        {/* Info Text */}
-        <div className="mb-4">
-          <h4 className="text-sky-500 font-semibold mb-2">Tarif hinzufügen</h4>
-          <p className="text-sm text-muted-foreground">
-            Um einen Tarif zum Angebot hinzuzufügen, klicken Sie in der Ergebnisliste bei dem jeweiligen Tarif auf zum Angebot hinzufügen.
-          </p>
-        </div>
-        
         {/* Tariff Count / Dropdown */}
         <Collapsible open={isOpen} onOpenChange={setIsOpen}>
           <CollapsibleTrigger asChild>
@@ -51,7 +49,7 @@ export function OfferBasketPanel() {
             >
               <span className="flex items-center gap-2">
                 {itemCount > 0 && <span className="text-amber-600">✓</span>}
-                {itemCount} {itemCount === 1 ? "Tarif" : "Tarife"} im Angebot
+                {itemCount} {itemCount === 1 ? "Tarif" : "Tarife"} gesammelt
               </span>
               <ChevronDown 
                 className={cn(
@@ -74,13 +72,18 @@ export function OfferBasketPanel() {
                     key={item.id}
                     className="flex items-center justify-between text-sm py-1.5 px-2 rounded hover:bg-background group"
                   >
-                    <span className="truncate flex-1">{item.name}</span>
+                    <div className="flex-1 min-w-0">
+                      <span className="truncate block font-medium">{item.name}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {item.result.totals.avgTermNet.toFixed(2)} €/Monat
+                      </span>
+                    </div>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         removeItem(item.id);
                       }}
-                      className="opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive/80 transition-opacity p-1"
+                      className="opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive/80 transition-opacity p-1 ml-2"
                       title="Entfernen"
                     >
                       <X className="w-3.5 h-3.5" />
@@ -99,8 +102,15 @@ export function OfferBasketPanel() {
           className="w-full mt-4 bg-amber-400 hover:bg-amber-500 text-white border-2 border-amber-500"
         >
           <Plus className="w-4 h-4 mr-2" />
-          neues Angebot erstellen
+          Angebot erstellen
         </Button>
+        
+        {/* Info hint */}
+        {itemCount === 0 && (
+          <p className="text-xs text-muted-foreground mt-3 text-center">
+            Konfiguriere einen Tarif und klicke auf "zum Angebot hinzufügen"
+          </p>
+        )}
       </div>
     </div>
   );

@@ -18,9 +18,10 @@ interface AddToOfferButtonProps {
   option: OfferOptionState;
   result: CalculationResult;
   className?: string;
+  onResetForNewTariff?: () => void;
 }
 
-export function AddToOfferButton({ option, result, className }: AddToOfferButtonProps) {
+export function AddToOfferButton({ option, result, className, onResetForNewTariff }: AddToOfferButtonProps) {
   const { addItem, items } = useOfferBasket();
 
   // Generate a descriptive name for this tariff
@@ -66,17 +67,17 @@ export function AddToOfferButton({ option, result, className }: AddToOfferButton
           <Check className="w-4 h-4 mr-2 text-emerald-500" />
           Im Angebot
         </Button>
-        <Button
-          variant="link"
-          size="sm"
-          onClick={() => {
-            // Reset wizard state to allow adding another tariff
-            toast.info("Konfiguriere den nächsten Tarif und füge ihn hinzu");
-          }}
-          className="text-primary text-xs"
-        >
-          + Weiteren Tarif hinzufügen
-        </Button>
+        {onResetForNewTariff && (
+          <Button
+            variant="default"
+            size="sm"
+            onClick={onResetForNewTariff}
+            className="bg-primary hover:bg-primary/90"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Weiteren Tarif hinzufügen
+          </Button>
+        )}
       </div>
     );
   }

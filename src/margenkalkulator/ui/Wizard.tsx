@@ -36,6 +36,7 @@ import { ViewModeToggle } from "./components/ViewModeToggle";
 import { CustomerSessionToggle } from "./components/CustomerSessionToggle";
 import { LiveCalculationBar, getStepSummary } from "./components/LiveCalculationBar";
 import { SummarySidebar } from "./components/SummarySidebar";
+import { OfferBasketPanel } from "./components/OfferBasketPanel";
 import { GigaKombiBanner } from "./components/GigaKombiBanner";
 import { SavingsBreakdown } from "./components/SavingsBreakdown";
 import { QuickStartDialog, shouldShowQuickStart } from "./components/QuickStartDialog";
@@ -300,6 +301,20 @@ export function Wizard() {
     
     setViewMode(newMode);
   }, [viewMode, policy, customerSession.isActive, toggleSession, toast]);
+
+  // Reset wizard for new tariff (keeps basket)
+  const resetForNewTariff = useCallback(() => {
+    const freshState = createDefaultOptionState();
+    setOption1(freshState);
+    setOption2(createDefaultOptionState());
+    setActiveOption(1);
+    setOpenSections(["hardware", "mobile"]);
+    
+    toast({
+      title: "Bereit für nächsten Tarif",
+      description: "Konfiguriere jetzt den nächsten Tarif für dieses Angebot.",
+    });
+  }, [toast]);
 
   // Copy option
   const copyOption = (from: 1 | 2, to: 1 | 2) => {
@@ -661,14 +676,16 @@ export function Wizard() {
             )}
           </div>
 
-          {/* Summary Sidebar - Desktop only */}
+          {/* Summary + Basket Sidebar - Desktop only */}
           {!isMobile && (
-            <aside className="w-72 xl:w-80 flex-shrink-0 hidden lg:block">
+            <aside className="w-72 xl:w-80 flex-shrink-0 hidden lg:block space-y-4">
               <SummarySidebar
                 option={option1}
                 result={result1}
                 viewMode={effectiveViewMode}
+                onResetForNewTariff={resetForNewTariff}
               />
+              <OfferBasketPanel />
             </aside>
           )}
         </div>

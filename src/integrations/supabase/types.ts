@@ -1366,6 +1366,57 @@ export type Database = {
         }
         Relationships: []
       }
+      quantity_bonus_tiers: {
+        Row: {
+          bonus_per_contract: number
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          min_quantity: number
+          name: string
+          scope_id: string | null
+          scope_type: string
+          tenant_id: string
+          updated_at: string
+          valid_from: string
+          valid_until: string | null
+        }
+        Insert: {
+          bonus_per_contract: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          min_quantity: number
+          name: string
+          scope_id?: string | null
+          scope_type?: string
+          tenant_id: string
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Update: {
+          bonus_per_contract?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          min_quantity?: number
+          name?: string
+          scope_id?: string | null
+          scope_type?: string
+          tenant_id?: string
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
       rate_limit_entries: {
         Row: {
           category: string

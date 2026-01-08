@@ -16,7 +16,8 @@ import {
   ClipboardList,
   LayoutDashboard,
   UserCog,
-  HardDrive
+  HardDrive,
+  Sparkles
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -89,6 +90,7 @@ const settingsItems = [
 // ADMIN - Administration (collapsible, role-gated)
 const adminItems = [
   { title: "Stammdaten", url: "/tenant-admin", icon: Settings, requiresTenantAdmin: true },
+  { title: "Quantity-Boni", url: "/admin/quantity-bonus", icon: Sparkles, requiresTenantAdmin: true },
   { title: "Benutzerverwaltung", url: "/admin/users", icon: UserCog, requiresAdmin: true },
   { title: "Datenmanager", url: "/data-manager", icon: HardDrive },
   { title: "Reporting", url: "/reporting", icon: BarChart3 },

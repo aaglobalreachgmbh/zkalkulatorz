@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { TrendingUp, TrendingDown, ShoppingCart, Euro } from "lucide-react";
+import { TrendingUp, TrendingDown, ShoppingCart, Euro, Sparkles } from "lucide-react";
 import type { CalculationResult, ViewMode } from "../../engine/types";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
 import { cn } from "@/lib/utils";
@@ -8,6 +8,7 @@ interface LiveCalculationBarProps {
   result: CalculationResult;
   viewMode: ViewMode;
   quantity: number;
+  quantityBonus?: number;
   className?: string;
   sticky?: boolean;
   compact?: boolean;
@@ -17,6 +18,7 @@ export function LiveCalculationBar({
   result, 
   viewMode,
   quantity,
+  quantityBonus = 0,
   className,
   sticky = false,
   compact = false,
@@ -25,7 +27,7 @@ export function LiveCalculationBar({
   const showDealerEconomics = visibility.showDealerEconomics;
   
   const avgMonthly = result.totals.avgTermNet;
-  const margin = result.dealer.margin;
+  const margin = result.dealer.margin + quantityBonus;
   const provision = result.dealer.provisionBase;
   const hardwareEk = result.dealer.hardwareEkNet;
   const total24M = avgMonthly * 24 * quantity;
@@ -61,6 +63,15 @@ export function LiveCalculationBar({
                 <p className="text-[9px] uppercase tracking-wider text-slate-400">Provision</p>
                 <p className="text-lg sm:text-xl font-bold tabular-nums text-emerald-400">+{provision.toFixed(0)} €</p>
               </div>
+              {quantityBonus > 0 && (
+                <div className="text-center hidden sm:block">
+                  <p className="text-[9px] uppercase tracking-wider text-slate-400 flex items-center gap-1 justify-center">
+                    <Sparkles className="w-3 h-3" />
+                    On-Top
+                  </p>
+                  <p className="text-lg font-bold tabular-nums text-amber-300">+{quantityBonus.toFixed(0)} €</p>
+                </div>
+              )}
               {hardwareEk > 0 && (
                 <div className="text-center hidden sm:block">
                   <p className="text-[9px] uppercase tracking-wider text-slate-400">HW-EK</p>

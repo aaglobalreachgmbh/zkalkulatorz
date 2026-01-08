@@ -7,6 +7,7 @@
 import { useMemo } from "react";
 import { useIdentity, type AppRole } from "@/contexts/IdentityContext";
 import { useCustomerSession } from "@/contexts/CustomerSessionContext";
+import { usePOSMode } from "@/contexts/POSModeContext";
 import { useFeature } from "@/hooks/useFeature";
 import type { ViewMode } from "@/margenkalkulator/engine/types";
 
@@ -23,6 +24,8 @@ export interface SensitiveFieldsVisibility {
   canAccessAdmin: boolean;
   /** Is customer session active (safety lock) */
   isCustomerSessionActive: boolean;
+  /** Is customer-safe mode active (session OR POS mode) */
+  isCustomerSafeMode: boolean;
   /** Current effective mode for display */
   effectiveMode: "customer" | "dealer";
   /** Is admin full visibility enabled (overrides customer view for admins) */
@@ -48,30 +51,34 @@ export interface SensitiveFieldsVisibility {
 export function useSensitiveFieldsVisible(viewMode: ViewMode): SensitiveFieldsVisibility {
   const { identity, canAccessAdmin } = useIdentity();
   const { session } = useCustomerSession();
+  const { isPOSMode } = usePOSMode();
   const { enabled: adminFullVisibility } = useFeature("adminFullVisibility");
 
   return useMemo(() => {
     const isCustomerSessionActive = session.isActive;
+    // HOTFIX: POS mode also triggers customer-safe mode
+    const isCustomerSafeMode = isCustomerSessionActive || isPOSMode;
     const isCustomerView = viewMode === "customer";
     const role: AppRole = identity?.role ?? "sales";
     const isAdmin = role === "admin";
 
     // Admin Full Visibility: Admins can see everything even in customer view
-    // BUT still respect customer session for safety (customer is physically present)
-    const hasAdminOverride = adminFullVisibility && isAdmin && !isCustomerSessionActive;
+    // BUT still respect customer-safe mode for safety (customer is physically present)
+    const hasAdminOverride = adminFullVisibility && isAdmin && !isCustomerSafeMode;
 
-    // Safety lock: Customer session overrides everything (HIGHEST PRIORITY)
+    // HOTFIX: Customer-safe mode (session OR POS) overrides everything (HIGHEST PRIORITY)
     // This is the "customer is physically present" scenario
-    if (isCustomerSessionActive) {
+    if (isCustomerSafeMode) {
       return {
         showDealerEconomics: false,
         showHardwareEk: false,
         showOmoSelector: false,
         showFhPartnerToggle: false,
         canAccessAdmin,
-        isCustomerSessionActive: true,
+        isCustomerSessionActive,
+        isCustomerSafeMode: true,
         effectiveMode: "customer",
-        hasAdminFullVisibility: false, // Disabled during customer session
+        hasAdminFullVisibility: false, // Disabled during customer-safe mode
       };
     }
 
@@ -84,6 +91,7 @@ export function useSensitiveFieldsVisible(viewMode: ViewMode): SensitiveFieldsVi
         showFhPartnerToggle: true,
         canAccessAdmin,
         isCustomerSessionActive: false,
+        isCustomerSafeMode: false,
         effectiveMode: isCustomerView ? "customer" : "dealer",
         hasAdminFullVisibility: true,
       };
@@ -98,6 +106,7 @@ export function useSensitiveFieldsVisible(viewMode: ViewMode): SensitiveFieldsVi
         showFhPartnerToggle: false,
         canAccessAdmin,
         isCustomerSessionActive: false,
+        isCustomerSafeMode: false,
         effectiveMode: "customer",
         hasAdminFullVisibility: false,
       };
@@ -114,10 +123,11 @@ export function useSensitiveFieldsVisible(viewMode: ViewMode): SensitiveFieldsVi
       showFhPartnerToggle: canSeeDealerInfo,
       canAccessAdmin,
       isCustomerSessionActive: false,
+      isCustomerSafeMode: false,
       effectiveMode: "dealer",
       hasAdminFullVisibility: adminFullVisibility && isAdmin,
     };
-  }, [identity?.role, session.isActive, viewMode, canAccessAdmin, adminFullVisibility]);
+  }, [identity?.role, session.isActive, isPOSMode, viewMode, canAccessAdmin, adminFullVisibility]);
 }
 
 /**
@@ -128,19 +138,22 @@ export function computeSensitiveFieldsVisibility(
   role: AppRole,
   isCustomerSessionActive: boolean,
   viewMode: ViewMode,
-  adminFullVisibility: boolean = false
+  adminFullVisibility: boolean = false,
+  isPOSMode: boolean = false
 ): Omit<SensitiveFieldsVisibility, "canAccessAdmin"> {
   const isAdmin = role === "admin";
-  const hasAdminOverride = adminFullVisibility && isAdmin && !isCustomerSessionActive;
+  const isCustomerSafeMode = isCustomerSessionActive || isPOSMode;
+  const hasAdminOverride = adminFullVisibility && isAdmin && !isCustomerSafeMode;
 
-  // Safety lock: Customer session overrides everything
-  if (isCustomerSessionActive) {
+  // Safety lock: Customer-safe mode (session OR POS) overrides everything
+  if (isCustomerSafeMode) {
     return {
       showDealerEconomics: false,
       showHardwareEk: false,
       showOmoSelector: false,
       showFhPartnerToggle: false,
-      isCustomerSessionActive: true,
+      isCustomerSessionActive,
+      isCustomerSafeMode: true,
       effectiveMode: "customer",
       hasAdminFullVisibility: false,
     };
@@ -154,6 +167,7 @@ export function computeSensitiveFieldsVisibility(
       showOmoSelector: true,
       showFhPartnerToggle: true,
       isCustomerSessionActive: false,
+      isCustomerSafeMode: false,
       effectiveMode: viewMode === "customer" ? "customer" : "dealer",
       hasAdminFullVisibility: true,
     };
@@ -167,6 +181,7 @@ export function computeSensitiveFieldsVisibility(
       showOmoSelector: false,
       showFhPartnerToggle: false,
       isCustomerSessionActive: false,
+      isCustomerSafeMode: false,
       effectiveMode: "customer",
       hasAdminFullVisibility: false,
     };
@@ -179,6 +194,7 @@ export function computeSensitiveFieldsVisibility(
     showOmoSelector: true,
     showFhPartnerToggle: true,
     isCustomerSessionActive: false,
+    isCustomerSafeMode: false,
     effectiveMode: "dealer",
     hasAdminFullVisibility: adminFullVisibility && isAdmin,
   };

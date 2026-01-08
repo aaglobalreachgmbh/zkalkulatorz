@@ -11,7 +11,8 @@ import {
   Key, 
   ChevronRight, 
   Monitor, 
-  FileText, 
+  FileText,
+  Inbox,
   ClipboardList,
   LayoutDashboard,
   UserCog,
@@ -72,6 +73,11 @@ const salesItems = [
 const orgItems = [
   { title: "Team", url: "/team", icon: Users },
   { title: "Meine Daten", url: "/daten", icon: Database },
+];
+
+// SYSTEM - Backend tools
+const systemItems = [
+  { title: "Posteingang", url: "/inbox", icon: Inbox },
 ];
 
 // SETTINGS - User settings (collapsible)
@@ -245,6 +251,35 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {orgItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton 
+                    asChild 
+                    isActive={isActive(item.url)}
+                    tooltip={collapsed ? item.title : undefined}
+                    className={cn(
+                      "transition-all",
+                      isActive(item.url) 
+                        ? "bg-primary/10 text-primary font-medium" 
+                        : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50"
+                    )}
+                  >
+                    <NavLink to={item.url}>
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* System Section */}
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-muted-foreground/70">System</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {systemItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton 
                     asChild 

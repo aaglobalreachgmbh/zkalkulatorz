@@ -5,6 +5,7 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { 
   Bell, 
   Clock, 
@@ -12,7 +13,8 @@ import {
   ChevronRight, 
   AlertCircle,
   Mail,
-  Eye
+  Eye,
+  Coffee
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -137,7 +139,30 @@ export function FollowupReminders({ compact = false }: FollowupRemindersProps) {
   }
 
   // Full card mode for dashboard
-  if (isLoading || followups.length === 0) return null;
+  if (isLoading) return null;
+  
+  // Empty state when no followups
+  if (followups.length === 0) {
+    return (
+      <Card className="border-emerald-500/30 bg-gradient-to-br from-emerald-500/5 to-teal-500/5">
+        <CardContent className="py-6">
+          <div className="flex flex-col items-center justify-center text-center">
+            <motion.div
+              className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center mb-3"
+              animate={{ scale: [1, 1.05, 1] }}
+              transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
+            >
+              <Coffee className="w-6 h-6 text-emerald-600" />
+            </motion.div>
+            <h4 className="font-semibold text-base">Alles erledigt!</h4>
+            <p className="text-sm text-muted-foreground mt-1 max-w-[220px]">
+              Gönn dir einen Kaffee oder plane die nächste Woche.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="border-amber-500/30 bg-gradient-to-br from-amber-500/5 to-orange-500/5">

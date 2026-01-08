@@ -8,7 +8,8 @@
 // ============================================
 
 import { useState } from "react";
-import { ChevronDown, X, Plus, FileText } from "lucide-react";
+import { ChevronDown, X, Plus, FileText, ShoppingCart } from "lucide-react";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -62,9 +63,21 @@ export function OfferBasketPanel() {
           
           <CollapsibleContent className="mt-2">
             {items.length === 0 ? (
-              <p className="text-sm text-muted-foreground italic py-2 px-3 bg-muted rounded">
-                Noch keine Tarife hinzugefügt
-              </p>
+              <div className="py-4 px-3 bg-muted/50 rounded-lg text-center">
+                <motion.div
+                  animate={{ scale: [1, 1.05, 1] }}
+                  transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+                  className="mx-auto w-fit"
+                >
+                  <ShoppingCart className="w-8 h-8 mx-auto text-muted-foreground/50 mb-2" />
+                </motion.div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Warenkorb ist leer
+                </p>
+                <p className="text-xs text-muted-foreground/70 mt-1">
+                  Konfiguriere einen Tarif und füge ihn hinzu
+                </p>
+              </div>
             ) : (
               <ul className="space-y-1 bg-muted rounded p-2">
                 {items.map((item) => (

@@ -123,6 +123,9 @@ export function Wizard() {
   // Feature-Gating: Check if Option 2 is enabled
   const { enabled: option2Enabled, reason: option2Reason } = useFeature("compareOption2");
   
+  // Feature-Gating: Check if FixedNet module is enabled
+  const { enabled: fixedNetModuleEnabled } = useFeature("fixedNetModule");
+  
   const [option1, setOption1] = useState<OfferOptionState>(createDefaultOptionState);
   const [option2, setOption2] = useState<OfferOptionState>(createDefaultOptionState);
   
@@ -577,47 +580,49 @@ export function Wizard() {
                   </AccordionContent>
                 </AccordionItem>
 
-                {/* Fixed Net Section */}
-                <AccordionItem value="fixedNet" className={cn(
-                  "border rounded-xl overflow-hidden transition-opacity",
-                  !openSections.includes("fixedNet") && "opacity-60 hover:opacity-100"
-                )}>
-                  <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50 [&[data-state=open]]:bg-muted/30">
-                    <div className="flex items-center gap-3 flex-1">
-                      <div className={cn(
-                        "w-8 h-8 rounded-lg flex items-center justify-center",
-                        option1.fixedNet.enabled ? "bg-emerald-500/10" : "bg-muted/50"
-                      )}>
-                        <Router className={cn(
-                          "w-4 h-4",
-                          option1.fixedNet.enabled ? "text-emerald-600" : "text-muted-foreground/50"
-                        )} />
+                {/* Fixed Net Section - nur wenn Feature aktiv */}
+                {fixedNetModuleEnabled && (
+                  <AccordionItem value="fixedNet" className={cn(
+                    "border rounded-xl overflow-hidden transition-opacity",
+                    !openSections.includes("fixedNet") && "opacity-60 hover:opacity-100"
+                  )}>
+                    <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50 [&[data-state=open]]:bg-muted/30">
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className={cn(
+                          "w-8 h-8 rounded-lg flex items-center justify-center",
+                          option1.fixedNet.enabled ? "bg-emerald-500/10" : "bg-muted/50"
+                        )}>
+                          <Router className={cn(
+                            "w-4 h-4",
+                            option1.fixedNet.enabled ? "text-emerald-600" : "text-muted-foreground/50"
+                          )} />
+                        </div>
+                        <div className="text-left">
+                          <p className="font-medium">Festnetz</p>
+                          <p className="text-xs text-muted-foreground/70">
+                            {getStepSummary("fixedNet", { fixedNet: option1.fixedNet })}
+                          </p>
+                        </div>
+                        {option1.fixedNet.enabled && (
+                          <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-200">
+                            GigaKombi
+                          </Badge>
+                        )}
                       </div>
-                      <div className="text-left">
-                        <p className="font-medium">Festnetz</p>
-                        <p className="text-xs text-muted-foreground/70">
-                          {getStepSummary("fixedNet", { fixedNet: option1.fixedNet })}
-                        </p>
-                      </div>
-                      {option1.fixedNet.enabled && (
-                        <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-200">
-                          GigaKombi
-                        </Badge>
-                      )}
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="px-4 pb-4 pt-2">
-                    <FixedNetStep
-                      value={activeState.fixedNet}
-                      onChange={(fixedNet) => setActiveState({ ...activeState, fixedNet })}
-                      datasetVersion={activeState.meta.datasetVersion}
-                      onFixedNetEnabled={() => {
-                        // Auto-collapse fixedNet
-                        setOpenSections(prev => prev.filter(s => s !== "fixedNet"));
-                      }}
-                    />
-                  </AccordionContent>
-                </AccordionItem>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-4 pb-4 pt-2">
+                      <FixedNetStep
+                        value={activeState.fixedNet}
+                        onChange={(fixedNet) => setActiveState({ ...activeState, fixedNet })}
+                        datasetVersion={activeState.meta.datasetVersion}
+                        onFixedNetEnabled={() => {
+                          // Auto-collapse fixedNet
+                          setOpenSections(prev => prev.filter(s => s !== "fixedNet"));
+                        }}
+                      />
+                    </AccordionContent>
+                  </AccordionItem>
+                )}
               </Accordion>
 
               {/* GigaKombi Banner */}

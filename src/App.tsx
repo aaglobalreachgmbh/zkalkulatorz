@@ -58,6 +58,7 @@ const SecurityTestPage = lazy(() => import("./pages/SecurityTestPage"));
 const DistributionDashboard = lazy(() => import("./pages/DistributionDashboard"));
 const TenantAdmin = lazy(() => import("./pages/TenantAdmin"));
 const BrandingSettings = lazy(() => import("./pages/BrandingSettings"));
+const Inbox = lazy(() => import("./pages/Inbox"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -318,6 +319,16 @@ const App = () => (
                               <BrandingSettings />
                             </TenantAdminRoute>
                           </FeatureRoute>
+                        }
+                      />
+                      
+                      {/* Inbox - Zentrale Dokumentenablage */}
+                      <Route
+                        path="/inbox"
+                        element={
+                          <ProtectedRoute>
+                            <Inbox />
+                          </ProtectedRoute>
                         }
                       />
                       

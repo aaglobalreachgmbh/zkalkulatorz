@@ -25,6 +25,7 @@ import { MultiOfferPdf } from "../../pdf/MultiOfferPdf";
 import { pdf } from "@react-pdf/renderer";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { fireConfetti } from "@/lib/confetti";
 import { SendOfferEmailModal } from "./SendOfferEmailModal";
 import { CreateCalendarEventModal } from "./CreateCalendarEventModal";
 
@@ -128,6 +129,7 @@ export function CreateOfferModal() {
       URL.revokeObjectURL(url);
 
       toast.success("PDF erfolgreich erstellt");
+      fireConfetti({ duration: 3000 });
       resetOffer();
     } catch (error) {
       console.error("PDF generation failed:", error);

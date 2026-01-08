@@ -318,8 +318,9 @@ export function HardwareStep({ value, onChange, onHardwareSelected, datasetVersi
           <button
             onClick={handleSimOnlySelect}
             className={`
-              relative p-5 rounded-xl border-2 bg-card text-left transition-all
-              hover:shadow-md hover:border-primary/50
+              relative p-5 rounded-xl border-2 bg-card text-left 
+              transition-all duration-200 ease-out
+              hover:shadow-lg hover:border-primary/50 hover:-translate-y-1
               ${selectedInfo?.type === "simOnly"
                 ? "border-primary ring-2 ring-primary/20" 
                 : "border-border"
@@ -373,8 +374,9 @@ export function HardwareStep({ value, onChange, onHardwareSelected, datasetVersi
               <PopoverTrigger asChild>
                 <button
                   className={`
-                    relative p-5 rounded-xl border-2 bg-card text-left transition-all w-full
-                    hover:shadow-md hover:border-primary/50
+                    relative p-5 rounded-xl border-2 bg-card text-left w-full
+                    transition-all duration-200 ease-out
+                    hover:shadow-lg hover:border-primary/50 hover:-translate-y-1
                     ${isSelected 
                       ? "border-primary ring-2 ring-primary/20" 
                       : "border-border"

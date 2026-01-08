@@ -1,5 +1,22 @@
 import { useEffect, useState } from "react";
-import { Calculator, Users, BarChart3, Building2, FolderOpen, Shield, Database, Settings, Home, Package, ShieldCheck, User, ChevronDown, ChevronRight, Monitor, FileSpreadsheet, FileText } from "lucide-react";
+import { 
+  Calculator, 
+  Users, 
+  BarChart3, 
+  Building2, 
+  Shield, 
+  Database, 
+  Settings, 
+  Package, 
+  Key, 
+  ChevronRight, 
+  Monitor, 
+  FileText, 
+  ClipboardList,
+  LayoutDashboard,
+  UserCog,
+  HardDrive
+} from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -36,29 +53,38 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { User, ChevronDown } from "lucide-react";
 
-// Simplified main navigation - core items
-const mainItems = [
-  { title: "Home", url: "/", icon: Home },
+// ============================================
+// NAVIGATION STRUCTURE - Logically grouped
+// ============================================
+
+// SALES - Core business functions
+const salesItems = [
   { title: "Kalkulator", url: "/calculator", icon: Calculator },
-  { title: "Meine Daten", url: "/daten", icon: FileSpreadsheet },
-  { title: "Meine Angebote", url: "/offers", icon: FolderOpen },
-  { title: "Bundles", url: "/bundles", icon: Package },
-  { title: "Verträge", url: "/contracts", icon: FileText },
+  { title: "Angebote", url: "/offers", icon: FileText },
   { title: "Kunden", url: "/customers", icon: Building2 },
-  { title: "Team", url: "/team", icon: Users },
+  { title: "Verträge", url: "/contracts", icon: ClipboardList },
+  { title: "Bundles", url: "/bundles", icon: Package },
 ];
 
-// Secondary items in collapsible section
+// ORGANIZATION - Team & resources
+const orgItems = [
+  { title: "Team", url: "/team", icon: Users },
+  { title: "Meine Daten", url: "/daten", icon: Database },
+];
+
+// SETTINGS - User settings (collapsible)
 const settingsItems = [
   { title: "Sicherheit", url: "/settings/security", icon: Shield },
-  { title: "Lizenz", url: "/license", icon: ShieldCheck },
+  { title: "Lizenz", url: "/license", icon: Key },
 ];
 
-// Admin items - collapsed by default
-const adminCoreItems = [
-  { title: "Benutzerverwaltung", url: "/admin/users", icon: Users },
-  { title: "Datenmanager", url: "/data-manager", icon: Database },
+// ADMIN - Administration (collapsible, role-gated)
+const adminItems = [
+  { title: "Stammdaten", url: "/tenant-admin", icon: Settings, requiresTenantAdmin: true },
+  { title: "Benutzerverwaltung", url: "/admin/users", icon: UserCog, requiresAdmin: true },
+  { title: "Datenmanager", url: "/data-manager", icon: HardDrive },
   { title: "Reporting", url: "/reporting", icon: BarChart3 },
 ];
 
@@ -66,7 +92,7 @@ export function AppSidebar() {
   const { state, setOpen } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
-  const { isAdmin } = useUserRole();
+  const { isAdmin, role } = useUserRole();
   const { identity, canAccessAdmin, setMockIdentity, clearMockIdentity, isSupabaseAuth } = useIdentity();
   const { isTenantAdmin } = useTenantAdmin();
   const { branding } = useTenantBranding();
@@ -76,15 +102,20 @@ export function AppSidebar() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
   
-  // Show admin section if user has admin role OR can access admin via identity
-  const showAdminSection = isAdmin || canAccessAdmin;
+  // Show admin section if user has admin role, tenant admin, OR can access admin via identity
+  const showAdminSection = isAdmin || canAccessAdmin || isTenantAdmin;
   
   // Auto-open section if active route is inside
   useEffect(() => {
-    if (settingsItems.some(item => location.pathname.startsWith(item.url))) {
+    const path = location.pathname;
+    if (settingsItems.some(item => path.startsWith(item.url))) {
       setSettingsOpen(true);
     }
-    if (adminCoreItems.some(item => location.pathname.startsWith(item.url))) {
+    if (
+      adminItems.some(item => path.startsWith(item.url)) ||
+      path.startsWith("/admin") ||
+      path.startsWith("/tenant-admin")
+    ) {
       setAdminOpen(true);
     }
   }, [location.pathname]);
@@ -113,6 +144,13 @@ export function AppSidebar() {
     if (path === "/") return location.pathname === "/";
     return location.pathname.startsWith(path);
   };
+
+  // Filter admin items based on user permissions
+  const visibleAdminItems = adminItems.filter(item => {
+    if (item.requiresAdmin && !isAdmin) return false;
+    if (item.requiresTenantAdmin && !isTenantAdmin && !isAdmin) return false;
+    return true;
+  });
 
   return (
     <Sidebar collapsible="icon">
@@ -146,12 +184,67 @@ export function AppSidebar() {
           )}
         </div>
 
-        {/* Main navigation - always visible */}
+        {/* Dashboard - Main entry point */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-muted-foreground/70">Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {mainItems.map((item) => (
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  asChild 
+                  isActive={isActive("/")}
+                  tooltip={collapsed ? "Dashboard" : undefined}
+                  className={cn(
+                    "transition-all",
+                    isActive("/") 
+                      ? "bg-primary/10 text-primary font-medium" 
+                      : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50"
+                  )}
+                >
+                  <NavLink to="/">
+                    <LayoutDashboard className="h-4 w-4" />
+                    <span>Dashboard</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Sales - Core business functions */}
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-muted-foreground/70">Vertrieb</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {salesItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton 
+                    asChild 
+                    isActive={isActive(item.url)}
+                    tooltip={collapsed ? item.title : undefined}
+                    className={cn(
+                      "transition-all",
+                      isActive(item.url) 
+                        ? "bg-primary/10 text-primary font-medium" 
+                        : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50"
+                    )}
+                  >
+                    <NavLink to={item.url}>
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Organization - Team & Resources */}
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-muted-foreground/70">Organisation</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {orgItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton 
                     asChild 
@@ -218,36 +311,8 @@ export function AppSidebar() {
           </Collapsible>
         </SidebarGroup>
 
-        {/* Tenant Admin - simple link */}
-        {isTenantAdmin && (
-          <SidebarGroup>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton 
-                    asChild 
-                    isActive={isActive("/tenant-admin")}
-                    tooltip={collapsed ? "Stammdaten" : undefined}
-                    className={cn(
-                      "transition-all",
-                      isActive("/tenant-admin") 
-                        ? "bg-primary/10 text-primary font-medium" 
-                        : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50"
-                    )}
-                  >
-                    <NavLink to="/tenant-admin">
-                      <Settings className="h-4 w-4" />
-                      <span>Stammdaten</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-
-        {/* Admin section - collapsible, only for admins */}
-        {showAdminSection && (
+        {/* Admin section - collapsible, only for admins/managers/tenant admins */}
+        {showAdminSection && visibleAdminItems.length > 0 && (
           <SidebarGroup>
             <Collapsible open={adminOpen} onOpenChange={setAdminOpen}>
               <CollapsibleTrigger className="w-full">
@@ -264,7 +329,7 @@ export function AppSidebar() {
               <CollapsibleContent>
                 <SidebarGroupContent>
                   <SidebarMenu>
-                    {adminCoreItems.map((item) => (
+                    {visibleAdminItems.map((item) => (
                       <SidebarMenuItem key={item.title}>
                         <SidebarMenuButton 
                           asChild 

@@ -115,6 +115,11 @@ export function Wizard() {
   const [activeOption, setActiveOption] = useState<1 | 2>(1);
   const [viewMode, setViewMode] = useState<ViewMode>(policy.defaultViewMode);
   
+  // SECURITY HOTFIX: Compute effective view mode based on customer-safe mode
+  // When POS mode or customer session is active, force customer view mode
+  const isCustomerSafeMode = isPOSMode || customerSession.isActive;
+  const effectiveViewMode: ViewMode = isCustomerSafeMode ? "customer" : viewMode;
+  
   // Feature-Gating: Check if Option 2 is enabled
   const { enabled: option2Enabled, reason: option2Reason } = useFeature("compareOption2");
   
@@ -436,9 +441,10 @@ export function Wizard() {
             {policy.showCustomerSessionToggle && <CustomerSessionToggle />}
             
             <ViewModeToggle 
-              value={viewMode} 
+              value={effectiveViewMode} 
               onChange={handleViewModeChange}
               allowCustomerMode={policy.allowCustomerMode}
+              disabled={isCustomerSafeMode}
             />
             
             {!isPOSMode && (
@@ -517,7 +523,7 @@ export function Wizard() {
                           return without.includes("mobile") ? without : [...without, "mobile"];
                         });
                       }}
-                      viewMode={viewMode}
+                      viewMode={effectiveViewMode}
                     />
                   </AccordionContent>
                 </AccordionItem>
@@ -559,7 +565,7 @@ export function Wizard() {
                       onChange={(mobile) => setActiveState({ ...activeState, mobile })}
                       datasetVersion={activeState.meta.datasetVersion}
                       fixedNetEnabled={activeState.fixedNet.enabled}
-                      viewMode={viewMode}
+                      viewMode={effectiveViewMode}
                       onTariffSelected={() => {
                         // Auto-collapse mobile and open fixedNet
                         setOpenSections(prev => {
@@ -641,7 +647,7 @@ export function Wizard() {
               <div className="sticky bottom-0 z-30 -mx-3 sm:-mx-4 lg:-mx-6 mt-auto">
                 <LiveCalculationBar
                   result={activeResult}
-                  viewMode={viewMode}
+                  viewMode={effectiveViewMode}
                   quantity={activeState.mobile.quantity}
                   sticky
                   compact
@@ -656,7 +662,7 @@ export function Wizard() {
               <SummarySidebar
                 option={option1}
                 result={result1}
-                viewMode={viewMode}
+                viewMode={effectiveViewMode}
               />
             </aside>
           )}
@@ -668,7 +674,7 @@ export function Wizard() {
         <footer className="bg-card border-t border-border sticky bottom-0 z-40 shrink-0 pb-safe">
           <LiveCalculationBar
             result={activeResult}
-            viewMode={viewMode}
+            viewMode={effectiveViewMode}
             quantity={activeState.mobile.quantity}
             sticky
             compact

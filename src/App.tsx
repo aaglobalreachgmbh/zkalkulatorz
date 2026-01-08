@@ -1,4 +1,4 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useState, useEffect, Component, type ReactNode, type ErrorInfo } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -18,7 +18,8 @@ import { SeatLimitGate } from "@/components/SeatLimitGate";
 import { FeatureRoute } from "@/components/FeatureRoute";
 import { MobileAccessGate } from "@/components/MobileAccessGate";
 import { OfferBasketProvider } from "@/margenkalkulator/contexts";
-import { Loader2 } from "lucide-react";
+import { Loader2, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 // Eagerly loaded pages (critical path)
 import Home from "./pages/Home";
@@ -61,12 +62,80 @@ const TenantAdmin = lazy(() => import("./pages/TenantAdmin"));
 const BrandingSettings = lazy(() => import("./pages/BrandingSettings"));
 const Inbox = lazy(() => import("./pages/Inbox"));
 
-// Loading fallback component
-const PageLoader = () => (
-  <div className="flex items-center justify-center min-h-screen">
-    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-  </div>
-);
+// P1 FIX: Enhanced loading fallback with timeout and retry
+const PageLoader = () => {
+  const [showRetry, setShowRetry] = useState(false);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => setShowRetry(true), 8000);
+    return () => clearTimeout(timer);
+  }, []);
+  
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="text-center space-y-4">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+        <p className="text-muted-foreground text-sm">Lade...</p>
+        {showRetry && (
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => window.location.reload()}
+            className="gap-2"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Seite neu laden
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// P1 FIX: Route-level Error Boundary to prevent white screens
+interface RouteErrorBoundaryState {
+  hasError: boolean;
+  error?: Error;
+}
+
+class RouteErrorBoundary extends Component<{ children: ReactNode }, RouteErrorBoundaryState> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error): RouteErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error("[RouteErrorBoundary] Caught error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+          <div className="max-w-md w-full text-center space-y-4">
+            <div className="w-16 h-16 mx-auto bg-destructive/10 rounded-full flex items-center justify-center">
+              <span className="text-destructive text-2xl">!</span>
+            </div>
+            <h2 className="text-xl font-semibold">Seite konnte nicht geladen werden</h2>
+            <p className="text-muted-foreground text-sm">
+              Ein Fehler ist aufgetreten. Bitte laden Sie die Seite neu.
+            </p>
+            <Button onClick={() => window.location.reload()} className="gap-2">
+              <RefreshCw className="w-4 h-4" />
+              Seite neu laden
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 // QueryClient with optimized caching
 const queryClient = new QueryClient({
@@ -99,6 +168,7 @@ const App = () => (
                         <Toaster />
                         <Sonner />
                       <BrowserRouter>
+                    <RouteErrorBoundary>
                     <Suspense fallback={<PageLoader />}>
                     <Routes>
                       {/* Public routes - no authentication required */}
@@ -344,6 +414,7 @@ const App = () => (
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                     </Suspense>
+                    </RouteErrorBoundary>
                     </BrowserRouter>
                       </MobileAccessGate>
                     </SeatLimitGate>

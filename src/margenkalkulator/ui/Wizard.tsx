@@ -394,6 +394,9 @@ export function Wizard() {
   // The static businessCatalog is always available as a fallback
   const staticCatalogAvailable = true; // Static catalog is bundled in the app
   
+  // Check for force demo flag from localStorage
+  const forceDemoMode = localStorage.getItem("force_demo_catalog") === "true";
+  
   // Determine if we're using the fallback catalog
   const usingFallbackCatalog = isSupabaseAuth 
     && !isSuperAdmin 
@@ -401,8 +404,22 @@ export function Wizard() {
     && tenantDataStatus 
     && !tenantDataStatus.isComplete;
   
-  // Only block if no static fallback (never happens, but kept for safety)
-  const shouldBlockWizard = usingFallbackCatalog && !staticCatalogAvailable;
+  // Only block if no static fallback AND demo mode not forced (never happens, but kept for safety)
+  const shouldBlockWizard = usingFallbackCatalog && !staticCatalogAvailable && !forceDemoMode;
+  
+  // DEBUG: Log wizard state for troubleshooting
+  useEffect(() => {
+    console.log("[Wizard] State:", {
+      isSupabaseAuth,
+      isSuperAdmin,
+      isLoadingTenantData,
+      tenantDataStatus,
+      staticCatalogAvailable,
+      shouldBlockWizard,
+      usingFallbackCatalog,
+      forceDemoMode
+    });
+  }, [isSupabaseAuth, isSuperAdmin, isLoadingTenantData, tenantDataStatus, shouldBlockWizard, usingFallbackCatalog, forceDemoMode]);
 
   if (shouldBlockWizard) {
     return (
@@ -449,6 +466,18 @@ export function Wizard() {
                 <Settings className="w-4 h-4" />
                 Zu den Stammdaten
               </Link>
+            </Button>
+            {/* P2 FIX: Demo-Daten Button als Fallback */}
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                localStorage.setItem("force_demo_catalog", "true");
+                window.location.reload();
+              }}
+              className="w-full gap-2"
+            >
+              <Zap className="w-4 h-4" />
+              Mit Demo-Daten starten
             </Button>
           </CardContent>
         </Card>

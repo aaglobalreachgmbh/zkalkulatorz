@@ -25,6 +25,8 @@ import { useEmployeeSettings } from "@/margenkalkulator/hooks/useEmployeeSetting
 import { usePushProvisions } from "@/margenkalkulator/hooks/usePushProvisions";
 import { useDatasetVersions } from "@/margenkalkulator/hooks/useDatasetVersions";
 import { useTenantDataStatus } from "@/margenkalkulator/hooks/useTenantDataStatus";
+import { useQuantityBonus } from "@/margenkalkulator/hooks/useQuantityBonus";
+import { useOfferBasket } from "@/margenkalkulator/contexts/OfferBasketContext";
 import { HardwareStep } from "./steps/HardwareStep";
 import { MobileStep } from "./steps/MobileStep";
 import { FixedNetStep } from "./steps/FixedNetStep";
@@ -71,10 +73,12 @@ export function Wizard() {
   const isMobile = useIsMobile();
   const { isPOSMode, togglePOSMode } = usePOSMode();
   
-  // Employee Settings & Push Provisions Hooks
+  // Employee Settings, Push Provisions & Quantity Bonus Hooks
   const { settings: employeeSettings } = useEmployeeSettings();
   const { getBonusAmount } = usePushProvisions();
   const { addToHistory } = useHistory();
+  const { getBonusForQuantity, calculateTotalBonus, tiers: quantityBonusTiers } = useQuantityBonus();
+  const { items: basketItems } = useOfferBasket();
   
   // Onboarding Tour Hook
   const tour = useOnboardingTour();
@@ -261,18 +265,58 @@ export function Wizard() {
     contractType: option.mobile.contractType,
   }), []);
 
+  // Calculate total quantity (basket + current config) for quantity bonus
+  const totalQuantityInBasket = useMemo(() => {
+    return basketItems.reduce((sum, item) => sum + (item.option.mobile.quantity || 1), 0);
+  }, [basketItems]);
+  
+  const totalQuantityForBonus = totalQuantityInBasket + option1.mobile.quantity;
+  
+  // Determine active quantity bonus tier
+  const activeQuantityBonusTier = useMemo(() => {
+    return getBonusForQuantity(totalQuantityForBonus);
+  }, [getBonusForQuantity, totalQuantityForBonus]);
+  
+  // Find next tier for motivation teaser
+  const nextQuantityBonusTier = useMemo(() => {
+    if (!quantityBonusTiers.length) return null;
+    const sorted = [...quantityBonusTiers].sort((a, b) => a.minQuantity - b.minQuantity);
+    return sorted.find(t => t.minQuantity > totalQuantityForBonus) ?? null;
+  }, [quantityBonusTiers, totalQuantityForBonus]);
+  
+  // Calculate quantity bonus for current configuration
+  const quantityBonusForOption1 = useMemo(() => {
+    if (!activeQuantityBonusTier) return 0;
+    // Apply bonus to the current config's quantity
+    return activeQuantityBonusTier.bonusPerContract * option1.mobile.quantity;
+  }, [activeQuantityBonusTier, option1.mobile.quantity]);
+
   // Calculate results (memoized)
   const result1 = useMemo(() => {
     const context = buildPushContext(option1);
     const pushBonus = getBonusAmount(option1.mobile.tariffId, option1.mobile.contractType, 0, context);
-    return calculateOffer(option1, { ...employeeOptions, pushBonus });
-  }, [option1, employeeOptions, getBonusAmount, buildPushContext]);
+    return calculateOffer(option1, { 
+      ...employeeOptions, 
+      pushBonus,
+      quantityBonus: quantityBonusForOption1,
+      quantityBonusTierName: activeQuantityBonusTier?.name,
+    });
+  }, [option1, employeeOptions, getBonusAmount, buildPushContext, quantityBonusForOption1, activeQuantityBonusTier]);
   
   const result2 = useMemo(() => {
     const context = buildPushContext(option2);
     const pushBonus = getBonusAmount(option2.mobile.tariffId, option2.mobile.contractType, 0, context);
-    return calculateOffer(option2, { ...employeeOptions, pushBonus });
-  }, [option2, employeeOptions, getBonusAmount, buildPushContext]);
+    // Option 2 also gets quantity bonus based on total
+    const quantityBonusForOption2 = activeQuantityBonusTier 
+      ? activeQuantityBonusTier.bonusPerContract * option2.mobile.quantity 
+      : 0;
+    return calculateOffer(option2, { 
+      ...employeeOptions, 
+      pushBonus,
+      quantityBonus: quantityBonusForOption2,
+      quantityBonusTierName: activeQuantityBonusTier?.name,
+    });
+  }, [option2, employeeOptions, getBonusAmount, buildPushContext, activeQuantityBonusTier]);
 
   // Validation
   const validation = useWizardValidation(activeState);
@@ -669,6 +713,10 @@ export function Wizard() {
                   result={activeResult}
                   viewMode={effectiveViewMode}
                   quantity={activeState.mobile.quantity}
+                  quantityBonus={quantityBonusForOption1}
+                  quantityBonusTier={activeQuantityBonusTier}
+                  totalQuantity={totalQuantityForBonus}
+                  nextBonusTier={nextQuantityBonusTier}
                   sticky
                   compact
                 />
@@ -698,6 +746,10 @@ export function Wizard() {
             result={activeResult}
             viewMode={effectiveViewMode}
             quantity={activeState.mobile.quantity}
+            quantityBonus={quantityBonusForOption1}
+            quantityBonusTier={activeQuantityBonusTier}
+            totalQuantity={totalQuantityForBonus}
+            nextBonusTier={nextQuantityBonusTier}
             sticky
             compact
           />

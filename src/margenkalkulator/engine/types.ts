@@ -458,6 +458,10 @@ export type DealerEconomics = {
   omoRate?: number;
   /** OMO-Quelle: "matrix" = aus XLSX, "calculated" = prozentual berechnet */
   omoSource?: "matrix" | "calculated";
+  /** Mengen-Staffel Bonus (Cross-Selling On-Top) */
+  quantityBonus?: number;
+  /** Name der aktiven Staffel (z.B. "Gold Staffel") */
+  quantityBonusTierName?: string;
 };
 
 /**

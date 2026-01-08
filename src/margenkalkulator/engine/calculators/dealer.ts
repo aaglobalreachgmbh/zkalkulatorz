@@ -307,6 +307,10 @@ export type DealerEconomicsExtended = DealerEconomics & {
   displayProvision?: number;
   /** Flag: TeamDeal without Prime falls back to Smart Business Plus (no provision) */
   teamDealFallback?: boolean;
+  /** Quantity bonus (cross-selling on-top) */
+  quantityBonus?: number;
+  /** Name of the applied quantity bonus tier (e.g., "Gold Staffel") */
+  quantityBonusTierName?: string;
 };
 
 // ============================================
@@ -341,6 +345,10 @@ export function calculateDealerEconomics(
     primeOnAccount?: boolean;
     employeeDeduction?: EmployeeDeductionSettings | null;
     pushBonus?: number;
+    /** Quantity bonus total (cross-selling on-top) */
+    quantityBonus?: number;
+    /** Name of the quantity bonus tier */
+    quantityBonusTierName?: string;
   }
 ): DealerEconomicsExtended {
   const omoRate = options?.omoRate ?? 0;
@@ -350,6 +358,8 @@ export function calculateDealerEconomics(
   const primeOnAccount = options?.primeOnAccount ?? true;
   const employeeSettings = options?.employeeDeduction;
   const pushBonus = options?.pushBonus ?? 0;
+  const quantityBonus = options?.quantityBonus ?? 0;
+  const quantityBonusTierName = options?.quantityBonusTierName;
   
   // Fixed Net Provision (applies regardless of mobile tariff)
   const fixedNetProvision = calculateFixedNetProvision(fixedNetProduct, contractType);
@@ -441,8 +451,8 @@ export function calculateDealerEconomics(
   // Display provision = after all deductions
   const displayProvision = provisionAfterEmployee;
   
-  // Total margin = Mobile provision (after employee deduction) + FH-Bonus + Fixed Net + Push Bonus - Hardware
-  const totalProvision = provisionAfterEmployee + fixedNetProvision + pushBonus;
+  // Total margin = Mobile provision + Fixed Net + Push Bonus + Quantity Bonus - Hardware
+  const totalProvision = provisionAfterEmployee + fixedNetProvision + pushBonus + quantityBonus;
   const margin = Math.round((totalProvision - hardwareEkNet) * 100) / 100;
   
   return {
@@ -458,6 +468,8 @@ export function calculateDealerEconomics(
     pushBonus: pushBonus > 0 ? pushBonus : undefined,
     employeeDeduction: employeeDeductionAmount > 0 ? employeeDeductionAmount : undefined,
     displayProvision,
+    quantityBonus: quantityBonus > 0 ? quantityBonus : undefined,
+    quantityBonusTierName: quantityBonus > 0 ? quantityBonusTierName : undefined,
   };
 }
 

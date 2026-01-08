@@ -1,14 +1,21 @@
 import { useMemo } from "react";
-import { TrendingUp, TrendingDown, ShoppingCart, Euro, Sparkles } from "lucide-react";
+import { TrendingUp, TrendingDown, ShoppingCart, Euro, Sparkles, Zap } from "lucide-react";
 import type { CalculationResult, ViewMode } from "../../engine/types";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
 import { cn } from "@/lib/utils";
+import type { QuantityBonusTier } from "@/margenkalkulator/hooks/useQuantityBonus";
 
 interface LiveCalculationBarProps {
   result: CalculationResult;
   viewMode: ViewMode;
   quantity: number;
   quantityBonus?: number;
+  /** Active quantity bonus tier info */
+  quantityBonusTier?: Pick<QuantityBonusTier, "name" | "bonusPerContract" | "minQuantity"> | null;
+  /** Total quantity including basket items */
+  totalQuantity?: number;
+  /** Next tier info for motivation teaser */
+  nextBonusTier?: Pick<QuantityBonusTier, "name" | "bonusPerContract" | "minQuantity"> | null;
   className?: string;
   sticky?: boolean;
   compact?: boolean;
@@ -19,6 +26,9 @@ export function LiveCalculationBar({
   viewMode,
   quantity,
   quantityBonus = 0,
+  quantityBonusTier,
+  totalQuantity,
+  nextBonusTier,
   className,
   sticky = false,
   compact = false,
@@ -63,13 +73,28 @@ export function LiveCalculationBar({
                 <p className="text-[9px] uppercase tracking-wider text-slate-400">Provision</p>
                 <p className="text-lg sm:text-xl font-bold tabular-nums text-emerald-400">+{provision.toFixed(0)} €</p>
               </div>
-              {quantityBonus > 0 && (
+              {quantityBonus > 0 && quantityBonusTier && (
                 <div className="text-center hidden sm:block">
-                  <p className="text-[9px] uppercase tracking-wider text-slate-400 flex items-center gap-1 justify-center">
-                    <Sparkles className="w-3 h-3" />
-                    On-Top
+                  <p className="text-[9px] uppercase tracking-wider text-amber-400 flex items-center gap-1 justify-center">
+                    <Sparkles className="w-3 h-3 animate-pulse" />
+                    {quantityBonusTier.name}
                   </p>
                   <p className="text-lg font-bold tabular-nums text-amber-300">+{quantityBonus.toFixed(0)} €</p>
+                  <p className="text-[8px] text-slate-500">
+                    {quantityBonusTier.bonusPerContract}€ × {totalQuantity ?? quantity}
+                  </p>
+                </div>
+              )}
+              {/* Motivation teaser when close to next tier */}
+              {!quantityBonusTier && nextBonusTier && totalQuantity && (
+                <div className="text-center hidden sm:block">
+                  <p className="text-[9px] uppercase tracking-wider text-amber-400/70 flex items-center gap-1 justify-center">
+                    <Zap className="w-3 h-3" />
+                    Fast da!
+                  </p>
+                  <p className="text-[10px] text-amber-400">
+                    +{nextBonusTier.minQuantity - totalQuantity} bis {nextBonusTier.name}
+                  </p>
                 </div>
               )}
               {hardwareEk > 0 && (

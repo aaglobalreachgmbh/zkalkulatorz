@@ -40,6 +40,10 @@ import { generateBreakdown } from "./breakdown";
 export interface EmployeeCalculationOptions {
   employeeDeduction?: EmployeeDeductionSettings | null;
   pushBonus?: number;
+  /** Quantity bonus total (cross-selling on-top) */
+  quantityBonus?: number;
+  /** Name of the quantity bonus tier */
+  quantityBonusTierName?: string;
 }
 
 // ============================================
@@ -150,7 +154,7 @@ export function calculateOffer(
   };
   
   // Dealer economics (Phase 2: with OMO-Matrix, Fixed Net provision, FH-Partner)
-  // Extended: Now includes employeeDeduction and pushBonus
+  // Extended: Now includes employeeDeduction, pushBonus, and quantityBonus
   const dealer = calculateDealerEconomics(
     tariff, 
     mobile.contractType, 
@@ -165,6 +169,8 @@ export function calculateOffer(
       primeOnAccount: mobile.primeOnAccount ?? true,
       employeeDeduction: employeeOptions?.employeeDeduction ?? null,
       pushBonus: employeeOptions?.pushBonus ?? 0,
+      quantityBonus: employeeOptions?.quantityBonus ?? 0,
+      quantityBonusTierName: employeeOptions?.quantityBonusTierName,
     }
   );
   

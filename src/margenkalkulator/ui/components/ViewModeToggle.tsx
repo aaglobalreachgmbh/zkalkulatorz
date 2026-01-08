@@ -30,6 +30,7 @@ export function ViewModeToggle({ value, onChange, allowCustomerMode = true, disa
           disabled={!allowCustomerMode || disabled}
           className={cn(
             "data-[state=on]:bg-background data-[state=on]:text-foreground px-3 py-1.5 text-sm",
+            "transition-transform duration-100 active:scale-95",
             (!allowCustomerMode || disabled) && "opacity-50 cursor-not-allowed"
           )}
         >
@@ -41,6 +42,7 @@ export function ViewModeToggle({ value, onChange, allowCustomerMode = true, disa
           disabled={disabled}
           className={cn(
             "data-[state=on]:bg-background data-[state=on]:text-foreground px-3 py-1.5 text-sm",
+            "transition-transform duration-100 active:scale-95",
             disabled && "opacity-50 cursor-not-allowed"
           )}
         >

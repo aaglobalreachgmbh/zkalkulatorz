@@ -13,6 +13,7 @@ import { useOfferBasket } from "../../contexts/OfferBasketContext";
 import type { OfferOptionState, CalculationResult } from "../../engine/types";
 import { toast } from "sonner";
 import { useMemo } from "react";
+import { fireConfetti } from "@/lib/confetti";
 
 interface AddToOfferButtonProps {
   option: OfferOptionState;
@@ -53,6 +54,7 @@ export function AddToOfferButton({ option, result, className, onResetForNewTarif
   const handleAdd = () => {
     addItem(tariffName, option, result);
     toast.success(`"${tariffName}" zum Angebot hinzugefügt`);
+    fireConfetti({ duration: 1500 });
   };
 
   if (isAlreadyAdded) {

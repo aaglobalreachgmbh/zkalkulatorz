@@ -2119,6 +2119,7 @@ export type Database = {
           table_name: string
         }[]
       }
+      can_view_economics: { Args: { _user_id: string }; Returns: boolean }
       check_rate_limit: {
         Args: {
           _category: string
@@ -2133,6 +2134,22 @@ export type Database = {
         Returns: number
       }
       cleanup_rate_limits: { Args: never; Returns: number }
+      get_catalog_hardware_safe: {
+        Args: never
+        Returns: {
+          brand: string
+          category: string
+          created_at: string
+          hardware_id: string
+          id: string
+          is_active: boolean
+          model: string
+          sort_order: number
+          tenant_id: string
+          updated_at: string
+        }[]
+      }
+      get_dataset_catalog_safe: { Args: { p_tenant_id: string }; Returns: Json }
       get_effective_provision_split: { Args: never; Returns: number }
       get_my_department_id: { Args: never; Returns: string }
       get_my_distribution_id: { Args: never; Returns: string }

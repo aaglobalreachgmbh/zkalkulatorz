@@ -13,6 +13,7 @@ import { PdfDownloadButton } from "./PdfDownloadButton";
 import { QuickSaveOfferButton } from "./QuickSaveOfferButton";
 import { CreateCalendarEventModal } from "./CreateCalendarEventModal";
 import { MarginBadge } from "./MarginBadge";
+import { AddToOfferButton } from "./AddToOfferButton";
 import { cn } from "@/lib/utils";
 import { getProfitabilityStatus, calculateMarginPercent } from "../../lib/formatters";
 
@@ -21,6 +22,7 @@ interface SummarySidebarProps {
   result: CalculationResult;
   viewMode: ViewMode;
   quantityBonus?: number;
+  onResetForNewTariff?: () => void;
   className?: string;
 }
 
@@ -29,6 +31,7 @@ export function SummarySidebar({
   result, 
   viewMode,
   quantityBonus = 0,
+  onResetForNewTariff,
   className 
 }: SummarySidebarProps) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -235,6 +238,16 @@ export function SummarySidebar({
             
             {/* Action Buttons */}
             <div className="space-y-2 pt-3 border-t border-border">
+              {/* Add to Offer Button - prominent for Cross-Selling */}
+              {hasTariff && (
+                <AddToOfferButton
+                  option={option}
+                  result={result}
+                  onResetForNewTariff={onResetForNewTariff}
+                  className="w-full"
+                />
+              )}
+              
               <QuickSaveOfferButton
                 config={option}
                 result={result}

@@ -390,7 +390,21 @@ export function Wizard() {
   // Super-Admin bypass
   const { isAdmin: isSuperAdmin } = useUserRole();
   
-  if (isSupabaseAuth && !isSuperAdmin && !isLoadingTenantData && tenantDataStatus && !tenantDataStatus.isComplete) {
+  // P0 FIX: Allow fallback to static catalog when tenant data is missing
+  // The static businessCatalog is always available as a fallback
+  const staticCatalogAvailable = true; // Static catalog is bundled in the app
+  
+  // Determine if we're using the fallback catalog
+  const usingFallbackCatalog = isSupabaseAuth 
+    && !isSuperAdmin 
+    && !isLoadingTenantData
+    && tenantDataStatus 
+    && !tenantDataStatus.isComplete;
+  
+  // Only block if no static fallback (never happens, but kept for safety)
+  const shouldBlockWizard = usingFallbackCatalog && !staticCatalogAvailable;
+
+  if (shouldBlockWizard) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="max-w-lg w-full">
@@ -406,27 +420,27 @@ export function Wizard() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm">
-                {tenantDataStatus.hasHardware ? (
+                {tenantDataStatus?.hasHardware ? (
                   <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
                     <span className="text-emerald-600 dark:text-emerald-400 text-xs">✓</span>
                   </div>
                 ) : (
                   <XCircle className="w-5 h-5 text-destructive" />
                 )}
-                <span className={tenantDataStatus.hasHardware ? "text-muted-foreground" : "font-medium"}>
-                  Hardware-Katalog ({tenantDataStatus.hardwareCount} Geräte)
+                <span className={tenantDataStatus?.hasHardware ? "text-muted-foreground" : "font-medium"}>
+                  Hardware-Katalog ({tenantDataStatus?.hardwareCount ?? 0} Geräte)
                 </span>
               </div>
               <div className="flex items-center gap-2 text-sm">
-                {tenantDataStatus.hasProvisions ? (
+                {tenantDataStatus?.hasProvisions ? (
                   <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
                     <span className="text-emerald-600 dark:text-emerald-400 text-xs">✓</span>
                   </div>
                 ) : (
                   <XCircle className="w-5 h-5 text-destructive" />
                 )}
-                <span className={tenantDataStatus.hasProvisions ? "text-muted-foreground" : "font-medium"}>
-                  Provisionstabelle ({tenantDataStatus.provisionCount} Einträge)
+                <span className={tenantDataStatus?.hasProvisions ? "text-muted-foreground" : "font-medium"}>
+                  Provisionstabelle ({tenantDataStatus?.provisionCount ?? 0} Einträge)
                 </span>
               </div>
             </div>
@@ -445,7 +459,8 @@ export function Wizard() {
   return (
     <div className={cn(
       "min-h-screen flex flex-col bg-background",
-      customerSession.isActive && "ring-4 ring-amber-400 ring-inset"
+      customerSession.isActive && "ring-4 ring-amber-400 ring-inset",
+      usingFallbackCatalog && "relative"
     )}>
       {/* Restore Draft Dialog */}
       <WizardRestoreDialog
@@ -480,6 +495,26 @@ export function Wizard() {
           onStart={tour.startTour}
           onDismiss={tour.skipTour}
         />
+      )}
+      
+      {/* Demo Mode Banner - shown when using fallback catalog */}
+      {usingFallbackCatalog && (
+        <div className="bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200 dark:border-amber-800 px-4 py-2">
+          <div className="container mx-auto flex items-center justify-between gap-2 text-sm">
+            <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
+              <Zap className="w-4 h-4" />
+              <span>
+                <strong>Demo-Modus:</strong> Es werden Beispieldaten verwendet.
+              </span>
+            </div>
+            <Link 
+              to="/tenant-admin" 
+              className="text-amber-700 dark:text-amber-300 underline hover:no-underline text-xs"
+            >
+              Eigene Daten hinterlegen →
+            </Link>
+          </div>
+        </div>
       )}
       
       {/* Header - Simplified: No logo/POS/Identity (already in Sidebar) */}

@@ -2,13 +2,14 @@
 // Welcome Widget - Onboarding für neue Testuser
 // ============================================
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sparkles, Palette, Package, FileText, ChevronRight, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useCloudOffers } from "@/margenkalkulator/hooks/useCloudOffers";
+import { useTenantAdmin } from "@/hooks/useTenantAdmin";
 
 const STORAGE_KEY = "welcome_widget_dismissed";
 
@@ -25,6 +26,7 @@ export function WelcomeWidget() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { offers, isLoading } = useCloudOffers();
+  const { isTenantAdmin, isLoading: isRoleLoading } = useTenantAdmin();
   
   const [dismissed, setDismissed] = useState(() => {
     return localStorage.getItem(STORAGE_KEY) === "true";
@@ -34,7 +36,7 @@ export function WelcomeWidget() {
   if (dismissed || !user) return null;
   
   // Don't show while loading
-  if (isLoading) return null;
+  if (isLoading || isRoleLoading) return null;
   
   // Don't show if user already has offers (not a new user)
   if ((offers?.length ?? 0) > 0) return null;
@@ -48,6 +50,7 @@ export function WelcomeWidget() {
     navigate(href);
   };
 
+  // Build steps dynamically - branding only for tenant admins
   const steps: OnboardingStep[] = [
     {
       id: "offer",
@@ -63,13 +66,14 @@ export function WelcomeWidget() {
       icon: Package,
       href: "/customers?action=new",
     },
-    {
+    // Only show branding step for tenant admins
+    ...(isTenantAdmin ? [{
       id: "branding",
       title: "Branding einstellen",
       description: "Logo & Farben für PDFs festlegen",
       icon: Palette,
       href: "/settings/branding",
-    },
+    }] : []),
   ];
 
   return (
@@ -83,7 +87,7 @@ export function WelcomeWidget() {
             <div>
               <CardTitle className="text-lg">Willkommen im MargenKalkulator!</CardTitle>
               <p className="text-sm text-muted-foreground">
-                In 3 Schritten loslegen
+                In {steps.length} Schritten loslegen
               </p>
             </div>
           </div>
@@ -99,7 +103,7 @@ export function WelcomeWidget() {
         </div>
       </CardHeader>
       <CardContent className="pt-2">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className={`grid grid-cols-1 ${steps.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-3`}>
           {steps.map((step, index) => (
             <button
               key={step.id}

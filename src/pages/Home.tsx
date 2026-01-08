@@ -10,6 +10,7 @@ import { RecentActivityFeed } from "@/margenkalkulator/ui/components/RecentActiv
 import { RevenueForecastWidget } from "@/margenkalkulator/ui/components/RevenueForecastWidget";
 import { FollowupReminders } from "@/margenkalkulator/ui/components/FollowupReminders";
 import { WelcomeWidget } from "@/margenkalkulator/ui/components/WelcomeWidget";
+import { DailyDeltaWidget } from "@/margenkalkulator/ui/components/DailyDeltaWidget";
 import { AverageMarginWidget } from "@/margenkalkulator/ui/components/AverageMarginWidget";
 import { ProvisionSourcesWidget } from "@/margenkalkulator/ui/components/ProvisionSourcesWidget";
 import { DiscountUsageWidget } from "@/margenkalkulator/ui/components/DiscountUsageWidget";
@@ -108,6 +109,9 @@ const Home = () => {
               <span className="text-sm font-medium text-foreground">VVL-Liste</span>
             </button>
           </div>
+
+          {/* Daily Delta Widget - Taktgeber für den Arbeitstag */}
+          {user && <DailyDeltaWidget />}
 
           {/* Welcome Widget for new users */}
           {user && <WelcomeWidget />}

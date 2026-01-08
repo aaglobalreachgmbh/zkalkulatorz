@@ -54,6 +54,19 @@ export function DashboardWidgets() {
               <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
               <span className="text-sm text-muted-foreground">Lädt...</span>
             </div>
+          ) : sentOffersLast30Days === 0 ? (
+            <div className="text-center py-1">
+              <div className="text-2xl font-bold text-muted-foreground">0</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Noch keine Angebote gesendet
+              </p>
+              <button 
+                onClick={(e) => { e.stopPropagation(); navigate("/calculator"); }}
+                className="text-primary text-xs font-medium hover:underline mt-1.5"
+              >
+                Jetzt starten →
+              </button>
+            </div>
           ) : (
             <>
               <div className="text-3xl font-bold text-foreground">
@@ -85,6 +98,16 @@ export function DashboardWidgets() {
             <div className="flex items-center gap-2">
               <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
               <span className="text-sm text-muted-foreground">Lädt...</span>
+            </div>
+          ) : monthlyRevenuePotential === 0 ? (
+            <div className="text-center py-1">
+              <div className="text-2xl font-bold text-muted-foreground">€0</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Noch kein Potenzial erfasst
+              </p>
+              <p className="text-xs text-muted-foreground/70 mt-0.5">
+                Erscheint nach Angebotsversand
+              </p>
             </div>
           ) : (
             <>
@@ -119,9 +142,14 @@ export function DashboardWidgets() {
               <span className="text-sm text-muted-foreground">Lädt...</span>
             </div>
           ) : topTariffs.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Noch keine Daten vorhanden
-            </p>
+            <div className="text-center py-1">
+              <p className="text-sm text-muted-foreground">
+                Noch keine Tarife verwendet
+              </p>
+              <p className="text-xs text-muted-foreground/70 mt-1">
+                Daten erscheinen nach ersten Angeboten
+              </p>
+            </div>
           ) : (
             <div className="space-y-2">
               {topTariffs.map((tariff, index) => (

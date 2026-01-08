@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Smartphone, Signal, Wifi, Check, Calendar, Tag, ChevronDown, ChevronUp } from "lucide-react";
+import { Smartphone, Signal, Wifi, Check, Calendar, Tag, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -20,6 +20,7 @@ interface SummarySidebarProps {
   option: OfferOptionState;
   result: CalculationResult;
   viewMode: ViewMode;
+  quantityBonus?: number;
   className?: string;
 }
 
@@ -27,13 +28,14 @@ export function SummarySidebar({
   option, 
   result, 
   viewMode,
+  quantityBonus = 0,
   className 
 }: SummarySidebarProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const visibility = useSensitiveFieldsVisible(viewMode);
   const showDealerEconomics = visibility.showDealerEconomics;
   
-  const margin = result.dealer.margin;
+  const margin = result.dealer.margin + quantityBonus;
   const avgMonthly = result.totals.avgTermNet;
   const provision = result.dealer.provisionBase;
   
@@ -210,6 +212,15 @@ export function SummarySidebar({
                   <span className="text-sm text-muted-foreground/70">Provision</span>
                   <span className="font-medium text-emerald-600">+{provision.toFixed(0)} €</span>
                 </div>
+                {quantityBonus > 0 && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground/70 flex items-center gap-1">
+                      <Sparkles className="w-3 h-3 text-amber-500" />
+                      On-Top Bonus
+                    </span>
+                    <span className="font-medium text-amber-600">+{quantityBonus.toFixed(0)} €</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center">
                   <span className="font-semibold text-sm">Marge</span>
                   <MarginBadge margin={margin} marginPercentage={marginPercent} size="md" />

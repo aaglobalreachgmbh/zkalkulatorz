@@ -56,15 +56,28 @@ export function AddToOfferButton({ option, result, className }: AddToOfferButton
 
   if (isAlreadyAdded) {
     return (
-      <Button
-        variant="outline"
-        size="sm"
-        disabled
-        className={className}
-      >
-        <Check className="w-4 h-4 mr-2 text-emerald-500" />
-        Im Angebot
-      </Button>
+      <div className="flex flex-col gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          disabled
+          className={className}
+        >
+          <Check className="w-4 h-4 mr-2 text-emerald-500" />
+          Im Angebot
+        </Button>
+        <Button
+          variant="link"
+          size="sm"
+          onClick={() => {
+            // Reset wizard state to allow adding another tariff
+            toast.info("Konfiguriere den nächsten Tarif und füge ihn hinzu");
+          }}
+          className="text-primary text-xs"
+        >
+          + Weiteren Tarif hinzufügen
+        </Button>
+      </div>
     );
   }
 

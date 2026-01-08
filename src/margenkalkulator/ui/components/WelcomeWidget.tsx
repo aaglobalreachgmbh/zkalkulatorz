@@ -68,7 +68,7 @@ export function WelcomeWidget() {
       title: "Branding einstellen",
       description: "Logo & Farben für PDFs festlegen",
       icon: Palette,
-      href: "/tenant-admin",
+      href: "/settings/branding",
     },
   ];
 

@@ -5,6 +5,8 @@
  * Läuft täglich als Cron-Job
  * 
  * DSGVO Art. 5(1)(e) - Speicherbegrenzung
+ * 
+ * SECURITY: Requires admin authentication or cron secret
  */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
@@ -38,6 +40,53 @@ function hashEmail(email: string | null): string | null {
   return `${maskedLocal}@${domain}`;
 }
 
+/**
+ * Verify that the caller is an admin user or a cron job
+ */
+async function verifyAdminAccess(
+  req: Request,
+  supabase: any
+): Promise<{ authorized: boolean; error?: string; userId?: string; isCron?: boolean }> {
+  // Check for cron secret header (for scheduled jobs)
+  const cronSecret = req.headers.get("X-Cron-Secret");
+  const expectedCronSecret = Deno.env.get("CRON_SECRET");
+  
+  if (cronSecret && expectedCronSecret && cronSecret === expectedCronSecret) {
+    console.log("[gdpr-cleanup] Authorized via cron secret");
+    return { authorized: true, isCron: true };
+  }
+
+  // Otherwise require admin authentication
+  const authHeader = req.headers.get("Authorization");
+  
+  if (!authHeader) {
+    return { authorized: false, error: "Missing Authorization header" };
+  }
+
+  const token = authHeader.replace("Bearer ", "");
+  
+  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+  
+  if (authError || !user) {
+    return { authorized: false, error: "Invalid or expired token" };
+  }
+
+  // Check for admin role ONLY (not tenant_admin - this is a system-wide operation)
+  const { data: roleData, error: roleError } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id)
+    .eq("role", "admin");
+
+  if (roleError || !roleData || roleData.length === 0) {
+    console.log(`[gdpr-cleanup] Access denied for user ${user.id} - admin role required`);
+    return { authorized: false, error: "System admin access required" };
+  }
+
+  console.log(`[gdpr-cleanup] Admin access granted for user ${user.id}`);
+  return { authorized: true, userId: user.id };
+}
+
 serve(async (req: Request) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -63,6 +112,24 @@ serve(async (req: Request) => {
       },
     });
 
+    // ============================================
+    // SECURITY: Verify admin access before proceeding
+    // ============================================
+    const authResult = await verifyAdminAccess(req, supabaseAdmin);
+    
+    if (!authResult.authorized) {
+      return new Response(
+        JSON.stringify({ error: authResult.error }),
+        { 
+          status: authResult.error === "Missing Authorization header" ? 401 : 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        }
+      );
+    }
+
+    const callerInfo = authResult.isCron ? "cron" : `admin:${authResult.userId}`;
+    console.log(`[gdpr-cleanup] Authorized caller: ${callerInfo}`);
+
     // Calculate cutoff date (2 years ago)
     const cutoffDate = new Date(Date.now() - TWO_YEARS_MS);
     console.log(`[gdpr-cleanup] Cutoff date: ${cutoffDate.toISOString()}`);
@@ -85,6 +152,7 @@ serve(async (req: Request) => {
           success: true,
           message: "No inactive users to process",
           processed: 0,
+          triggered_by: callerInfo,
           duration_ms: Date.now() - startTime,
         }),
         { 
@@ -184,7 +252,7 @@ serve(async (req: Request) => {
           email_hash: hashEmail(user.email),
           deletion_reason: "inactivity_2_years",
           deleted_tables: deletedTables,
-          deletion_requested_by: "system_auto",
+          deletion_requested_by: callerInfo,
         });
 
         deletionResults.push({ userId: user.id, success: true });
@@ -236,6 +304,10 @@ serve(async (req: Request) => {
                     <td style="padding: 8px; border: 1px solid #d1d5db;">2 Jahre Inaktivität (Art. 5(1)(e) DSGVO)</td>
                   </tr>
                   <tr>
+                    <td style="padding: 8px; border: 1px solid #d1d5db;"><strong>Ausgelöst von</strong></td>
+                    <td style="padding: 8px; border: 1px solid #d1d5db;">${callerInfo}</td>
+                  </tr>
+                  <tr style="background: #f3f4f6;">
                     <td style="padding: 8px; border: 1px solid #d1d5db;"><strong>Zeitpunkt</strong></td>
                     <td style="padding: 8px; border: 1px solid #d1d5db;">${new Date().toLocaleString("de-DE")}</td>
                   </tr>
@@ -258,6 +330,7 @@ serve(async (req: Request) => {
       JSON.stringify({
         success: true,
         message: `Processed ${inactiveUsers.length} inactive users`,
+        triggered_by: callerInfo,
         results: {
           total: inactiveUsers.length,
           deleted: successCount,

@@ -13,6 +13,53 @@ interface AuditResult {
   risk_level: string;
 }
 
+/**
+ * Verify that the caller is an admin user or a cron job
+ */
+async function verifyAdminAccess(
+  req: Request,
+  supabase: any
+): Promise<{ authorized: boolean; error?: string; userId?: string; isCron?: boolean }> {
+  // Check for cron secret header (for scheduled jobs)
+  const cronSecret = req.headers.get("X-Cron-Secret");
+  const expectedCronSecret = Deno.env.get("CRON_SECRET");
+  
+  if (cronSecret && expectedCronSecret && cronSecret === expectedCronSecret) {
+    console.log("[daily-security-audit] Authorized via cron secret");
+    return { authorized: true, isCron: true };
+  }
+
+  // Otherwise require admin authentication
+  const authHeader = req.headers.get("Authorization");
+  
+  if (!authHeader) {
+    return { authorized: false, error: "Missing Authorization header" };
+  }
+
+  const token = authHeader.replace("Bearer ", "");
+  
+  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+  
+  if (authError || !user) {
+    return { authorized: false, error: "Invalid or expired token" };
+  }
+
+  // Check for admin role
+  const { data: roleData, error: roleError } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id)
+    .in("role", ["admin", "tenant_admin"]);
+
+  if (roleError || !roleData || roleData.length === 0) {
+    console.log(`[daily-security-audit] Access denied for user ${user.id} - no admin role`);
+    return { authorized: false, error: "Admin access required" };
+  }
+
+  console.log(`[daily-security-audit] Admin access granted for user ${user.id}`);
+  return { authorized: true, userId: user.id };
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -26,6 +73,24 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // ============================================
+    // SECURITY: Verify admin access before proceeding
+    // ============================================
+    const authResult = await verifyAdminAccess(req, supabase);
+    
+    if (!authResult.authorized) {
+      return new Response(
+        JSON.stringify({ error: authResult.error }),
+        { 
+          status: authResult.error === "Missing Authorization header" ? 401 : 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        }
+      );
+    }
+
+    const callerInfo = authResult.isCron ? "cron" : `user:${authResult.userId}`;
+    console.log(`[daily-security-audit] Authorized caller: ${callerInfo}`);
 
     // 1. Run the security audit function
     console.log("[daily-security-audit] Running audit_rls_security()...");
@@ -68,7 +133,8 @@ Deno.serve(async (req) => {
       critical_tables: criticalTables.map(t => t.table_name),
       high_risk_tables: highRiskTables.map(t => t.table_name),
       medium_risk_tables: mediumRiskTables.map(t => t.table_name),
-      full_audit: results
+      full_audit: results,
+      triggered_by: callerInfo
     };
 
     console.log("[daily-security-audit] Report data:", JSON.stringify(reportData.risk_breakdown));
@@ -124,6 +190,7 @@ Deno.serve(async (req) => {
                   <h1>Daily Security Audit Report</h1>
                   <p><strong>Date:</strong> ${today}</p>
                   <p><strong>Security Score:</strong> ${securityScore}/100</p>
+                  <p><strong>Triggered by:</strong> ${callerInfo}</p>
                   
                   <h2>Risk Summary</h2>
                   <ul>
@@ -169,6 +236,7 @@ Deno.serve(async (req) => {
       success: true,
       timestamp: new Date().toISOString(),
       security_score: securityScore,
+      triggered_by: callerInfo,
       summary: {
         total_tables: totalTables,
         critical: criticalTables.length,

@@ -17,6 +17,43 @@ function hashIP(ip: string): string {
   return Math.abs(hash).toString(16).padStart(12, "0");
 }
 
+/**
+ * Verify that the caller is an admin user
+ */
+async function verifyAdminAccess(
+  req: Request,
+  supabase: any
+): Promise<{ authorized: boolean; error?: string; userId?: string }> {
+  const authHeader = req.headers.get("Authorization");
+  
+  if (!authHeader) {
+    return { authorized: false, error: "Missing Authorization header" };
+  }
+
+  const token = authHeader.replace("Bearer ", "");
+  
+  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+  
+  if (authError || !user) {
+    return { authorized: false, error: "Invalid or expired token" };
+  }
+
+  // Check for admin or tenant_admin role
+  const { data: roleData, error: roleError } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id)
+    .in("role", ["admin", "tenant_admin"]);
+
+  if (roleError || !roleData || roleData.length === 0) {
+    console.log(`[threat-intel] Access denied for user ${user.id} - no admin role`);
+    return { authorized: false, error: "Admin access required" };
+  }
+
+  console.log(`[threat-intel] Admin access granted for user ${user.id}`);
+  return { authorized: true, userId: user.id };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -27,9 +64,24 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // ============================================
+    // SECURITY: Verify admin access before proceeding
+    // ============================================
+    const authResult = await verifyAdminAccess(req, supabase);
+    
+    if (!authResult.authorized) {
+      return new Response(
+        JSON.stringify({ error: authResult.error }),
+        { 
+          status: authResult.error === "Missing Authorization header" ? 401 : 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        }
+      );
+    }
+
     const { action } = await req.json().catch(() => ({ action: "sync" }));
 
-    console.log(`Threat Intel action: ${action}`);
+    console.log(`[threat-intel] Action: ${action} by user: ${authResult.userId}`);
 
     if (action === "sync") {
       // Get enabled feeds

@@ -4,6 +4,7 @@ import type { CalculationResult, ViewMode } from "../../engine/types";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
 import { cn } from "@/lib/utils";
 import type { QuantityBonusTier } from "@/margenkalkulator/hooks/useQuantityBonus";
+import { AnimatedCurrency } from "./AnimatedCurrency";
 
 interface LiveCalculationBarProps {
   result: CalculationResult;
@@ -67,11 +68,15 @@ export function LiveCalculationBar({
             <div className="flex items-center gap-4 sm:gap-6">
               <div className="text-center">
                 <p className="text-[9px] uppercase tracking-wider text-slate-400">Ø Monat</p>
-                <p className="text-lg sm:text-xl font-bold tabular-nums">{avgMonthly.toFixed(2)} €</p>
+                <p className="text-lg sm:text-xl font-bold">
+                  <AnimatedCurrency value={avgMonthly} decimals={2} />
+                </p>
               </div>
               <div className="text-center">
                 <p className="text-[9px] uppercase tracking-wider text-slate-400">Provision</p>
-                <p className="text-lg sm:text-xl font-bold tabular-nums text-emerald-400">+{provision.toFixed(0)} €</p>
+                <p className="text-lg sm:text-xl font-bold text-emerald-400">
+                  <AnimatedCurrency value={provision} variant="positive" decimals={0} />
+                </p>
               </div>
               {quantityBonus > 0 && quantityBonusTier && (
                 <div className="text-center hidden sm:block">
@@ -79,7 +84,9 @@ export function LiveCalculationBar({
                     <Sparkles className="w-3 h-3 animate-pulse" />
                     {quantityBonusTier.name}
                   </p>
-                  <p className="text-lg font-bold tabular-nums text-amber-300">+{quantityBonus.toFixed(0)} €</p>
+                  <p className="text-lg font-bold text-amber-300">
+                    <AnimatedCurrency value={quantityBonus} variant="positive" decimals={0} />
+                  </p>
                   <p className="text-[8px] text-slate-500">
                     {quantityBonusTier.bonusPerContract}€ × {totalQuantity ?? quantity}
                   </p>
@@ -100,7 +107,9 @@ export function LiveCalculationBar({
               {hardwareEk > 0 && (
                 <div className="text-center hidden sm:block">
                   <p className="text-[9px] uppercase tracking-wider text-slate-400">HW-EK</p>
-                  <p className="text-lg font-bold tabular-nums text-amber-400">-{hardwareEk.toFixed(0)} €</p>
+                  <p className="text-lg font-bold text-amber-400">
+                    <AnimatedCurrency value={hardwareEk} variant="negative" decimals={0} />
+                  </p>
                 </div>
               )}
             </div>
@@ -112,8 +121,8 @@ export function LiveCalculationBar({
                 ) : (
                   <TrendingDown className={cn("w-3.5 h-3.5", marginColor)} />
                 )}
-                <p className={cn("text-lg sm:text-xl font-bold tabular-nums", marginColor)}>
-                  {margin >= 0 ? "+" : ""}{margin.toFixed(0)} €
+                <p className={cn("text-lg sm:text-xl font-bold", marginColor)}>
+                  <AnimatedCurrency value={margin} variant="margin" decimals={0} />
                 </p>
               </div>
             </div>
@@ -135,7 +144,9 @@ export function LiveCalculationBar({
               <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Ø Monat</p>
               <div className="flex items-center justify-center gap-1">
                 <Euro className="w-3.5 h-3.5 text-primary" />
-                <p className="text-lg sm:text-xl font-bold tabular-nums text-foreground">{avgMonthly.toFixed(2)}</p>
+                <p className="text-lg sm:text-xl font-bold text-foreground">
+                  <AnimatedCurrency value={avgMonthly} decimals={2} className="[&]:inline" />
+                </p>
               </div>
             </div>
             {quantity > 1 && (
@@ -150,7 +161,9 @@ export function LiveCalculationBar({
           </div>
           <div className="text-center">
             <p className="text-[9px] uppercase tracking-wider text-muted-foreground">24 Mon. Gesamt</p>
-            <p className="text-lg sm:text-xl font-bold tabular-nums text-foreground">{total24M.toFixed(0)} €</p>
+            <p className="text-lg sm:text-xl font-bold text-foreground">
+              <AnimatedCurrency value={total24M} decimals={0} />
+            </p>
           </div>
         </div>
       </div>
@@ -170,8 +183,8 @@ export function LiveCalculationBar({
             <p className="text-[10px] uppercase tracking-wider text-slate-400 mb-1">
               Ø Monat
             </p>
-            <p className="text-2xl font-bold tabular-nums">
-              {avgMonthly.toFixed(2)} €
+            <p className="text-2xl font-bold">
+              <AnimatedCurrency value={avgMonthly} decimals={2} />
             </p>
           </div>
           
@@ -180,8 +193,8 @@ export function LiveCalculationBar({
             <p className="text-[10px] uppercase tracking-wider text-slate-400 mb-1">
               Provision
             </p>
-            <p className="text-2xl font-bold tabular-nums text-emerald-400">
-              +{provision.toFixed(0)} €
+            <p className="text-2xl font-bold text-emerald-400">
+              <AnimatedCurrency value={provision} variant="positive" decimals={0} />
             </p>
           </div>
           
@@ -190,8 +203,8 @@ export function LiveCalculationBar({
             <p className="text-[10px] uppercase tracking-wider text-slate-400 mb-1">
               HW-EK
             </p>
-            <p className="text-2xl font-bold tabular-nums text-amber-400">
-              -{hardwareEk.toFixed(0)} €
+            <p className="text-2xl font-bold text-amber-400">
+              <AnimatedCurrency value={hardwareEk} variant="negative" decimals={0} />
             </p>
           </div>
           
@@ -209,8 +222,8 @@ export function LiveCalculationBar({
               ) : (
                 <TrendingDown className={cn("w-4 h-4", marginColor)} />
               )}
-              <p className={cn("text-2xl font-bold tabular-nums", marginColor)}>
-                {margin >= 0 ? "+" : ""}{margin.toFixed(0)} €
+              <p className={cn("text-2xl font-bold", marginColor)}>
+                <AnimatedCurrency value={margin} variant="margin" decimals={0} />
               </p>
             </div>
           </div>
@@ -233,8 +246,8 @@ export function LiveCalculationBar({
           </p>
           <div className="flex items-center justify-center gap-1.5">
             <Euro className="w-4 h-4 text-primary" />
-            <p className="text-2xl font-bold tabular-nums text-foreground">
-              {avgMonthly.toFixed(2)}
+            <p className="text-2xl font-bold text-foreground">
+              <AnimatedCurrency value={avgMonthly} decimals={2} />
             </p>
           </div>
         </div>
@@ -257,8 +270,8 @@ export function LiveCalculationBar({
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
             24 Monate Gesamt
           </p>
-          <p className="text-2xl font-bold tabular-nums text-foreground">
-            {total24M.toFixed(0)} €
+          <p className="text-2xl font-bold text-foreground">
+            <AnimatedCurrency value={total24M} decimals={0} />
           </p>
         </div>
       </div>

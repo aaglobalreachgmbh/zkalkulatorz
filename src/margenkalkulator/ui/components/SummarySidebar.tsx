@@ -14,6 +14,7 @@ import { QuickSaveOfferButton } from "./QuickSaveOfferButton";
 import { CreateCalendarEventModal } from "./CreateCalendarEventModal";
 import { MarginBadge } from "./MarginBadge";
 import { AddToOfferButton } from "./AddToOfferButton";
+import { AnimatedCurrency } from "./AnimatedCurrency";
 import { cn } from "@/lib/utils";
 import { getProfitabilityStatus, calculateMarginPercent } from "../../lib/formatters";
 
@@ -80,7 +81,9 @@ export function SummarySidebar({
             <div className="flex items-center gap-3">
               {/* Quick KPIs in collapsed state */}
               <div className="text-right">
-                <p className="text-lg font-bold">{avgMonthly.toFixed(2)} €</p>
+                <p className="text-lg font-bold">
+                  <AnimatedCurrency value={avgMonthly} decimals={2} />
+                </p>
                 <p className="text-xs text-muted-foreground/70">Ø/Monat</p>
               </div>
               {isExpanded ? (
@@ -115,7 +118,7 @@ export function SummarySidebar({
                   </p>
                   {showDealerEconomics && hasHardware && (
                     <p className="text-xs text-muted-foreground/70">
-                      EK: {option.hardware.ekNet.toFixed(2)} €
+                      EK: <AnimatedCurrency value={option.hardware.ekNet} decimals={2} className="text-xs" />
                     </p>
                   )}
                 </div>
@@ -213,7 +216,9 @@ export function SummarySidebar({
               <div className="space-y-2 pt-3 border-t border-border">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground/70">Provision</span>
-                  <span className="font-medium text-emerald-600">+{provision.toFixed(0)} €</span>
+                  <span className="font-medium text-emerald-600">
+                    <AnimatedCurrency value={provision} variant="positive" decimals={0} />
+                  </span>
                 </div>
                 {quantityBonus > 0 && (
                   <div className="flex justify-between items-center">
@@ -221,7 +226,9 @@ export function SummarySidebar({
                       <Sparkles className="w-3 h-3 text-amber-500" />
                       On-Top Bonus
                     </span>
-                    <span className="font-medium text-amber-600">+{quantityBonus.toFixed(0)} €</span>
+                    <span className="font-medium text-amber-600">
+                      <AnimatedCurrency value={quantityBonus} variant="positive" decimals={0} />
+                    </span>
                   </div>
                 )}
                 <div className="flex justify-between items-center">

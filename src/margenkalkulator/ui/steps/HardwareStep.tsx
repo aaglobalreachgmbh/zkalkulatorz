@@ -308,10 +308,12 @@ export function HardwareStep({ value, onChange, onHardwareSelected, datasetVersi
         </div>
       )}
 
-      {/* Hardware Grid - Responsive: 2 cols on mobile, 3-4 on larger screens */}
+      {/* Hardware Grid - Responsive: 2 cols on mobile, 3-5 on larger screens */}
       <div className={cn(
-        "grid gap-3 sm:gap-4",
-        isPOSMode && isMobile ? "grid-cols-2" : "grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+        "grid gap-2 sm:gap-3 lg:gap-4",
+        isPOSMode && isMobile 
+          ? "grid-cols-2" 
+          : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
       )}>
         {/* SIM Only Card */}
         {showSimOnly && simOnlyItem && (

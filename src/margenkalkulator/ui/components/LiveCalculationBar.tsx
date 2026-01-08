@@ -64,8 +64,8 @@ export function LiveCalculationBar({
           sticky && "border-t border-slate-700 shadow-lg",
           className
         )}>
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4 sm:gap-6">
+          <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-4">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 lg:gap-6">
               <div className="text-center">
                 <p className="text-[9px] uppercase tracking-wider text-slate-400">Ø Monat</p>
                 <p className="text-lg sm:text-xl font-bold">
@@ -138,8 +138,8 @@ export function LiveCalculationBar({
         sticky && "shadow-lg",
         className
       )}>
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4 sm:gap-6">
+        <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-4">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4 lg:gap-6">
             <div className="text-center">
               <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Ø Monat</p>
               <div className="flex items-center justify-center gap-1">

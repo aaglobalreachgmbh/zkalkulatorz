@@ -6,6 +6,7 @@ import { useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useIdentity } from "@/contexts/IdentityContext";
 import { useCloudLicense } from "@/hooks/useCloudLicense";
+import { useUserRole } from "@/hooks/useUserRole";
 import { loadLicense, isFeatureEnabled as isFeatureEnabledLocal, type LicenseFeatures } from "@/lib/license";
 
 export interface UseFeatureReturn {
@@ -52,13 +53,20 @@ const FEATURE_REQUIRED_PLANS: Partial<Record<keyof LicenseFeatures, string>> = {
 
 /**
  * Hybrid hook - uses Cloud for authenticated users, localStorage for guests
+ * Admins get ALL features enabled automatically
  */
 export function useFeature(featureKey: keyof LicenseFeatures): UseFeatureReturn {
   const { user } = useAuth();
   const { identity } = useIdentity();
   const cloudLicense = useCloudLicense();
+  const { isAdmin, isTenantAdmin } = useUserRole();
   
   return useMemo(() => {
+    // Admin-Bypass: Admins und Tenant-Admins bekommen ALLE Features
+    if (isAdmin || isTenantAdmin) {
+      return { enabled: true };
+    }
+    
     let enabled: boolean;
     
     if (user && cloudLicense.license) {
@@ -84,21 +92,29 @@ export function useFeature(featureKey: keyof LicenseFeatures): UseFeatureReturn 
         : `${featureName} ist in Ihrer Lizenz nicht aktiviert.`,
       requiredPlan,
     };
-  }, [user, cloudLicense.license, identity.tenantId, featureKey]);
+  }, [user, cloudLicense.license, identity.tenantId, featureKey, isAdmin, isTenantAdmin]);
 }
 
 /**
  * Hook to check multiple features at once
+ * Admins get ALL features enabled automatically
  */
 export function useFeatures(featureKeys: (keyof LicenseFeatures)[]): Record<keyof LicenseFeatures, UseFeatureReturn> {
   const { user } = useAuth();
   const { identity } = useIdentity();
   const cloudLicense = useCloudLicense();
+  const { isAdmin, isTenantAdmin } = useUserRole();
   
   return useMemo(() => {
     const result: Partial<Record<keyof LicenseFeatures, UseFeatureReturn>> = {};
     
     for (const key of featureKeys) {
+      // Admin-Bypass: Admins und Tenant-Admins bekommen ALLE Features
+      if (isAdmin || isTenantAdmin) {
+        result[key] = { enabled: true };
+        continue;
+      }
+      
       let enabled: boolean;
       
       if (user && cloudLicense.license) {
@@ -123,7 +139,7 @@ export function useFeatures(featureKeys: (keyof LicenseFeatures)[]): Record<keyo
     }
     
     return result as Record<keyof LicenseFeatures, UseFeatureReturn>;
-  }, [user, cloudLicense.license, identity.tenantId, featureKeys]);
+  }, [user, cloudLicense.license, identity.tenantId, featureKeys, isAdmin, isTenantAdmin]);
 }
 
 /**

@@ -531,8 +531,8 @@ export function Wizard() {
       )}
 
       {/* Main Content with Sidebar */}
-      <main className="flex-1 container mx-auto py-4 sm:py-6 px-3 sm:px-4 lg:px-6 max-w-screen-2xl flex flex-col min-h-0">
-        <div className="flex gap-6 flex-1 min-h-0">
+      <main className="flex-1 container mx-auto py-4 sm:py-6 px-3 sm:px-4 lg:px-6 max-w-[1600px] flex flex-col min-h-0 overflow-x-hidden">
+        <div className="flex gap-4 lg:gap-6 flex-1 min-h-0">
           {/* Accordion Sections with sticky footer */}
           <div className={cn(
             "flex-1 min-w-0 flex flex-col",
@@ -726,7 +726,7 @@ export function Wizard() {
 
           {/* Summary + Basket Sidebar - Desktop only */}
           {!isMobile && (
-            <aside className="w-72 xl:w-80 flex-shrink-0 hidden lg:block space-y-4">
+            <aside className="w-64 xl:w-72 flex-shrink-0 hidden lg:block space-y-4">
               <SummarySidebar
                 option={option1}
                 result={result1}

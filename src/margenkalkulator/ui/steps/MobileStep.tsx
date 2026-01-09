@@ -16,6 +16,8 @@ import {
   type TariffFamily,
   type MobileTariff,
   type ViewMode,
+  type OfferOptionState,
+  type CalculationResult,
   listMobileTariffs,
   listPromos,
   listSubVariants,
@@ -26,6 +28,7 @@ import { Signal, Tag, AlertTriangle, Minus, Plus, Ban, Settings2, ChevronDown } 
 import { OMORateSelectorEnhanced, type OMORate } from "../components/OMORateSelectorEnhanced";
 import { SubVariantSelector } from "../components/SubVariantSelector";
 import { FHPartnerToggle } from "../components/FHPartnerToggle";
+import { InlineTariffConfig } from "../components/InlineTariffConfig";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
 import { useEmployeeSettings, isTariffBlocked } from "@/margenkalkulator/hooks/useEmployeeSettings";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
@@ -37,7 +40,13 @@ interface MobileStepProps {
   fixedNetEnabled?: boolean;
   hardwareName?: string;
   viewMode?: ViewMode;
-  /** Callback after promo/discount selection (for workflow) */
+  /** Full option state for inline calculation */
+  fullOption?: OfferOptionState;
+  /** Pre-calculated result for inline display */
+  result?: CalculationResult;
+  /** Quantity bonus from parent */
+  quantityBonus?: number;
+  /** Callback after config complete or added to offer */
   onConfigComplete?: () => void;
 }
 
@@ -62,6 +71,9 @@ export function MobileStep({
   fixedNetEnabled = false,
   hardwareName = "",
   viewMode = "dealer",
+  fullOption,
+  result,
+  quantityBonus = 0,
   onConfigComplete,
 }: MobileStepProps) {
   // Use centralized visibility hook instead of direct viewMode check
@@ -296,6 +308,22 @@ export function MobileStep({
           })}
         </div>
 
+        {/* INLINE TARIFF CONFIG - Discounts + Price + Add directly at tariff */}
+        {selectedTariff && fullOption && result && (
+          <InlineTariffConfig
+            tariff={selectedTariff}
+            mobileState={value}
+            promos={promos}
+            fullOption={fullOption}
+            result={result}
+            viewMode={viewMode}
+            quantityBonus={quantityBonus}
+            onPromoChange={(promoId) => updateField("promoId", promoId)}
+            onOmoChange={(rate) => updateField("omoRate", rate)}
+            onAddedToOffer={onConfigComplete}
+          />
+        )}
+
         {/* Empty State */}
         {filteredTariffs.length === 0 && (
           <div className="text-center py-12 text-muted-foreground">
@@ -419,72 +447,7 @@ export function MobileStep({
         </div>
       )}
 
-      {/* Promos Section */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Tag className="w-5 h-5 text-muted-foreground" />
-          <h3 className="text-lg font-semibold">Aktionen & Promos</h3>
-        </div>
-
-        {/* Warnung wenn OMO aktiv */}
-        {(value.omoRate ?? 0) > 0 && (
-          <Alert className="border-amber-500 bg-amber-50 dark:bg-amber-950/30">
-            <AlertTriangle className="h-4 w-4 text-amber-600" />
-            <AlertDescription className="text-amber-800 dark:text-amber-200">
-              OMO-Rate ({value.omoRate}%) ist aktiv. Aktionen sind deaktiviert.
-            </AlertDescription>
-          </Alert>
-        )}
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-          {promos.map((promo) => {
-            const isSelected = value.promoId === promo.id;
-            const isDisabledByOmo = (value.omoRate ?? 0) > 0 && promo.id !== "NONE";
-            
-            return (
-              <button
-                key={promo.id}
-                onClick={() => {
-                  if (isDisabledByOmo) return;
-                  // Promo gewählt → OMO auf 0 zurücksetzen
-                  if (promo.id !== "NONE" && (value.omoRate ?? 0) > 0) {
-                    onChange({ ...value, promoId: promo.id, omoRate: 0 });
-                  } else {
-                    updateField("promoId", promo.id);
-                  }
-                }}
-                disabled={isDisabledByOmo}
-                className={`
-                  p-4 rounded-lg border text-left transition-all
-                  ${isDisabledByOmo 
-                    ? "opacity-50 cursor-not-allowed border-border bg-muted"
-                    : isSelected 
-                      ? "border-primary bg-primary/5" 
-                      : "border-border bg-card hover:border-primary/50"
-                  }
-                `}
-              >
-                <div className="flex items-start gap-3">
-                  <div className={`w-4 h-4 mt-0.5 rounded-full border-2 flex items-center justify-center ${
-                    isSelected ? "border-primary" : "border-muted-foreground"
-                  }`}>
-                    {isSelected && <div className="w-2 h-2 rounded-full bg-primary" />}
-                  </div>
-                  <div>
-                    <p className="font-medium text-foreground">{promo.label}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {promo.id === "NONE" && "Standardpreise"}
-                      {promo.type === "INTRO_PRICE" && `${promo.durationMonths} Monate Basispreisbefreiung`}
-                      {promo.type === "PCT_OFF_BASE" && `${(promo.value * 100).toFixed(0)}% Rabatt für ${promo.durationMonths} Monate`}
-                      {promo.type === "ABS_OFF_BASE" && `−${promo.amountNetPerMonth}€/mtl. für ${promo.durationMonths} Monate`}
-                    </p>
-                  </div>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      {/* NOTE: Promos Section removed - now integrated in InlineTariffConfig above */}
     </div>
   );
 }

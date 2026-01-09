@@ -475,12 +475,15 @@ const handler = async (req: Request): Promise<Response> => {
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-
-    console.log(`[send-offer-email] Sending to ${body.recipientEmail}, attachment size: ${pdfBuffer.length} bytes`);
+    // Get configured sender email or fallback to Resend test domain
+    const senderEmailAddress = Deno.env.get("SENDER_EMAIL_ADDRESS") || "onboarding@resend.dev";
+    const senderFromLine = `${companyName} <${senderEmailAddress}>`;
+    
+    console.log(`[send-offer-email] Sending from ${senderFromLine} to ${body.recipientEmail}, attachment size: ${pdfBuffer.length} bytes`);
 
     // Send email via Resend
     const emailResponse = await resend.emails.send({
-      from: `${companyName} <onboarding@resend.dev>`,
+      from: senderFromLine,
       to: [body.recipientEmail],
       subject: body.subject,
       html: htmlContent,

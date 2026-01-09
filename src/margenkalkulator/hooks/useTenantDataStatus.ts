@@ -1,6 +1,7 @@
 // ============================================
 // Tenant Data Status Hook
 // Checks if tenant has required data (hardware, provisions)
+// FIXED: Always call useQuery to comply with React Hooks rules
 // ============================================
 
 import { useQuery } from "@tanstack/react-query";
@@ -15,23 +16,23 @@ export interface TenantDataStatus {
   provisionCount: number;
 }
 
+// Default complete status for bypass cases
+const COMPLETE_STATUS: TenantDataStatus = {
+  hasHardware: true,
+  hasProvisions: true,
+  isComplete: true,
+  hardwareCount: 0,
+  provisionCount: 0,
+};
+
 export function useTenantDataStatus() {
   const { identity, isSupabaseAuth } = useIdentity();
 
-  // Super-Admin bypass - immer "complete" für Plattform-Admins
-  if (identity.role === "admin") {
-    return {
-      status: {
-        hasHardware: true,
-        hasProvisions: true,
-        isComplete: true,
-        hardwareCount: 0,
-        provisionCount: 0,
-      },
-      isLoading: false,
-    };
-  }
+  // Determine if query should actually run
+  const isAdmin = identity.role === "admin";
+  const shouldQuery = !!identity.tenantId && isSupabaseAuth && !isAdmin;
 
+  // ALWAYS call the hook (React Hooks rules), but conditionally enable
   const query = useQuery({
     queryKey: ["tenant-data-status", identity.tenantId],
     queryFn: async (): Promise<TenantDataStatus> => {
@@ -58,19 +59,30 @@ export function useTenantDataStatus() {
       };
     },
     staleTime: 60_000, // 1 minute cache
-    enabled: !!identity.tenantId && isSupabaseAuth,
+    enabled: shouldQuery, // Only run when conditions are met
   });
 
-  // For non-Supabase auth (mock identities), always return complete
+  // Super-Admin bypass - return AFTER hook is called
+  if (isAdmin) {
+    return {
+      status: COMPLETE_STATUS,
+      isLoading: false,
+    };
+  }
+
+  // Non-Supabase auth (mock identities) - return AFTER hook is called
   if (!isSupabaseAuth) {
     return {
-      status: {
-        hasHardware: true,
-        hasProvisions: true,
-        isComplete: true,
-        hardwareCount: 0,
-        provisionCount: 0,
-      },
+      status: COMPLETE_STATUS,
+      isLoading: false,
+    };
+  }
+
+  // Query failed or errored - fallback to complete to avoid blocking
+  if (query.isError) {
+    console.warn("[useTenantDataStatus] Query failed, using fallback:", query.error);
+    return {
+      status: COMPLETE_STATUS,
       isLoading: false,
     };
   }

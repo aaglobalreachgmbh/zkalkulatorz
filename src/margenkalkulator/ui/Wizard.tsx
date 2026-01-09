@@ -390,22 +390,21 @@ export function Wizard() {
   // Super-Admin bypass
   const { isAdmin: isSuperAdmin } = useUserRole();
   
-  // P0 FIX: Allow fallback to static catalog when tenant data is missing
-  // The static businessCatalog is always available as a fallback
-  const staticCatalogAvailable = true; // Static catalog is bundled in the app
-  
-  // Check for force demo flag from localStorage
+  // ============================================
+  // WIZARD BLOCKING LOGIC - FIXED: Never block
+  // Static catalog is always available as fallback
+  // ============================================
+  const staticCatalogAvailable = true;
   const forceDemoMode = localStorage.getItem("force_demo_catalog") === "true";
   
-  // Determine if we're using the fallback catalog
+  // CRITICAL FIX: NEVER block the wizard - static catalog always works
+  const shouldBlockWizard = false;
+  
+  // Determine if we're using fallback (for banner display only)
   const usingFallbackCatalog = isSupabaseAuth 
     && !isSuperAdmin 
     && !isLoadingTenantData
-    && tenantDataStatus 
-    && !tenantDataStatus.isComplete;
-  
-  // Only block if no static fallback AND demo mode not forced (never happens, but kept for safety)
-  const shouldBlockWizard = usingFallbackCatalog && !staticCatalogAvailable && !forceDemoMode;
+    && (!tenantDataStatus || !tenantDataStatus.isComplete);
   
   // DEBUG: Log wizard state for troubleshooting
   useEffect(() => {

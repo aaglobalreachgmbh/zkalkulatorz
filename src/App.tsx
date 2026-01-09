@@ -111,10 +111,47 @@ class RouteErrorBoundary extends Component<{ children: ReactNode }, RouteErrorBo
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("[RouteErrorBoundary] Caught error:", error, errorInfo);
+    
+    // CRITICAL: If error is auth-related, clear local storage and redirect to login
+    const errorMessage = error?.message?.toLowerCase() || "";
+    if (errorMessage.includes("refresh_token") || 
+        errorMessage.includes("session") ||
+        errorMessage.includes("token") ||
+        errorMessage.includes("auth")) {
+      console.warn("[RouteErrorBoundary] Auth-related error detected, clearing session");
+      try {
+        // Clear all Supabase-related storage
+        Object.keys(localStorage).forEach(key => {
+          if (key.includes('supabase') || key.includes('sb-')) {
+            localStorage.removeItem(key);
+          }
+        });
+      } catch (e) {
+        console.error("Failed to clear storage:", e);
+      }
+    }
   }
+
+  handleLogout = () => {
+    // Clear all Supabase-related storage and redirect to login
+    try {
+      Object.keys(localStorage).forEach(key => {
+        if (key.includes('supabase') || key.includes('sb-')) {
+          localStorage.removeItem(key);
+        }
+      });
+    } catch (e) {
+      console.error("Failed to clear storage:", e);
+    }
+    window.location.href = "/auth";
+  };
 
   render() {
     if (this.state.hasError) {
+      const isAuthError = this.state.error?.message?.toLowerCase().includes("auth") ||
+                          this.state.error?.message?.toLowerCase().includes("token") ||
+                          this.state.error?.message?.toLowerCase().includes("session");
+      
       return (
         <div className="min-h-screen flex items-center justify-center p-4 bg-background">
           <div className="max-w-md w-full text-center space-y-4">
@@ -123,12 +160,25 @@ class RouteErrorBoundary extends Component<{ children: ReactNode }, RouteErrorBo
             </div>
             <h2 className="text-xl font-semibold">Seite konnte nicht geladen werden</h2>
             <p className="text-muted-foreground text-sm">
-              Ein Fehler ist aufgetreten. Bitte laden Sie die Seite neu.
+              {isAuthError 
+                ? "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an."
+                : "Ein Fehler ist aufgetreten. Bitte laden Sie die Seite neu."}
             </p>
-            <Button onClick={() => window.location.reload()} className="gap-2">
-              <RefreshCw className="w-4 h-4" />
-              Seite neu laden
-            </Button>
+            <div className="flex flex-col gap-2">
+              {isAuthError ? (
+                <Button onClick={this.handleLogout} className="gap-2">
+                  Neu anmelden
+                </Button>
+              ) : (
+                <Button onClick={() => window.location.reload()} className="gap-2">
+                  <RefreshCw className="w-4 h-4" />
+                  Seite neu laden
+                </Button>
+              )}
+              <Button variant="outline" onClick={this.handleLogout} className="gap-2 text-sm">
+                Abmelden und neu starten
+              </Button>
+            </div>
           </div>
         </div>
       );

@@ -85,17 +85,34 @@ export function useCloudLicense() {
   const { data: license, isLoading, error } = useQuery({
     queryKey: [...QUERY_KEY, identity.tenantId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("licenses")
-        .select("*")
-        .eq("tenant_id", identity.tenantId)
-        .maybeSingle();
+      try {
+        const { data, error } = await supabase
+          .from("licenses")
+          .select("*")
+          .eq("tenant_id", identity.tenantId)
+          .maybeSingle();
 
-      if (error) throw error;
-      if (!data) return null;
-      return rowToLicense(data);
+        // CRITICAL: Don't throw on auth errors - session is being cleaned up
+        if (error) {
+          const errorMsg = error.message?.toLowerCase() || "";
+          if (errorMsg.includes("refresh_token") || 
+              errorMsg.includes("jwt") ||
+              error.code === "PGRST301") {
+            console.warn("[useCloudLicense] Auth error, returning null:", error.message);
+            return null;
+          }
+          console.error("[useCloudLicense] Query error:", error);
+          return null; // Graceful degradation - don't throw
+        }
+        if (!data) return null;
+        return rowToLicense(data);
+      } catch (err) {
+        console.error("[useCloudLicense] Unexpected error:", err);
+        return null; // NEVER throw - prevents Error Boundary crashes
+      }
     },
     enabled: !!user,
+    retry: false, // No retry on auth problems
   });
 
   // Update license mutation (Admin only)

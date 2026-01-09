@@ -47,6 +47,7 @@ const Admin = lazy(() => import("./pages/Admin"));
 const AdminEmployees = lazy(() => import("./pages/AdminEmployees"));
 const AdminPushProvisions = lazy(() => import("./pages/AdminPushProvisions"));
 const AdminQuantityBonus = lazy(() => import("./pages/AdminQuantityBonus"));
+const SharedOfferPage = lazy(() => import("./pages/SharedOfferPage"));
 const AdminUsers = lazy(() => import("./pages/AdminUsers"));
 const License = lazy(() => import("./pages/License"));
 const SecurityReport = lazy(() => import("./pages/SecurityReport"));
@@ -409,6 +410,9 @@ const App = () => (
                       <Route path="/profile" element={<Navigate to="/" replace />} />
                       <Route path="/reports" element={<Navigate to="/reporting" replace />} />
                       <Route path="/wizard" element={<Navigate to="/calculator" replace />} />
+                      
+                      {/* Public shared offer view (no auth required) */}
+                      <Route path="/share/offer/:offerId" element={<SharedOfferPage />} />
                       
                       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                       <Route path="*" element={<NotFound />} />

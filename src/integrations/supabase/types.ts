@@ -1162,12 +1162,19 @@ export type Database = {
         Row: {
           created_at: string
           customer_id: string | null
+          gdpr_consent_given: boolean | null
+          gdpr_consent_timestamp: string | null
           id: string
+          ip_hash: string | null
           message: string | null
           offer_data: Json | null
           recipient_email: string
           recipient_name: string | null
           resend_message_id: string | null
+          sender_employee_email: string | null
+          sender_employee_name: string | null
+          sender_employee_phone: string | null
+          shared_offer_id: string | null
           status: string
           subject: string
           tenant_id: string
@@ -1177,12 +1184,19 @@ export type Database = {
         Insert: {
           created_at?: string
           customer_id?: string | null
+          gdpr_consent_given?: boolean | null
+          gdpr_consent_timestamp?: string | null
           id?: string
+          ip_hash?: string | null
           message?: string | null
           offer_data?: Json | null
           recipient_email: string
           recipient_name?: string | null
           resend_message_id?: string | null
+          sender_employee_email?: string | null
+          sender_employee_name?: string | null
+          sender_employee_phone?: string | null
+          shared_offer_id?: string | null
           status?: string
           subject: string
           tenant_id?: string
@@ -1192,12 +1206,19 @@ export type Database = {
         Update: {
           created_at?: string
           customer_id?: string | null
+          gdpr_consent_given?: boolean | null
+          gdpr_consent_timestamp?: string | null
           id?: string
+          ip_hash?: string | null
           message?: string | null
           offer_data?: Json | null
           recipient_email?: string
           recipient_name?: string | null
           resend_message_id?: string | null
+          sender_employee_email?: string | null
+          sender_employee_name?: string | null
+          sender_employee_phone?: string | null
+          shared_offer_id?: string | null
           status?: string
           subject?: string
           tenant_id?: string
@@ -1210,6 +1231,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offer_emails_shared_offer_id_fkey"
+            columns: ["shared_offer_id"]
+            isOneToOne: false
+            referencedRelation: "shared_offers"
             referencedColumns: ["id"]
           },
         ]
@@ -1586,6 +1614,63 @@ export type Database = {
           risk_level?: string
           user_agent_hash?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      shared_offers: {
+        Row: {
+          access_token: string
+          created_at: string | null
+          created_by: string | null
+          customer_email: string | null
+          customer_name: string | null
+          expires_at: string
+          gdpr_notice_accepted: boolean | null
+          id: string
+          is_revoked: boolean | null
+          last_viewed_at: string | null
+          offer_data: Json
+          offer_id: string
+          tenant_id: string
+          updated_at: string | null
+          valid_days: number
+          view_count: number | null
+        }
+        Insert: {
+          access_token: string
+          created_at?: string | null
+          created_by?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          expires_at: string
+          gdpr_notice_accepted?: boolean | null
+          id?: string
+          is_revoked?: boolean | null
+          last_viewed_at?: string | null
+          offer_data: Json
+          offer_id: string
+          tenant_id?: string
+          updated_at?: string | null
+          valid_days?: number
+          view_count?: number | null
+        }
+        Update: {
+          access_token?: string
+          created_at?: string | null
+          created_by?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          expires_at?: string
+          gdpr_notice_accepted?: boolean | null
+          id?: string
+          is_revoked?: boolean | null
+          last_viewed_at?: string | null
+          offer_data?: Json
+          offer_id?: string
+          tenant_id?: string
+          updated_at?: string | null
+          valid_days?: number
+          view_count?: number | null
         }
         Relationships: []
       }
@@ -2129,6 +2214,10 @@ export type Database = {
         }
         Returns: number
       }
+      cleanup_expired_shared_offers: {
+        Args: { retention_days?: number }
+        Returns: number
+      }
       cleanup_old_activities: {
         Args: { retention_days?: number }
         Returns: number
@@ -2163,6 +2252,18 @@ export type Database = {
           window_start: string
         }[]
       }
+      get_shared_offer_public: {
+        Args: { p_access_token: string; p_offer_id: string }
+        Returns: {
+          customer_name: string
+          expires_at: string
+          id: string
+          offer_data: Json
+          offer_id: string
+          valid_days: number
+          view_count: number
+        }[]
+      }
       get_team_role: {
         Args: { _team_id: string; _user_id: string }
         Returns: string
@@ -2172,6 +2273,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      increment_shared_offer_views: {
+        Args: { p_access_token: string; p_offer_id: string }
         Returns: boolean
       }
       is_distribution_member: {

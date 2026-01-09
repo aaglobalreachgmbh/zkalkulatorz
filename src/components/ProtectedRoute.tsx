@@ -73,9 +73,19 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
-  // Redirect to pending-approval if not approved
-  if (!isApproved) {
+  // CRITICAL: Only redirect if approval status is definitively FALSE
+  // null = still loading or not yet checked, don't redirect
+  // true = approved, continue
+  // false = explicitly pending approval
+  if (isApproved === false) {
+    console.log("[ProtectedRoute] User explicitly not approved, redirecting to pending-approval");
     return <Navigate to="/pending-approval" replace />;
+  }
+
+  // If isApproved is null but approvalLoading is false, default to showing content
+  // This handles edge cases where approval check didn't return a definitive result
+  if (isApproved === null && !approvalLoading) {
+    console.log("[ProtectedRoute] Approval status null but not loading - allowing access");
   }
 
   return <>{children}</>;

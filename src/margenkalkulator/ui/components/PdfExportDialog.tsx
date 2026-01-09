@@ -39,6 +39,10 @@ interface PdfExportDialogProps {
   viewMode?: ViewMode;
   customer?: OfferCustomerInfo;
   children?: React.ReactNode;
+  /** Controlled open state */
+  open?: boolean;
+  /** Controlled open state setter */
+  onOpenChange?: (open: boolean) => void;
 }
 
 // SECURITY: Maximum PDF generation time
@@ -67,9 +71,16 @@ export function PdfExportDialog({
   viewMode = "customer",
   customer,
   children,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
 }: PdfExportDialogProps) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  
+  // Controlled or uncontrolled mode
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = isControlled ? controlledOnOpenChange! : setInternalOpen;
   
   // Export options state
   const [showCoverPage, setShowCoverPage] = useState(true);

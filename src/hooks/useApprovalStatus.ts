@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 
 interface UseApprovalStatusResult {
-  isApproved: boolean;
+  isApproved: boolean | null;
   isLoading: boolean;
   error: Error | null;
   refetch: () => void;
@@ -11,13 +11,15 @@ interface UseApprovalStatusResult {
 
 export function useApprovalStatus(): UseApprovalStatusResult {
   const { user } = useAuth();
-  const [isApproved, setIsApproved] = useState(false);
+  // Start with null to indicate "not yet checked" - prevents premature redirects
+  const [isApproved, setIsApproved] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   const checkApproval = useCallback(async () => {
     if (!user) {
-      setIsApproved(false);
+      // No user = not approved, but also not loading
+      setIsApproved(null);
       setIsLoading(false);
       return;
     }
@@ -35,26 +37,37 @@ export function useApprovalStatus(): UseApprovalStatusResult {
       if (queryError) {
         console.error("[useApprovalStatus] Error fetching approval status:", queryError);
         setError(queryError);
-        // Default to approved on error to prevent lockout of existing users
+        // CRITICAL: Default to approved on error to prevent lockout of existing users
+        console.log("[useApprovalStatus] Defaulting to approved due to error");
         setIsApproved(true);
         return;
       }
 
-      // If no profile found, user is new and not approved
+      // If no profile found, user might be new - check if trigger created one
       if (!data) {
         console.log("[useApprovalStatus] No profile found for user:", user.id);
-        setIsApproved(false);
+        // For existing users without profile (edge case), default to approved
+        // New users will have profile created by trigger with is_approved=true
+        setIsApproved(true);
         return;
       }
 
-      // is_approved can be null (not yet reviewed) or boolean
-      const approved = data.is_approved === true;
-      console.log("[useApprovalStatus] User approval status:", { userId: user.id, approved });
+      // is_approved can be null (legacy) or boolean
+      // null = legacy user, treat as approved
+      // true = explicitly approved
+      // false = explicitly pending
+      const approved = data.is_approved !== false;
+      console.log("[useApprovalStatus] User approval status:", { 
+        userId: user.id, 
+        dbValue: data.is_approved, 
+        approved 
+      });
       setIsApproved(approved);
     } catch (err) {
       console.error("[useApprovalStatus] Unexpected error:", err);
       setError(err instanceof Error ? err : new Error("Unknown error"));
-      // Default to approved on error to prevent lockout
+      // CRITICAL: Default to approved on error to prevent lockout
+      console.log("[useApprovalStatus] Defaulting to approved due to exception");
       setIsApproved(true);
     } finally {
       setIsLoading(false);

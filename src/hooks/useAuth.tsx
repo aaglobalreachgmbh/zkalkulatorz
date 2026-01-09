@@ -74,6 +74,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setRequiresMFA(false);
       setMfaStatus(null);
       setIsLoading(false);
+      
+      // CRITICAL: Redirect to auth page to avoid stuck states
+      if (window.location.pathname !== '/auth' && window.location.pathname !== '/pending-approval') {
+        console.log("[useAuth] Redirecting to /auth after clearing corrupt session");
+        window.location.href = '/auth';
+      }
     };
     
     // Set up auth state listener FIRST

@@ -15,8 +15,9 @@
 import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Smartphone, Signal, Plus, Check, ShoppingCart, TrendingDown } from "lucide-react";
+import { Smartphone, Signal, Plus, Check, ShoppingCart, TrendingDown, FileText } from "lucide-react";
 import { AnimatedCurrency } from "./AnimatedCurrency";
+import { PdfExportDialog } from "./PdfExportDialog";
 import { useOfferBasket } from "../../contexts/OfferBasketContext";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
 import { toast } from "sonner";
@@ -149,8 +150,21 @@ export function StickyPriceBar({
           )}
         </div>
         
-        {/* Right: Action */}
-        <div className="shrink-0">
+        {/* Right: Actions */}
+        <div className="shrink-0 flex items-center gap-2">
+          {/* PDF Export Button */}
+          <PdfExportDialog
+            option={fullOption}
+            result={result}
+            viewMode={viewMode}
+          >
+            <Button variant="outline" size="sm" className="gap-1.5">
+              <FileText className="w-4 h-4" />
+              <span className="hidden md:inline">PDF</span>
+            </Button>
+          </PdfExportDialog>
+          
+          {/* Add to Offer Button */}
           {isAlreadyAdded ? (
             <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-200 py-1.5 px-3">
               <Check className="w-4 h-4 mr-1.5" />

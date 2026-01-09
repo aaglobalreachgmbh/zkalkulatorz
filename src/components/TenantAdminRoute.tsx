@@ -1,14 +1,14 @@
 // ============================================
 // Tenant Admin Route Protection
 // Only accessible for tenant_admin or admin roles
-// FIXED: Race condition with sessionStable state
+// FIXED: Race condition + timeout with retry button
 // ============================================
 
 import { useState, useEffect } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useTenantAdmin } from "@/hooks/useTenantAdmin";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, ShieldAlert } from "lucide-react";
+import { Loader2, ShieldAlert, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface TenantAdminRouteProps {
@@ -20,66 +20,74 @@ export function TenantAdminRoute({ children }: TenantAdminRouteProps) {
   const { isTenantAdmin, isLoading: adminLoading } = useTenantAdmin();
   const location = useLocation();
   
-  // CRITICAL FIX: Wait for session to stabilize after auth loading completes
+  // Wait for session to stabilize after auth loading completes
   const [sessionStable, setSessionStable] = useState(false);
+  const [showRetry, setShowRetry] = useState(false);
 
   useEffect(() => {
     if (!authLoading) {
-      console.log("[TenantAdminRoute] Auth loaded, waiting for session to stabilize...");
       // Short delay to catch race condition where user is set slightly after isLoading
       const timer = setTimeout(() => {
-        console.log("[TenantAdminRoute] Session stabilized, user:", !!user, user?.id);
         setSessionStable(true);
       }, 150);
       return () => clearTimeout(timer);
     } else {
-      // Reset when auth starts loading again
       setSessionStable(false);
     }
   }, [authLoading, user]);
 
-  // DEBUG: Log all state for diagnosis
-  console.log("[TenantAdminRoute] State:", {
-    authLoading,
-    adminLoading,
-    sessionStable,
-    hasUser: !!user,
-    userId: user?.id,
-    isTenantAdmin,
-    pathname: location.pathname
-  });
+  // Show retry button after 5 seconds of loading
+  useEffect(() => {
+    if (authLoading || adminLoading || !sessionStable) {
+      const timer = setTimeout(() => setShowRetry(true), 5000);
+      return () => clearTimeout(timer);
+    }
+    setShowRetry(false);
+  }, [authLoading, adminLoading, sessionStable]);
 
   // 1. FIRST: Wait until auth is COMPLETELY loaded AND session is stable
   if (authLoading || !sessionStable) {
-    console.log("[TenantAdminRoute] Waiting for auth/session stability");
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        <span className="ml-2 text-muted-foreground">Authentifizierung wird geprüft...</span>
+      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+        <div className="flex items-center">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <span className="ml-2 text-muted-foreground">Authentifizierung wird geprüft...</span>
+        </div>
+        {showRetry && (
+          <Button variant="outline" size="sm" onClick={() => window.location.reload()} className="gap-2">
+            <RefreshCw className="w-4 h-4" />
+            Neu laden
+          </Button>
+        )}
       </div>
     );
   }
 
   // 2. THEN: Check if user exists (auth is definitely loaded and stable now)
   if (!user) {
-    console.log("[TenantAdminRoute] No user after stable check - redirecting to /auth");
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
   // 3. THEN: Wait until roles are loaded
   if (adminLoading) {
-    console.log("[TenantAdminRoute] Roles still loading - showing loader");
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        <span className="ml-2 text-muted-foreground">Berechtigungen werden geprüft...</span>
+      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+        <div className="flex items-center">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <span className="ml-2 text-muted-foreground">Berechtigungen werden geprüft...</span>
+        </div>
+        {showRetry && (
+          <Button variant="outline" size="sm" onClick={() => window.location.reload()} className="gap-2">
+            <RefreshCw className="w-4 h-4" />
+            Neu laden
+          </Button>
+        )}
       </div>
     );
   }
 
   // 4. FINALLY: Check permission (both auth and roles are loaded)
   if (!isTenantAdmin) {
-    console.log("[TenantAdminRoute] User is not tenant admin - access denied");
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4">
         <ShieldAlert className="h-16 w-16 text-destructive" />
@@ -98,6 +106,5 @@ export function TenantAdminRoute({ children }: TenantAdminRouteProps) {
     );
   }
 
-  console.log("[TenantAdminRoute] Access granted - rendering children");
   return <>{children}</>;
 }

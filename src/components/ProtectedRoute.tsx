@@ -1,7 +1,9 @@
+import { useState, useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useApprovalStatus } from "@/hooks/useApprovalStatus";
-import { Loader2 } from "lucide-react";
+import { Loader2, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -10,6 +12,16 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, isLoading: authLoading } = useAuth();
   const { isApproved, isLoading: approvalLoading } = useApprovalStatus();
+  const [showRetry, setShowRetry] = useState(false);
+  
+  // Show retry button after 5 seconds of loading
+  useEffect(() => {
+    if (authLoading || approvalLoading) {
+      const timer = setTimeout(() => setShowRetry(true), 5000);
+      return () => clearTimeout(timer);
+    }
+    setShowRetry(false);
+  }, [authLoading, approvalLoading]);
 
   // Show loading while checking auth status
   if (authLoading) {
@@ -18,6 +30,12 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
           <p className="text-muted-foreground">Authentifizierung wird geprüft...</p>
+          {showRetry && (
+            <Button variant="outline" size="sm" onClick={() => window.location.reload()} className="gap-2">
+              <RefreshCw className="w-4 h-4" />
+              Neu laden
+            </Button>
+          )}
         </div>
       </div>
     );
@@ -35,6 +53,12 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
           <p className="text-muted-foreground">Berechtigungen werden geprüft...</p>
+          {showRetry && (
+            <Button variant="outline" size="sm" onClick={() => window.location.reload()} className="gap-2">
+              <RefreshCw className="w-4 h-4" />
+              Neu laden
+            </Button>
+          )}
         </div>
       </div>
     );

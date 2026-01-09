@@ -42,6 +42,7 @@ import { SummarySidebar } from "./components/SummarySidebar";
 import { OfferBasketPanel } from "./components/OfferBasketPanel";
 import { GigaKombiBanner } from "./components/GigaKombiBanner";
 import { SavingsBreakdown } from "./components/SavingsBreakdown";
+import { StickyPriceBar } from "./components/StickyPriceBar";
 import { QuickStartDialog, shouldShowQuickStart } from "./components/QuickStartDialog";
 import { useHistory } from "../hooks/useHistory";
 import { useToast } from "@/hooks/use-toast";

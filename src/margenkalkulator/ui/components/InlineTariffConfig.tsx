@@ -1,40 +1,49 @@
 // ============================================
-// Inline Tariff Config - Discounts + Add directly at tariff
+// Inline Tariff Config - Complete tariff configuration
 // ============================================
 //
 // Appears below selected tariff with:
+// - SUB-Variant (Geräteklasse) selection INLINE
 // - TARIFF-SPECIFIC discount/promo selection as toggle buttons
 // - Live price update with animation
 // - Full price breakdown with period transparency
+// - Expert options (OMO, FH-Partner) as collapsible
 // - "Add to Offer" CTA
 //
 // Uses getPromosForTariff() to show ONLY applicable promos
 // ============================================
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Label } from "@/components/ui/label";
 import { 
   Plus, Check, Tag, Sparkles, TrendingDown, AlertTriangle, 
-  ChevronDown, Calendar, Info, Euro
+  ChevronDown, Calendar, Info, Euro, Smartphone, Settings2, Percent
 } from "lucide-react";
 import { AnimatedCurrency } from "./AnimatedCurrency";
+import { SubVariantSelector } from "./SubVariantSelector";
+import { OMORateSelectorEnhanced, type OMORate } from "./OMORateSelectorEnhanced";
+import { FHPartnerToggle } from "./FHPartnerToggle";
 import { useOfferBasket } from "../../contexts/OfferBasketContext";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { toast } from "sonner";
 import { fireConfetti } from "@/lib/confetti";
 import { cn } from "@/lib/utils";
 import { getPromosForTariff } from "../../engine/calculators/promo";
 import { formatCurrency } from "../../lib/formatters";
+import { listSubVariants } from "../../engine/catalogResolver";
 import type { 
   MobileTariff, 
   Promo, 
   MobileState, 
   OfferOptionState, 
   CalculationResult,
-  ViewMode 
+  ViewMode,
+  SubVariant
 } from "../../engine/types";
 
 interface InlineTariffConfigProps {
@@ -50,8 +59,12 @@ interface InlineTariffConfigProps {
   quantityBonus?: number;
   /** Reference date for promo validity check */
   asOfISO?: string;
+  /** Hardware name for SUB auto-inference */
+  hardwareName?: string;
   onPromoChange: (promoId: string) => void;
+  onSubVariantChange?: (subVariantId: string) => void;
   onOmoChange?: (omoRate: number) => void;
+  onFHPartnerChange?: (checked: boolean) => void;
   onAddedToOffer?: () => void;
 }
 
@@ -64,26 +77,43 @@ export function InlineTariffConfig({
   viewMode,
   quantityBonus = 0,
   asOfISO,
+  hardwareName = "",
   onPromoChange,
+  onSubVariantChange,
   onOmoChange,
+  onFHPartnerChange,
   onAddedToOffer,
 }: InlineTariffConfigProps) {
   const { addItem, items } = useOfferBasket();
   const visibility = useSensitiveFieldsVisible(viewMode);
   const showDealerEconomics = visibility.showDealerEconomics;
+  const showOmoSelector = visibility.showOmoSelector;
+  const showFhPartnerToggle = visibility.showFhPartnerToggle;
+  
+  const [expertOptionsOpen, setExpertOptionsOpen] = useState(false);
+  
+  // Get SUB variants for this tariff
+  const subVariants = useMemo(() => {
+    return listSubVariants(fullOption.meta.datasetVersion);
+  }, [fullOption.meta.datasetVersion]);
   
   // Filter promos for THIS SPECIFIC tariff
   const tariffPromos = useMemo(() => {
     return getPromosForTariff(allPromos, tariff.id, asOfISO);
   }, [allPromos, tariff.id, asOfISO]);
   
-  // Calculate prices
+  // Get selected SUB variant for price display
+  const selectedSubVariant = subVariants.find(v => v.id === mobileState.subVariantId);
+  const subVariantAddOn = selectedSubVariant?.monthlyAddNet || 0;
+  
+  // Calculate prices including SUB
   const basePrice = tariff.baseNet;
+  const effectiveBasePrice = basePrice + subVariantAddOn;
   const avgMonthly = result.totals.avgTermNet;
   const margin = result.dealer.margin + quantityBonus;
-  const hasDiscount = avgMonthly < basePrice;
-  const savingsPerMonth = basePrice - avgMonthly;
-  const savingsPercent = basePrice > 0 ? (savingsPerMonth / basePrice) * 100 : 0;
+  const hasDiscount = avgMonthly < effectiveBasePrice;
+  const savingsPerMonth = effectiveBasePrice - avgMonthly;
+  const savingsPercent = effectiveBasePrice > 0 ? (savingsPerMonth / effectiveBasePrice) * 100 : 0;
   
   // OMO is active?
   const omoActive = (mobileState.omoRate ?? 0) > 0;
@@ -92,50 +122,54 @@ export function InlineTariffConfig({
   const selectedPromo = tariffPromos.find(p => p.id === mobileState.promoId);
   const hasSelectedPromo = mobileState.promoId && mobileState.promoId !== "NONE";
   
+  // Has expert options available?
+  const hasExpertOptions = (showOmoSelector || showFhPartnerToggle) && tariff.family !== "teamdeal";
+  
   // Calculate period breakdown for transparency
   const periods = useMemo(() => {
+    const termMonths = fullOption.meta.termMonths || 24;
+    
     if (!selectedPromo || selectedPromo.id === "NONE" || selectedPromo.type === "NONE") {
-      return [{ from: 1, to: 24, price: basePrice, label: "Vertragslaufzeit", isBase: true }];
+      return [{ from: 1, to: termMonths, price: effectiveBasePrice, label: "Vertragslaufzeit", isBase: true }];
     }
     
     const promoMonths = selectedPromo.durationMonths || 0;
-    const termMonths = fullOption.meta.termMonths || 24;
     
     if (selectedPromo.type === "INTRO_PRICE") {
-      const introPrice = selectedPromo.value;
+      const introPrice = selectedPromo.value + subVariantAddOn;
       if (promoMonths >= termMonths) {
         return [{ from: 1, to: termMonths, price: introPrice, label: "Aktionszeitraum", isBase: false }];
       }
       return [
         { from: 1, to: promoMonths, price: introPrice, label: "Aktionszeitraum", isBase: false },
-        { from: promoMonths + 1, to: termMonths, price: basePrice, label: "Regulärer Preis", isBase: true },
+        { from: promoMonths + 1, to: termMonths, price: effectiveBasePrice, label: "Regulärer Preis", isBase: true },
       ];
     }
     
     if (selectedPromo.type === "PCT_OFF_BASE") {
-      const discountedPrice = basePrice * (1 - selectedPromo.value);
+      const discountedPrice = basePrice * (1 - selectedPromo.value) + subVariantAddOn;
       if (promoMonths >= termMonths) {
         return [{ from: 1, to: termMonths, price: discountedPrice, label: "Aktionspreis", isBase: false }];
       }
       return [
         { from: 1, to: promoMonths, price: discountedPrice, label: "Aktionspreis", isBase: false },
-        { from: promoMonths + 1, to: termMonths, price: basePrice, label: "Regulärer Preis", isBase: true },
+        { from: promoMonths + 1, to: termMonths, price: effectiveBasePrice, label: "Regulärer Preis", isBase: true },
       ];
     }
     
     if (selectedPromo.type === "ABS_OFF_BASE") {
-      const discountedPrice = basePrice - (selectedPromo.amountNetPerMonth || 0);
+      const discountedPrice = basePrice - (selectedPromo.amountNetPerMonth || 0) + subVariantAddOn;
       if (promoMonths >= termMonths) {
         return [{ from: 1, to: termMonths, price: discountedPrice, label: "Aktionspreis", isBase: false }];
       }
       return [
         { from: 1, to: promoMonths, price: discountedPrice, label: "Aktionspreis", isBase: false },
-        { from: promoMonths + 1, to: termMonths, price: basePrice, label: "Regulärer Preis", isBase: true },
+        { from: promoMonths + 1, to: termMonths, price: effectiveBasePrice, label: "Regulärer Preis", isBase: true },
       ];
     }
     
-    return [{ from: 1, to: 24, price: basePrice, label: "Vertragslaufzeit", isBase: true }];
-  }, [selectedPromo, basePrice, fullOption.meta.termMonths]);
+    return [{ from: 1, to: 24, price: effectiveBasePrice, label: "Vertragslaufzeit", isBase: true }];
+  }, [selectedPromo, basePrice, subVariantAddOn, effectiveBasePrice, fullOption.meta.termMonths]);
   
   // Generate tariff name for basket
   const tariffName = useMemo(() => {
@@ -197,6 +231,31 @@ export function InlineTariffConfig({
             OMO-Rate ({mobileState.omoRate}%) aktiv – Rabatte deaktiviert
           </AlertDescription>
         </Alert>
+      )}
+      
+      {/* SUB Variant Selection - INLINE */}
+      {onSubVariantChange && tariff.family !== "teamdeal" && (
+        <div className="mb-5 p-4 bg-card rounded-lg border border-border">
+          <div className="flex items-center gap-2 mb-3">
+            <Smartphone className="w-4 h-4 text-muted-foreground" />
+            <Label className="text-sm font-medium text-muted-foreground">
+              Geräteklasse (SUB)
+            </Label>
+            <HelpTooltip term="sub" />
+          </div>
+          <SubVariantSelector
+            value={mobileState.subVariantId}
+            onChange={onSubVariantChange}
+            hardwareName={hardwareName}
+            allowedSubVariants={tariff.allowedSubVariants}
+            subVariants={subVariants}
+          />
+          {subVariantAddOn > 0 && (
+            <p className="text-xs text-muted-foreground mt-2">
+              → Aufpreis: +{subVariantAddOn}€/mtl. = Effektiv: {formatCurrency(effectiveBasePrice)}/mtl.
+            </p>
+          )}
+        </div>
       )}
       
       {/* Discount Toggle Buttons */}
@@ -321,6 +380,64 @@ export function InlineTariffConfig({
                   </span>
                 </div>
               ))}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      )}
+      
+      {/* Expert Options (OMO, FH-Partner) - Collapsible */}
+      {hasExpertOptions && (
+        <Collapsible open={expertOptionsOpen} onOpenChange={setExpertOptionsOpen} className="mb-4">
+          <CollapsibleTrigger asChild>
+            <Button 
+              variant="ghost" 
+              className="w-full justify-between p-3 h-auto bg-muted/50 hover:bg-muted text-sm"
+            >
+              <div className="flex items-center gap-2">
+                <Settings2 className="w-4 h-4" />
+                <span className="font-medium">Experten-Optionen</span>
+                <span className="text-xs text-muted-foreground">(OMO, FH-Partner)</span>
+              </div>
+              <ChevronDown className={cn("w-4 h-4 transition-transform duration-200", expertOptionsOpen && "rotate-180")} />
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pt-3">
+            <div className="grid gap-4 p-4 bg-card rounded-lg border border-border">
+              {showOmoSelector && onOmoChange && (
+                <div className="space-y-2">
+                  <Label className="text-sm text-muted-foreground flex items-center gap-1.5">
+                    <Percent className="w-4 h-4" />
+                    OMO-Rate
+                    <HelpTooltip term="omo" />
+                  </Label>
+                  <OMORateSelectorEnhanced
+                    value={(mobileState.omoRate ?? 0) as OMORate}
+                    onChange={(rate) => {
+                      // OMO und Promo sind nicht kombinierbar
+                      if (rate > 0 && mobileState.promoId !== "NONE") {
+                        onOmoChange(rate);
+                        onPromoChange("NONE");
+                      } else {
+                        onOmoChange(rate);
+                      }
+                    }}
+                    tariff={tariff}
+                    contractType={mobileState.contractType}
+                  />
+                  {(mobileState.omoRate ?? 0) > 0 && (
+                    <p className="text-xs text-amber-600">
+                      ⚠️ OMO-Rabatte und Aktionen sind nicht kombinierbar
+                    </p>
+                  )}
+                </div>
+              )}
+              {showFhPartnerToggle && onFHPartnerChange && (
+                <FHPartnerToggle
+                  checked={mobileState.isFHPartner ?? false}
+                  onChange={onFHPartnerChange}
+                  fhPartnerProvision={tariff.fhPartnerNet}
+                />
+              )}
             </div>
           </CollapsibleContent>
         </Collapsible>

@@ -188,14 +188,62 @@ class RouteErrorBoundary extends Component<{ children: ReactNode }, RouteErrorBo
   }
 }
 
-// QueryClient with optimized caching
+// CRITICAL: Pro-active session cleanup on app load
+function clearCorruptSessionOnLoad() {
+  try {
+    const hasSessionData = Object.keys(localStorage).some(
+      key => key.includes('supabase') || key.includes('sb-')
+    );
+    
+    if (hasSessionData) {
+      const lastClear = localStorage.getItem('__session_clear_attempt');
+      const now = Date.now();
+      
+      // If cleared within last 3 seconds but we're still here, session is corrupt
+      if (lastClear && (now - parseInt(lastClear)) < 3000) {
+        console.warn("[App] Detected rapid reload, clearing all session data");
+        Object.keys(localStorage).forEach(key => {
+          if (key.includes('supabase') || key.includes('sb-')) {
+            localStorage.removeItem(key);
+          }
+        });
+        localStorage.removeItem('__session_clear_attempt');
+        window.location.href = "/auth";
+        return;
+      }
+      
+      localStorage.setItem('__session_clear_attempt', now.toString());
+      // Clean up marker after 5 seconds
+      setTimeout(() => localStorage.removeItem('__session_clear_attempt'), 5000);
+    }
+  } catch (e) {
+    console.error("[App] Error in clearCorruptSessionOnLoad:", e);
+  }
+}
+
+// Run on module load
+clearCorruptSessionOnLoad();
+
+// QueryClient with optimized caching and error handling
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5, // 5 minutes - data stays fresh
-      gcTime: 1000 * 60 * 30, // 30 minutes - cache retention (formerly cacheTime)
-      retry: 2,
-      refetchOnWindowFocus: false, // Reduce unnecessary refetches
+      gcTime: 1000 * 60 * 30, // 30 minutes - cache retention
+      retry: (failureCount, error) => {
+        // CRITICAL: No retry on auth-related errors
+        const errorMsg = (error as Error)?.message?.toLowerCase() || "";
+        if (errorMsg.includes("refresh_token") || 
+            errorMsg.includes("jwt") ||
+            errorMsg.includes("unauthorized") ||
+            errorMsg.includes("session")) {
+          return false;
+        }
+        return failureCount < 2;
+      },
+      refetchOnWindowFocus: false,
+      // CRITICAL: Don't propagate errors to Error Boundary
+      throwOnError: false,
     },
   },
 });

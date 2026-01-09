@@ -55,16 +55,33 @@ export function useCloudSeats() {
   const { data: seats = [], isLoading, error } = useQuery({
     queryKey: [...QUERY_KEY, identity.tenantId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("seat_assignments")
-        .select("*")
-        .eq("tenant_id", identity.tenantId)
-        .order("assigned_at", { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from("seat_assignments")
+          .select("*")
+          .eq("tenant_id", identity.tenantId)
+          .order("assigned_at", { ascending: false });
 
-      if (error) throw error;
-      return (data || []).map(rowToSeatAssignment);
+        // CRITICAL: Don't throw on auth errors - session is being cleaned up
+        if (error) {
+          const errorMsg = error.message?.toLowerCase() || "";
+          if (errorMsg.includes("refresh_token") || 
+              errorMsg.includes("jwt") ||
+              error.code === "PGRST301") {
+            console.warn("[useCloudSeats] Auth error, returning []:", error.message);
+            return [];
+          }
+          console.error("[useCloudSeats] Query error:", error);
+          return []; // Graceful degradation - don't throw
+        }
+        return (data || []).map(rowToSeatAssignment);
+      } catch (err) {
+        console.error("[useCloudSeats] Unexpected error:", err);
+        return []; // NEVER throw - prevents Error Boundary crashes
+      }
     },
     enabled: !!user,
+    retry: false, // No retry on auth problems
   });
 
   // Assign seat mutation

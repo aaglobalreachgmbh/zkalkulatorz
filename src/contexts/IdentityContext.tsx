@@ -172,15 +172,21 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
   const identity = useMemo((): IdentityState => {
     // Priority 1: Supabase authenticated user
     if (user && !authLoading && !roleLoading) {
-      const appRole = mapSupabaseToAppRole(supabaseRole);
-      return {
-        userId: user.id,
-        displayName: user.user_metadata?.display_name || user.email?.split("@")[0] || "User",
-        role: appRole,
-        // Prefer JWT claims over user_metadata for tenant/department
-        departmentId: jwtClaims.departmentId || user.user_metadata?.department_id || "dept_default",
-        tenantId: jwtClaims.tenantId || user.user_metadata?.tenant_id || "tenant_default",
-      };
+      try {
+        const appRole = mapSupabaseToAppRole(supabaseRole);
+        return {
+          userId: user.id,
+          displayName: user.user_metadata?.display_name || user.email?.split("@")[0] || "User",
+          role: appRole,
+          // Prefer JWT claims over user_metadata for tenant/department
+          departmentId: jwtClaims.departmentId || user.user_metadata?.department_id || "dept_default",
+          tenantId: jwtClaims.tenantId || user.user_metadata?.tenant_id || "tenant_default",
+        };
+      } catch (err) {
+        console.error("[IdentityContext] Error computing identity:", err);
+        // Fallback to default on any error to prevent crashes
+        return DEFAULT_IDENTITY;
+      }
     }
 
     // Priority 2: Mock identity (for development/offline)

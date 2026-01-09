@@ -37,6 +37,7 @@ import { ActionMenu } from "./components/ActionMenu";
 import { ViewModeToggle } from "./components/ViewModeToggle";
 import { CustomerSessionToggle } from "./components/CustomerSessionToggle";
 import { LiveCalculationBar, getStepSummary } from "./components/LiveCalculationBar";
+import { FloatingActionBar } from "./components/FloatingActionBar";
 import { SummarySidebar } from "./components/SummarySidebar";
 import { OfferBasketPanel } from "./components/OfferBasketPanel";
 import { GigaKombiBanner } from "./components/GigaKombiBanner";
@@ -582,11 +583,10 @@ export function Wizard() {
                       value={activeState.hardware}
                       onChange={(hardware) => setActiveState({ ...activeState, hardware })}
                       onHardwareSelected={() => {
-                        // Auto-collapse hardware and open mobile
-                        setOpenSections(prev => {
-                          const without = prev.filter(s => s !== "hardware");
-                          return without.includes("mobile") ? without : [...without, "mobile"];
-                        });
+                        // Open mobile section if not already open - NO auto-collapse
+                        if (!openSections.includes("mobile")) {
+                          setOpenSections(prev => [...prev, "mobile"]);
+                        }
                       }}
                       viewMode={effectiveViewMode}
                     />
@@ -631,12 +631,11 @@ export function Wizard() {
                       datasetVersion={activeState.meta.datasetVersion}
                       fixedNetEnabled={activeState.fixedNet.enabled}
                       viewMode={effectiveViewMode}
-                      onTariffSelected={() => {
-                        // Auto-collapse mobile and open fixedNet
-                        setOpenSections(prev => {
-                          const without = prev.filter(s => s !== "mobile");
-                          return without.includes("fixedNet") ? without : [...without, "fixedNet"];
-                        });
+                      onConfigComplete={() => {
+                        // Only open fixedNet section if not already open - NO auto-collapse
+                        if (fixedNetModuleEnabled && !openSections.includes("fixedNet")) {
+                          setOpenSections(prev => [...prev, "fixedNet"]);
+                        }
                       }}
                     />
                   </AccordionContent>
@@ -678,8 +677,7 @@ export function Wizard() {
                         onChange={(fixedNet) => setActiveState({ ...activeState, fixedNet })}
                         datasetVersion={activeState.meta.datasetVersion}
                         onFixedNetEnabled={() => {
-                          // Auto-collapse fixedNet
-                          setOpenSections(prev => prev.filter(s => s !== "fixedNet"));
+                          // NO auto-collapse - user can collapse manually if needed
                         }}
                       />
                     </AccordionContent>
@@ -709,32 +707,28 @@ export function Wizard() {
               )}
             </div>
 
-            {/* Sticky Live Calculation Bar - Desktop */}
+            {/* Sticky Floating Action Bar - Desktop */}
             {!isMobile && (
               <div className="sticky bottom-0 z-30 -mx-3 sm:-mx-4 lg:-mx-6 mt-auto">
-                <LiveCalculationBar
+                <FloatingActionBar
+                  option={option1}
                   result={activeResult}
                   viewMode={effectiveViewMode}
-                  quantity={activeState.mobile.quantity}
                   quantityBonus={quantityBonusForOption1}
-                  quantityBonusTier={activeQuantityBonusTier}
-                  totalQuantity={totalQuantityForBonus}
-                  nextBonusTier={nextQuantityBonusTier}
-                  sticky
-                  compact
+                  onResetForNewTariff={resetForNewTariff}
                 />
               </div>
             )}
           </div>
 
-          {/* Summary + Basket Sidebar - Desktop only */}
+          {/* Summary + Basket Sidebar - Desktop only (Overview only, no actions) */}
           {!isMobile && (
             <aside className="w-64 xl:w-72 flex-shrink-0 hidden lg:block space-y-4">
               <SummarySidebar
                 option={option1}
                 result={result1}
                 viewMode={effectiveViewMode}
-                onResetForNewTariff={resetForNewTariff}
+                quantityBonus={quantityBonusForOption1}
               />
               <OfferBasketPanel />
             </aside>
@@ -742,19 +736,15 @@ export function Wizard() {
         </div>
       </main>
 
-      {/* Mobile Footer with Sticky Price Bar */}
+      {/* Mobile Footer with Floating Action Bar */}
       {isMobile && (
-        <footer className="bg-card border-t border-border sticky bottom-0 z-40 shrink-0 pb-safe">
-          <LiveCalculationBar
+        <footer className="sticky bottom-0 z-40 shrink-0 pb-safe">
+          <FloatingActionBar
+            option={option1}
             result={activeResult}
             viewMode={effectiveViewMode}
-            quantity={activeState.mobile.quantity}
             quantityBonus={quantityBonusForOption1}
-            quantityBonusTier={activeQuantityBonusTier}
-            totalQuantity={totalQuantityForBonus}
-            nextBonusTier={nextQuantityBonusTier}
-            sticky
-            compact
+            onResetForNewTariff={resetForNewTariff}
           />
         </footer>
       )}

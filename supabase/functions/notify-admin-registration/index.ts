@@ -3,6 +3,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const adminEmail = Deno.env.get("SECURITY_ALERT_EMAIL");
+// Configurable sender email - set via secrets for own domain
+const senderEmailAddress = Deno.env.get("SENDER_EMAIL_ADDRESS") || "onboarding@resend.dev";
 
 // Allowed origins for CORS - restrict to production domains
 const ALLOWED_ORIGINS = [
@@ -93,7 +95,7 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "MargenKalkulator <onboarding@resend.dev>",
+        from: `MargenKalkulator <${senderEmailAddress}>`,
         to: [adminEmail],
         subject: `Neue Registrierung: ${displayName || email}`,
         html: `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6;color:#333}.container{max-width:600px;margin:0 auto;padding:20px}.header{background:linear-gradient(135deg,#e60000 0%,#990000 100%);color:white;padding:30px;border-radius:10px 10px 0 0;text-align:center}.content{background:#f9f9f9;padding:30px;border-radius:0 0 10px 10px}.info-box{background:white;border-left:4px solid #e60000;padding:15px;margin:15px 0;border-radius:0 5px 5px 0}.label{color:#666;font-size:12px;text-transform:uppercase;letter-spacing:1px}.value{font-size:16px;font-weight:600;color:#333;margin-top:5px}.stats{display:flex;justify-content:space-around;margin-top:20px;text-align:center}.stat{padding:15px}.stat-number{font-size:24px;font-weight:bold;color:#e60000}.footer{text-align:center;margin-top:20px;color:#666;font-size:12px}</style></head><body><div class="container"><div class="header"><h1 style="margin:0">Neue Registrierung</h1><p style="margin:10px 0 0 0;opacity:0.9">MargenKalkulator</p></div><div class="content"><p>Ein neuer Benutzer hat sich erfolgreich registriert:</p><div class="info-box"><div class="label">Anzeigename</div><div class="value">${displayName || "Nicht angegeben"}</div></div><div class="info-box"><div class="label">E-Mail-Adresse</div><div class="value">${email}</div></div><div class="info-box"><div class="label">Benutzer-ID</div><div class="value" style="font-family:monospace;font-size:14px">${userId}</div></div><div class="info-box"><div class="label">Registrierungszeitpunkt</div><div class="value">${registrationTime}</div></div><div class="stats"><div class="stat"><div class="stat-number">${(userCount || 0) + 1}</div><div class="label">Gesamt Benutzer</div></div></div><div class="footer"><p>Diese E-Mail wurde automatisch vom MargenKalkulator Security System gesendet.</p><p>Um dem neuen Benutzer eine Lizenz zuzuweisen, besuchen Sie das Security Status Dashboard.</p></div></div></div></body></html>`,

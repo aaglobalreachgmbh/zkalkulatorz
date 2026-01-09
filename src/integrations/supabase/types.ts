@@ -2283,6 +2283,7 @@ export type Database = {
         Args: { _distribution_id: string }
         Returns: boolean
       }
+      is_owner: { Args: { record_user_id: string }; Returns: boolean }
       is_same_tenant: { Args: { _tenant_id: string }; Returns: boolean }
       is_team_member: {
         Args: { _team_id: string; _user_id: string }
@@ -2290,6 +2291,14 @@ export type Database = {
       }
       is_tenant_admin: { Args: { _user_id: string }; Returns: boolean }
       is_tenant_manager: { Args: { _user_id: string }; Returns: boolean }
+      is_tenant_member_or_admin: {
+        Args: { record_tenant_id: string }
+        Returns: boolean
+      }
+      is_tenant_owner: {
+        Args: { record_tenant_id: string; record_user_id: string }
+        Returns: boolean
+      }
       is_user_approved: { Args: { _user_id: string }; Returns: boolean }
       log_cross_tenant_attempt: {
         Args: {

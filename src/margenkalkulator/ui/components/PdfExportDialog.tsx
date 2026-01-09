@@ -1,9 +1,10 @@
 // ============================================
 // PDF Export Dialog Component
 // Options for cover page, dealer summary, validity
+// With PDF Preview before download
 // ============================================
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -23,7 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FileText, Loader2, ShieldCheck, Download } from "lucide-react";
+import { FileText, Loader2, ShieldCheck, Download, Eye, ArrowLeft, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
 import { useEmployeeSettings } from "@/margenkalkulator/hooks/useEmployeeSettings";
@@ -46,7 +47,7 @@ interface PdfExportDialogProps {
 }
 
 // SECURITY: Maximum PDF generation time
-const PDF_GENERATION_TIMEOUT_MS = 20_000;
+const PDF_GENERATION_TIMEOUT_MS = 30_000;
 
 // SECURITY: Sanitize filename
 function sanitizeFilename(name: string): string {
@@ -65,6 +66,8 @@ function generateOfferId(): string {
   return `AN-${dateStr}-${random}`;
 }
 
+type DialogStep = "options" | "preview";
+
 export function PdfExportDialog({
   option,
   result,
@@ -76,6 +79,12 @@ export function PdfExportDialog({
 }: PdfExportDialogProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState<DialogStep>("options");
+  
+  // Preview state
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewBlob, setPreviewBlob] = useState<Blob | null>(null);
+  const [zoom, setZoom] = useState(100);
   
   // Controlled or uncontrolled mode
   const isControlled = controlledOpen !== undefined;
@@ -86,6 +95,9 @@ export function PdfExportDialog({
   const [showCoverPage, setShowCoverPage] = useState(true);
   const [showDealerSummary, setShowDealerSummary] = useState(false);
   const [validDays, setValidDays] = useState("14");
+  
+  // Generated offer ID (persisted during session)
+  const [offerId] = useState(() => generateOfferId());
   
   // Hooks
   const visibility = useSensitiveFieldsVisible(viewMode);
@@ -138,9 +150,23 @@ export function PdfExportDialog({
     ort: "",
   };
   
-  const handleExport = async () => {
-    setLoading(true);
-    
+  // Cleanup preview URL on close
+  const handleOpenChange = useCallback((newOpen: boolean) => {
+    if (!newOpen) {
+      // Reset state when closing
+      setStep("options");
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+        setPreviewUrl(null);
+      }
+      setPreviewBlob(null);
+      setZoom(100);
+    }
+    setOpen(newOpen);
+  }, [previewUrl, setOpen]);
+  
+  // Generate PDF blob
+  const generatePdfBlob = async (): Promise<Blob> => {
     const timeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(
         () => reject(new Error("PDF generation timeout")),
@@ -148,172 +174,284 @@ export function PdfExportDialog({
       );
     });
     
+    const [{ pdf }, { ProfessionalOfferPdf }] = await Promise.all([
+      import("@react-pdf/renderer"),
+      import("../../pdf/ProfessionalOfferPdf"),
+    ]);
+    
+    const pdfOptions: PdfOfferOptions = {
+      templateId: DEFAULT_TEMPLATE.id,
+      showCoverPage,
+      validDays: parseInt(validDays, 10),
+    };
+    
+    const blob = await Promise.race([
+      pdf(
+        <ProfessionalOfferPdf
+          template={DEFAULT_TEMPLATE}
+          customer={effectiveCustomer}
+          options={pdfOptions}
+          branding={branding}
+          offerId={offerId}
+          items={[{ option, result }]}
+          showDealerSummary={showDealerSummary}
+          dealerData={dealerData}
+        />
+      ).toBlob(),
+      timeoutPromise,
+    ]);
+    
+    if (blob.type !== "application/pdf") {
+      throw new Error("Invalid PDF blob type");
+    }
+    
+    return blob;
+  };
+  
+  // Generate preview
+  const handleGeneratePreview = async () => {
+    setLoading(true);
+    
     try {
-      // Dynamic import
-      const [{ pdf }, { ProfessionalOfferPdf }] = await Promise.all([
-        import("@react-pdf/renderer"),
-        import("../../pdf/ProfessionalOfferPdf"),
-      ]);
+      const blob = await generatePdfBlob();
       
-      const offerId = generateOfferId();
-      
-      const pdfOptions: PdfOfferOptions = {
-        templateId: DEFAULT_TEMPLATE.id,
-        showCoverPage,
-        validDays: parseInt(validDays, 10),
-      };
-      
-      // Generate PDF
-      const blob = await Promise.race([
-        pdf(
-          <ProfessionalOfferPdf
-            template={DEFAULT_TEMPLATE}
-            customer={effectiveCustomer}
-            options={pdfOptions}
-            branding={branding}
-            offerId={offerId}
-            items={[{ option, result }]}
-            showDealerSummary={showDealerSummary}
-            dealerData={dealerData}
-          />
-        ).toBlob(),
-        timeoutPromise,
-      ]);
-      
-      // Validate blob
-      if (blob.type !== "application/pdf") {
-        throw new Error("Invalid PDF blob type");
+      // Cleanup old URL if exists
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
       }
       
-      // Download
       const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
+      setPreviewUrl(url);
+      setPreviewBlob(blob);
+      setStep("preview");
       
-      const date = new Date().toISOString().split("T")[0];
-      const tariffName = option.mobile.tariffId
-        ? sanitizeFilename(option.mobile.tariffId)
-        : "Angebot";
-      const suffix = showDealerSummary ? "_Haendler" : "_Kunde";
-      link.download = `${tariffName}${suffix}_${date}.pdf`;
-      
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      
-      toast.success(
-        showDealerSummary 
-          ? "Professionelles PDF mit Händler-Zusammenfassung erstellt" 
-          : "Professionelles Kunden-PDF erstellt"
-      );
-      
-      trackPdfExported(undefined, `${tariffName}_professional${suffix}`);
-      setOpen(false);
+      toast.success("Vorschau wurde generiert");
     } catch (e) {
-      console.error("PDF generation failed:", e);
+      console.error("PDF preview generation failed:", e);
       const errorMessage =
         e instanceof Error && e.message === "PDF generation timeout"
           ? "PDF-Generierung dauerte zu lange. Bitte erneut versuchen."
-          : "PDF-Generierung fehlgeschlagen.";
+          : "PDF-Vorschau fehlgeschlagen.";
       toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
   };
   
+  // Download the generated PDF
+  const handleDownload = () => {
+    if (!previewBlob || !previewUrl) return;
+    
+    const link = document.createElement("a");
+    link.href = previewUrl;
+    
+    const date = new Date().toISOString().split("T")[0];
+    const tariffName = option.mobile.tariffId
+      ? sanitizeFilename(option.mobile.tariffId)
+      : "Angebot";
+    const suffix = showDealerSummary ? "_Haendler" : "_Kunde";
+    link.download = `${tariffName}${suffix}_${date}.pdf`;
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast.success(
+      showDealerSummary 
+        ? "Professionelles PDF mit Händler-Zusammenfassung heruntergeladen" 
+        : "Professionelles Kunden-PDF heruntergeladen"
+    );
+    
+    trackPdfExported(undefined, `${tariffName}_professional${suffix}`);
+    handleOpenChange(false);
+  };
+  
+  // Go back to options
+  const handleBackToOptions = () => {
+    setStep("options");
+  };
+  
+  // Zoom controls
+  const handleZoomIn = () => setZoom(prev => Math.min(prev + 25, 200));
+  const handleZoomOut = () => setZoom(prev => Math.max(prev - 25, 50));
+  const handleZoomReset = () => setZoom(100);
+  
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {children || (
-          <Button variant="outline" size="sm" className="gap-2">
-            <FileText className="w-4 h-4" />
-            <span className="hidden sm:inline">PDF Export</span>
-          </Button>
-        )}
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      {children && (
+        <DialogTrigger asChild>
+          {children}
+        </DialogTrigger>
+      )}
       
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FileText className="w-5 h-5" />
-            Professionelles Angebots-PDF
-          </DialogTitle>
-          <DialogDescription>
-            Erstellen Sie ein professionelles Angebot im allenetze.de Design.
-          </DialogDescription>
-        </DialogHeader>
-        
-        <div className="grid gap-4 py-4">
-          {/* Cover Page Option */}
-          <div className="flex items-center space-x-3">
-            <Checkbox
-              id="cover"
-              checked={showCoverPage}
-              onCheckedChange={(checked) => setShowCoverPage(checked === true)}
-            />
-            <Label htmlFor="cover" className="text-sm font-medium cursor-pointer">
-              Deckblatt anzeigen
-            </Label>
-          </div>
-          
-          {/* Dealer Summary Option (only in dealer mode) */}
-          {canShowDealerOption && (
-            <div className="flex items-start space-x-3">
-              <Checkbox
-                id="dealer"
-                checked={showDealerSummary}
-                onCheckedChange={(checked) => setShowDealerSummary(checked === true)}
-              />
-              <div className="grid gap-1">
-                <Label htmlFor="dealer" className="text-sm font-medium cursor-pointer flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-amber-500" />
-                  Händler-Zusammenfassung anhängen
+      <DialogContent className={step === "preview" ? "sm:max-w-[900px] h-[90vh] flex flex-col" : "sm:max-w-[425px]"}>
+        {step === "options" ? (
+          <>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                Professionelles Angebots-PDF
+              </DialogTitle>
+              <DialogDescription>
+                Erstellen Sie ein professionelles Angebot im allenetze.de Design.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="grid gap-4 py-4">
+              {/* Cover Page Option */}
+              <div className="flex items-center space-x-3">
+                <Checkbox
+                  id="cover"
+                  checked={showCoverPage}
+                  onCheckedChange={(checked) => setShowCoverPage(checked === true)}
+                />
+                <Label htmlFor="cover" className="text-sm font-medium cursor-pointer">
+                  Deckblatt anzeigen
                 </Label>
-                <p className="text-xs text-muted-foreground">
-                  Vertrauliche Seite mit Provisions- und Margen-Kalkulation
-                </p>
+              </div>
+              
+              {/* Dealer Summary Option (only in dealer mode) */}
+              {canShowDealerOption && (
+                <div className="flex items-start space-x-3">
+                  <Checkbox
+                    id="dealer"
+                    checked={showDealerSummary}
+                    onCheckedChange={(checked) => setShowDealerSummary(checked === true)}
+                  />
+                  <div className="grid gap-1">
+                    <Label htmlFor="dealer" className="text-sm font-medium cursor-pointer flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-amber-500" />
+                      Händler-Zusammenfassung anhängen
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Vertrauliche Seite mit Provisions- und Margen-Kalkulation
+                    </p>
+                  </div>
+                </div>
+              )}
+              
+              {/* Validity */}
+              <div className="grid gap-2">
+                <Label htmlFor="validity" className="text-sm font-medium">
+                  Gültigkeit des Angebots
+                </Label>
+                <Select value={validDays} onValueChange={setValidDays}>
+                  <SelectTrigger id="validity">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="7">7 Tage</SelectItem>
+                    <SelectItem value="14">14 Tage</SelectItem>
+                    <SelectItem value="21">21 Tage</SelectItem>
+                    <SelectItem value="30">30 Tage</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
-          )}
-          
-          {/* Validity */}
-          <div className="grid gap-2">
-            <Label htmlFor="validity" className="text-sm font-medium">
-              Gültigkeit des Angebots
-            </Label>
-            <Select value={validDays} onValueChange={setValidDays}>
-              <SelectTrigger id="validity">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="7">7 Tage</SelectItem>
-                <SelectItem value="14">14 Tage</SelectItem>
-                <SelectItem value="21">21 Tage</SelectItem>
-                <SelectItem value="30">30 Tage</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        
-        <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="ghost" onClick={() => setOpen(false)} disabled={loading}>
-            Abbrechen
-          </Button>
-          <Button onClick={handleExport} disabled={loading} className="gap-2">
-            {loading ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Wird erstellt...
-              </>
-            ) : (
-              <>
+            
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button variant="ghost" onClick={() => handleOpenChange(false)} disabled={loading}>
+                Abbrechen
+              </Button>
+              <Button onClick={handleGeneratePreview} disabled={loading} className="gap-2">
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Wird generiert...
+                  </>
+                ) : (
+                  <>
+                    <Eye className="w-4 h-4" />
+                    Vorschau anzeigen
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </>
+        ) : (
+          <>
+            {/* Preview Step */}
+            <DialogHeader className="flex-shrink-0">
+              <div className="flex items-center justify-between">
+                <DialogTitle className="flex items-center gap-2">
+                  <FileText className="w-5 h-5" />
+                  PDF-Vorschau
+                </DialogTitle>
+                
+                {/* Zoom Controls */}
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleZoomOut}
+                    disabled={zoom <= 50}
+                    className="h-8 w-8"
+                  >
+                    <ZoomOut className="w-4 h-4" />
+                  </Button>
+                  <span className="text-sm text-muted-foreground w-12 text-center">{zoom}%</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleZoomIn}
+                    disabled={zoom >= 200}
+                    className="h-8 w-8"
+                  >
+                    <ZoomIn className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleZoomReset}
+                    className="h-8 w-8"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+              <DialogDescription>
+                Überprüfen Sie das Angebot vor dem Download.
+                {showDealerSummary && (
+                  <span className="ml-2 text-amber-600 font-medium">
+                    🔒 Enthält Händler-Informationen
+                  </span>
+                )}
+              </DialogDescription>
+            </DialogHeader>
+            
+            {/* PDF Viewer */}
+            <div className="flex-1 min-h-0 bg-muted/50 rounded-lg overflow-auto border">
+              {previewUrl && (
+                <div 
+                  className="flex justify-center p-4"
+                  style={{ transform: `scale(${zoom / 100})`, transformOrigin: "top center" }}
+                >
+                  <iframe
+                    src={previewUrl}
+                    className="w-full bg-white shadow-lg rounded"
+                    style={{ 
+                      height: "calc(100vh - 280px)",
+                      minHeight: "500px",
+                      maxWidth: "800px"
+                    }}
+                    title="PDF Vorschau"
+                  />
+                </div>
+              )}
+            </div>
+            
+            <DialogFooter className="flex-shrink-0 gap-2 sm:gap-0 pt-4">
+              <Button variant="ghost" onClick={handleBackToOptions} className="gap-2">
+                <ArrowLeft className="w-4 h-4" />
+                Zurück
+              </Button>
+              <Button onClick={handleDownload} className="gap-2">
                 <Download className="w-4 h-4" />
-                PDF erstellen
-              </>
-            )}
-          </Button>
-        </DialogFooter>
+                PDF herunterladen
+              </Button>
+            </DialogFooter>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );

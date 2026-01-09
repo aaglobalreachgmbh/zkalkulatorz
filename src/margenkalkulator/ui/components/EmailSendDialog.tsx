@@ -151,6 +151,10 @@ export function EmailSendDialog({
         message: formData.message.trim(),
         pdfBase64,
         pdfFilename,
+        gdprConsentGiven: formData.gdprConsentGiven,
+        gdprConsentTimestamp: new Date().toISOString(),
+        offerId,
+        sharedOfferId,
       });
 
       if (result.success) {

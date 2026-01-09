@@ -20,6 +20,7 @@ import {
   createDefaultOptionState,
   calculateOffer,
   useWizardValidation,
+  getMobileTariffFromCatalog,
 } from "@/margenkalkulator";
 import { useEmployeeSettings } from "@/margenkalkulator/hooks/useEmployeeSettings";
 import { usePushProvisions } from "@/margenkalkulator/hooks/usePushProvisions";
@@ -385,6 +386,11 @@ export function Wizard() {
   const activeResult = activeOption === 1 ? result1 : result2;
   const avgMonthlyNet = activeResult.totals.avgTermNet;
 
+  // Get selected tariff for StickyPriceBar
+  const selectedTariff = useMemo(() => {
+    return getMobileTariffFromCatalog(option1.meta.datasetVersion, option1.mobile.tariffId);
+  }, [option1.meta.datasetVersion, option1.mobile.tariffId]);
+
   // GigaKombi eligibility check
   const isGigaKombiEligible = option1.fixedNet.enabled && 
     option1.mobile.tariffId.toLowerCase().includes("prime");
@@ -545,6 +551,20 @@ export function Wizard() {
           )}>
             {/* Scrollable content area */}
             <div className="flex-1 overflow-y-auto min-h-0 pb-4">
+              {/* StickyPriceBar - Always visible when tariff selected */}
+              {selectedTariff && (
+                <StickyPriceBar
+                  tariff={selectedTariff}
+                  mobileState={option1.mobile}
+                  hardware={option1.hardware}
+                  fullOption={option1}
+                  result={result1}
+                  viewMode={effectiveViewMode}
+                  quantityBonus={quantityBonusForOption1}
+                  onAddedToOffer={resetForNewTariff}
+                />
+              )}
+              
               <Accordion 
                 type="multiple" 
                 value={openSections}

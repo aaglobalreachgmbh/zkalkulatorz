@@ -14,6 +14,15 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isApproved, isLoading: approvalLoading } = useApprovalStatus();
   const [showRetry, setShowRetry] = useState(false);
   
+  // DEBUG: Log auth state for troubleshooting (v2.1)
+  console.log("[ProtectedRoute] State:", { 
+    authLoading, 
+    user: !!user, 
+    userId: user?.id,
+    approvalLoading, 
+    isApproved 
+  });
+  
   // Show retry button after 5 seconds of loading
   useEffect(() => {
     if (authLoading || approvalLoading) {

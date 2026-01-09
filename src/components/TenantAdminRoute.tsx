@@ -24,6 +24,16 @@ export function TenantAdminRoute({ children }: TenantAdminRouteProps) {
   const [sessionStable, setSessionStable] = useState(false);
   const [showRetry, setShowRetry] = useState(false);
 
+  // DEBUG: Log auth state for troubleshooting (v2.1)
+  console.log("[TenantAdminRoute] State:", { 
+    user: !!user, 
+    userId: user?.id,
+    authLoading, 
+    isTenantAdmin, 
+    adminLoading,
+    sessionStable
+  });
+
   useEffect(() => {
     if (!authLoading) {
       // Short delay to catch race condition where user is set slightly after isLoading

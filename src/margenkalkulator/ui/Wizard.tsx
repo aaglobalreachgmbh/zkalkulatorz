@@ -420,69 +420,8 @@ export function Wizard() {
     });
   }, [isSupabaseAuth, isSuperAdmin, isLoadingTenantData, tenantDataStatus, shouldBlockWizard, usingFallbackCatalog, forceDemoMode]);
 
-  if (shouldBlockWizard) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="max-w-lg w-full">
-          <CardHeader className="text-center">
-            <div className="mx-auto w-16 h-16 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mb-4">
-              <AlertTriangle className="w-8 h-8 text-amber-600 dark:text-amber-400" />
-            </div>
-            <CardTitle>Stammdaten fehlen</CardTitle>
-            <CardDescription>
-              Um den Kalkulator nutzen zu können, müssen zunächst die Stammdaten gepflegt werden.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm">
-                {tenantDataStatus?.hasHardware ? (
-                  <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-                    <span className="text-emerald-600 dark:text-emerald-400 text-xs">✓</span>
-                  </div>
-                ) : (
-                  <XCircle className="w-5 h-5 text-destructive" />
-                )}
-                <span className={tenantDataStatus?.hasHardware ? "text-muted-foreground" : "font-medium"}>
-                  Hardware-Katalog ({tenantDataStatus?.hardwareCount ?? 0} Geräte)
-                </span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                {tenantDataStatus?.hasProvisions ? (
-                  <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-                    <span className="text-emerald-600 dark:text-emerald-400 text-xs">✓</span>
-                  </div>
-                ) : (
-                  <XCircle className="w-5 h-5 text-destructive" />
-                )}
-                <span className={tenantDataStatus?.hasProvisions ? "text-muted-foreground" : "font-medium"}>
-                  Provisionstabelle ({tenantDataStatus?.provisionCount ?? 0} Einträge)
-                </span>
-              </div>
-            </div>
-            <Button asChild className="w-full gap-2">
-              <Link to="/tenant-admin">
-                <Settings className="w-4 h-4" />
-                Zu den Stammdaten
-              </Link>
-            </Button>
-            {/* P2 FIX: Demo-Daten Button als Fallback */}
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                localStorage.setItem("force_demo_catalog", "true");
-                window.location.reload();
-              }}
-              className="w-full gap-2"
-            >
-              <Zap className="w-4 h-4" />
-              Mit Demo-Daten starten
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  // RESCUE V2: Blocking code completely removed - shouldBlockWizard is always false
+  // Static catalog fallback ensures wizard always works
 
   return (
     <div className={cn(
@@ -533,10 +472,11 @@ export function Wizard() {
               <Zap className="w-4 h-4" />
               <span>
                 <strong>Demo-Modus:</strong> Es werden Beispieldaten verwendet.
+                <span className="text-xs ml-2 opacity-50">(v2.1)</span>
               </span>
             </div>
             <Link 
-              to="/tenant-admin" 
+              to="/daten" 
               className="text-amber-700 dark:text-amber-300 underline hover:no-underline text-xs"
             >
               Eigene Daten hinterlegen →

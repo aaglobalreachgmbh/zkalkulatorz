@@ -1,6 +1,6 @@
 // ============================================
 // Tenant Provision Manager
-// CSV Upload für mandantenspezifische Tarif-Provisionen
+// CSV Upload + TK-World Vorlagen für mandantenspezifische Tarif-Provisionen
 // ============================================
 
 import { useState, useCallback } from "react";
@@ -11,8 +11,9 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Upload, CreditCard, Trash2, Check, AlertTriangle, Download, Loader2 } from "lucide-react";
+import { Upload, CreditCard, Trash2, Check, AlertTriangle, Download, Loader2, FileText, Database } from "lucide-react";
 import { useTenantProvisions, type TenantProvisionInput } from "@/margenkalkulator/hooks/useTenantProvisions";
+import { TK_WORLD_PROVISIONS_2026, TK_WORLD_STATS } from "@/margenkalkulator/dataManager/importers/tkWorldProvisions2026";
 import Papa from "papaparse";
 
 interface ParsedRow {
@@ -34,6 +35,22 @@ export function TenantProvisionManager() {
   const { provisions, isLoading, bulkImport, clearAll, isUploading, hasData } = useTenantProvisions();
   const [parseResult, setParseResult] = useState<ValidationResult | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [showTkWorldPreview, setShowTkWorldPreview] = useState(false);
+
+  // Load TK-World template data
+  const handleLoadTkWorldTemplate = () => {
+    const items: TenantProvisionInput[] = TK_WORLD_PROVISIONS_2026.map((entry) => ({
+      tariff_id: entry.id,
+      tariff_name: entry.name,
+      tariff_family: entry.family,
+      contract_type: entry.type === "new" ? "new" : "extension",
+      provision_amount: entry.amount,
+      sub_variant_id: entry.sub,
+    }));
+    
+    bulkImport(items);
+    setShowTkWorldPreview(false);
+  };
 
   const validateRows = (rows: Record<string, unknown>[]): ValidationResult => {
     const valid: ParsedRow[] = [];

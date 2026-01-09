@@ -630,12 +630,14 @@ export function Wizard() {
                       onChange={(mobile) => setActiveState({ ...activeState, mobile })}
                       datasetVersion={activeState.meta.datasetVersion}
                       fixedNetEnabled={activeState.fixedNet.enabled}
+                      hardwareName={activeState.hardware.name}
                       viewMode={effectiveViewMode}
+                      fullOption={option1}
+                      result={result1}
+                      quantityBonus={quantityBonusForOption1}
                       onConfigComplete={() => {
-                        // Only open fixedNet section if not already open - NO auto-collapse
-                        if (fixedNetModuleEnabled && !openSections.includes("fixedNet")) {
-                          setOpenSections(prev => [...prev, "fixedNet"]);
-                        }
+                        // Reset for next tariff after adding to basket
+                        resetForNewTariff();
                       }}
                     />
                   </AccordionContent>
@@ -707,18 +709,7 @@ export function Wizard() {
               )}
             </div>
 
-            {/* Sticky Floating Action Bar - Desktop */}
-            {!isMobile && (
-              <div className="sticky bottom-0 z-30 -mx-3 sm:-mx-4 lg:-mx-6 mt-auto">
-                <FloatingActionBar
-                  option={option1}
-                  result={activeResult}
-                  viewMode={effectiveViewMode}
-                  quantityBonus={quantityBonusForOption1}
-                  onResetForNewTariff={resetForNewTariff}
-                />
-              </div>
-            )}
+            {/* NOTE: FloatingActionBar on Desktop removed - now inline in tariff selection via InlineTariffConfig */}
           </div>
 
           {/* Summary + Basket Sidebar - Desktop only (Overview only, no actions) */}

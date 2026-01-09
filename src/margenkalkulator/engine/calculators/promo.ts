@@ -1,6 +1,6 @@
 // ============================================
 // Promo Calculation Module
-// Handles promo validity and TeamDeal resolution
+// Handles promo validity, tariff-specific filtering, and TeamDeal resolution
 // ============================================
 
 import type { Promo, MobileTariff, FixedNetProduct } from "../types";
@@ -37,6 +37,46 @@ export function isPromoValid(
   if (!asOfISO) return true;
   
   return asOfISO >= promo.validFromISO && asOfISO <= promo.validUntilISO;
+}
+
+/**
+ * Check if a promo applies to a specific tariff
+ */
+export function isPromoForTariff(
+  promo: Promo,
+  tariffId: string
+): boolean {
+  // NONE type always applies
+  if (promo.type === "NONE") return true;
+  
+  // No tariff restriction or wildcard = applies to all
+  if (!promo.appliesToTariffs || promo.appliesToTariffs === "*") return true;
+  
+  // Check if tariff is in the allowed list
+  return promo.appliesToTariffs.includes(tariffId);
+}
+
+/**
+ * Get all valid promos for a specific tariff
+ * Filters by: tariff applicability AND date validity
+ */
+export function getPromosForTariff(
+  allPromos: Promo[],
+  tariffId: string,
+  asOfISO?: string
+): Promo[] {
+  return allPromos.filter(promo => {
+    // Always include "NONE" option
+    if (promo.id === "NONE") return true;
+    
+    // Check tariff applicability
+    if (!isPromoForTariff(promo, tariffId)) return false;
+    
+    // Check date validity
+    if (!isPromoValid(promo, asOfISO)) return false;
+    
+    return true;
+  });
 }
 
 /**

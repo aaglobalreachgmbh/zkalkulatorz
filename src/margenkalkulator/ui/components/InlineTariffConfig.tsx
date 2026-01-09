@@ -3,24 +3,31 @@
 // ============================================
 //
 // Appears below selected tariff with:
-// - Discount/Promo selection as toggle buttons
+// - TARIFF-SPECIFIC discount/promo selection as toggle buttons
 // - Live price update with animation
+// - Full price breakdown with period transparency
 // - "Add to Offer" CTA
 //
-// Eliminates need to scroll for promos or add action.
+// Uses getPromosForTariff() to show ONLY applicable promos
 // ============================================
 
 import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Plus, Check, Tag, Sparkles, TrendingDown, AlertTriangle } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { 
+  Plus, Check, Tag, Sparkles, TrendingDown, AlertTriangle, 
+  ChevronDown, Calendar, Info, Euro
+} from "lucide-react";
 import { AnimatedCurrency } from "./AnimatedCurrency";
 import { useOfferBasket } from "../../contexts/OfferBasketContext";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
 import { toast } from "sonner";
 import { fireConfetti } from "@/lib/confetti";
 import { cn } from "@/lib/utils";
+import { getPromosForTariff } from "../../engine/calculators/promo";
+import { formatCurrency } from "../../lib/formatters";
 import type { 
   MobileTariff, 
   Promo, 
@@ -33,13 +40,16 @@ import type {
 interface InlineTariffConfigProps {
   tariff: MobileTariff;
   mobileState: MobileState;
-  promos: Promo[];
+  /** ALL promos - will be filtered to tariff-specific */
+  allPromos: Promo[];
   /** Full offer option for basket */
   fullOption: OfferOptionState;
   /** Pre-calculated result */
   result: CalculationResult;
   viewMode: ViewMode;
   quantityBonus?: number;
+  /** Reference date for promo validity check */
+  asOfISO?: string;
   onPromoChange: (promoId: string) => void;
   onOmoChange?: (omoRate: number) => void;
   onAddedToOffer?: () => void;
@@ -48,11 +58,12 @@ interface InlineTariffConfigProps {
 export function InlineTariffConfig({
   tariff,
   mobileState,
-  promos,
+  allPromos,
   fullOption,
   result,
   viewMode,
   quantityBonus = 0,
+  asOfISO,
   onPromoChange,
   onOmoChange,
   onAddedToOffer,
@@ -60,6 +71,11 @@ export function InlineTariffConfig({
   const { addItem, items } = useOfferBasket();
   const visibility = useSensitiveFieldsVisible(viewMode);
   const showDealerEconomics = visibility.showDealerEconomics;
+  
+  // Filter promos for THIS SPECIFIC tariff
+  const tariffPromos = useMemo(() => {
+    return getPromosForTariff(allPromos, tariff.id, asOfISO);
+  }, [allPromos, tariff.id, asOfISO]);
   
   // Calculate prices
   const basePrice = tariff.baseNet;
@@ -71,6 +87,55 @@ export function InlineTariffConfig({
   
   // OMO is active?
   const omoActive = (mobileState.omoRate ?? 0) > 0;
+  
+  // Selected promo
+  const selectedPromo = tariffPromos.find(p => p.id === mobileState.promoId);
+  const hasSelectedPromo = mobileState.promoId && mobileState.promoId !== "NONE";
+  
+  // Calculate period breakdown for transparency
+  const periods = useMemo(() => {
+    if (!selectedPromo || selectedPromo.id === "NONE" || selectedPromo.type === "NONE") {
+      return [{ from: 1, to: 24, price: basePrice, label: "Vertragslaufzeit", isBase: true }];
+    }
+    
+    const promoMonths = selectedPromo.durationMonths || 0;
+    const termMonths = fullOption.meta.termMonths || 24;
+    
+    if (selectedPromo.type === "INTRO_PRICE") {
+      const introPrice = selectedPromo.value;
+      if (promoMonths >= termMonths) {
+        return [{ from: 1, to: termMonths, price: introPrice, label: "Aktionszeitraum", isBase: false }];
+      }
+      return [
+        { from: 1, to: promoMonths, price: introPrice, label: "Aktionszeitraum", isBase: false },
+        { from: promoMonths + 1, to: termMonths, price: basePrice, label: "Regulärer Preis", isBase: true },
+      ];
+    }
+    
+    if (selectedPromo.type === "PCT_OFF_BASE") {
+      const discountedPrice = basePrice * (1 - selectedPromo.value);
+      if (promoMonths >= termMonths) {
+        return [{ from: 1, to: termMonths, price: discountedPrice, label: "Aktionspreis", isBase: false }];
+      }
+      return [
+        { from: 1, to: promoMonths, price: discountedPrice, label: "Aktionspreis", isBase: false },
+        { from: promoMonths + 1, to: termMonths, price: basePrice, label: "Regulärer Preis", isBase: true },
+      ];
+    }
+    
+    if (selectedPromo.type === "ABS_OFF_BASE") {
+      const discountedPrice = basePrice - (selectedPromo.amountNetPerMonth || 0);
+      if (promoMonths >= termMonths) {
+        return [{ from: 1, to: termMonths, price: discountedPrice, label: "Aktionspreis", isBase: false }];
+      }
+      return [
+        { from: 1, to: promoMonths, price: discountedPrice, label: "Aktionspreis", isBase: false },
+        { from: promoMonths + 1, to: termMonths, price: basePrice, label: "Regulärer Preis", isBase: true },
+      ];
+    }
+    
+    return [{ from: 1, to: 24, price: basePrice, label: "Vertragslaufzeit", isBase: true }];
+  }, [selectedPromo, basePrice, fullOption.meta.termMonths]);
   
   // Generate tariff name for basket
   const tariffName = useMemo(() => {
@@ -101,16 +166,15 @@ export function InlineTariffConfig({
     onAddedToOffer?.();
   };
   
-  // Filter promos - simple list for toggle buttons
-  const availablePromos = promos.filter(p => p.id !== "NONE");
-  const selectedPromo = promos.find(p => p.id === mobileState.promoId);
-  const hasSelectedPromo = mobileState.promoId && mobileState.promoId !== "NONE";
+  // Filter promos - exclude NONE for buttons
+  const availablePromos = tariffPromos.filter(p => p.id !== "NONE");
+  const hasAvailablePromos = availablePromos.length > 0;
   
   const marginColor = margin >= 100 ? "text-emerald-600" : margin >= 0 ? "text-amber-600" : "text-red-600";
   
   return (
     <div className="mt-4 p-5 rounded-xl border-2 border-primary/30 bg-primary/5 animate-fade-in">
-      {/* Header */}
+      {/* Header with Base Price */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Check className="w-5 h-5 text-primary" />
@@ -118,6 +182,10 @@ export function InlineTariffConfig({
           {mobileState.quantity > 1 && (
             <Badge variant="secondary">{mobileState.quantity}x</Badge>
           )}
+        </div>
+        <div className="flex items-center gap-1.5 text-muted-foreground text-sm">
+          <Euro className="w-3.5 h-3.5" />
+          <span>Basis: {formatCurrency(basePrice)}</span>
         </div>
       </div>
       
@@ -135,7 +203,12 @@ export function InlineTariffConfig({
       <div className="mb-5">
         <div className="flex items-center gap-2 mb-2">
           <Tag className="w-4 h-4 text-muted-foreground" />
-          <span className="text-sm font-medium text-muted-foreground">Rabatt wählen</span>
+          <span className="text-sm font-medium text-muted-foreground">
+            Rabatt wählen
+            {!hasAvailablePromos && (
+              <span className="text-xs ml-2 text-amber-600">(keine verfügbar für diesen Tarif)</span>
+            )}
+          </span>
         </div>
         <div className="flex flex-wrap gap-2">
           {/* No Discount */}
@@ -153,7 +226,7 @@ export function InlineTariffConfig({
             Kein Rabatt
           </button>
           
-          {/* Available Promos */}
+          {/* Tariff-Specific Promos */}
           {availablePromos.map((promo) => {
             const isSelected = mobileState.promoId === promo.id;
             const isDisabled = omoActive;
@@ -195,15 +268,63 @@ export function InlineTariffConfig({
           })}
         </div>
         
-        {/* Promo description */}
+        {/* Promo description with validity period */}
         {selectedPromo && selectedPromo.id !== "NONE" && (
-          <p className="text-xs text-muted-foreground mt-2">
-            {selectedPromo.type === "INTRO_PRICE" && `${selectedPromo.durationMonths} Monate Grundgebühr entfällt`}
-            {selectedPromo.type === "PCT_OFF_BASE" && `${(selectedPromo.value * 100).toFixed(0)}% Rabatt für ${selectedPromo.durationMonths} Monate`}
-            {selectedPromo.type === "ABS_OFF_BASE" && `−${selectedPromo.amountNetPerMonth}€/mtl. für ${selectedPromo.durationMonths} Monate`}
-          </p>
+          <div className="mt-2 p-2 rounded-md bg-muted/50 text-sm">
+            <p className="text-muted-foreground">
+              {selectedPromo.type === "INTRO_PRICE" && `${selectedPromo.durationMonths} Monate Grundgebühr entfällt`}
+              {selectedPromo.type === "PCT_OFF_BASE" && `${(selectedPromo.value * 100).toFixed(0)}% Rabatt für ${selectedPromo.durationMonths} Monate`}
+              {selectedPromo.type === "ABS_OFF_BASE" && `−${selectedPromo.amountNetPerMonth}€/mtl. für ${selectedPromo.durationMonths} Monate`}
+            </p>
+            {selectedPromo.eligibilityNote && (
+              <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
+                <Info className="w-3 h-3" />
+                {selectedPromo.eligibilityNote}
+              </p>
+            )}
+            {selectedPromo.validUntilISO && (
+              <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                <Calendar className="w-3 h-3" />
+                Gültig bis {new Date(selectedPromo.validUntilISO).toLocaleDateString("de-DE")}
+              </p>
+            )}
+          </div>
         )}
       </div>
+      
+      {/* Price Breakdown (Collapsible) */}
+      {periods.length > 1 && (
+        <Collapsible className="mb-4">
+          <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group w-full">
+            <ChevronDown className="w-4 h-4 transition-transform group-data-[state=open]:rotate-180" />
+            <span>Preisübersicht nach Zeitraum</span>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="mt-2">
+            <div className="grid gap-2 p-3 rounded-lg bg-muted/30 border border-border">
+              {periods.map((period, idx) => (
+                <div 
+                  key={idx} 
+                  className={cn(
+                    "flex items-center justify-between py-1 px-2 rounded",
+                    !period.isBase && "bg-emerald-500/10"
+                  )}
+                >
+                  <span className="text-sm">
+                    <span className="font-medium">Monat {period.from}–{period.to}</span>
+                    <span className="text-muted-foreground ml-2">({period.label})</span>
+                  </span>
+                  <span className={cn(
+                    "font-semibold",
+                    !period.isBase && "text-emerald-600"
+                  )}>
+                    {formatCurrency(period.price)}/mtl.
+                  </span>
+                </div>
+              ))}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      )}
       
       {/* Price Display */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-card rounded-lg border border-border mb-4">

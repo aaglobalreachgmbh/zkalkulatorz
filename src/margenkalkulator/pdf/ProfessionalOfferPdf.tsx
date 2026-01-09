@@ -5,7 +5,8 @@
 // ============================================
 
 import { Document, Page, Text, View, Image, StyleSheet } from "@react-pdf/renderer";
-import type { ProfessionalOfferPdfProps, PeriodColumn, PositionRow } from "./templates/types";
+import type { ProfessionalOfferPdfProps, PeriodColumn, PositionRow, DealerSummaryData } from "./templates/types";
+import { DealerSummaryPage } from "./components/DealerSummaryPage";
 import type { TenantBranding } from "@/hooks/useTenantBranding";
 import { DEFAULT_BRANDING } from "@/hooks/useTenantBranding";
 import { DEFAULT_TEMPLATE } from "./templates/allenetzeClean";
@@ -1036,6 +1037,8 @@ export function ProfessionalOfferPdf({
   items,
   hardwareImages,
   qrCodeDataUrl,
+  showDealerSummary = false,
+  dealerData,
 }: ProfessionalOfferPdfProps) {
   const primaryColor = branding?.primaryColor || template.primaryColor;
   const accentColor = template.accentColor;
@@ -1043,9 +1046,7 @@ export function ProfessionalOfferPdf({
   
   // Calculate total pages
   const hasCover = options.showCoverPage && template.showCoverPage;
-  const totalPages = (hasCover ? 1 : 0) + 2; // Cover + Summary + Details
-  
-  let currentPage = 1;
+  const totalPages = (hasCover ? 1 : 0) + 2 + (showDealerSummary && dealerData ? 1 : 0);
   
   return (
     <Document>
@@ -1083,6 +1084,17 @@ export function ProfessionalOfferPdf({
         pageNumber={hasCover ? 3 : 2}
         totalPages={totalPages}
       />
+      
+      {/* Dealer Summary Page (optional, confidential) */}
+      {showDealerSummary && dealerData && (
+        <DealerSummaryPage
+          template={template}
+          branding={branding}
+          dealerData={dealerData}
+          pageNumber={totalPages}
+          totalPages={totalPages}
+        />
+      )}
     </Document>
   );
 }

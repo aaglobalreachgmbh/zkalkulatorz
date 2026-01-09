@@ -103,6 +103,40 @@ export interface PositionRow {
 }
 
 /**
+ * Dealer-specific summary data for confidential PDF section
+ */
+export interface DealerSummaryData {
+  /** Brutto-Provision vor Abzügen */
+  grossProvision: number;
+  /** Provision nach allen Abzügen */
+  netProvision: number;
+  /** FH-Partner Abzug */
+  fhPartnerDeduction?: number;
+  /** OMO-Rate Abzug */
+  omoDeduction?: number;
+  /** Hardware-EK gesamt */
+  hardwareEk: number;
+  /** Netto-Marge (Provision - Hardware) */
+  netMargin: number;
+  /** Marge pro Vertrag */
+  marginPerContract: number;
+  /** Anzahl Verträge gesamt */
+  totalContracts: number;
+  /** Vertragsart */
+  contractType: "new" | "renewal";
+  /** Hardware-Details */
+  hardwareDetails?: Array<{
+    name: string;
+    quantity: number;
+    ekPerUnit: number;
+  }>;
+  /** Push-Bonus */
+  pushBonus?: number;
+  /** Mitarbeiter-Abzug */
+  employeeDeduction?: number;
+}
+
+/**
  * Props for the professional offer PDF
  */
 export interface ProfessionalOfferPdfProps {
@@ -128,4 +162,8 @@ export interface ProfessionalOfferPdfProps {
   hardwareImages?: Map<string, string>;
   /** QR code data URL (pre-generated) */
   qrCodeDataUrl?: string;
+  /** Show confidential dealer summary page */
+  showDealerSummary?: boolean;
+  /** Dealer-specific summary data */
+  dealerData?: DealerSummaryData;
 }

@@ -46,13 +46,19 @@ export function useUserRole(): UseUserRoleResult {
           .eq("user_id", user.id);
 
         if (queryError) {
-          throw queryError;
+          console.error("[useUserRole] Query error:", queryError);
+          // CRITICAL: Don't throw, just default to "user" role to prevent crashes
+          setError(queryError);
+          setAllRoles(["user"]);
+          setRole("user");
+          setIsLoading(false);
+          return;
         }
 
         // Extract roles from data
         const roles = (data?.map(r => r.role) || []) as AppRole[];
         
-        // Determine highest priority role
+        // Determine highest priority role - default to "user" if no roles
         const highestRole = roles.length > 0
           ? roles.reduce((highest, current) => 
               ROLE_PRIORITY[current] > ROLE_PRIORITY[highest] ? current : highest
@@ -65,13 +71,14 @@ export function useUserRole(): UseUserRoleResult {
                     "Highest:", highestRole,
                     "isTenantAdmin:", calculatedIsTenantAdmin);
 
-        setAllRoles(roles);
+        setAllRoles(roles.length > 0 ? roles : ["user"]);
         setRole(highestRole);
       } catch (err) {
-        console.error("[useUserRole] Error fetching roles:", err);
+        console.error("[useUserRole] Unexpected error:", err);
         setError(err as Error);
-        setRole(null);
-        setAllRoles([]);
+        // CRITICAL: Default to "user" role to prevent app crashes
+        setAllRoles(["user"]);
+        setRole("user");
       } finally {
         setIsLoading(false);
       }

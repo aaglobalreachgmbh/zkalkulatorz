@@ -108,6 +108,8 @@ export function SendOfferEmailModal({ trigger }: SendOfferEmailModalProps) {
         message: message || undefined,
         pdfBase64: base64,
         pdfFilename: `Angebot_${customer.firma || "Kunde"}_${new Date().toISOString().split("T")[0]}.pdf`,
+        gdprConsentGiven: true, // Implicit consent by user action
+        gdprConsentTimestamp: new Date().toISOString(),
       });
 
       if (result.success) {

@@ -2,6 +2,7 @@
 // PDF Export Dialog Component
 // Options for cover page, dealer summary, validity
 // With PDF Preview before download
+// Extended: QR-Code + Email sending (DSGVO-compliant)
 // ============================================
 
 import { useState, useMemo, useCallback } from "react";
@@ -24,12 +25,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FileText, Loader2, ShieldCheck, Download, Eye, ArrowLeft, ZoomIn, ZoomOut, RotateCcw, Printer } from "lucide-react";
+import { FileText, Loader2, ShieldCheck, Download, Eye, ArrowLeft, ZoomIn, ZoomOut, RotateCcw, Printer, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
 import { useEmployeeSettings } from "@/margenkalkulator/hooks/useEmployeeSettings";
 import { useTenantBranding } from "@/hooks/useTenantBranding";
 import { useActivityTracker } from "@/hooks/useActivityTracker";
+import { useSharedOffers } from "@/margenkalkulator/hooks/useSharedOffers";
+import { generateOfferQrCode, generateOfferId as generateQrOfferId, generateAccessToken } from "@/margenkalkulator/utils/qrCodeGenerator";
+import { EmailSendDialog } from "./EmailSendDialog";
 import type { OfferOptionState, CalculationResult, ViewMode } from "../../engine/types";
 import type { DealerSummaryData, OfferCustomerInfo, PdfOfferOptions } from "../../pdf/templates/types";
 import { DEFAULT_TEMPLATE } from "../../pdf/templates/allenetzeClean";
@@ -58,7 +62,7 @@ function sanitizeFilename(name: string): string {
     .slice(0, 100);
 }
 
-// Generate unique offer ID
+// Generate unique offer ID (fallback)
 function generateOfferId(): string {
   const date = new Date();
   const dateStr = date.toISOString().slice(0, 10).replace(/-/g, "");
@@ -66,7 +70,7 @@ function generateOfferId(): string {
   return `AN-${dateStr}-${random}`;
 }
 
-type DialogStep = "options" | "preview";
+type DialogStep = "options" | "preview" | "email";
 
 export function PdfExportDialog({
   option,
@@ -86,6 +90,15 @@ export function PdfExportDialog({
   const [previewBlob, setPreviewBlob] = useState<Blob | null>(null);
   const [zoom, setZoom] = useState(100);
   
+  // QR Code + Share state
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
+  const [sharedOfferId, setSharedOfferId] = useState<string | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  
+  // Email dialog state
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [pdfBase64, setPdfBase64] = useState<string | null>(null);
+  
   // Controlled or uncontrolled mode
   const isControlled = controlledOpen !== undefined;
   const open = isControlled ? controlledOpen : internalOpen;
@@ -98,6 +111,9 @@ export function PdfExportDialog({
   
   // Generated offer ID (persisted during session)
   const [offerId] = useState(() => generateOfferId());
+  
+  // Shared offers hook
+  const { saveSharedOffer } = useSharedOffers();
   
   // Hooks
   const visibility = useSensitiveFieldsVisible(viewMode);
@@ -161,12 +177,16 @@ export function PdfExportDialog({
       }
       setPreviewBlob(null);
       setZoom(100);
+      setQrCodeDataUrl(null);
+      setSharedOfferId(null);
+      setAccessToken(null);
+      setPdfBase64(null);
     }
     setOpen(newOpen);
   }, [previewUrl, setOpen]);
   
-  // Generate PDF blob
-  const generatePdfBlob = async (): Promise<Blob> => {
+  // Generate PDF blob with optional QR code
+  const generatePdfBlob = async (qrCode?: string): Promise<Blob> => {
     const timeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(
         () => reject(new Error("PDF generation timeout")),
@@ -196,6 +216,7 @@ export function PdfExportDialog({
           items={[{ option, result }]}
           showDealerSummary={showDealerSummary}
           dealerData={dealerData}
+          qrCodeDataUrl={qrCode}
         />
       ).toBlob(),
       timeoutPromise,
@@ -208,24 +229,93 @@ export function PdfExportDialog({
     return blob;
   };
   
-  // Generate preview
+  // Generate preview with QR code
   const handleGeneratePreview = async () => {
     setLoading(true);
     
     try {
-      const blob = await generatePdfBlob();
+      // Step 1: Create shared offer for QR code
+      const newOfferId = generateQrOfferId();
+      const newAccessToken = generateAccessToken();
       
-      // Cleanup old URL if exists
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
+      // Prepare offer data (customer-facing only, NO dealer info)
+      const sharedOfferData = {
+        tariffName: option.mobile.tariffId || "Business Tarif",
+        hardwareName: option.hardware.name || "SIM-Only",
+        monthlyPrice: result.totals.avgTermNet,
+        oneTimePrice: result.oneTime.reduce((sum, item) => sum + item.net, 0),
+        contractLength: 24,
+        validDays: parseInt(validDays, 10),
+        createdAt: new Date().toISOString(),
+        quantity: option.mobile.quantity,
+        fixedNet: option.fixedNet.enabled ? {
+          product: option.fixedNet.productId,
+          monthlyPrice: result.totals.avgTermNet, // Simplified
+        } : undefined,
+      };
+      
+      // Save shared offer to database
+      const savedOffer = await saveSharedOffer(
+        sharedOfferData,
+        effectiveCustomer.vorname && effectiveCustomer.nachname 
+          ? `${effectiveCustomer.vorname} ${effectiveCustomer.nachname}`.trim()
+          : effectiveCustomer.firma || undefined
+      );
+      
+      if (savedOffer.success && savedOffer.offerId && savedOffer.accessToken) {
+        setSharedOfferId(savedOffer.offerId);
+        setAccessToken(savedOffer.accessToken);
+        
+        // Use the QR code from the saved offer
+        if (savedOffer.qrCodeDataUrl) {
+          setQrCodeDataUrl(savedOffer.qrCodeDataUrl);
+        }
+        
+        // Step 3: Generate PDF with QR code
+        const blob = await generatePdfBlob(savedOffer.qrCodeDataUrl);
+        
+        // Convert to base64 for email sending
+        const reader = new FileReader();
+        reader.onload = () => {
+          const base64 = (reader.result as string).split(',')[1];
+          setPdfBase64(base64);
+        };
+        reader.readAsDataURL(blob);
+        
+        // Cleanup old URL if exists
+        if (previewUrl) {
+          URL.revokeObjectURL(previewUrl);
+        }
+        
+        const url = URL.createObjectURL(blob);
+        setPreviewUrl(url);
+        setPreviewBlob(blob);
+        setStep("preview");
+        
+        toast.success("Vorschau mit QR-Code wurde generiert");
+      } else {
+        // Fallback: Generate PDF without QR code
+        const blob = await generatePdfBlob();
+        
+        // Convert to base64 for email sending
+        const reader = new FileReader();
+        reader.onload = () => {
+          const base64 = (reader.result as string).split(',')[1];
+          setPdfBase64(base64);
+        };
+        reader.readAsDataURL(blob);
+        
+        if (previewUrl) {
+          URL.revokeObjectURL(previewUrl);
+        }
+        
+        const url = URL.createObjectURL(blob);
+        setPreviewUrl(url);
+        setPreviewBlob(blob);
+        setStep("preview");
+        
+        toast.success("Vorschau wurde generiert (ohne QR-Code)");
       }
-      
-      const url = URL.createObjectURL(blob);
-      setPreviewUrl(url);
-      setPreviewBlob(blob);
-      setStep("preview");
-      
-      toast.success("Vorschau wurde generiert");
     } catch (e) {
       console.error("PDF preview generation failed:", e);
       const errorMessage =
@@ -297,6 +387,27 @@ export function PdfExportDialog({
         toast.error("Drucken konnte nicht gestartet werden. Bitte laden Sie das PDF herunter.");
       }
     }
+  };
+  
+  // Open email dialog
+  const handleOpenEmailDialog = () => {
+    setEmailDialogOpen(true);
+  };
+  
+  // Email sent successfully
+  const handleEmailSent = () => {
+    setEmailDialogOpen(false);
+    toast.success("Angebot wurde per E-Mail gesendet!");
+  };
+  
+  // Get PDF filename
+  const getPdfFilename = () => {
+    const date = new Date().toISOString().split("T")[0];
+    const tariffName = option.mobile.tariffId
+      ? sanitizeFilename(option.mobile.tariffId)
+      : "Angebot";
+    const suffix = showDealerSummary ? "_Haendler" : "_Kunde";
+    return `${tariffName}${suffix}_${date}.pdf`;
   };
   
   return (
@@ -469,6 +580,15 @@ export function PdfExportDialog({
                 Zurück
               </Button>
               <div className="flex-1" />
+              <Button 
+                variant="outline" 
+                onClick={handleOpenEmailDialog} 
+                disabled={!pdfBase64}
+                className="gap-2"
+              >
+                <Mail className="w-4 h-4" />
+                Per E-Mail senden
+              </Button>
               <Button variant="outline" onClick={handlePrint} className="gap-2">
                 <Printer className="w-4 h-4" />
                 Drucken
@@ -478,6 +598,22 @@ export function PdfExportDialog({
                 Herunterladen
               </Button>
             </DialogFooter>
+            
+            {/* Email Send Dialog */}
+            {pdfBase64 && (
+              <EmailSendDialog
+                open={emailDialogOpen}
+                onOpenChange={setEmailDialogOpen}
+                pdfBase64={pdfBase64}
+                pdfFilename={getPdfFilename()}
+                offerId={sharedOfferId || offerId}
+                customerName={effectiveCustomer.vorname && effectiveCustomer.nachname 
+                  ? `${effectiveCustomer.vorname} ${effectiveCustomer.nachname}`.trim()
+                  : effectiveCustomer.firma || ""}
+                customerEmail=""
+                onSuccess={handleEmailSent}
+              />
+            )}
           </>
         )}
       </DialogContent>

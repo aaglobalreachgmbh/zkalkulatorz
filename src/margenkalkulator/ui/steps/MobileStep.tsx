@@ -5,11 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
   type MobileState,
   type ContractType,
   type DatasetVersion,
@@ -20,16 +15,11 @@ import {
   type CalculationResult,
   listMobileTariffs,
   listPromos,
-  listSubVariants,
   getMobileTariffFromCatalog,
   checkGKEligibility,
 } from "@/margenkalkulator";
-import { Signal, Tag, AlertTriangle, Minus, Plus, Ban, Settings2, ChevronDown } from "lucide-react";
-import { OMORateSelectorEnhanced, type OMORate } from "../components/OMORateSelectorEnhanced";
-import { SubVariantSelector } from "../components/SubVariantSelector";
-import { FHPartnerToggle } from "../components/FHPartnerToggle";
+import { Signal, AlertTriangle, Minus, Plus, Ban } from "lucide-react";
 import { InlineTariffConfig } from "../components/InlineTariffConfig";
-import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
 import { useEmployeeSettings, isTariffBlocked } from "@/margenkalkulator/hooks/useEmployeeSettings";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
 
@@ -76,13 +66,7 @@ export function MobileStep({
   quantityBonus = 0,
   onConfigComplete,
 }: MobileStepProps) {
-  // Use centralized visibility hook instead of direct viewMode check
-  const visibility = useSensitiveFieldsVisible(viewMode);
-  const showOmoSelector = visibility.showOmoSelector;
-  const showFhPartnerToggle = visibility.showFhPartnerToggle;
-  
   const [selectedFamily, setSelectedFamily] = useState<TariffFamily | "all">("all");
-  const [expertOptionsOpen, setExpertOptionsOpen] = useState(false);
 
   const updateField = <K extends keyof MobileState>(
     field: K,
@@ -93,7 +77,6 @@ export function MobileStep({
 
   const mobileTariffs = listMobileTariffs(datasetVersion);
   const promos = listPromos(datasetVersion);
-  const subVariants = listSubVariants(datasetVersion);
   
   const selectedTariff = getMobileTariffFromCatalog(datasetVersion, value.tariffId);
   const isGKEligible = checkGKEligibility(selectedTariff, fixedNetEnabled);
@@ -308,8 +291,8 @@ export function MobileStep({
           })}
         </div>
 
-        {/* INLINE TARIFF CONFIG - Discounts + Price + Add directly at tariff */}
-        {selectedTariff && fullOption && result && (
+        {/* INLINE TARIFF CONFIG - SUB + Discounts + Expert Options + Add */}
+        {selectedTariff && fullOption && result && !isTeamDeal && (
           <InlineTariffConfig
             tariff={selectedTariff}
             mobileState={value}
@@ -319,8 +302,35 @@ export function MobileStep({
             viewMode={viewMode}
             quantityBonus={quantityBonus}
             asOfISO={fullOption.meta.asOfISO}
+            hardwareName={hardwareName}
             onPromoChange={(promoId) => updateField("promoId", promoId)}
-            onOmoChange={(rate) => updateField("omoRate", rate)}
+            onSubVariantChange={(id) => updateField("subVariantId", id)}
+            onOmoChange={(rate) => {
+              // OMO und Promo sind nicht kombinierbar - OMO gewählt → Promo auf NONE
+              if (rate > 0 && value.promoId !== "NONE") {
+                onChange({ ...value, omoRate: rate, promoId: "NONE" });
+              } else {
+                updateField("omoRate", rate);
+              }
+            }}
+            onFHPartnerChange={(checked) => updateField("isFHPartner", checked)}
+            onAddedToOffer={onConfigComplete}
+          />
+        )}
+        
+        {/* TeamDeal uses simplified inline config (no SUB variants) */}
+        {selectedTariff && fullOption && result && isTeamDeal && (
+          <InlineTariffConfig
+            tariff={selectedTariff}
+            mobileState={value}
+            allPromos={promos}
+            fullOption={fullOption}
+            result={result}
+            viewMode={viewMode}
+            quantityBonus={quantityBonus}
+            asOfISO={fullOption.meta.asOfISO}
+            hardwareName={hardwareName}
+            onPromoChange={(promoId) => updateField("promoId", promoId)}
             onAddedToOffer={onConfigComplete}
           />
         )}
@@ -368,85 +378,7 @@ export function MobileStep({
         </div>
       )}
 
-      {/* SUB Variant Selection + OMO + FH-Partner Row - Händler-Optionen basierend auf Visibility */}
-      {selectedTariff && !isTeamDeal && (
-        <div className="space-y-4">
-          {/* SUB Variant Selector - immer sichtbar */}
-          <div className="p-6 bg-card rounded-xl border border-border">
-            <div className="space-y-2">
-              <Label className="text-sm text-muted-foreground flex items-center gap-1.5">
-                Geräteklasse (SUB)
-                <HelpTooltip term="sub" />
-              </Label>
-              <SubVariantSelector
-                value={value.subVariantId}
-                onChange={(id) => updateField("subVariantId", id)}
-                hardwareName={hardwareName}
-                allowedSubVariants={selectedTariff.allowedSubVariants}
-                subVariants={subVariants}
-              />
-            </div>
-          </div>
-          
-          {/* Experten-Optionen - nur in Dealer-Modus */}
-          {(showOmoSelector || showFhPartnerToggle) && (
-            <Collapsible open={expertOptionsOpen} onOpenChange={setExpertOptionsOpen}>
-              <CollapsibleTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  className="w-full justify-between p-4 h-auto bg-muted/50 hover:bg-muted"
-                >
-                  <div className="flex items-center gap-2">
-                    <Settings2 className="w-4 h-4" />
-                    <span className="font-medium">Experten-Optionen</span>
-                    <span className="text-xs text-muted-foreground">(OMO, FH-Partner)</span>
-                  </div>
-                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${expertOptionsOpen ? "rotate-180" : ""}`} />
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="pt-4">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 p-4 lg:p-6 bg-card rounded-xl border border-border">
-                  {showOmoSelector && (
-                    <div className="space-y-2">
-                      <Label className="text-sm text-muted-foreground flex items-center gap-1.5">
-                        OMO-Rate
-                        <HelpTooltip term="omo" />
-                      </Label>
-                      <OMORateSelectorEnhanced
-                        value={(value.omoRate ?? 0) as OMORate}
-                        onChange={(rate) => {
-                          // OMO und Promo sind nicht kombinierbar - OMO gewählt → Promo auf NONE
-                          if (rate > 0 && value.promoId !== "NONE") {
-                            onChange({ ...value, omoRate: rate, promoId: "NONE" });
-                          } else {
-                            updateField("omoRate", rate);
-                          }
-                        }}
-                        tariff={selectedTariff}
-                        contractType={value.contractType}
-                      />
-                      {(value.omoRate ?? 0) > 0 && (
-                        <p className="text-xs text-amber-600 mt-2">
-                          ⚠️ OMO-Rabatte und Aktionen sind nicht kombinierbar
-                        </p>
-                      )}
-                    </div>
-                  )}
-                  {showFhPartnerToggle && (
-                    <div className="flex items-end">
-                      <FHPartnerToggle
-                        checked={value.isFHPartner ?? false}
-                        onChange={(checked) => updateField("isFHPartner", checked)}
-                        fhPartnerProvision={selectedTariff.fhPartnerNet}
-                      />
-                    </div>
-                  )}
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
-          )}
-        </div>
-      )}
+      {/* NOTE: SUB Variants + Expert Options moved to InlineTariffConfig (Phase 4) */}
 
       {/* NOTE: Promos Section removed - now integrated in InlineTariffConfig above */}
     </div>

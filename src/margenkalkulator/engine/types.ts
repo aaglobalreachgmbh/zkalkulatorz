@@ -812,6 +812,19 @@ export type Promo = {
   label: string;
   /** Anwendungsbereich (mobile, fixed, oder beides) */
   appliesTo?: "mobile" | "fixed" | "both";
+  /**
+   * Tarif-IDs, für die diese Promo gilt.
+   * 
+   * WERTE:
+   * - undefined oder "*": Gilt für alle Tarife
+   * - string[]: Gilt nur für die angegebenen Tarif-IDs
+   * 
+   * BEISPIEL:
+   * - appliesToTariffs: ["PRIME_S"] → Nur für Prime S
+   * - appliesToTariffs: ["PRIME_S", "PRIME_M", "PRIME_L", "PRIME_XL"] → Alle Prime
+   * - appliesToTariffs: "*" → Alle Tarife
+   */
+  appliesToTariffs?: string[] | "*";
   /** Dauer in Monaten (0 = Dauerrabatt bis Laufzeitende) */
   durationMonths: number;
   /**

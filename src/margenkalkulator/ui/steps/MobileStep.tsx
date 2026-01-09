@@ -313,11 +313,12 @@ export function MobileStep({
           <InlineTariffConfig
             tariff={selectedTariff}
             mobileState={value}
-            promos={promos}
+            allPromos={promos}
             fullOption={fullOption}
             result={result}
             viewMode={viewMode}
             quantityBonus={quantityBonus}
+            asOfISO={fullOption.meta.asOfISO}
             onPromoChange={(promoId) => updateField("promoId", promoId)}
             onOmoChange={(rate) => updateField("omoRate", rate)}
             onAddedToOffer={onConfigComplete}

@@ -24,7 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FileText, Loader2, ShieldCheck, Download, Eye, ArrowLeft, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
+import { FileText, Loader2, ShieldCheck, Download, Eye, ArrowLeft, ZoomIn, ZoomOut, RotateCcw, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
 import { useEmployeeSettings } from "@/margenkalkulator/hooks/useEmployeeSettings";
@@ -276,6 +276,29 @@ export function PdfExportDialog({
   const handleZoomOut = () => setZoom(prev => Math.max(prev - 25, 50));
   const handleZoomReset = () => setZoom(100);
   
+  // Print PDF
+  const handlePrint = () => {
+    if (!previewUrl) return;
+    
+    // Open PDF in new window and trigger print
+    const printWindow = window.open(previewUrl, '_blank');
+    if (printWindow) {
+      printWindow.onload = () => {
+        printWindow.focus();
+        printWindow.print();
+      };
+    } else {
+      // Fallback: use iframe print
+      const iframe = document.querySelector('iframe[title="PDF Vorschau"]') as HTMLIFrameElement;
+      if (iframe?.contentWindow) {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+      } else {
+        toast.error("Drucken konnte nicht gestartet werden. Bitte laden Sie das PDF herunter.");
+      }
+    }
+  };
+  
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       {children && (
@@ -440,14 +463,19 @@ export function PdfExportDialog({
               )}
             </div>
             
-            <DialogFooter className="flex-shrink-0 gap-2 sm:gap-0 pt-4">
+            <DialogFooter className="flex-shrink-0 gap-2 pt-4">
               <Button variant="ghost" onClick={handleBackToOptions} className="gap-2">
                 <ArrowLeft className="w-4 h-4" />
                 Zurück
               </Button>
+              <div className="flex-1" />
+              <Button variant="outline" onClick={handlePrint} className="gap-2">
+                <Printer className="w-4 h-4" />
+                Drucken
+              </Button>
               <Button onClick={handleDownload} className="gap-2">
                 <Download className="w-4 h-4" />
-                PDF herunterladen
+                Herunterladen
               </Button>
             </DialogFooter>
           </>

@@ -47,26 +47,26 @@ export function MainLayout({ children }: MainLayoutProps) {
             "h-14 border-b border-border bg-card/80 backdrop-blur-sm flex items-center justify-between px-4 sticky top-0 z-40",
             isPOSMode && "h-12 px-2"
           )}>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
               <SidebarTrigger />
-              <div className="flex flex-col">
               {branding.logoUrl ? (
-                  <img 
-                    src={branding.logoUrl} 
-                    alt={branding.companyName || "Logo"} 
-                    className="h-10 md:h-12 w-auto max-w-[180px] object-contain"
-                  />
-                ) : (
+                <img 
+                  src={branding.logoUrl} 
+                  alt={branding.companyName || "Logo"} 
+                  className="h-8 md:h-10 w-auto max-w-[200px] object-contain"
+                />
+              ) : (
+                <div className="flex flex-col">
                   <span className="text-lg md:text-xl font-bold text-foreground tracking-tight">
                     {branding.companyName || PUBLISHER.displayName}
                   </span>
-                )}
-                {!isPOSMode && (
-                  <span className="text-[10px] text-muted-foreground leading-tight">
-                    {PUBLISHER.subline}
-                  </span>
-                )}
-              </div>
+                  {!isPOSMode && (
+                    <span className="text-[10px] text-muted-foreground leading-tight">
+                      {PUBLISHER.subline}
+                    </span>
+                  )}
+                </div>
+              )}
               {isPOSMode && (
                 <Badge variant="secondary" className="gap-1 text-xs">
                   <Monitor className="h-3 w-3" />

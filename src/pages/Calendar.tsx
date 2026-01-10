@@ -3,7 +3,7 @@ import { MainLayout } from "@/components/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar as CalendarIcon, Plus, ChevronLeft, ChevronRight, Clock, MapPin, User } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, ChevronLeft, ChevronRight, Clock, MapPin, User, Link2 } from "lucide-react";
 import { useCalendarEvents, type CalendarEvent, type CreateEventInput } from "@/margenkalkulator/hooks/useCalendarEvents";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from "date-fns";
 import { de } from "date-fns/locale";
@@ -13,6 +13,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { IntegrationPromptCard } from "@/margenkalkulator/ui/components/IntegrationPromptCard";
+import { GoogleCalendarIcon, OutlookIcon } from "@/margenkalkulator/ui/components/icons/IntegrationIcons";
+import { toast } from "sonner";
 
 const EVENT_TYPE_COLORS: Record<string, string> = {
   meeting: "bg-blue-500",
@@ -243,6 +246,58 @@ export default function CalendarPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Calendar Integrations Section */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Link2 className="w-4 h-4" />
+              Kalender-Integrationen
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Verbinden Sie externe Kalender, um Termine automatisch zu synchronisieren.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              <IntegrationPromptCard
+                type="google-calendar"
+                onConnect={() => toast.info("Google Kalender-Integration kommt bald!")}
+                variant="inline"
+              />
+              <IntegrationPromptCard
+                type="outlook"
+                onConnect={() => toast.info("Outlook-Integration kommt bald!")}
+                variant="inline"
+              />
+              <button
+                onClick={() => toast.info("iCloud-Integration kommt bald!")}
+                className="flex items-center gap-3 p-3 rounded-lg border border-dashed border-muted-foreground/20 hover:border-primary/40 hover:bg-muted/50 transition-all"
+              >
+                <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none">
+                  <rect x="3" y="4" width="18" height="18" rx="4" fill="url(#appleCalGradient2)"/>
+                  <rect x="3" y="4" width="18" height="6" rx="4" fill="#FF3B30"/>
+                  <text x="12" y="18" textAnchor="middle" fill="#333" fontSize="10" fontWeight="bold">31</text>
+                  <defs>
+                    <linearGradient id="appleCalGradient2" x1="12" y1="4" x2="12" y2="22" gradientUnits="userSpaceOnUse">
+                      <stop stopColor="#FF3B30"/>
+                      <stop offset="0.3" stopColor="#FFFFFF"/>
+                      <stop offset="1" stopColor="#F5F5F5"/>
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <div className="flex-1 text-left">
+                  <p className="font-medium text-sm">iCloud Kalender</p>
+                  <p className="text-xs text-muted-foreground">Apple Kalender</p>
+                </div>
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-4 flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              Sync-Status: Manuell (keine externen Kalender verbunden)
+            </p>
+          </CardContent>
+        </Card>
       </div>
     </MainLayout>
   );

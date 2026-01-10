@@ -16,7 +16,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { FolderOpen, Trash2, Clock, Smartphone, Signal, Loader2 } from "lucide-react";
 import type { OfferOptionState } from "../../engine/types";
 import { useDrafts } from "../../hooks/useDrafts";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useState } from "react";
 
 interface DraftManagerProps {
@@ -30,26 +30,20 @@ export function DraftManager({
   variant = "outline",
   size = "sm",
 }: DraftManagerProps) {
-  const { toast } = useToast();
+  
   const [open, setOpen] = useState(false);
   const { drafts, isLoading, deleteDraft, isDeleting } = useDrafts();
   
   const handleLoad = (draft: { name: string; config: OfferOptionState }) => {
     onLoadDraft(draft.config);
-    toast({
-      title: "Entwurf geladen",
-      description: `"${draft.name}" wurde wiederhergestellt.`,
-    });
+    toast.success("Entwurf geladen", { description: `"${draft.name}" wurde wiederhergestellt.` });
     setOpen(false);
   };
   
   const handleDelete = async (id: string, name: string) => {
     try {
       await deleteDraft(id);
-      toast({
-        title: "Entwurf gelöscht",
-        description: `"${name}" wurde entfernt.`,
-      });
+      toast.success("Entwurf gelöscht", { description: `"${name}" wurde entfernt.` });
     } catch {
       // Error handled by hook
     }

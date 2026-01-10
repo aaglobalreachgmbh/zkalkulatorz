@@ -17,7 +17,7 @@ import {
 import { Save } from "lucide-react";
 import type { OfferOptionState } from "../../engine/types";
 import { useDrafts } from "../../hooks/useDrafts";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 interface SaveDraftButtonProps {
   config: OfferOptionState;
@@ -32,7 +32,7 @@ export function SaveDraftButton({
   variant = "outline",
   size = "sm",
 }: SaveDraftButtonProps) {
-  const { toast } = useToast();
+  
   const { createDraft, isCreating } = useDrafts();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -54,18 +54,11 @@ export function SaveDraftButton({
     
     try {
       await createDraft(name.trim(), config, avgMonthly);
-      toast({
-        title: "Entwurf gespeichert",
-        description: `"${name.trim()}" wurde gespeichert.`,
-      });
+      toast.success("Entwurf gespeichert", { description: `"${name.trim()}" wurde gespeichert.` });
       setOpen(false);
       setName("");
     } catch {
-      toast({
-        title: "Fehler",
-        description: "Speichern fehlgeschlagen.",
-        variant: "destructive",
-      });
+      toast.error("Fehler", { description: "Speichern fehlgeschlagen." });
     }
   };
   

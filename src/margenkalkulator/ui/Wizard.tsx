@@ -46,7 +46,7 @@ import { SavingsBreakdown } from "./components/SavingsBreakdown";
 import { StickyPriceBar } from "./components/StickyPriceBar";
 import { QuickStartDialog, shouldShowQuickStart } from "./components/QuickStartDialog";
 import { useHistory } from "../hooks/useHistory";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useIdentity } from "@/contexts/IdentityContext";
 import { useCustomerSession } from "@/contexts/CustomerSessionContext";
 import { useEffectivePolicy } from "@/hooks/useEffectivePolicy";
@@ -67,7 +67,7 @@ const STEPS: { id: WizardStep; label: string; icon: typeof Smartphone }[] = [
 ];
 
 export function Wizard() {
-  const { toast } = useToast();
+  
   const location = useLocation();
   const navigate = useNavigate();
   const { identity } = useIdentity();
@@ -160,13 +160,10 @@ export function Wizard() {
       if (draft.option1.hardware.ekNet > 0) sections.unshift("hardware");
       if (draft.option1.fixedNet.enabled) sections.push("fixedNet");
       setOpenSections(sections);
-      toast({
-        title: "Entwurf wiederhergestellt",
-        description: "Deine letzte Konfiguration wurde geladen.",
-      });
+      toast.success("Entwurf wiederhergestellt", { description: "Deine letzte Konfiguration wurde geladen." });
     }
     setShowRestoreDialog(false);
-  }, [autoSave, toast]);
+  }, [autoSave]);
   
   // Handle draft discard
   const handleDiscardDraft = useCallback(() => {
@@ -232,16 +229,10 @@ export function Wizard() {
     if (state?.bundleConfig) {
       const merged = { ...createDefaultOptionState(), ...state.bundleConfig };
       setOption1(merged);
-      toast({
-        title: "Bundle geladen",
-        description: "Die Bundle-Konfiguration wurde übernommen.",
-      });
+      toast.success("Bundle geladen", { description: "Die Bundle-Konfiguration wurde übernommen." });
     } else if (state?.templateConfig) {
       setOption1(state.templateConfig);
-      toast({
-        title: "Template geladen",
-        description: "Die Template-Konfiguration wurde übernommen.",
-      });
+      toast.success("Template geladen", { description: "Die Template-Konfiguration wurde übernommen." });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -343,11 +334,11 @@ export function Wizard() {
     
     if (newMode === "customer" && policy.requireCustomerSessionWhenCustomerMode && !customerSession.isActive) {
       toggleSession();
-      toast({ title: "Kundensitzung aktiviert", description: "Sensible Daten werden ausgeblendet." });
+      toast.success("Kundensitzung aktiviert", { description: "Sensible Daten werden ausgeblendet." });
     }
     
     setViewMode(newMode);
-  }, [viewMode, policy, customerSession.isActive, toggleSession, toast]);
+  }, [viewMode, policy, customerSession.isActive, toggleSession]);
 
   // Reset wizard for new tariff (keeps basket)
   const resetForNewTariff = useCallback(() => {
@@ -357,29 +348,19 @@ export function Wizard() {
     setActiveOption(1);
     setOpenSections(["hardware", "mobile"]);
     
-    toast({
-      title: "Bereit für nächsten Tarif",
-      description: "Konfiguriere jetzt den nächsten Tarif für dieses Angebot.",
-    });
-  }, [toast]);
+    toast.success("Bereit für nächsten Tarif", { description: "Konfiguriere jetzt den nächsten Tarif für dieses Angebot." });
+  }, []);
 
   // Copy option
   const copyOption = (from: 1 | 2, to: 1 | 2) => {
     if (!option2Enabled && to === 2) {
-      toast({
-        title: "Option 2 nicht verfügbar",
-        description: option2Reason,
-        variant: "destructive",
-      });
+      toast.error("Option 2 nicht verfügbar", { description: option2Reason });
       return;
     }
     const source = from === 1 ? option1 : option2;
     const setter = to === 1 ? setOption1 : setOption2;
     setter(JSON.parse(JSON.stringify(source)));
-    toast({
-      title: "Option kopiert",
-      description: `Option ${from} → Option ${to}`,
-    });
+    toast.success("Option kopiert", { description: `Option ${from} → Option ${to}` });
   };
 
   // Get active result

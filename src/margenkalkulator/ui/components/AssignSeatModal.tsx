@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { UserPlus, Loader2, AlertCircle } from "lucide-react";
 import { useCloudSeats } from "@/hooks/useCloudSeats";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 interface AssignSeatModalProps {
   open: boolean;
@@ -32,7 +32,7 @@ export function AssignSeatModal({ open, onOpenChange }: AssignSeatModalProps) {
   const [error, setError] = useState<string | null>(null);
 
   const { assignSeat, seatUsage, seats } = useCloudSeats();
-  const { toast } = useToast();
+  
 
   const resetForm = () => {
     setEmail("");
@@ -79,10 +79,7 @@ export function AssignSeatModal({ open, onOpenChange }: AssignSeatModalProps) {
       // In production, this would look up the user by email first
       await assignSeat(email, email, name || undefined);
       
-      toast({
-        title: "Seat zugewiesen",
-        description: `${name || email} hat nun Zugang zum System.`,
-      });
+      toast.success("Seat zugewiesen", { description: `${name || email} hat nun Zugang zum System.` });
 
       handleClose();
     } catch (err) {

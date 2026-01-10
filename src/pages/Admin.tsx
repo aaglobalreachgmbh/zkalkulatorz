@@ -18,7 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useIdentity, MOCK_IDENTITIES, type IdentityState } from "@/contexts/IdentityContext";
 import { Building2, Settings, Database, Plus, Trash2, Users, FileText, Clock, User, Key, Check, X, Crown, HardDrive, RefreshCw, AlertTriangle, CheckCircle2, Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useLocalStorageAudit, formatBytes, getCategoryLabel, getCategoryColor } from "@/hooks/useLocalStorageAudit";
 
 // Organisation imports
@@ -58,7 +58,6 @@ import { de } from "date-fns/locale";
 
 export default function Admin() {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { identity, setMockIdentity, canAccessAdmin } = useIdentity();
   
   // State
@@ -108,8 +107,8 @@ export default function Admin() {
       { name: newDept.name }
     );
     
-    toast({ title: "Abteilung hinzugefügt", description: newDept.name });
-  }, [identity, newDeptName, toast]);
+    toast.success("Abteilung hinzugefügt", { description: newDept.name });
+  }, [identity, newDeptName]);
 
   const handleDeleteDepartment = useCallback((id: string) => {
     const dept = departments.find(d => d.id === id);
@@ -130,8 +129,8 @@ export default function Admin() {
       { name: dept.name }
     );
     
-    toast({ title: "Abteilung gelöscht" });
-  }, [identity, departments, toast]);
+    toast.success("Abteilung gelöscht");
+  }, [identity, departments]);
 
   // Policy updates
   const handlePolicyChange = useCallback(<K extends keyof Policy>(key: K, value: Policy[K]) => {
@@ -164,11 +163,8 @@ export default function Admin() {
 
   const switchToIdentity = useCallback((id: IdentityState) => {
     setMockIdentity(id);
-    toast({ 
-      title: "Benutzer gewechselt", 
-      description: `Angemeldet als ${id.displayName} (${id.role})` 
-    });
-  }, [setMockIdentity, toast]);
+    toast.success("Benutzer gewechselt", { description: `Angemeldet als ${id.displayName} (${id.role})` });
+  }, [setMockIdentity]);
 
   if (!canAccessAdmin) {
     return null;

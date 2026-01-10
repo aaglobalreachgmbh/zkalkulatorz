@@ -15,22 +15,19 @@ import {
 import { History, Clock, Loader2 } from "lucide-react";
 import type { OfferOptionState } from "../../engine/types";
 import { useHistory } from "../../hooks/useHistory";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 interface HistoryDropdownProps {
   onLoadHistory: (config: OfferOptionState) => void;
 }
 
 export function HistoryDropdown({ onLoadHistory }: HistoryDropdownProps) {
-  const { toast } = useToast();
+  
   const { history, isLoading, clearHistory, isClearing } = useHistory();
   
   const handleLoad = (entry: { config: OfferOptionState; summary: string }) => {
     onLoadHistory(entry.config);
-    toast({
-      title: "Verlauf geladen",
-      description: entry.summary,
-    });
+    toast.success("Verlauf geladen", { description: entry.summary });
   };
   
   const handleClear = async () => {

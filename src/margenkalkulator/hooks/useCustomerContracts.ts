@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 // Types
 export interface CustomerContract {
@@ -141,7 +141,6 @@ export interface ContractWithCustomer extends CustomerContract {
 
 // Hook
 export function useCustomerContracts(customerId?: string) {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Fetch contracts for a specific customer
@@ -183,14 +182,10 @@ export function useCustomerContracts(customerId?: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customer-contracts"] });
       queryClient.invalidateQueries({ queryKey: ["all-contracts"] });
-      toast({ title: "Vertrag erstellt" });
+      toast.success("Vertrag erstellt");
     },
     onError: (error) => {
-      toast({ 
-        title: "Fehler beim Erstellen", 
-        description: error.message,
-        variant: "destructive" 
-      });
+      toast.error("Fehler beim Erstellen", { description: error.message });
     },
   });
 
@@ -210,14 +205,10 @@ export function useCustomerContracts(customerId?: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customer-contracts"] });
       queryClient.invalidateQueries({ queryKey: ["all-contracts"] });
-      toast({ title: "Vertrag aktualisiert" });
+      toast.success("Vertrag aktualisiert");
     },
     onError: (error) => {
-      toast({ 
-        title: "Fehler beim Aktualisieren", 
-        description: error.message,
-        variant: "destructive" 
-      });
+      toast.error("Fehler beim Aktualisieren", { description: error.message });
     },
   });
 
@@ -234,14 +225,10 @@ export function useCustomerContracts(customerId?: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customer-contracts"] });
       queryClient.invalidateQueries({ queryKey: ["all-contracts"] });
-      toast({ title: "Vertrag gelöscht" });
+      toast.success("Vertrag gelöscht");
     },
     onError: (error) => {
-      toast({ 
-        title: "Fehler beim Löschen", 
-        description: error.message,
-        variant: "destructive" 
-      });
+      toast.error("Fehler beim Löschen", { description: error.message });
     },
   });
 

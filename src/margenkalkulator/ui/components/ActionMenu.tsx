@@ -19,7 +19,7 @@ import {
 import type { OfferOptionState, CalculationResult, ViewMode } from "@/margenkalkulator";
 import { useHistory } from "../../hooks/useHistory";
 import { useDrafts } from "../../hooks/useDrafts";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { PdfExportDialog } from "./PdfExportDialog";
 
@@ -32,7 +32,7 @@ interface ActionMenuProps {
 }
 
 export function ActionMenu({ config, avgMonthly, result, viewMode, onLoadConfig }: ActionMenuProps) {
-  const { toast } = useToast();
+  
   const navigate = useNavigate();
   const { history } = useHistory();
   const { createDraft } = useDrafts();
@@ -45,33 +45,18 @@ export function ActionMenu({ config, avgMonthly, result, viewMode, onLoadConfig 
     
     try {
       await createDraft(name, config, avgMonthly);
-      
-      toast({
-        title: "Entwurf gespeichert",
-        description: `"${name}" wurde gespeichert.`,
-      });
+      toast.success("Entwurf gespeichert", { description: `"${name}" wurde gespeichert.` });
     } catch {
-      toast({
-        title: "Fehler",
-        description: "Entwurf konnte nicht gespeichert werden.",
-        variant: "destructive",
-      });
+      toast.error("Fehler", { description: "Entwurf konnte nicht gespeichert werden." });
     }
   };
 
   const handleLoadLastHistory = () => {
     if (history.length > 0) {
       onLoadConfig(history[0].config as OfferOptionState);
-      toast({
-        title: "Konfiguration geladen",
-        description: "Letzter Verlaufseintrag wurde geladen.",
-      });
+      toast.success("Konfiguration geladen", { description: "Letzter Verlaufseintrag wurde geladen." });
     } else {
-      toast({
-        title: "Kein Verlauf",
-        description: "Es gibt keine gespeicherten Konfigurationen.",
-        variant: "destructive",
-      });
+      toast.error("Kein Verlauf", { description: "Es gibt keine gespeicherten Konfigurationen." });
     }
   };
 
@@ -84,19 +69,13 @@ export function ActionMenu({ config, avgMonthly, result, viewMode, onLoadConfig 
   };
 
   const handleSaveTemplate = () => {
-    toast({
-      title: "Template speichern",
-      description: "Bitte nutze den Vorlagen-Button auf der Angebote-Seite.",
-    });
+    toast("Template speichern", { description: "Bitte nutze den Vorlagen-Button auf der Angebote-Seite." });
     navigate("/offers");
   };
 
   const handleSaveBundle = () => {
     navigate("/bundles");
-    toast({
-      title: "Bundle speichern",
-      description: "Du wirst zur Bundle-Verwaltung weitergeleitet.",
-    });
+    toast("Bundle speichern", { description: "Du wirst zur Bundle-Verwaltung weitergeleitet." });
   };
 
   return (

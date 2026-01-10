@@ -1,77 +1,216 @@
+// ============================================
+// Inbox Page - Email Integration with Gmail and IONOS
+// ============================================
+
 import { useState } from "react";
 import { MainLayout } from "@/components/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { 
   Inbox as InboxIcon, 
-  Upload, 
-  Link2, 
-  Eye, 
-  FileText, 
-  Image, 
-  File,
-  FileSpreadsheet
+  Mail,
+  Plus,
+  RefreshCw,
+  Star,
+  StarOff,
+  Search,
+  Filter,
+  Users,
+  Link2,
+  ExternalLink,
+  Settings,
+  Trash2,
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  Eye,
 } from "lucide-react";
+import { useEmailAccounts } from "@/margenkalkulator/hooks/useEmailAccounts";
+import { useSyncedEmails } from "@/margenkalkulator/hooks/useSyncedEmails";
+import { useEmployeeAssignments } from "@/margenkalkulator/hooks/useEmployeeAssignments";
+import { useIdentity } from "@/contexts/IdentityContext";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { format, parseISO, isToday, isYesterday } from "date-fns";
+import { de } from "date-fns/locale";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
-// Mock-Daten für ungesichtete Uploads
-const MOCK_UPLOADS = [
-  { 
-    id: "1", 
-    name: "Rahmenvertrag_Vodafone.pdf", 
-    type: "pdf", 
-    size: "2.4 MB", 
-    uploadedAt: "Heute 09:15", 
-    status: "neu" 
-  },
-  { 
-    id: "2", 
-    name: "Hardware_EK_Januar.xlsx", 
-    type: "xlsx", 
-    size: "156 KB", 
-    uploadedAt: "Gestern", 
-    status: "neu" 
-  },
-  { 
-    id: "3", 
-    name: "Kundenlogo_Musterfirma.png", 
-    type: "image", 
-    size: "89 KB", 
-    uploadedAt: "03.01.2026", 
-    status: "neu" 
-  },
-];
+// Gmail Icon Component
+function GmailIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none">
+      <path d="M22 6L12 13L2 6V4L12 11L22 4V6Z" fill="#EA4335"/>
+      <path d="M22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6L12 13L22 6Z" fill="#FBBC05"/>
+      <path d="M22 6L12 13V20H20C21.1 20 22 19.1 22 18V6Z" fill="#34A853"/>
+      <path d="M2 6L12 13V20H4C2.9 20 2 19.1 2 18V6Z" fill="#4285F4"/>
+    </svg>
+  );
+}
 
-function getFileIcon(type: string) {
-  switch (type) {
-    case "pdf":
-      return <FileText className="w-5 h-5 text-red-500" />;
-    case "xlsx":
-      return <FileSpreadsheet className="w-5 h-5 text-green-500" />;
-    case "image":
-      return <Image className="w-5 h-5 text-blue-500" />;
-    default:
-      return <File className="w-5 h-5 text-muted-foreground" />;
-  }
+// IONOS Icon Component
+function IonosIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none">
+      <rect width="24" height="24" rx="4" fill="#003D8F"/>
+      <text x="12" y="16" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold">IO</text>
+    </svg>
+  );
+}
+
+function formatEmailDate(dateStr: string): string {
+  const date = parseISO(dateStr);
+  if (isToday(date)) return format(date, "HH:mm");
+  if (isYesterday(date)) return "Gestern";
+  return format(date, "dd.MM.yy", { locale: de });
 }
 
 export default function InboxPage() {
-  const [uploads] = useState(MOCK_UPLOADS);
-  const [isDragOver, setIsDragOver] = useState(false);
+  const { user } = useAuth();
+  const { identity } = useIdentity();
+  const { accounts, isLoading: accountsLoading, deleteAccount } = useEmailAccounts();
+  const { emails, isLoading: emailsLoading, refetch: refetchEmails } = useSyncedEmails();
+  const { supervisedEmployeeIds } = useEmployeeAssignments();
+  
+  const [activeTab, setActiveTab] = useState("inbox");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showConnectDialog, setShowConnectDialog] = useState(false);
+  const [connectProvider, setConnectProvider] = useState<"gmail" | "ionos" | null>(null);
+  const [ionosCredentials, setIonosCredentials] = useState({ email: "", password: "" });
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(true);
+  const isAdmin = identity?.role === "admin" || identity?.role === "tenant_admin";
+  const isTeamLead = identity?.role === "manager" || supervisedEmployeeIds.length > 0;
+
+  // Filter emails based on active tab and search
+  const filteredEmails = emails.filter(email => {
+    const matchesSearch = !searchQuery || 
+      email.subject?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      email.sender_email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      email.sender_name?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesTab = activeTab === "inbox" || 
+      (activeTab === "unread" && !email.is_read) ||
+      (activeTab === "starred" && email.is_starred) ||
+      (activeTab === "linked" && email.customer_id);
+    
+    return matchesSearch && matchesTab;
+  });
+
+  const unreadCount = emails.filter(e => !e.is_read).length;
+
+  // Gmail OAuth connect
+  const handleGmailConnect = async () => {
+    setIsConnecting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Nicht authentifiziert");
+
+      const response = await supabase.functions.invoke("gmail-oauth", {
+        body: { 
+          action: "get_auth_url",
+          redirectUri: `${window.location.origin}/inbox`,
+        },
+      });
+
+      if (response.error) throw response.error;
+      if (response.data?.authUrl) {
+        window.location.href = response.data.authUrl;
+      } else if (response.data?.error) {
+        toast.error(response.data.message || "Gmail OAuth nicht konfiguriert");
+      }
+    } catch (error) {
+      console.error("Gmail connect error:", error);
+      toast.error("Gmail-Verbindung fehlgeschlagen");
+    } finally {
+      setIsConnecting(false);
+    }
   };
 
-  const handleDragLeave = () => {
-    setIsDragOver(false);
+  // IONOS connect
+  const handleIonosConnect = async () => {
+    if (!ionosCredentials.email || !ionosCredentials.password) {
+      toast.error("Bitte E-Mail und Passwort eingeben");
+      return;
+    }
+
+    setIsConnecting(true);
+    try {
+      const response = await supabase.functions.invoke("ionos-connect", {
+        body: { 
+          action: "save_credentials",
+          email: ionosCredentials.email,
+          password: ionosCredentials.password,
+        },
+      });
+
+      if (response.error) throw response.error;
+      if (response.data?.success) {
+        toast.success("IONOS-Konto erfolgreich verbunden");
+        setShowConnectDialog(false);
+        setConnectProvider(null);
+        setIonosCredentials({ email: "", password: "" });
+      } else {
+        toast.error(response.data?.error || "Verbindung fehlgeschlagen");
+      }
+    } catch (error) {
+      console.error("IONOS connect error:", error);
+      toast.error("IONOS-Verbindung fehlgeschlagen");
+    } finally {
+      setIsConnecting(false);
+    }
   };
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    // TODO: Handle file drop
+  // Sync emails
+  const handleSync = async () => {
+    setIsSyncing(true);
+    try {
+      const response = await supabase.functions.invoke("sync-emails", {
+        body: {},
+      });
+
+      if (response.error) throw response.error;
+      
+      const results = response.data?.results || [];
+      const synced = results.reduce((sum: number, r: any) => sum + (r.synced || 0), 0);
+      
+      if (synced > 0) {
+        toast.success(`${synced} neue E-Mails synchronisiert`);
+      } else {
+        toast.info("Keine neuen E-Mails");
+      }
+      
+      refetchEmails();
+    } catch (error) {
+      console.error("Sync error:", error);
+      toast.error("Synchronisation fehlgeschlagen");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  // Disconnect account
+  const handleDisconnect = async (accountId: string) => {
+    try {
+      await deleteAccount(accountId);
+      toast.success("Konto getrennt");
+    } catch (error) {
+      toast.error("Trennen fehlgeschlagen");
+    }
   };
 
   return (
@@ -80,93 +219,348 @@ export default function InboxPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Posteingang</h1>
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              <InboxIcon className="w-6 h-6" />
+              Posteingang
+            </h1>
             <p className="text-muted-foreground">
-              Zentrale Ablage für eingehende Dokumente
+              E-Mail-Integration für Gmail und IONOS
             </p>
           </div>
-          <Badge variant="secondary" className="text-sm">
-            {uploads.length} ungesichtet
-          </Badge>
+          <div className="flex items-center gap-2">
+            {accounts.length > 0 && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleSync}
+                disabled={isSyncing}
+              >
+                <RefreshCw className={cn("w-4 h-4 mr-2", isSyncing && "animate-spin")} />
+                Synchronisieren
+              </Button>
+            )}
+            <Button 
+              size="sm" 
+              onClick={() => setShowConnectDialog(true)}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Konto verbinden
+            </Button>
+          </div>
         </div>
 
-        {/* Dropzone */}
-        <Card 
-          className={`border-dashed border-2 transition-colors cursor-pointer ${
-            isDragOver 
-              ? "border-primary bg-primary/5" 
-              : "hover:border-primary/50"
-          }`}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          onClick={() => document.getElementById('file-upload')?.click()}
-        >
-          <CardContent className="py-12 text-center">
-            <Upload className={`w-12 h-12 mx-auto mb-4 ${
-              isDragOver ? "text-primary" : "text-muted-foreground"
-            }`} />
-            <p className="text-lg font-medium">Dateien hier ablegen</p>
-            <p className="text-sm text-muted-foreground">
-              oder klicken zum Auswählen
-            </p>
-            <input 
-              type="file" 
-              className="hidden" 
-              id="file-upload" 
-              multiple 
-            />
-            <Button variant="outline" className="mt-4">
-              Dateien auswählen
-            </Button>
-          </CardContent>
-        </Card>
+        {/* Connected Accounts */}
+        {accounts.length > 0 && (
+          <div className="flex flex-wrap gap-3">
+            {accounts.map((account) => (
+              <Card key={account.id} className="flex items-center gap-3 p-3 pr-4">
+                {account.provider === "gmail" ? (
+                  <GmailIcon className="w-8 h-8" />
+                ) : (
+                  <IonosIcon className="w-8 h-8" />
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm truncate">{account.email_address}</p>
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    {account.sync_error ? (
+                      <>
+                        <AlertCircle className="w-3 h-3 text-destructive" />
+                        Fehler
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-3 h-3 text-success" />
+                        Verbunden
+                      </>
+                    )}
+                    {account.last_sync_at && (
+                      <span className="ml-2">
+                        <Clock className="w-3 h-3 inline mr-1" />
+                        {formatEmailDate(account.last_sync_at)}
+                      </span>
+                    )}
+                  </p>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  className="text-muted-foreground hover:text-destructive"
+                  onClick={() => handleDisconnect(account.id)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </Card>
+            ))}
+          </div>
+        )}
 
-        {/* Ungesichtete Uploads */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <InboxIcon className="w-5 h-5" />
-              Ungesichtete Uploads
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {uploads.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <InboxIcon className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>Keine ungesichteten Dokumente</p>
+        {/* No accounts connected */}
+        {accounts.length === 0 && !accountsLoading && (
+          <Card className="border-dashed">
+            <CardContent className="py-12 text-center">
+              <Mail className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-lg font-semibold mb-2">Kein E-Mail-Konto verbunden</h3>
+              <p className="text-muted-foreground mb-4">
+                Verbinden Sie Ihr Gmail- oder IONOS-Konto, um E-Mails direkt hier zu sehen.
+              </p>
+              <div className="flex justify-center gap-3">
+                <Button 
+                  variant="outline" 
+                  onClick={() => { setConnectProvider("gmail"); setShowConnectDialog(true); }}
+                >
+                  <GmailIcon className="w-5 h-5 mr-2" />
+                  Gmail verbinden
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => { setConnectProvider("ionos"); setShowConnectDialog(true); }}
+                >
+                  <IonosIcon className="w-5 h-5 mr-2" />
+                  IONOS verbinden
+                </Button>
               </div>
-            ) : (
-              <div className="space-y-2">
-                {uploads.map((item) => (
-                  <div 
-                    key={item.id} 
-                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      {getFileIcon(item.type)}
-                      <div>
-                        <p className="font-medium">{item.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {item.size} • {item.uploadedAt}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="icon" title="Anzeigen">
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" title="Zuordnen">
-                        <Link2 className="w-4 h-4" />
-                      </Button>
-                    </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Email List */}
+        {accounts.length > 0 && (
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base">
+                  E-Mails
+                  {unreadCount > 0 && (
+                    <Badge variant="secondary" className="ml-2">
+                      {unreadCount} ungelesen
+                    </Badge>
+                  )}
+                </CardTitle>
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input 
+                      placeholder="Suchen..."
+                      className="pl-9 w-64"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
                   </div>
-                ))}
+                </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </CardHeader>
+            <CardContent>
+              <Tabs value={activeTab} onValueChange={setActiveTab}>
+                <TabsList className="mb-4">
+                  <TabsTrigger value="inbox">Alle</TabsTrigger>
+                  <TabsTrigger value="unread">Ungelesen</TabsTrigger>
+                  <TabsTrigger value="starred">Markiert</TabsTrigger>
+                  <TabsTrigger value="linked">Mit Kunde</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value={activeTab} className="mt-0">
+                  {emailsLoading ? (
+                    <div className="space-y-2">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="h-16 bg-muted/50 rounded-lg animate-pulse" />
+                      ))}
+                    </div>
+                  ) : filteredEmails.length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <InboxIcon className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                      <p>Keine E-Mails gefunden</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-1">
+                      {filteredEmails.map((email) => (
+                        <div 
+                          key={email.id}
+                          className={cn(
+                            "flex items-start gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer border border-transparent",
+                            !email.is_read && "bg-primary/5 border-primary/10",
+                            selectedEmail === email.id && "bg-muted"
+                          )}
+                          onClick={() => setSelectedEmail(email.id)}
+                        >
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="shrink-0 h-8 w-8"
+                            onClick={(e) => { e.stopPropagation(); }}
+                          >
+                            {email.is_starred ? (
+                              <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                            ) : (
+                              <StarOff className="w-4 h-4 text-muted-foreground" />
+                            )}
+                          </Button>
+                          
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2">
+                              <p className={cn(
+                                "truncate",
+                                !email.is_read && "font-semibold"
+                              )}>
+                                {email.sender_name || email.sender_email}
+                              </p>
+                              <span className="text-xs text-muted-foreground shrink-0">
+                                {formatEmailDate(email.received_at)}
+                              </span>
+                            </div>
+                            <p className={cn(
+                              "text-sm truncate",
+                              !email.is_read ? "text-foreground" : "text-muted-foreground"
+                            )}>
+                              {email.subject}
+                            </p>
+                            <p className="text-xs text-muted-foreground truncate mt-0.5">
+                              {email.body_preview}
+                            </p>
+                          </div>
+
+                          {email.customer_id && (
+                            <Badge variant="outline" className="shrink-0">
+                              <Link2 className="w-3 h-3 mr-1" />
+                              Verknüpft
+                            </Badge>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Team Overview - Only for Team Leads and Admins */}
+        {(isAdmin || isTeamLead) && accounts.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Users className="w-4 h-4" />
+                Team-Übersicht
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground text-sm">
+                {isAdmin 
+                  ? "Als Administrator können Sie alle E-Mails im Tenant einsehen."
+                  : `Sie betreuen ${supervisedEmployeeIds.length} Mitarbeiter.`
+                }
+              </p>
+              {/* TODO: Implement team email overview */}
+            </CardContent>
+          </Card>
+        )}
       </div>
+
+      {/* Connect Account Dialog */}
+      <Dialog open={showConnectDialog} onOpenChange={setShowConnectDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>E-Mail-Konto verbinden</DialogTitle>
+            <DialogDescription>
+              Wählen Sie einen Anbieter aus, um Ihre E-Mails zu synchronisieren.
+            </DialogDescription>
+          </DialogHeader>
+
+          {!connectProvider ? (
+            <div className="grid grid-cols-2 gap-4 py-4">
+              <Button 
+                variant="outline" 
+                className="h-24 flex-col gap-2"
+                onClick={() => setConnectProvider("gmail")}
+              >
+                <GmailIcon className="w-10 h-10" />
+                <span>Gmail</span>
+              </Button>
+              <Button 
+                variant="outline" 
+                className="h-24 flex-col gap-2"
+                onClick={() => setConnectProvider("ionos")}
+              >
+                <IonosIcon className="w-10 h-10" />
+                <span>IONOS</span>
+              </Button>
+            </div>
+          ) : connectProvider === "gmail" ? (
+            <div className="py-4 space-y-4">
+              <div className="flex items-center gap-3 p-4 bg-muted rounded-lg">
+                <GmailIcon className="w-10 h-10" />
+                <div>
+                  <p className="font-medium">Gmail verbinden</p>
+                  <p className="text-sm text-muted-foreground">
+                    Sie werden zu Google weitergeleitet, um die Verbindung zu autorisieren.
+                  </p>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setConnectProvider(null)}>
+                  Zurück
+                </Button>
+                <Button onClick={handleGmailConnect} disabled={isConnecting}>
+                  {isConnecting ? (
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                  )}
+                  Mit Google verbinden
+                </Button>
+              </DialogFooter>
+            </div>
+          ) : (
+            <div className="py-4 space-y-4">
+              <div className="flex items-center gap-3 p-4 bg-muted rounded-lg">
+                <IonosIcon className="w-10 h-10" />
+                <div>
+                  <p className="font-medium">IONOS verbinden</p>
+                  <p className="text-sm text-muted-foreground">
+                    Geben Sie Ihre IONOS-Zugangsdaten ein.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                <div>
+                  <Label htmlFor="ionos-email">E-Mail-Adresse</Label>
+                  <Input 
+                    id="ionos-email"
+                    type="email"
+                    placeholder="ihre@email.de"
+                    value={ionosCredentials.email}
+                    onChange={(e) => setIonosCredentials(prev => ({ ...prev, email: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="ionos-password">Passwort / App-Passwort</Label>
+                  <Input 
+                    id="ionos-password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={ionosCredentials.password}
+                    onChange={(e) => setIonosCredentials(prev => ({ ...prev, password: e.target.value }))}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Tipp: Erstellen Sie ein App-Passwort in Ihren IONOS-Einstellungen.
+                  </p>
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setConnectProvider(null)}>
+                  Zurück
+                </Button>
+                <Button onClick={handleIonosConnect} disabled={isConnecting}>
+                  {isConnecting && <RefreshCw className="w-4 h-4 mr-2 animate-spin" />}
+                  Verbinden
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   );
 }

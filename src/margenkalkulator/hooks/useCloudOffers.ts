@@ -51,7 +51,10 @@ export function useCloudOffers() {
         .select("*")
         .order("updated_at", { ascending: false });
 
-      if (error) throw new Error("Laden fehlgeschlagen: " + error.message);
+      if (error) {
+        console.warn("[useCloudOffers] Query error:", error.message);
+        return [];
+      }
 
       return (data || []).map((row) => ({
         id: row.id,
@@ -88,7 +91,11 @@ export function useCloudOffers() {
       customerId?: string | null;
       datasetVersionId?: string | null;
     }): Promise<CloudOffer> => {
-      if (!user) throw new Error("Nicht eingeloggt");
+      if (!user) {
+        console.warn("[useCloudOffers] Not authenticated");
+        toast.error("Bitte zuerst einloggen");
+        return null as unknown as CloudOffer;
+      }
 
       const preview = createPreview(config, avgMonthly);
 
@@ -107,7 +114,11 @@ export function useCloudOffers() {
         .select()
         .single();
 
-      if (error) throw new Error("Speichern fehlgeschlagen: " + error.message);
+      if (error) {
+        console.warn("[useCloudOffers] Create error:", error.message);
+        toast.error("Speichern fehlgeschlagen");
+        return null as unknown as CloudOffer;
+      }
 
       return {
         id: data.id,
@@ -150,7 +161,11 @@ export function useCloudOffers() {
         .delete()
         .eq("id", id);
 
-      if (error) throw new Error("Löschen fehlgeschlagen: " + error.message);
+      if (error) {
+        console.warn("[useCloudOffers] Delete error:", error.message);
+        toast.error("Löschen fehlgeschlagen");
+        return;
+      }
     },
     onSuccess: (_, id) => {
       queryClient.setQueryData<CloudOffer[]>(QUERY_KEY, (old) =>
@@ -176,7 +191,11 @@ export function useCloudOffers() {
         .update({ name })
         .eq("id", id);
 
-      if (error) throw new Error("Umbenennen fehlgeschlagen: " + error.message);
+      if (error) {
+        console.warn("[useCloudOffers] Rename error:", error.message);
+        toast.error("Umbenennen fehlgeschlagen");
+        return;
+      }
     },
     onSuccess: (_, { id, name }) => {
       queryClient.setQueryData<CloudOffer[]>(QUERY_KEY, (old) =>

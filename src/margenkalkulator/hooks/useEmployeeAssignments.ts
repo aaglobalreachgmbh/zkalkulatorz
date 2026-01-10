@@ -92,7 +92,9 @@ export function useEmployeeAssignments() {
   const createMutation = useMutation({
     mutationFn: async ({ supervisorId, employeeId }: { supervisorId: string; employeeId: string }) => {
       if (!identity?.tenantId) {
-        throw new Error("Nicht authentifiziert");
+        console.warn("[useEmployeeAssignments] Not authenticated");
+        toast.error("Bitte zuerst einloggen");
+        return null;
       }
 
       const { data, error } = await supabase

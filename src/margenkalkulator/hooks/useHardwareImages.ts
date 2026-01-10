@@ -48,12 +48,14 @@ export function useHardwareImages() {
       // Validate file type
       const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
       if (!allowedTypes.includes(file.type)) {
-        throw new Error("Nur JPEG, PNG oder WebP erlaubt");
+        toast.error("Nur JPEG, PNG oder WebP erlaubt");
+        return null;
       }
 
       // Validate file size (max 1MB)
       if (file.size > 1024 * 1024) {
-        throw new Error("Maximale Dateigröße: 1 MB");
+        toast.error("Maximale Dateigröße: 1 MB");
+        return null;
       }
 
       // Generate unique filename

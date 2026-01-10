@@ -94,7 +94,11 @@ export function useTeams() {
 
   const createTeam = useMutation({
     mutationFn: async (input: { name: string; description?: string }) => {
-      if (!user) throw new Error("Not authenticated");
+      if (!user) {
+        console.warn("[useTeams] Not authenticated");
+        toast.error("Bitte zuerst einloggen");
+        return null;
+      }
 
       // Create team
       const { data: team, error: teamError } = await supabase
@@ -190,7 +194,8 @@ export function useTeams() {
         .single();
 
       if (profileError || !profile) {
-        throw new Error("Benutzer nicht gefunden");
+        toast.error("Benutzer nicht gefunden");
+        return null;
       }
 
       const { error } = await supabase.from("team_members").insert({
@@ -201,10 +206,12 @@ export function useTeams() {
 
       if (error) {
         if (error.code === "23505") {
-          throw new Error("Benutzer ist bereits Mitglied");
+          toast.error("Benutzer ist bereits Mitglied");
+          return null;
         }
         throw error;
       }
+      return { success: true };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["teams"] });

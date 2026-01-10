@@ -156,7 +156,8 @@ export function usePermissionTemplates() {
     mutationFn: async (templateId: string) => {
       const template = templates.find(t => t.id === templateId);
       if (template?.is_system) {
-        throw new Error("System-Vorlagen können nicht gelöscht werden");
+        toast.error("System-Vorlagen können nicht gelöscht werden");
+        return;
       }
 
       const { error } = await supabase

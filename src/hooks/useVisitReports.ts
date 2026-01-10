@@ -129,7 +129,9 @@ export function useVisitReports() {
   const createReport = useMutation({
     mutationFn: async (input: CreateVisitReportInput): Promise<string> => {
       if (!userId || !tenantId) {
-        throw new Error("Nicht authentifiziert");
+        console.warn("[useVisitReports] Not authenticated");
+        toast.error("Bitte zuerst einloggen");
+        return "";
       }
 
       // Offline: Lokal speichern

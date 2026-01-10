@@ -94,17 +94,23 @@ export function useCloudSeats() {
       userName?: string;
       userEmail: string;
     }) => {
-      if (!user) throw new Error("Nicht authentifiziert");
+      if (!user) {
+        console.warn("[useCloudSeats] Not authenticated");
+        toast.error("Bitte zuerst einloggen");
+        return null;
+      }
 
       // Check seat limit
       if (license && seats.length >= license.seatLimit) {
-        throw new Error("Seat-Limit erreicht");
+        toast.error("Seat-Limit erreicht");
+        return null;
       }
 
       // Check if already assigned
       const existing = seats.find((s) => s.userId === userId);
       if (existing) {
-        throw new Error("Benutzer hat bereits einen Seat");
+        toast.error("Benutzer hat bereits einen Seat");
+        return null;
       }
 
       const { data, error } = await supabase
@@ -142,7 +148,11 @@ export function useCloudSeats() {
   // Revoke seat mutation
   const revokeMutation = useMutation({
     mutationFn: async (userId: string) => {
-      if (!user) throw new Error("Nicht authentifiziert");
+      if (!user) {
+        console.warn("[useCloudSeats] Not authenticated");
+        toast.error("Bitte zuerst einloggen");
+        return;
+      }
 
       const { error } = await supabase
         .from("seat_assignments")

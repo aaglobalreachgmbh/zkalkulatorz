@@ -8,6 +8,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useIdentity } from "@/contexts/IdentityContext";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import type { Database, Json } from "@/integrations/supabase/types";
 import type { ContractType } from "../engine/types";
 
@@ -394,7 +395,9 @@ export function useAdminPushProvisions() {
   const createProvision = useCallback(
     async (provision: Omit<PushProvision, "id" | "createdAt" | "createdBy" | "tenantId">) => {
       if (!user?.id || !identity.tenantId) {
-        throw new Error("Nicht authentifiziert");
+        console.warn("[usePushProvisions] Not authenticated");
+        toast.error("Bitte zuerst einloggen");
+        return null;
       }
 
       const payload = {

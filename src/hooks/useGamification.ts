@@ -250,7 +250,9 @@ export function useGamification() {
   const awardPoints = useMutation({
     mutationFn: async (input: AwardPointsInput) => {
       if (!userId || !tenantId) {
-        throw new Error("Nicht authentifiziert");
+        console.warn("[useGamification] Not authenticated");
+        toast.error("Bitte zuerst einloggen");
+        return null;
       }
 
       const { data, error } = await supabase
@@ -281,7 +283,9 @@ export function useGamification() {
   const awardBadge = useMutation({
     mutationFn: async (badgeId: string) => {
       if (!userId || !tenantId) {
-        throw new Error("Nicht authentifiziert");
+        console.warn("[useGamification] Not authenticated");
+        toast.error("Bitte zuerst einloggen");
+        return null;
       }
 
       // Check if already earned

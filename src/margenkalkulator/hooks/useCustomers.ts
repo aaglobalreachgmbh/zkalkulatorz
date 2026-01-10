@@ -88,7 +88,11 @@ export function useCustomers() {
 
   const createCustomer = useMutation({
     mutationFn: async (input: CustomerInput) => {
-      if (!user) throw new Error("Not authenticated");
+      if (!user) {
+        console.warn("[useCustomers] Not authenticated");
+        toast.error("Bitte zuerst einloggen");
+        return null;
+      }
 
       const { data, error } = await supabase
         .from("customers")

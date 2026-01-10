@@ -5,6 +5,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCloudTemplates, type CloudTemplate, type CloudFolder } from "./useCloudTemplates";
+import { toast } from "sonner";
 import { 
   loadTemplates, 
   saveTemplate as saveLocalTemplate,
@@ -101,13 +102,30 @@ export function useTemplates() {
     error: null,
     hasTemplates: localTemplates.length > 0,
     createTemplate,
-    updateTemplate: async () => { throw new Error("Update not supported in guest mode"); },
-    deleteTemplate: async () => { throw new Error("Delete not supported in guest mode"); },
-    duplicateTemplate: async () => { throw new Error("Duplicate not supported in guest mode"); },
-    moveTemplate: async () => { throw new Error("Move not supported in guest mode"); },
-    createFolder: async () => { throw new Error("Create folder not supported in guest mode"); },
-    renameFolder: async () => { throw new Error("Rename folder not supported in guest mode"); },
-    deleteFolder: async () => { throw new Error("Delete folder not supported in guest mode"); },
+    updateTemplate: async () => { 
+      toast.error("Funktion im Gastmodus nicht verfügbar");
+      return null as unknown as ReturnType<typeof cloudTemplates.updateTemplate>; 
+    },
+    deleteTemplate: async () => { 
+      toast.error("Funktion im Gastmodus nicht verfügbar");
+    },
+    duplicateTemplate: async () => { 
+      toast.error("Funktion im Gastmodus nicht verfügbar");
+      return null as unknown as ReturnType<typeof cloudTemplates.duplicateTemplate>; 
+    },
+    moveTemplate: async () => { 
+      toast.error("Funktion im Gastmodus nicht verfügbar");
+    },
+    createFolder: async () => { 
+      toast.error("Funktion im Gastmodus nicht verfügbar");
+      return null as unknown as ReturnType<typeof cloudTemplates.createFolder>; 
+    },
+    renameFolder: async () => { 
+      toast.error("Funktion im Gastmodus nicht verfügbar");
+    },
+    deleteFolder: async () => { 
+      toast.error("Funktion im Gastmodus nicht verfügbar");
+    },
     getTemplatesInFolder: (folderId: string | null) => 
       localTemplates.filter(t => (t.folderId || null) === folderId) as unknown as CloudTemplate[],
     isCreatingTemplate: false,

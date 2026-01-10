@@ -229,10 +229,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useAuth() {
+const SAFE_DEFAULT_AUTH: AuthContextType = {
+  user: null,
+  session: null,
+  isLoading: false,
+  requiresMFA: false,
+  mfaStatus: null,
+  signIn: async () => ({ error: new Error("Auth not available") }),
+  signUp: async () => ({ error: new Error("Auth not available") }),
+  signOut: async () => {},
+  checkMFAStatus: async () => false,
+};
+
+export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+  if (!context) {
+    console.warn("[useAuth] Used outside AuthProvider, returning safe default");
+    return SAFE_DEFAULT_AUTH;
   }
   return context;
 }

@@ -2487,6 +2487,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_dashboard_config: {
+        Row: {
+          created_at: string
+          hidden_widgets: string[] | null
+          id: string
+          layout: Json
+          settings: Json | null
+          tenant_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          hidden_widgets?: string[] | null
+          id?: string
+          layout?: Json
+          settings?: Json | null
+          tenant_id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          hidden_widgets?: string[] | null
+          id?: string
+          layout?: Json
+          settings?: Json | null
+          tenant_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_department_assignments: {
         Row: {
           assigned_at: string

@@ -5,17 +5,7 @@ import { useVVLCounts } from "@/margenkalkulator/hooks/useCustomerContracts";
 import { useAuth } from "@/hooks/useAuth";
 import { usePOSMode } from "@/contexts/POSModeContext";
 import { Button } from "@/components/ui/button";
-import { DashboardWidgets } from "@/margenkalkulator/ui/components/DashboardWidgets";
-import { RecentActivityFeed } from "@/margenkalkulator/ui/components/RecentActivityFeed";
-import { RevenueForecastWidget } from "@/margenkalkulator/ui/components/RevenueForecastWidget";
-import { FollowupReminders } from "@/margenkalkulator/ui/components/FollowupReminders";
-import { WelcomeWidget } from "@/margenkalkulator/ui/components/WelcomeWidget";
-import { TodayTasksWidget } from "@/margenkalkulator/ui/components/TodayTasksWidget";
-import { AverageMarginWidget } from "@/margenkalkulator/ui/components/AverageMarginWidget";
-import { ProvisionSourcesWidget } from "@/margenkalkulator/ui/components/ProvisionSourcesWidget";
-import { DiscountUsageWidget } from "@/margenkalkulator/ui/components/DiscountUsageWidget";
-import { CriticalOffersWidget } from "@/margenkalkulator/ui/components/CriticalOffersWidget";
-import { UpcomingEventsWidget } from "@/margenkalkulator/ui/components/UpcomingEventsWidget";
+import { ConfigurableDashboard } from "@/margenkalkulator/ui/components/ConfigurableDashboard";
 import { cn } from "@/lib/utils";
 
 const Home = () => {
@@ -52,9 +42,6 @@ const Home = () => {
         {/* Main Content */}
         <main className="flex-1 flex flex-col justify-center px-4 lg:px-6 py-6">
           
-          {/* PRIORITY 1: Welcome Widget - Prominently at the very top for new users */}
-          {user && <WelcomeWidget />}
-
           {/* Headline */}
           <div className="text-center mb-6 animate-fade-in">
             <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
@@ -116,52 +103,10 @@ const Home = () => {
             </button>
           </div>
 
-          {/* Today Tasks Widget - Replaces DailyDeltaWidget with real tasks */}
-          {user && <TodayTasksWidget />}
-
-          {/* Dashboard Widgets */}
-          <DashboardWidgets />
-
-          {/* Margen-Analytics Widgets - only for logged in users */}
-          {user && (
-            <section className={cn(
-              "max-w-5xl mx-auto w-full mb-6",
-              isPOSMode && "mb-4"
-            )}>
-              {/* Section Label */}
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3 px-1">
-                Margen-Analytics
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                <AverageMarginWidget />
-                <ProvisionSourcesWidget />
-                <DiscountUsageWidget />
-                <CriticalOffersWidget />
-              </div>
-            </section>
-          )}
-
-          {/* Revenue Forecast, Upcoming Events & Followup Reminders - only for logged in users */}
-          {user && (
-            <div className={cn(
-              "grid grid-cols-1 lg:grid-cols-3 gap-4 max-w-5xl mx-auto mb-6 w-full",
-              isPOSMode && "gap-3 mb-4"
-            )}>
-              <RevenueForecastWidget />
-              <UpcomingEventsWidget limit={3} compact={isPOSMode} />
-              <FollowupReminders />
-            </div>
-          )}
-
-          {/* Recent Activity Feed - only for logged in users */}
-          {user && (
-            <div className={cn(
-              "max-w-5xl mx-auto w-full mb-6",
-              isPOSMode && "mb-4"
-            )}>
-              <RecentActivityFeed limit={8} compact={isPOSMode} />
-            </div>
-          )}
+          {/* Configurable Dashboard - All widgets are managed here */}
+          <div className="max-w-5xl mx-auto w-full mb-6">
+            <ConfigurableDashboard />
+          </div>
 
           {/* Option Cards */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 max-w-5xl mx-auto w-full mb-6 items-stretch">

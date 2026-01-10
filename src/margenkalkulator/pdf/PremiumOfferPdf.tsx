@@ -1,11 +1,11 @@
 // ============================================
 // Premium Offer PDF - O2/Vodafone Style Combined
 // Professional multi-page PDF with modular pages
-// Supports page selection from export wizard
+// Supports page selection + custom pages from export wizard
 // ============================================
 
 import { Document } from "@react-pdf/renderer";
-import type { ProfessionalOfferPdfProps, PdfPageSelection } from "./templates/types";
+import type { ProfessionalOfferPdfProps, PdfPageSelection, CustomPageConfig } from "./templates/types";
 import { DEFAULT_PAGE_SELECTION } from "./templates/types";
 import { DEFAULT_TEMPLATE } from "./templates/allenetzeClean";
 import { DEFAULT_BRANDING } from "@/hooks/useTenantBranding";
@@ -16,6 +16,7 @@ import { PremiumDetailPage } from "./components/PremiumDetailPage";
 import { PremiumUspPage } from "./components/PremiumUspPage";
 import { PremiumContactPage } from "./components/PremiumContactPage";
 import { DealerSummaryPage } from "./components/DealerSummaryPage";
+import { CustomPage } from "./components/CustomPage";
 
 export function PremiumOfferPdf({
   template = DEFAULT_TEMPLATE,
@@ -41,16 +42,28 @@ export function PremiumOfferPdf({
   // Check if hardware exists in any item
   const hasHardware = items.some(item => item.option.hardware.ekNet > 0);
   
+  // Helper: filter custom pages by position
+  const getCustomPagesByPosition = (position: CustomPageConfig["position"]) =>
+    pageSelection.customPages.filter(p => p.position === position);
+  
   // Calculate total pages based on selection
   const calculateTotalPages = () => {
     let count = 0;
     if (pageSelection.showCoverPage) count++;
+    // Custom pages before summary
+    count += getCustomPagesByPosition("before-summary").length;
     if (pageSelection.showSummaryPage) count++;
+    // Custom pages after summary
+    count += getCustomPagesByPosition("after-summary").length;
     if (pageSelection.showTransitionPage) count++;
     if (pageSelection.showDetailPage) count++;
     if (pageSelection.showHardwarePage && hasHardware) count++;
     if (pageSelection.showUspPage) count++;
+    // Custom pages before contact
+    count += getCustomPagesByPosition("before-contact").length;
     if (pageSelection.showContactPage) count++;
+    // Custom pages after contact
+    count += getCustomPagesByPosition("after-contact").length;
     if (pageSelection.showDealerPage && dealerData) count++;
     return Math.max(count, 1);
   };
@@ -66,7 +79,7 @@ export function PremiumOfferPdf({
   
   // 1. Cover Page
   if (pageSelection.showCoverPage) {
-    const pageNum = getNextPageNumber();
+    getNextPageNumber();
     pages.push(
       <PremiumCoverPage
         key="cover"
@@ -78,7 +91,22 @@ export function PremiumOfferPdf({
     );
   }
   
-  // 2. Summary Page (with period table - Vodafone style)
+  // 2. Custom Pages: before-summary
+  getCustomPagesByPosition("before-summary").forEach((cp) => {
+    const pageNum = getNextPageNumber();
+    pages.push(
+      <CustomPage
+        key={cp.id}
+        config={cp}
+        template={template}
+        branding={branding}
+        pageNumber={pageNum}
+        totalPages={totalPages}
+      />
+    );
+  });
+  
+  // 3. Summary Page (with period table - Vodafone style)
   if (pageSelection.showSummaryPage) {
     const pageNum = getNextPageNumber();
     pages.push(
@@ -99,7 +127,22 @@ export function PremiumOfferPdf({
     );
   }
   
-  // 3. Transition Page (optional - O2 style)
+  // 4. Custom Pages: after-summary
+  getCustomPagesByPosition("after-summary").forEach((cp) => {
+    const pageNum = getNextPageNumber();
+    pages.push(
+      <CustomPage
+        key={cp.id}
+        config={cp}
+        template={template}
+        branding={branding}
+        pageNumber={pageNum}
+        totalPages={totalPages}
+      />
+    );
+  });
+  
+  // 5. Transition Page (optional - O2 style)
   if (pageSelection.showTransitionPage) {
     const pageNum = getNextPageNumber();
     pages.push(
@@ -115,7 +158,7 @@ export function PremiumOfferPdf({
     );
   }
   
-  // 4. Detail Page (O2 style with checkmarks)
+  // 6. Detail Page (O2 style with checkmarks)
   if (pageSelection.showDetailPage) {
     const pageNum = getNextPageNumber();
     pages.push(
@@ -131,7 +174,7 @@ export function PremiumOfferPdf({
     );
   }
   
-  // 5. USP Page (optional)
+  // 7. USP Page (optional)
   if (pageSelection.showUspPage) {
     const pageNum = getNextPageNumber();
     pages.push(
@@ -146,7 +189,22 @@ export function PremiumOfferPdf({
     );
   }
   
-  // 6. Contact Page
+  // 8. Custom Pages: before-contact
+  getCustomPagesByPosition("before-contact").forEach((cp) => {
+    const pageNum = getNextPageNumber();
+    pages.push(
+      <CustomPage
+        key={cp.id}
+        config={cp}
+        template={template}
+        branding={branding}
+        pageNumber={pageNum}
+        totalPages={totalPages}
+      />
+    );
+  });
+  
+  // 9. Contact Page
   if (pageSelection.showContactPage) {
     const pageNum = getNextPageNumber();
     pages.push(
@@ -163,7 +221,22 @@ export function PremiumOfferPdf({
     );
   }
   
-  // 7. Dealer Summary Page (confidential)
+  // 10. Custom Pages: after-contact
+  getCustomPagesByPosition("after-contact").forEach((cp) => {
+    const pageNum = getNextPageNumber();
+    pages.push(
+      <CustomPage
+        key={cp.id}
+        config={cp}
+        template={template}
+        branding={branding}
+        pageNumber={pageNum}
+        totalPages={totalPages}
+      />
+    );
+  });
+  
+  // 11. Dealer Summary Page (confidential)
   if (pageSelection.showDealerPage && dealerData) {
     const pageNum = getNextPageNumber();
     pages.push(

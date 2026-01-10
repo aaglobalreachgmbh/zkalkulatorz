@@ -1,6 +1,6 @@
 // ============================================
 // PDF Export Dialog Component - 3-Step Wizard
-// Step 1: Page Selection
+// Step 1: Template + Page Selection
 // Step 2: Preview with enhanced controls
 // Step 3: Export (Download/Email/Print)
 // ============================================
@@ -45,9 +45,10 @@ import { generateOfferId as generateQrOfferId } from "@/margenkalkulator/utils/q
 import { EmailSendDialog } from "./EmailSendDialog";
 import { PdfPageSelector } from "./PdfPageSelector";
 import { PdfPreviewPane } from "./PdfPreviewPane";
+import { PdfTemplateSelector } from "./PdfTemplateSelector";
 import type { OfferOptionState, CalculationResult, ViewMode } from "../../engine/types";
-import type { DealerSummaryData, OfferCustomerInfo, PdfOfferOptions, PdfPageSelection } from "../../pdf/templates/types";
-import { DEFAULT_TEMPLATE } from "../../pdf/templates/allenetzeClean";
+import type { DealerSummaryData, OfferCustomerInfo, PdfOfferOptions, PdfPageSelection, PdfTemplate } from "../../pdf/templates/types";
+import { PREMIUM_O2_TEMPLATE, PREMIUM_VODAFONE_TEMPLATE } from "../../pdf/templates/premiumO2Template";
 import { DEFAULT_PAGE_SELECTION } from "../../pdf/templates/types";
 
 interface PdfExportDialogProps {
@@ -112,6 +113,19 @@ export function PdfExportDialog({
   const isControlled = controlledOpen !== undefined;
   const open = isControlled ? controlledOpen : internalOpen;
   const setOpen = isControlled ? controlledOnOpenChange! : setInternalOpen;
+  
+  // Template selection state
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("premium-o2");
+  
+  // Get selected template
+  const selectedTemplate: PdfTemplate = useMemo(() => {
+    switch (selectedTemplateId) {
+      case "premium-vodafone":
+        return PREMIUM_VODAFONE_TEMPLATE;
+      default:
+        return PREMIUM_O2_TEMPLATE;
+    }
+  }, [selectedTemplateId]);
   
   // Page selection state
   const [pageSelection, setPageSelection] = useState<PdfPageSelection>({
@@ -235,7 +249,7 @@ export function PdfExportDialog({
     ]);
     
     const pdfOptions: PdfOfferOptions = {
-      templateId: DEFAULT_TEMPLATE.id,
+      templateId: selectedTemplate.id,
       showCoverPage: effectivePageSelection.showCoverPage,
       validDays: parseInt(validDays, 10),
       pageSelection: effectivePageSelection,
@@ -244,7 +258,7 @@ export function PdfExportDialog({
     const blob = await Promise.race([
       pdf(
         <PremiumOfferPdf
-          template={DEFAULT_TEMPLATE}
+          template={selectedTemplate}
           customer={effectiveCustomer}
           options={pdfOptions}
           branding={branding}
@@ -439,25 +453,33 @@ export function PdfExportDialog({
       >
         {step === "pages" ? (
           <>
-            {/* Step 1: Page Selection */}
+            {/* Step 1: Template + Page Selection */}
             <DialogHeader className="flex-shrink-0">
               <DialogTitle className="flex items-center gap-2">
                 <Settings2 className="w-5 h-5" />
                 Angebot konfigurieren
               </DialogTitle>
               <DialogDescription>
-                Wählen Sie die Seiten, die im PDF enthalten sein sollen.
+                Wählen Sie Design-Vorlage und Seiten für Ihr PDF.
               </DialogDescription>
             </DialogHeader>
             
             <div className="flex-1 overflow-y-auto py-4 space-y-6">
-              {/* Page Selector */}
-              <PdfPageSelector
-                selection={pageSelection}
-                onChange={setPageSelection}
-                canShowDealerPage={canShowDealerOption}
-                hasHardware={hasHardware}
+              {/* Template Selector */}
+              <PdfTemplateSelector
+                selectedTemplateId={selectedTemplateId}
+                onChange={setSelectedTemplateId}
               />
+              
+              {/* Page Selector */}
+              <div className="pt-2 border-t">
+                <PdfPageSelector
+                  selection={pageSelection}
+                  onChange={setPageSelection}
+                  canShowDealerPage={canShowDealerOption}
+                  hasHardware={hasHardware}
+                />
+              </div>
               
               {/* Validity Option */}
               <div className="space-y-2 pt-2 border-t">

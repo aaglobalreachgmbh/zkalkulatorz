@@ -7,6 +7,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { generateICSFile, downloadICSFile, CalendarEvent } from "./calendarExport";
+import type { Json } from "@/integrations/supabase/types";
 
 export type NotificationType = 
   | "visit_reminder"
@@ -51,20 +52,18 @@ export const notificationService = {
    */
   async createInAppNotification(input: NotificationInput): Promise<string | null> {
     try {
-      const insertData = {
-        user_id: input.userId,
-        tenant_id: input.tenantId,
-        type: input.type,
-        title: input.title,
-        message: input.message,
-        link: input.link,
-        metadata: (input.metadata || {}) as Record<string, unknown>,
-        is_read: false,
-      };
-      
       const { data, error } = await supabase
         .from("notifications")
-        .insert(insertData)
+        .insert({
+          user_id: input.userId,
+          tenant_id: input.tenantId,
+          type: input.type,
+          title: input.title,
+          message: input.message,
+          link: input.link,
+          metadata: (input.metadata || {}) as unknown as Json,
+          is_read: false,
+        })
         .select("id")
         .single();
 
@@ -85,20 +84,18 @@ export const notificationService = {
    */
   async scheduleNotification(input: ScheduledNotificationInput): Promise<string | null> {
     try {
-      const insertData = {
-        user_id: input.userId,
-        tenant_id: input.tenantId,
-        notification_type: input.type,
-        scheduled_for: input.scheduledFor.toISOString(),
-        related_id: input.relatedId,
-        related_type: input.relatedType,
-        payload: input.payload as Record<string, unknown>,
-        status: "pending",
-      };
-      
       const { data, error } = await supabase
         .from("scheduled_notifications")
-        .insert(insertData)
+        .insert({
+          user_id: input.userId,
+          tenant_id: input.tenantId,
+          notification_type: input.type,
+          scheduled_for: input.scheduledFor.toISOString(),
+          related_id: input.relatedId,
+          related_type: input.relatedType,
+          payload: input.payload as unknown as Json,
+          status: "pending",
+        })
         .select("id")
         .single();
 

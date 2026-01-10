@@ -5,7 +5,7 @@
 
 import { 
   Send, Check, CheckCheck, AlertCircle, Clock, 
-  FileText, Mail, ScrollText, MessageSquare,
+  FileText, Mail, ScrollText, MessageSquare, Trophy,
   type LucideIcon 
 } from "lucide-react";
 
@@ -105,6 +105,13 @@ export const CUSTOMER_STATUS: Record<string, StatusConfig> = {
     color: "text-emerald-600",
     bgColor: "bg-emerald-500/20",
     borderColor: "border-emerald-500/50",
+  },
+  gewonnen: { 
+    icon: Trophy, 
+    label: "Gewonnen", 
+    color: "text-amber-600",
+    bgColor: "bg-amber-500/20",
+    borderColor: "border-amber-500/50",
   },
   inaktiv: { 
     icon: Clock, 

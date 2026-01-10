@@ -30,6 +30,8 @@ export interface Customer {
   marketing_sms: boolean | null;
   marketing_email: boolean | null;
   marketing_brief: boolean | null;
+  // Gewonnen-Datum
+  won_at: string | null;
   // Meta
   external_id: string | null;
   external_refs: Record<string, unknown> | null;

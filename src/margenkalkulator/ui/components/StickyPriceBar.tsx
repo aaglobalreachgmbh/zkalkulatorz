@@ -15,11 +15,13 @@
 import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Smartphone, Signal, Plus, Check, ShoppingCart, TrendingDown, FileText } from "lucide-react";
+import { Smartphone, Signal, Plus, Check, ShoppingCart, TrendingDown, FileText, Info } from "lucide-react";
 import { AnimatedCurrency } from "./AnimatedCurrency";
 import { PdfExportDialog } from "./PdfExportDialog";
+import { DgrvBadge } from "./DgrvBadge";
 import { useOfferBasket } from "../../contexts/OfferBasketContext";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { fireConfetti } from "@/lib/confetti";
 import { cn } from "@/lib/utils";
@@ -67,6 +69,9 @@ export function StickyPriceBar({
   const margin = result.dealer.margin + quantityBonus;
   const basePrice = tariff.baseNet;
   const hasDiscount = avgMonthly < basePrice;
+  const hasMultiplePeriods = result.periods.length > 1;
+  const isDgrv = result.meta.isDgrvContract;
+  const freeMonths = result.meta.freeMonths;
   
   // Generate tariff name for basket
   const tariffName = useMemo(() => {
@@ -126,17 +131,56 @@ export function StickyPriceBar({
         
         {/* Center: Price */}
         <div className="flex items-center gap-4">
+          {/* DGRV Badge */}
+          {isDgrv && <DgrvBadge compact freeMonths={freeMonths} />}
+          
           <div className="text-right">
             <p className="text-xs text-muted-foreground">Ø Monat</p>
-            <div className="flex items-baseline gap-1">
-              <span className="text-xl font-bold text-foreground">
-                <AnimatedCurrency value={avgMonthly} decimals={2} />
-              </span>
-              <span className="text-sm text-muted-foreground">€</span>
-              {hasDiscount && (
-                <TrendingDown className="w-4 h-4 text-emerald-500 ml-1" />
-              )}
-            </div>
+            {hasMultiplePeriods ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-baseline gap-1 cursor-help">
+                    <span className="text-xl font-bold text-foreground">
+                      <AnimatedCurrency value={avgMonthly} decimals={2} />
+                    </span>
+                    <span className="text-sm text-muted-foreground">€</span>
+                    {hasDiscount && (
+                      <TrendingDown className="w-4 h-4 text-emerald-500 ml-1" />
+                    )}
+                    <Info className="w-3.5 h-3.5 text-muted-foreground/50 ml-0.5" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs p-3">
+                  <div className="space-y-2">
+                    <p className="font-medium text-sm">Preisübersicht</p>
+                    {result.periods.map((period, idx) => (
+                      <div key={idx} className="flex justify-between text-xs gap-4">
+                        <span className="text-muted-foreground">
+                          Monat {period.fromMonth}–{period.toMonth}:
+                        </span>
+                        <span className={period.monthly.net < 0.01 ? "text-emerald-500 font-medium" : ""}>
+                          {period.monthly.net < 0.01 ? "Kostenfrei" : `${period.monthly.net.toFixed(2)} €`}
+                        </span>
+                      </div>
+                    ))}
+                    <div className="border-t border-border pt-2 mt-2 flex justify-between text-xs font-medium">
+                      <span>Ø Durchschnitt:</span>
+                      <span>{avgMonthly.toFixed(2)} €/mtl.</span>
+                    </div>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              <div className="flex items-baseline gap-1">
+                <span className="text-xl font-bold text-foreground">
+                  <AnimatedCurrency value={avgMonthly} decimals={2} />
+                </span>
+                <span className="text-sm text-muted-foreground">€</span>
+                {hasDiscount && (
+                  <TrendingDown className="w-4 h-4 text-emerald-500 ml-1" />
+                )}
+              </div>
+            )}
           </div>
           
           {/* Margin (Dealer only) */}

@@ -44,6 +44,8 @@ import { OfferBasketPanel } from "./components/OfferBasketPanel";
 import { GigaKombiBanner } from "./components/GigaKombiBanner";
 import { SavingsBreakdown } from "./components/SavingsBreakdown";
 import { StickyPriceBar } from "./components/StickyPriceBar";
+import { PricePeriodBreakdown } from "./components/PricePeriodBreakdown";
+import { PriceTimeline } from "./components/PriceTimeline";
 import { QuickStartDialog, shouldShowQuickStart } from "./components/QuickStartDialog";
 import { useHistory } from "../hooks/useHistory";
 import { toast } from "sonner";
@@ -693,6 +695,21 @@ export function Wizard() {
               {isGigaKombiEligible && (
                 <div className="mt-4">
                   <GigaKombiBanner isEligible={isGigaKombiEligible} />
+                </div>
+              )}
+
+              {/* Price Period Breakdown - Shows when multiple periods exist */}
+              {result1.periods.length > 1 && (
+                <div className="mt-4 space-y-4">
+                  <PricePeriodBreakdown 
+                    result={result1} 
+                    termMonths={option1.meta.termMonths}
+                  />
+                  <PriceTimeline 
+                    periods={result1.periods} 
+                    termMonths={option1.meta.termMonths}
+                    avgMonthly={result1.totals.avgTermNet}
+                  />
                 </div>
               )}
 

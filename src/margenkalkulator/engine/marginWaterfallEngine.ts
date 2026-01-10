@@ -13,7 +13,7 @@ import { getProvisionForDistributor, getHardwareSubsidy } from "./tariffEngine";
 import type { DiscountResult } from "./discountEngine";
 import { calculateDiscounts, applyPercentageDiscount } from "./discountEngine";
 import { calculateHardwareEconomics } from "./hardwareEngine";
-import { formatCurrency } from "../lib/formatters";
+import { formatCurrency, getProfitabilityStatus } from "../lib/formatters";
 
 /**
  * Input für Margen-Wasserfallberechnung
@@ -321,15 +321,6 @@ export function calculateMarginWaterfall(
   };
 }
 
-/**
- * Bestimmt Profitability-Status (Ampel)
- * @deprecated Use getProfitabilityStatus from lib/formatters instead
- */
-export function getProfitabilityStatus(marginPerContract: number): ProfitabilityStatus {
-  if (marginPerContract > 50) return "positive";
-  if (marginPerContract >= 0) return "warning";
-  return "critical";
-}
 
 /**
  * Status-Beschreibung für UI

@@ -6,9 +6,9 @@
 import { describe, it, expect } from "vitest";
 import { 
   calculateMarginWaterfall, 
-  getProfitabilityStatus,
   type MarginCalculationInput 
 } from "../engine/marginWaterfallEngine";
+import { getProfitabilityStatus } from "../lib/formatters";
 import { 
   calculateDiscounts, 
   calculateTeamDealPercentage,

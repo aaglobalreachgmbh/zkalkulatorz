@@ -186,18 +186,18 @@ export function AppSidebar() {
           "flex items-center gap-2 px-4 py-4 border-b border-sidebar-border",
           collapsed && "justify-center px-2"
         )}>
-          {branding.logoUrl ? (
+        {branding.logoUrl ? (
             <img 
               src={branding.logoUrl} 
               alt={branding.companyName || "Logo"}
-              className="h-8 w-auto object-contain"
+              className="h-12 w-auto object-contain max-w-[180px]"
             />
           ) : (
             <div 
-              className="h-8 w-8 rounded-lg flex items-center justify-center"
+              className="h-12 w-12 rounded-xl flex items-center justify-center"
               style={{ backgroundColor: branding.primaryColor || "hsl(var(--primary))" }}
             >
-              <Calculator className="h-4 w-4 text-white" />
+              <Calculator className="h-6 w-6 text-white" />
             </div>
           )}
           {!collapsed && (

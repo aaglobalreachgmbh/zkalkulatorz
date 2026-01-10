@@ -65,6 +65,7 @@ const News = lazy(() => import("./pages/News"));
 const AdminNews = lazy(() => import("./pages/AdminNews"));
 const SuperAdmin = lazy(() => import("./pages/SuperAdmin"));
 const AdminPermissions = lazy(() => import("./pages/AdminPermissions"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 
 // Enhanced loading fallback with timeout and retry
 const PageLoader = () => {
@@ -387,6 +388,7 @@ const App = () => (
                   <Routes>
                     {/* Public routes - no authentication required */}
                     <Route path="/auth" element={<Auth />} />
+                    <Route path="/auth/reset-password" element={<ResetPassword />} />
                     <Route path="/datenschutz" element={<Privacy />} />
                     <Route path="/pending-approval" element={<PendingApproval />} />
                     

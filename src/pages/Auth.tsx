@@ -7,7 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Turnstile, useTurnstile } from "@/components/ui/turnstile";
-import { Calculator, Loader2, Eye, EyeOff, AlertCircle, ShieldAlert, ExternalLink, CheckCircle, Building2 } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Calculator, Loader2, Eye, EyeOff, AlertCircle, ShieldAlert, ExternalLink, CheckCircle, Building2, Mail, KeyRound } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -67,6 +69,11 @@ export default function Auth() {
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [signupDisplayName, setSignupDisplayName] = useState("");
+
+  // Password reset state
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [isResetting, setIsResetting] = useState(false);
 
   // Invite token state
   const [inviteInfo, setInviteInfo] = useState<{
@@ -236,6 +243,43 @@ export default function Auth() {
     toast.success("Konto erstellt! Du kannst dich jetzt anmelden.");
   };
 
+  const handlePasswordReset = async () => {
+    if (!resetEmail) {
+      toast.error("Bitte geben Sie Ihre E-Mail-Adresse ein");
+      return;
+    }
+
+    const emailResult = emailSchema.safeParse(resetEmail.toLowerCase());
+    if (!emailResult.success) {
+      toast.error("Ungültige E-Mail-Adresse");
+      return;
+    }
+
+    setIsResetting(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.toLowerCase(), {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
+      });
+
+      if (error) {
+        console.error("[Auth] Password reset error:", error);
+        toast.error("Fehler beim Senden der E-Mail. Bitte versuchen Sie es erneut.");
+        setIsResetting(false);
+        return;
+      }
+
+      toast.success("Falls ein Konto mit dieser E-Mail existiert, erhalten Sie einen Link zum Zurücksetzen.");
+      setShowForgotPassword(false);
+      setResetEmail("");
+    } catch (error) {
+      console.error("[Auth] Unexpected error:", error);
+      toast.error("Ein unerwarteter Fehler ist aufgetreten");
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -356,6 +400,20 @@ export default function Auth() {
                   ) : (
                     "Anmelden"
                   )}
+                </Button>
+                
+                <Button
+                  type="button"
+                  variant="link"
+                  className="w-full text-sm text-muted-foreground hover:text-primary"
+                  onClick={() => {
+                    setResetEmail(loginEmail);
+                    setShowForgotPassword(true);
+                  }}
+                  disabled={isLockedOut}
+                >
+                  <KeyRound className="w-3 h-3 mr-1" />
+                  Passwort vergessen?
                 </Button>
               </form>
             </TabsContent>
@@ -527,6 +585,67 @@ export default function Auth() {
         </div>
       </div>
       </div>
+
+      {/* Password Reset Dialog */}
+      <Dialog open={showForgotPassword} onOpenChange={setShowForgotPassword}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <KeyRound className="w-5 h-5 text-primary" />
+              Passwort zurücksetzen
+            </DialogTitle>
+            <DialogDescription>
+              Geben Sie Ihre E-Mail-Adresse ein. Falls ein Konto existiert, erhalten Sie einen Link zum Zurücksetzen.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="reset-email">E-Mail-Adresse</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  id="reset-email"
+                  type="email"
+                  placeholder="name@firma.de"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  disabled={isResetting}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1"
+                onClick={() => setShowForgotPassword(false)}
+                disabled={isResetting}
+              >
+                Abbrechen
+              </Button>
+              <Button
+                type="button"
+                className="flex-1"
+                onClick={handlePasswordReset}
+                disabled={isResetting || !resetEmail}
+              >
+                {isResetting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Senden...
+                  </>
+                ) : (
+                  <>
+                    <Mail className="w-4 h-4 mr-2" />
+                    Link senden
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

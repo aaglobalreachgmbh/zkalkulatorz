@@ -2,12 +2,12 @@
 // Sensitive Fields Visibility Hook
 // Phase 3A: Combines role, session, viewMode
 // Phase 3C: Added adminFullVisibility support
+// CORRECTED: POS mode removed from customer-safe logic
 // ============================================
 
 import { useMemo } from "react";
 import { useIdentity, type AppRole } from "@/contexts/IdentityContext";
 import { useCustomerSession } from "@/contexts/CustomerSessionContext";
-import { usePOSMode } from "@/contexts/POSModeContext";
 import { useFeature } from "@/hooks/useFeature";
 import type { ViewMode } from "@/margenkalkulator/engine/types";
 
@@ -24,7 +24,7 @@ export interface SensitiveFieldsVisibility {
   canAccessAdmin: boolean;
   /** Is customer session active (safety lock) */
   isCustomerSessionActive: boolean;
-  /** Is customer-safe mode active (session OR POS mode) */
+  /** Is customer-safe mode active (ONLY customer session now) */
   isCustomerSafeMode: boolean;
   /** Current effective mode for display */
   effectiveMode: "customer" | "dealer";
@@ -39,9 +39,13 @@ export interface SensitiveFieldsVisibility {
  * 3. Current view mode (customer/dealer)
  * 4. adminFullVisibility feature flag (ADMIN OVERRIDE)
  * 
+ * WICHTIG: POS-Modus ist KEIN Sicherheits-Feature!
+ * POS-Modus = Arbeitsplatz im Shop (UI-Optimierung)
+ * Customer-Session = Kunde physisch anwesend (Sicherheits-Lock)
+ * 
  * Priority:
- * - If adminFullVisibility enabled → admins ALWAYS see everything (except in customer session)
- * - If customerSession.isActive → always hide sensitive fields (HIGHEST PRIORITY for customer safety)
+ * - If customerSession.isActive → always hide sensitive fields (HIGHEST PRIORITY)
+ * - If adminFullVisibility enabled → admins can see everything
  * - If viewMode === "customer" → hide sensitive fields (unless admin override)
  * - Otherwise → show based on role
  * 
@@ -51,13 +55,13 @@ export interface SensitiveFieldsVisibility {
 export function useSensitiveFieldsVisible(viewMode: ViewMode): SensitiveFieldsVisibility {
   const { identity, canAccessAdmin } = useIdentity();
   const { session } = useCustomerSession();
-  const { isPOSMode } = usePOSMode();
   const { enabled: adminFullVisibility } = useFeature("adminFullVisibility");
 
   return useMemo(() => {
     const isCustomerSessionActive = session.isActive;
-    // HOTFIX: POS mode also triggers customer-safe mode
-    const isCustomerSafeMode = isCustomerSessionActive || isPOSMode;
+    // KORRIGIERT: NUR Customer-Session aktiviert Safe-Mode
+    // POS-Modus ist davon unabhängig (nur UI-Modus)
+    const isCustomerSafeMode = isCustomerSessionActive;
     const isCustomerView = viewMode === "customer";
     const role: AppRole = identity?.role ?? "sales";
     const isAdmin = role === "admin";
@@ -66,7 +70,7 @@ export function useSensitiveFieldsVisible(viewMode: ViewMode): SensitiveFieldsVi
     // BUT still respect customer-safe mode for safety (customer is physically present)
     const hasAdminOverride = adminFullVisibility && isAdmin && !isCustomerSafeMode;
 
-    // HOTFIX: Customer-safe mode (session OR POS) overrides everything (HIGHEST PRIORITY)
+    // Customer-safe mode (session only) overrides everything (HIGHEST PRIORITY)
     // This is the "customer is physically present" scenario
     if (isCustomerSafeMode) {
       return {
@@ -127,25 +131,31 @@ export function useSensitiveFieldsVisible(viewMode: ViewMode): SensitiveFieldsVi
       effectiveMode: "dealer",
       hasAdminFullVisibility: adminFullVisibility && isAdmin,
     };
-  }, [identity?.role, session.isActive, isPOSMode, viewMode, canAccessAdmin, adminFullVisibility]);
+  }, [identity?.role, session.isActive, viewMode, canAccessAdmin, adminFullVisibility]);
 }
 
 /**
  * Standalone function for testing without React context
  * @internal Use useSensitiveFieldsVisible hook in components
  */
+/**
+ * Standalone function for testing without React context
+ * @internal Use useSensitiveFieldsVisible hook in components
+ * 
+ * KORRIGIERT: isPOSMode Parameter entfernt, da POS kein Sicherheits-Feature ist
+ */
 export function computeSensitiveFieldsVisibility(
   role: AppRole,
   isCustomerSessionActive: boolean,
   viewMode: ViewMode,
-  adminFullVisibility: boolean = false,
-  isPOSMode: boolean = false
+  adminFullVisibility: boolean = false
 ): Omit<SensitiveFieldsVisibility, "canAccessAdmin"> {
   const isAdmin = role === "admin";
-  const isCustomerSafeMode = isCustomerSessionActive || isPOSMode;
+  // NUR Customer-Session aktiviert Safe-Mode
+  const isCustomerSafeMode = isCustomerSessionActive;
   const hasAdminOverride = adminFullVisibility && isAdmin && !isCustomerSafeMode;
 
-  // Safety lock: Customer-safe mode (session OR POS) overrides everything
+  // Safety lock: Customer session overrides everything
   if (isCustomerSafeMode) {
     return {
       showDealerEconomics: false,

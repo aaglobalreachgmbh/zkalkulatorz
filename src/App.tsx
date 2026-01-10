@@ -9,7 +9,6 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminRoute } from "@/components/AdminRoute";
 import { TenantAdminRoute } from "@/components/TenantAdminRoute";
 import { SecurityProvider } from "@/providers/SecurityProvider";
-import { SecurityErrorBoundary } from "@/components/SecurityErrorBoundary";
 import { OfflineBoundary } from "@/components/OfflineBoundary";
 import { IdentityProvider } from "@/contexts/IdentityContext";
 import { CustomerSessionProvider } from "@/contexts/CustomerSessionContext";
@@ -63,7 +62,7 @@ const TenantAdmin = lazy(() => import("./pages/TenantAdmin"));
 const BrandingSettings = lazy(() => import("./pages/BrandingSettings"));
 const Inbox = lazy(() => import("./pages/Inbox"));
 
-// P1 FIX: Enhanced loading fallback with timeout and retry
+// Enhanced loading fallback with timeout and retry
 const PageLoader = () => {
   const [showRetry, setShowRetry] = useState(false);
   
@@ -93,7 +92,114 @@ const PageLoader = () => {
   );
 };
 
-// P1 FIX: Route-level Error Boundary to prevent white screens
+// ============================================================================
+// PHASE 1: TOP-LEVEL ERROR BOUNDARY (outside all providers)
+// ============================================================================
+interface AppErrorBoundaryState {
+  hasError: boolean;
+  error?: Error;
+  errorInfo?: string;
+}
+
+class AppErrorBoundary extends Component<{ children: ReactNode }, AppErrorBoundaryState> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error): AppErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    // PHASE 5: Enhanced error logging
+    console.error("[AppErrorBoundary] FATAL ERROR:", error);
+    console.error("[AppErrorBoundary] Component Stack:", errorInfo.componentStack);
+    
+    this.setState({ 
+      errorInfo: `${error.name}: ${error.message}\n\nStack:\n${errorInfo.componentStack?.slice(0, 500)}` 
+    });
+    
+    // Clear corrupt session data on auth errors
+    const errorMessage = error?.message?.toLowerCase() || "";
+    if (
+      errorMessage.includes("refresh_token") || 
+      errorMessage.includes("session") ||
+      errorMessage.includes("jwt") ||
+      errorMessage.includes("auth")
+    ) {
+      console.warn("[AppErrorBoundary] Auth-related error, clearing session");
+      this.clearSessionData();
+    }
+  }
+
+  clearSessionData = () => {
+    try {
+      Object.keys(localStorage).forEach(key => {
+        if (key.includes('supabase') || key.includes('sb-')) {
+          localStorage.removeItem(key);
+        }
+      });
+    } catch (e) {
+      console.error("[AppErrorBoundary] Failed to clear storage:", e);
+    }
+  };
+
+  handleClearAndReload = () => {
+    this.clearSessionData();
+    window.location.href = "/auth";
+  };
+
+  render() {
+    if (this.state.hasError) {
+      const isDev = import.meta.env.DEV;
+      
+      return (
+        <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
+          <div className="max-w-md w-full text-center space-y-4">
+            <div className="w-16 h-16 mx-auto bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+              <span className="text-red-600 dark:text-red-400 text-2xl">!</span>
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+              App konnte nicht geladen werden
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 text-sm">
+              Ein kritischer Fehler ist aufgetreten. Bitte starten Sie die Anwendung neu.
+            </p>
+            
+            {/* PHASE 5: Show error details in dev mode */}
+            {isDev && this.state.errorInfo && (
+              <pre className="text-left text-xs bg-gray-100 dark:bg-gray-800 p-3 rounded overflow-auto max-h-40 text-red-600 dark:text-red-400">
+                {this.state.errorInfo}
+              </pre>
+            )}
+            
+            <div className="flex flex-col gap-2 pt-4">
+              <button
+                onClick={this.handleClearAndReload}
+                className="w-full py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Sitzung zurücksetzen und neu laden
+              </button>
+              <button
+                onClick={() => window.location.reload()}
+                className="w-full py-2 px-4 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+              >
+                Seite neu laden
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+// ============================================================================
+// Route-level Error Boundary (inside BrowserRouter, for route-specific errors)
+// ============================================================================
 interface RouteErrorBoundaryState {
   hasError: boolean;
   error?: Error;
@@ -110,17 +216,19 @@ class RouteErrorBoundary extends Component<{ children: ReactNode }, RouteErrorBo
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("[RouteErrorBoundary] Caught error:", error, errorInfo);
+    // PHASE 5: Enhanced logging
+    console.error("[RouteErrorBoundary] Caught route error:", error);
+    console.error("[RouteErrorBoundary] Component Stack:", errorInfo.componentStack);
     
-    // CRITICAL: If error is auth-related, clear local storage and redirect to login
     const errorMessage = error?.message?.toLowerCase() || "";
-    if (errorMessage.includes("refresh_token") || 
-        errorMessage.includes("session") ||
-        errorMessage.includes("token") ||
-        errorMessage.includes("auth")) {
+    if (
+      errorMessage.includes("refresh_token") || 
+      errorMessage.includes("session") ||
+      errorMessage.includes("token") ||
+      errorMessage.includes("auth")
+    ) {
       console.warn("[RouteErrorBoundary] Auth-related error detected, clearing session");
       try {
-        // Clear all Supabase-related storage
         Object.keys(localStorage).forEach(key => {
           if (key.includes('supabase') || key.includes('sb-')) {
             localStorage.removeItem(key);
@@ -133,7 +241,6 @@ class RouteErrorBoundary extends Component<{ children: ReactNode }, RouteErrorBo
   }
 
   handleLogout = () => {
-    // Clear all Supabase-related storage and redirect to login
     try {
       Object.keys(localStorage).forEach(key => {
         if (key.includes('supabase') || key.includes('sb-')) {
@@ -152,6 +259,8 @@ class RouteErrorBoundary extends Component<{ children: ReactNode }, RouteErrorBo
                           this.state.error?.message?.toLowerCase().includes("token") ||
                           this.state.error?.message?.toLowerCase().includes("session");
       
+      const isDev = import.meta.env.DEV;
+      
       return (
         <div className="min-h-screen flex items-center justify-center p-4 bg-background">
           <div className="max-w-md w-full text-center space-y-4">
@@ -164,6 +273,14 @@ class RouteErrorBoundary extends Component<{ children: ReactNode }, RouteErrorBo
                 ? "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an."
                 : "Ein Fehler ist aufgetreten. Bitte laden Sie die Seite neu."}
             </p>
+            
+            {/* PHASE 5: Show error in dev mode */}
+            {isDev && this.state.error && (
+              <pre className="text-left text-xs bg-muted p-3 rounded overflow-auto max-h-32 text-destructive">
+                {this.state.error.message}
+              </pre>
+            )}
+            
             <div className="flex flex-col gap-2">
               {isAuthError ? (
                 <Button onClick={this.handleLogout} className="gap-2">
@@ -188,41 +305,10 @@ class RouteErrorBoundary extends Component<{ children: ReactNode }, RouteErrorBo
   }
 }
 
-// CRITICAL: Pro-active session cleanup on app load
-function clearCorruptSessionOnLoad() {
-  try {
-    const hasSessionData = Object.keys(localStorage).some(
-      key => key.includes('supabase') || key.includes('sb-')
-    );
-    
-    if (hasSessionData) {
-      const lastClear = localStorage.getItem('__session_clear_attempt');
-      const now = Date.now();
-      
-      // If cleared within last 3 seconds but we're still here, session is corrupt
-      if (lastClear && (now - parseInt(lastClear)) < 3000) {
-        console.warn("[App] Detected rapid reload, clearing all session data");
-        Object.keys(localStorage).forEach(key => {
-          if (key.includes('supabase') || key.includes('sb-')) {
-            localStorage.removeItem(key);
-          }
-        });
-        localStorage.removeItem('__session_clear_attempt');
-        window.location.href = "/auth";
-        return;
-      }
-      
-      localStorage.setItem('__session_clear_attempt', now.toString());
-      // Clean up marker after 5 seconds
-      setTimeout(() => localStorage.removeItem('__session_clear_attempt'), 5000);
-    }
-  } catch (e) {
-    console.error("[App] Error in clearCorruptSessionOnLoad:", e);
-  }
-}
-
-// Run on module load
-clearCorruptSessionOnLoad();
+// ============================================================================
+// PHASE 2: REMOVED clearCorruptSessionOnLoad - was causing redirect loops
+// Session cleanup now only happens on explicit auth errors within error boundaries
+// ============================================================================
 
 // QueryClient with optimized caching and error handling
 const queryClient = new QueryClient({
@@ -231,12 +317,15 @@ const queryClient = new QueryClient({
       staleTime: 1000 * 60 * 5, // 5 minutes - data stays fresh
       gcTime: 1000 * 60 * 30, // 30 minutes - cache retention
       retry: (failureCount, error) => {
-        // CRITICAL: No retry on auth-related errors
+        // No retry on auth-related errors
         const errorMsg = (error as Error)?.message?.toLowerCase() || "";
-        if (errorMsg.includes("refresh_token") || 
-            errorMsg.includes("jwt") ||
-            errorMsg.includes("unauthorized") ||
-            errorMsg.includes("session")) {
+        if (
+          errorMsg.includes("refresh_token") || 
+          errorMsg.includes("jwt") ||
+          errorMsg.includes("unauthorized") ||
+          errorMsg.includes("session") ||
+          errorMsg.includes("pgrst301")
+        ) {
           return false;
         }
         return failureCount < 2;
@@ -248,288 +337,304 @@ const queryClient = new QueryClient({
   },
 });
 
-// Seiten die immer auf allen Geräten erlaubt sind
-const ALWAYS_ALLOWED_PATHS = ["/auth", "/datenschutz", "/license", "/pending-approval"];
+// Pages that are always allowed on all devices
+const ALWAYS_ALLOWED_PATHS = ["/auth", "/datenschutz", "/license", "/pending-approval", "/share"];
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <SecurityErrorBoundary>
-      <SecurityProvider>
-        <OfflineBoundary>
-          <TooltipProvider>
-            <AuthProvider>
-              <IdentityProvider>
-                <CustomerSessionProvider>
-                  <POSModeProvider>
-                    <OfferBasketProvider>
-                      <SeatLimitGate>
-                      <MobileAccessGate allowedPaths={ALWAYS_ALLOWED_PATHS}>
-                        <Toaster />
-                        <Sonner />
-                      <BrowserRouter>
-                    <RouteErrorBoundary>
-                    <Suspense fallback={<PageLoader />}>
-                    <Routes>
-                      {/* Public routes - no authentication required */}
-                      <Route path="/auth" element={<Auth />} />
-                      <Route path="/datenschutz" element={<Privacy />} />
-                      <Route path="/pending-approval" element={<PendingApproval />} />
-                      
-                      {/* ALL other routes require authentication */}
-                      <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-                      <Route path="/calculator" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-                      <Route path="/bundles" element={<ProtectedRoute><Bundles /></ProtectedRoute>} />
-                      <Route path="/daten" element={<ProtectedRoute><DataHub /></ProtectedRoute>} />
-                      <Route path="/license" element={<ProtectedRoute><License /></ProtectedRoute>} />
-                      
-                      {/* Admin routes */}
-                      <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
-                      <Route path="/admin/employees" element={<AdminRoute><AdminEmployees /></AdminRoute>} />
-                      <Route path="/admin/push-provisions" element={<AdminRoute><AdminPushProvisions /></AdminRoute>} />
-                      <Route path="/admin/quantity-bonus" element={<AdminRoute><AdminQuantityBonus /></AdminRoute>} />
-                      <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
-                      
-                      <Route
-                        path="/offers"
-                        element={
-                          <ProtectedRoute>
-                            <Offers />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/offers/:id"
-                        element={
-                          <ProtectedRoute>
-                            <OfferDetail />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/customers"
-                        element={
-                          <ProtectedRoute>
-                            <Customers />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/customers/:id"
-                        element={
-                          <ProtectedRoute>
-                            <CustomerDetail />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/customers/import"
-                        element={
-                          <ProtectedRoute>
-                            <MoccaImport />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/contracts"
-                        element={
-                          <ProtectedRoute>
-                            <Contracts />
-                          </ProtectedRoute>
-                        }
-                      />
-                      {/* VVL-Tracker alias for /contracts */}
-                      <Route
-                        path="/vvl-tracker"
-                        element={<Navigate to="/contracts" replace />}
-                      />
-                      <Route
-                        path="/team"
-                        element={
-                          <ProtectedRoute>
-                            <Team />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/reporting"
-                        element={
-                          <ProtectedRoute>
-                            <Reporting />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/settings/security"
-                        element={
-                          <ProtectedRoute>
-                            <SecuritySettings />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/settings/hardware-images"
-                        element={
-                          <ProtectedRoute>
-                            <HardwareImages />
-                          </ProtectedRoute>
-                        }
-                      />
-                      {/* Distribution Dashboard - Tenant Admin */}
-                      <Route
-                        path="/admin/distribution"
-                        element={
-                          <ProtectedRoute>
-                            <DistributionDashboard />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/security"
-                        element={
-                          <FeatureRoute feature="adminSecurityAccess">
-                            <AdminRoute>
-                              <SecurityDashboard />
-                            </AdminRoute>
-                          </FeatureRoute>
-                        }
-                      />
-                      <Route
-                        path="/security/report"
-                        element={
-                          <FeatureRoute feature="adminSecurityAccess">
-                            <AdminRoute>
-                              <SecurityReport />
-                            </AdminRoute>
-                          </FeatureRoute>
-                        }
-                      />
-                      <Route
-                        path="/security/threat-intel"
-                        element={
-                          <FeatureRoute feature="adminSecurityAccess">
-                            <AdminRoute>
-                              <ThreatIntelligence />
-                            </AdminRoute>
-                          </FeatureRoute>
-                        }
-                      />
-                      <Route
-                        path="/security/status"
-                        element={
-                          <FeatureRoute feature="adminSecurityAccess">
-                            <AdminRoute>
-                              <SecurityStatusDashboard />
-                            </AdminRoute>
-                          </FeatureRoute>
-                        }
-                      />
-                      <Route
-                        path="/security/gdpr"
-                        element={
-                          <FeatureRoute feature="adminSecurityAccess">
-                            <AdminRoute>
-                              <GDPRDashboard />
-                            </AdminRoute>
-                          </FeatureRoute>
-                        }
-                      />
-                      <Route
-                        path="/admin/activity"
-                        element={
-                          <FeatureRoute feature="adminSecurityAccess">
-                            <AdminRoute>
-                              <ActivityDashboard />
-                            </AdminRoute>
-                          </FeatureRoute>
-                        }
-                      />
-                      <Route
-                        path="/security/test"
-                        element={
-                          <FeatureRoute feature="adminSecurityAccess">
-                            <AdminRoute>
-                              <SecurityTestPage />
-                            </AdminRoute>
-                          </FeatureRoute>
-                        }
-                      />
-                      <Route
-                        path="/data-manager"
-                        element={
-                          <FeatureRoute feature="dataGovernance">
-                            <ProtectedRoute>
-                              <DataManager />
-                            </ProtectedRoute>
-                          </FeatureRoute>
-                        }
-                      />
-                      <Route
-                        path="/data-manager/hardware"
-                        element={
-                          <FeatureRoute feature="dataGovernance">
-                            <ProtectedRoute>
-                              <HardwareManager />
-                        </ProtectedRoute>
-                          </FeatureRoute>
-                        }
-                      />
-                      {/* Tenant Admin Routes */}
-                      <Route
-                        path="/tenant-admin"
-                        element={
-                          <TenantAdminRoute>
-                            <TenantAdmin />
-                          </TenantAdminRoute>
-                        }
-                      />
-                      <Route
-                        path="/settings/branding"
-                        element={
-                          <FeatureRoute feature="customBranding">
-                            <TenantAdminRoute>
-                              <BrandingSettings />
-                            </TenantAdminRoute>
-                          </FeatureRoute>
-                        }
-                      />
-                      
-                      {/* Inbox - Zentrale Dokumentenablage */}
-                      <Route
-                        path="/inbox"
-                        element={
-                          <ProtectedRoute>
-                            <Inbox />
-                          </ProtectedRoute>
-                        }
-                      />
-                      
-                      {/* Redirect routes for commonly attempted paths - prevents 404s */}
-                      <Route path="/settings" element={<Navigate to="/settings/security" replace />} />
-                      <Route path="/profile" element={<Navigate to="/" replace />} />
-                      <Route path="/reports" element={<Navigate to="/reporting" replace />} />
-                      <Route path="/wizard" element={<Navigate to="/calculator" replace />} />
-                      
-                      {/* Public shared offer view (no auth required) */}
-                      <Route path="/share/offer/:offerId" element={<SharedOfferPage />} />
-                      
-                      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                    </Suspense>
-                    </RouteErrorBoundary>
-                    </BrowserRouter>
-                      </MobileAccessGate>
-                    </SeatLimitGate>
+// ============================================================================
+// PHASE 3 & 4: Safe Provider Wrapper with Fallback
+// Wraps providers to catch errors and still render children
+// ============================================================================
+function SafeProviderStack({ children }: { children: ReactNode }) {
+  return (
+    <SecurityProvider>
+      <OfflineBoundary>
+        <TooltipProvider>
+          <AuthProvider>
+            <IdentityProvider>
+              <CustomerSessionProvider>
+                <POSModeProvider>
+                  <OfferBasketProvider>
+                    {children}
                   </OfferBasketProvider>
                 </POSModeProvider>
-                </CustomerSessionProvider>
-              </IdentityProvider>
-            </AuthProvider>
-          </TooltipProvider>
-        </OfflineBoundary>
-      </SecurityProvider>
-    </SecurityErrorBoundary>
-  </QueryClientProvider>
+              </CustomerSessionProvider>
+            </IdentityProvider>
+          </AuthProvider>
+        </TooltipProvider>
+      </OfflineBoundary>
+    </SecurityProvider>
+  );
+}
+
+// ============================================================================
+// MAIN APP COMPONENT
+// ============================================================================
+const App = () => (
+  // PHASE 1: Top-level error boundary OUTSIDE all providers
+  <AppErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <SafeProviderStack>
+        <SeatLimitGate>
+          <MobileAccessGate allowedPaths={ALWAYS_ALLOWED_PATHS}>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <RouteErrorBoundary>
+                <Suspense fallback={<PageLoader />}>
+                  <Routes>
+                    {/* Public routes - no authentication required */}
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/datenschutz" element={<Privacy />} />
+                    <Route path="/pending-approval" element={<PendingApproval />} />
+                    
+                    {/* ALL other routes require authentication */}
+                    <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+                    <Route path="/calculator" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+                    <Route path="/bundles" element={<ProtectedRoute><Bundles /></ProtectedRoute>} />
+                    <Route path="/daten" element={<ProtectedRoute><DataHub /></ProtectedRoute>} />
+                    <Route path="/license" element={<ProtectedRoute><License /></ProtectedRoute>} />
+                    
+                    {/* Admin routes */}
+                    <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+                    <Route path="/admin/employees" element={<AdminRoute><AdminEmployees /></AdminRoute>} />
+                    <Route path="/admin/push-provisions" element={<AdminRoute><AdminPushProvisions /></AdminRoute>} />
+                    <Route path="/admin/quantity-bonus" element={<AdminRoute><AdminQuantityBonus /></AdminRoute>} />
+                    <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
+                    
+                    <Route
+                      path="/offers"
+                      element={
+                        <ProtectedRoute>
+                          <Offers />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/offers/:id"
+                      element={
+                        <ProtectedRoute>
+                          <OfferDetail />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/customers"
+                      element={
+                        <ProtectedRoute>
+                          <Customers />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/customers/:id"
+                      element={
+                        <ProtectedRoute>
+                          <CustomerDetail />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/customers/import"
+                      element={
+                        <ProtectedRoute>
+                          <MoccaImport />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/contracts"
+                      element={
+                        <ProtectedRoute>
+                          <Contracts />
+                        </ProtectedRoute>
+                      }
+                    />
+                    {/* VVL-Tracker alias for /contracts */}
+                    <Route
+                      path="/vvl-tracker"
+                      element={<Navigate to="/contracts" replace />}
+                    />
+                    <Route
+                      path="/team"
+                      element={
+                        <ProtectedRoute>
+                          <Team />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/reporting"
+                      element={
+                        <ProtectedRoute>
+                          <Reporting />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/settings/security"
+                      element={
+                        <ProtectedRoute>
+                          <SecuritySettings />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/settings/hardware-images"
+                      element={
+                        <ProtectedRoute>
+                          <HardwareImages />
+                        </ProtectedRoute>
+                      }
+                    />
+                    {/* Distribution Dashboard - Tenant Admin */}
+                    <Route
+                      path="/admin/distribution"
+                      element={
+                        <ProtectedRoute>
+                          <DistributionDashboard />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/security"
+                      element={
+                        <FeatureRoute feature="adminSecurityAccess">
+                          <AdminRoute>
+                            <SecurityDashboard />
+                          </AdminRoute>
+                        </FeatureRoute>
+                      }
+                    />
+                    <Route
+                      path="/security/report"
+                      element={
+                        <FeatureRoute feature="adminSecurityAccess">
+                          <AdminRoute>
+                            <SecurityReport />
+                          </AdminRoute>
+                        </FeatureRoute>
+                      }
+                    />
+                    <Route
+                      path="/security/threat-intel"
+                      element={
+                        <FeatureRoute feature="adminSecurityAccess">
+                          <AdminRoute>
+                            <ThreatIntelligence />
+                          </AdminRoute>
+                        </FeatureRoute>
+                      }
+                    />
+                    <Route
+                      path="/security/status"
+                      element={
+                        <FeatureRoute feature="adminSecurityAccess">
+                          <AdminRoute>
+                            <SecurityStatusDashboard />
+                          </AdminRoute>
+                        </FeatureRoute>
+                      }
+                    />
+                    <Route
+                      path="/security/gdpr"
+                      element={
+                        <FeatureRoute feature="adminSecurityAccess">
+                          <AdminRoute>
+                            <GDPRDashboard />
+                          </AdminRoute>
+                        </FeatureRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin/activity"
+                      element={
+                        <FeatureRoute feature="adminSecurityAccess">
+                          <AdminRoute>
+                            <ActivityDashboard />
+                          </AdminRoute>
+                        </FeatureRoute>
+                      }
+                    />
+                    <Route
+                      path="/security/test"
+                      element={
+                        <FeatureRoute feature="adminSecurityAccess">
+                          <AdminRoute>
+                            <SecurityTestPage />
+                          </AdminRoute>
+                        </FeatureRoute>
+                      }
+                    />
+                    <Route
+                      path="/data-manager"
+                      element={
+                        <FeatureRoute feature="dataGovernance">
+                          <ProtectedRoute>
+                            <DataManager />
+                          </ProtectedRoute>
+                        </FeatureRoute>
+                      }
+                    />
+                    <Route
+                      path="/data-manager/hardware"
+                      element={
+                        <FeatureRoute feature="dataGovernance">
+                          <ProtectedRoute>
+                            <HardwareManager />
+                          </ProtectedRoute>
+                        </FeatureRoute>
+                      }
+                    />
+                    {/* Tenant Admin Routes */}
+                    <Route
+                      path="/tenant-admin"
+                      element={
+                        <TenantAdminRoute>
+                          <TenantAdmin />
+                        </TenantAdminRoute>
+                      }
+                    />
+                    <Route
+                      path="/settings/branding"
+                      element={
+                        <FeatureRoute feature="customBranding">
+                          <TenantAdminRoute>
+                            <BrandingSettings />
+                          </TenantAdminRoute>
+                        </FeatureRoute>
+                      }
+                    />
+                    
+                    {/* Inbox - Zentrale Dokumentenablage */}
+                    <Route
+                      path="/inbox"
+                      element={
+                        <ProtectedRoute>
+                          <Inbox />
+                        </ProtectedRoute>
+                      }
+                    />
+                    
+                    {/* Redirect routes for commonly attempted paths - prevents 404s */}
+                    <Route path="/settings" element={<Navigate to="/settings/security" replace />} />
+                    <Route path="/profile" element={<Navigate to="/" replace />} />
+                    <Route path="/reports" element={<Navigate to="/reporting" replace />} />
+                    <Route path="/wizard" element={<Navigate to="/calculator" replace />} />
+                    
+                    {/* Public shared offer view (no auth required) */}
+                    <Route path="/share/offer/:offerId" element={<SharedOfferPage />} />
+                    
+                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
+              </RouteErrorBoundary>
+            </BrowserRouter>
+          </MobileAccessGate>
+        </SeatLimitGate>
+      </SafeProviderStack>
+    </QueryClientProvider>
+  </AppErrorBoundary>
 );
 
 export default App;

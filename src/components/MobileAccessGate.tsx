@@ -3,6 +3,7 @@
  * 
  * Prüft ob der Benutzer Mobile-Zugang hat und zeigt
  * entsprechend die App oder eine Upgrade-Meldung an.
+ * PHASE 4: Safe fallback - always render children on error
  */
 
 import { ReactNode } from "react";
@@ -22,15 +23,33 @@ interface MobileAccessGateProps {
 const TABLET_BREAKPOINT = 1024;
 
 function useIsTablet(): boolean {
-  const isMobile = useIsMobile();
-  if (typeof window === "undefined") return false;
-  return !isMobile && window.innerWidth < TABLET_BREAKPOINT;
+  try {
+    const isMobile = useIsMobile();
+    if (typeof window === "undefined") return false;
+    return !isMobile && window.innerWidth < TABLET_BREAKPOINT;
+  } catch {
+    return false;
+  }
 }
 
 export function MobileAccessGate({ children, allowedPaths = [] }: MobileAccessGateProps) {
-  const isMobile = useIsMobile();
-  const isTablet = useIsTablet();
-  const { enabled: hasMobileAccess, reason } = useFeature("mobileAccess");
+  // Safe hook calls with fallback
+  let isMobile = false;
+  let isTablet = false;
+  let hasMobileAccess = true;
+  let reason = "";
+
+  try {
+    isMobile = useIsMobile();
+    isTablet = useIsTablet();
+    const featureResult = useFeature("mobileAccess");
+    hasMobileAccess = featureResult.enabled;
+    reason = featureResult.reason || "";
+  } catch (error) {
+    // PHASE 4: On any error, allow access
+    console.warn("[MobileAccessGate] Error checking mobile access, allowing access:", error);
+    return <>{children}</>;
+  }
   
   // Prüfe ob aktuelle Seite erlaubt ist
   const currentPath = typeof window !== "undefined" ? window.location.pathname : "/";

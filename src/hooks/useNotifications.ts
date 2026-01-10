@@ -160,15 +160,15 @@ export function useNotifications() {
     tenant_id?: string;
   }) => {
     try {
-      const { error } = await supabase.from("notifications").insert({
+      const { error } = await supabase.from("notifications").insert([{
         user_id: input.user_id,
         type: input.type,
         title: input.title,
         message: input.message || null,
         link: input.link || null,
-        metadata: input.metadata || {},
+        metadata: (input.metadata || {}) as Record<string, never>,
         tenant_id: input.tenant_id || "",
-      });
+      }]);
 
       if (error) {
         console.warn("[useNotifications] Create error:", error.message);

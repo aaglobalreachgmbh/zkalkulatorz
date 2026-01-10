@@ -2027,6 +2027,7 @@ export type Database = {
           active_team_id: string | null
           approved_at: string | null
           approved_by: string | null
+          avatar_url: string | null
           created_at: string
           display_name: string | null
           email: string | null
@@ -2040,6 +2041,7 @@ export type Database = {
           active_team_id?: string | null
           approved_at?: string | null
           approved_by?: string | null
+          avatar_url?: string | null
           created_at?: string
           display_name?: string | null
           email?: string | null
@@ -2053,6 +2055,7 @@ export type Database = {
           active_team_id?: string | null
           approved_at?: string | null
           approved_by?: string | null
+          avatar_url?: string | null
           created_at?: string
           display_name?: string | null
           email?: string | null

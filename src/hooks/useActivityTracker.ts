@@ -52,7 +52,17 @@ export type ActivityAction =
   // Folder Actions
   | "folder_create"
   | "folder_rename"
-  | "folder_delete";
+  | "folder_delete"
+  // Team Actions
+  | "member_invite"
+  | "member_register"
+  | "member_remove"
+  | "member_promote"
+  | "member_demote"
+  | "member_reactivate"
+  | "permission_change"
+  | "invitation_resend"
+  | "invitation_revoke";
 
 export type ResourceType = 
   | "offer"
@@ -64,7 +74,9 @@ export type ResourceType =
   | "dataset"
   | "pdf"
   | "csv"
-  | "session";
+  | "session"
+  | "team_member"
+  | "invitation";
 
 export interface ActivityParams {
   action: ActivityAction;
@@ -439,6 +451,95 @@ export function useActivityTracker() {
     [trackActivity]
   );
 
+  // =====================================================
+  // Convenience Methods - Team
+  // =====================================================
+
+  const trackMemberInvited = useCallback(
+    (email: string, role: string) => 
+      trackActivity({
+        action: "member_invite",
+        resourceType: "invitation",
+        resourceName: email,
+        summary: `Einladung an ${email} gesendet`,
+        newValues: { email, role },
+      }),
+    [trackActivity]
+  );
+
+  const trackMemberPromoted = useCallback(
+    (userId: string, name: string, newRole: string) => 
+      trackActivity({
+        action: "member_promote",
+        resourceType: "team_member",
+        resourceId: userId,
+        resourceName: name,
+        summary: `${name} zum ${newRole === "tenant_admin" ? "Admin" : newRole} befördert`,
+        newValues: { role: newRole },
+      }),
+    [trackActivity]
+  );
+
+  const trackMemberDemoted = useCallback(
+    (userId: string, name: string, newRole: string) => 
+      trackActivity({
+        action: "member_demote",
+        resourceType: "team_member",
+        resourceId: userId,
+        resourceName: name,
+        summary: `${name} zum ${newRole === "user" ? "Mitarbeiter" : newRole} herabgestuft`,
+        newValues: { role: newRole },
+      }),
+    [trackActivity]
+  );
+
+  const trackMemberRemoved = useCallback(
+    (userId: string, name: string) => 
+      trackActivity({
+        action: "member_remove",
+        resourceType: "team_member",
+        resourceId: userId,
+        resourceName: name,
+        summary: `${name} deaktiviert`,
+      }),
+    [trackActivity]
+  );
+
+  const trackPermissionChanged = useCallback(
+    (userId: string, name: string, changes: Record<string, unknown>) => 
+      trackActivity({
+        action: "permission_change",
+        resourceType: "team_member",
+        resourceId: userId,
+        resourceName: name,
+        summary: `Berechtigungen für ${name} geändert`,
+        newValues: changes,
+      }),
+    [trackActivity]
+  );
+
+  const trackInvitationResent = useCallback(
+    (email: string) => 
+      trackActivity({
+        action: "invitation_resend",
+        resourceType: "invitation",
+        resourceName: email,
+        summary: `Einladung an ${email} erneut gesendet`,
+      }),
+    [trackActivity]
+  );
+
+  const trackInvitationRevoked = useCallback(
+    (email: string) => 
+      trackActivity({
+        action: "invitation_revoke",
+        resourceType: "invitation",
+        resourceName: email,
+        summary: `Einladung an ${email} widerrufen`,
+      }),
+    [trackActivity]
+  );
+
   return {
     // Core function
     trackActivity,
@@ -478,5 +579,14 @@ export function useActivityTracker() {
     trackFolderCreated,
     trackFolderRenamed,
     trackFolderDeleted,
+
+    // Team methods
+    trackMemberInvited,
+    trackMemberPromoted,
+    trackMemberDemoted,
+    trackMemberRemoved,
+    trackPermissionChanged,
+    trackInvitationResent,
+    trackInvitationRevoked,
   };
 }

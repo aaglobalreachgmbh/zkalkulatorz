@@ -36,7 +36,7 @@ export type MenuItemId = keyof typeof MENU_ITEMS;
 // ============================================
 // Default-Berechtigungen für neue Mitarbeiter
 // ============================================
-const DEFAULT_ALLOWED_MENUS: MenuItemId[] = [
+export const DEFAULT_ALLOWED_MENUS: MenuItemId[] = [
   "calculator",
   "offers", 
   "customers",

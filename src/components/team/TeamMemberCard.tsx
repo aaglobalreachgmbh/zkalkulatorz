@@ -45,6 +45,8 @@ export interface TeamMemberData {
 interface TeamMemberCardProps {
   member: TeamMemberData;
   canManage: boolean;
+  isDragging?: boolean;
+  onClick?: () => void;
   onPromote?: () => void;
   onDemote?: () => void;
   onRemove?: () => void;
@@ -64,6 +66,8 @@ const roleConfig: Record<string, { label: string; icon: React.ReactNode; variant
 export function TeamMemberCard({
   member,
   canManage,
+  isDragging = false,
+  onClick,
   onPromote,
   onDemote,
   onRemove,
@@ -86,8 +90,19 @@ export function TeamMemberCard({
     ? new Date(member.expiresAt) < new Date()
     : false;
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't trigger onClick if clicking on buttons or dropdown
+    if ((e.target as HTMLElement).closest('button, [role="menuitem"]')) return;
+    onClick?.();
+  };
+
   return (
-    <div className="group flex items-center justify-between p-3 rounded-lg bg-card border hover:shadow-md transition-all duration-200">
+    <div
+      className={`group flex items-center justify-between p-3 rounded-lg bg-card border hover:shadow-md transition-all duration-200 ${
+        onClick ? "cursor-pointer" : ""
+      } ${isDragging ? "shadow-lg ring-2 ring-primary/20" : ""}`}
+      onClick={handleCardClick}
+    >
       <div className="flex items-center gap-3 min-w-0 flex-1">
         {/* Avatar */}
         <Avatar className="h-10 w-10 shrink-0">

@@ -190,6 +190,12 @@ export function calculateOffer(
   const primeUnlimitedUpgradeEligible = fixedNet.enabled && 
     gkEligible && 
     tariff?.family === "prime";
+  
+  // Calculate DGRV meta-flags (free months detection)
+  const freeMonths = periods
+    .filter(p => p.monthly.net < 0.01)
+    .reduce((sum, p) => sum + (p.toMonth - p.fromMonth + 1), 0);
+  const isDgrvContract = freeMonths >= 12;
 
   return {
     periods,
@@ -201,6 +207,8 @@ export function calculateOffer(
     meta: {
       convergenceEligible,
       primeUnlimitedUpgradeEligible,
+      isDgrvContract,
+      freeMonths,
     },
   };
 }

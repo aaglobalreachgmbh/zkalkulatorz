@@ -517,6 +517,13 @@ export type CalculationResult = {
     convergenceEligible: boolean;
     /** Prime-Tarif mit berechtigtem Festnetz = Unlimited Upgrade */
     primeUnlimitedUpgradeEligible: boolean;
+    /** 
+     * DGRV-Vertrag (12 Monate BP-befreit)
+     * Zeigt an, dass es sich um einen Dauerrabatt-Gewähr-Vertrag handelt.
+     */
+    isDgrvContract: boolean;
+    /** Anzahl der kostenfreien Monate (0 = keine, 6 = 6M BP-frei, 12 = DGRV) */
+    freeMonths: number;
   };
 };
 

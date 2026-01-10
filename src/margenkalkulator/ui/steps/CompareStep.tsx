@@ -7,6 +7,8 @@ import { PdfDownloadButton } from "../components/PdfDownloadButton";
 import { AiOfferCheck } from "../components/AiOfferCheck";
 import { CreateCalendarEventModal } from "../components/CreateCalendarEventModal";
 import { QuickSaveOfferButton } from "../components/QuickSaveOfferButton";
+import { PricePeriodBreakdown } from "../components/PricePeriodBreakdown";
+import { DgrvBadge } from "../components/DgrvBadge";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
 import { useFeature } from "@/hooks/useFeature";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -193,13 +195,26 @@ export function CompareStep({
                 )}
               </div>
 
-              {/* Average Monthly Cost */}
+              {/* Average Monthly Cost with DGRV Badge */}
               <div className="flex items-center justify-between pt-4 border-t-2 border-border">
-                <span className="text-muted-foreground">Ø Kosten pro Monat (pro Vertrag)</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground">Ø Kosten pro Monat (pro Vertrag)</span>
+                  {result1.meta.isDgrvContract && <DgrvBadge compact freeMonths={result1.meta.freeMonths} />}
+                </div>
                 <span className="text-4xl font-bold text-foreground">
                   {result1.totals.avgTermNet.toFixed(2)} €
                 </span>
               </div>
+              
+              {/* Price Period Breakdown for offers with promotions */}
+              {result1.periods.length > 1 && (
+                <div className="mt-6">
+                  <PricePeriodBreakdown 
+                    result={result1} 
+                    termMonths={option1.meta.termMonths}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>

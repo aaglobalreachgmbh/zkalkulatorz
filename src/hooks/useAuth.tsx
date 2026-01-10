@@ -16,6 +16,7 @@ interface AuthContextType {
   mfaStatus: MFAStatus | null;
   signIn: (email: string, password: string) => Promise<{ error: Error | null; requiresMFA?: boolean }>;
   signUp: (email: string, password: string, displayName?: string) => Promise<{ error: Error | null }>;
+  signInWithGoogle: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   checkMFAStatus: () => Promise<boolean>;
 }
@@ -204,6 +205,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error as Error | null };
   };
 
+  const signInWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/`,
+      },
+    });
+    return { error: error as Error | null };
+  };
+
   const signOut = async () => {
     setRequiresMFA(false);
     setMfaStatus(null);
@@ -221,6 +232,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       mfaStatus,
       signIn, 
       signUp, 
+      signInWithGoogle,
       signOut,
       checkMFAStatus,
     }}>
@@ -237,6 +249,7 @@ const SAFE_DEFAULT_AUTH: AuthContextType = {
   mfaStatus: null,
   signIn: async () => ({ error: new Error("Auth not available") }),
   signUp: async () => ({ error: new Error("Auth not available") }),
+  signInWithGoogle: async () => ({ error: new Error("Auth not available") }),
   signOut: async () => {},
   checkMFAStatus: async () => false,
 };

@@ -119,6 +119,81 @@ export type Database = {
         }
         Relationships: []
       }
+      bonus_rules: {
+        Row: {
+          bonus_type: string
+          bonus_value: number
+          condition_field: string
+          condition_operator: string
+          condition_text: string | null
+          condition_value: number
+          condition_value_max: number | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          is_stackable: boolean | null
+          name: string
+          priority: number | null
+          rule_type: string
+          scope_id: string | null
+          scope_type: string | null
+          tenant_id: string
+          updated_at: string | null
+          valid_from: string
+          valid_until: string | null
+        }
+        Insert: {
+          bonus_type?: string
+          bonus_value?: number
+          condition_field?: string
+          condition_operator?: string
+          condition_text?: string | null
+          condition_value?: number
+          condition_value_max?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_stackable?: boolean | null
+          name: string
+          priority?: number | null
+          rule_type?: string
+          scope_id?: string | null
+          scope_type?: string | null
+          tenant_id?: string
+          updated_at?: string | null
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Update: {
+          bonus_type?: string
+          bonus_value?: number
+          condition_field?: string
+          condition_operator?: string
+          condition_text?: string | null
+          condition_value?: number
+          condition_value_max?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_stackable?: boolean | null
+          name?: string
+          priority?: number | null
+          rule_type?: string
+          scope_id?: string | null
+          scope_type?: string | null
+          tenant_id?: string
+          updated_at?: string | null
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
       calculation_history: {
         Row: {
           avg_monthly: number | null
@@ -1600,6 +1675,7 @@ export type Database = {
           is_active: boolean | null
           min_quantity: number
           name: string
+          position_number: number | null
           scope_id: string | null
           scope_type: string
           tenant_id: string
@@ -1616,6 +1692,7 @@ export type Database = {
           is_active?: boolean | null
           min_quantity: number
           name: string
+          position_number?: number | null
           scope_id?: string | null
           scope_type?: string
           tenant_id: string
@@ -1632,6 +1709,7 @@ export type Database = {
           is_active?: boolean | null
           min_quantity?: number
           name?: string
+          position_number?: number | null
           scope_id?: string | null
           scope_type?: string
           tenant_id?: string

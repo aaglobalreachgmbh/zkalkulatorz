@@ -273,11 +273,11 @@ export function Wizard() {
     return getBonusForQuantity(totalQuantityForBonus);
   }, [getBonusForQuantity, totalQuantityForBonus]);
   
-  // Find next tier for motivation teaser
+  // Find next tier for motivation teaser (position-based)
   const nextQuantityBonusTier = useMemo(() => {
     if (!quantityBonusTiers.length) return null;
-    const sorted = [...quantityBonusTiers].sort((a, b) => a.minQuantity - b.minQuantity);
-    return sorted.find(t => t.minQuantity > totalQuantityForBonus) ?? null;
+    const sorted = [...quantityBonusTiers].sort((a, b) => a.positionNumber - b.positionNumber);
+    return sorted.find(t => t.positionNumber > totalQuantityForBonus) ?? null;
   }, [quantityBonusTiers, totalQuantityForBonus]);
   
   // Calculate quantity bonus for current configuration

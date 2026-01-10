@@ -17,7 +17,8 @@ import {
   LayoutDashboard,
   UserCog,
   HardDrive,
-  Sparkles
+  Sparkles,
+  Megaphone,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -68,6 +69,7 @@ const salesItems = [
   { title: "Kunden", url: "/customers", icon: Building2 },
   { title: "Verträge", url: "/contracts", icon: ClipboardList },
   { title: "Kalender", url: "/calendar", icon: LayoutDashboard },
+  { title: "News & Aktionen", url: "/news", icon: Megaphone },
   { title: "Bundles", url: "/bundles", icon: Package },
 ];
 
@@ -91,6 +93,7 @@ const settingsItems = [
 // ADMIN - Administration (collapsible, role-gated)
 const adminItems = [
   { title: "Stammdaten", url: "/tenant-admin", icon: Settings, requiresTenantAdmin: true },
+  { title: "News verwalten", url: "/admin/news", icon: Megaphone, requiresTenantAdmin: true },
   { title: "Quantity-Boni", url: "/admin/quantity-bonus", icon: Sparkles, requiresTenantAdmin: true },
   { title: "Benutzerverwaltung", url: "/admin/users", icon: UserCog, requiresAdmin: true },
   { title: "Datenmanager", url: "/data-manager", icon: HardDrive },

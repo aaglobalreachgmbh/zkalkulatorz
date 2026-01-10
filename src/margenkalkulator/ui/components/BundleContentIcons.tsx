@@ -42,8 +42,8 @@ interface ContentItem {
 function analyzeConfig(config: OfferOptionState): ContentItem[] {
   const items: ContentItem[] = [];
 
-  // Hardware check
-  if (config.hardware?.name || config.hardware?.ek !== undefined) {
+  // Hardware check - use ekNet which is the correct property
+  if (config.hardware?.name || config.hardware?.ekNet !== undefined) {
     items.push({
       id: "hardware",
       label: "Hardware",
@@ -62,23 +62,13 @@ function analyzeConfig(config: OfferOptionState): ContentItem[] {
     });
   }
 
-  // Fixed net check
-  if (config.fixedNet?.enabled || config.fixedNet?.tariffId) {
+  // Fixed net check - use productId which is the correct property
+  if (config.fixedNet?.enabled || config.fixedNet?.productId) {
     items.push({
       id: "fixednet",
       label: "Festnetz/Kabel",
       icon: Phone,
       color: "text-orange-500",
-    });
-  }
-
-  // IoT check
-  if (config.iot?.enabled) {
-    items.push({
-      id: "iot",
-      label: "IoT/M2M",
-      icon: Router,
-      color: "text-purple-500",
     });
   }
 

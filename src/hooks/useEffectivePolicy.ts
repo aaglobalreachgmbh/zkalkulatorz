@@ -10,13 +10,18 @@ import { getEffectivePolicy, DEFAULT_POLICY, type Policy } from "@/lib/policies"
 /**
  * Hook to get the effective policy for the current user
  * Merges: DEFAULT_POLICY < Tenant Policy < Department Policy
+ * Gracefully handles missing identity with default policy
  */
 export function useEffectivePolicy(): Policy {
   const { identity } = useIdentity();
   
   const policy = useMemo(() => {
+    // Graceful fallback wenn identity nicht vollständig
+    if (!identity?.tenantId) {
+      return DEFAULT_POLICY;
+    }
     return getEffectivePolicy(identity.tenantId, identity.departmentId);
-  }, [identity.tenantId, identity.departmentId]);
+  }, [identity?.tenantId, identity?.departmentId]);
   
   return policy;
 }

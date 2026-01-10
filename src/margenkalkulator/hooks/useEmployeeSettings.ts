@@ -44,7 +44,7 @@ export function useEmployeeSettings(targetUserId?: string): UseEmployeeSettingsR
   const effectiveUserId = targetUserId || user?.id;
 
   const loadSettings = useCallback(async () => {
-    if (!effectiveUserId || !identity.tenantId) {
+    if (!effectiveUserId || !identity?.tenantId) {
       setSettings(null);
       setIsLoading(false);
       return;
@@ -62,7 +62,10 @@ export function useEmployeeSettings(targetUserId?: string): UseEmployeeSettingsR
         .maybeSingle();
 
       if (fetchError) {
-        throw fetchError;
+        console.warn("[useEmployeeSettings] Query error, using null:", fetchError.message);
+        setSettings(null);
+        setIsLoading(false);
+        return; // Graceful fallback statt throw
       }
 
       if (data) {
@@ -84,12 +87,13 @@ export function useEmployeeSettings(targetUserId?: string): UseEmployeeSettingsR
         setSettings(null);
       }
     } catch (err: unknown) {
-      console.error("Failed to load employee settings:", err);
-      setError(err instanceof Error ? err.message : "Laden fehlgeschlagen");
+      console.warn("[useEmployeeSettings] Unexpected error, using null:", err);
+      setSettings(null); // Graceful fallback
+      setError(null); // Don't propagate error
     } finally {
       setIsLoading(false);
     }
-  }, [effectiveUserId, identity.tenantId]);
+  }, [effectiveUserId, identity?.tenantId]);
 
   useEffect(() => {
     loadSettings();
@@ -113,7 +117,7 @@ export function useAllEmployeeSettings() {
   const [error, setError] = useState<string | null>(null);
 
   const loadAll = useCallback(async () => {
-    if (!identity.tenantId) {
+    if (!identity?.tenantId) {
       setEmployees([]);
       setIsLoading(false);
       return;
@@ -130,7 +134,10 @@ export function useAllEmployeeSettings() {
         .order("display_name", { ascending: true });
 
       if (fetchError) {
-        throw fetchError;
+        console.warn("[useAllEmployeeSettings] Query error, using empty array:", fetchError.message);
+        setEmployees([]);
+        setIsLoading(false);
+        return; // Graceful fallback
       }
 
       setEmployees(
@@ -149,12 +156,13 @@ export function useAllEmployeeSettings() {
         }))
       );
     } catch (err: unknown) {
-      console.error("Failed to load all employee settings:", err);
-      setError(err instanceof Error ? err.message : "Laden fehlgeschlagen");
+      console.warn("[useAllEmployeeSettings] Unexpected error, using empty array:", err);
+      setEmployees([]); // Graceful fallback
+      setError(null);
     } finally {
       setIsLoading(false);
     }
-  }, [identity.tenantId]);
+  }, [identity?.tenantId]);
 
   useEffect(() => {
     loadAll();

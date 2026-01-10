@@ -59,7 +59,13 @@ export function useQuantityBonus(): UseQuantityBonusReturn {
         .or(`valid_until.is.null,valid_until.gte.${today}`)
         .order("min_quantity", { ascending: true });
 
-      if (queryError) throw queryError;
+      if (queryError) {
+        console.warn("[useQuantityBonus] Query error, using empty array:", queryError.message);
+        setTiers([]);
+        setError(null); // Don't propagate error - graceful degradation
+        setIsLoading(false);
+        return;
+      }
 
       const mappedTiers: QuantityBonusTier[] = (data || []).map((row: Record<string, unknown>) => ({
         id: row.id as string,
@@ -86,8 +92,9 @@ export function useQuantityBonus(): UseQuantityBonusReturn {
       setTiers(applicableTiers);
       setError(null);
     } catch (err) {
-      console.error("[useQuantityBonus] Error fetching tiers:", err);
-      setError(err as Error);
+      console.warn("[useQuantityBonus] Unexpected error, using empty array:", err);
+      setTiers([]); // Graceful fallback
+      setError(null); // Don't propagate error
     } finally {
       setIsLoading(false);
     }

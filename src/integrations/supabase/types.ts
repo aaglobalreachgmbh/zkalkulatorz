@@ -3435,6 +3435,155 @@ export type Database = {
         }
         Relationships: []
       }
+      visit_checklists: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          is_template: boolean
+          items: Json
+          name: string
+          tenant_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_template?: boolean
+          items?: Json
+          name: string
+          tenant_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_template?: boolean
+          items?: Json
+          name?: string
+          tenant_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      visit_photos: {
+        Row: {
+          caption: string | null
+          created_at: string
+          id: string
+          storage_path: string
+          visit_report_id: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          storage_path: string
+          visit_report_id: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          storage_path?: string
+          visit_report_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visit_photos_visit_report_id_fkey"
+            columns: ["visit_report_id"]
+            isOneToOne: false
+            referencedRelation: "visit_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      visit_reports: {
+        Row: {
+          checklist_id: string | null
+          checklist_responses: Json | null
+          created_at: string
+          customer_id: string | null
+          id: string
+          location_address: string | null
+          location_lat: number | null
+          location_lng: number | null
+          notes: string | null
+          offline_id: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          synced_at: string | null
+          tenant_id: string
+          updated_at: string
+          user_id: string
+          visit_date: string
+        }
+        Insert: {
+          checklist_id?: string | null
+          checklist_responses?: Json | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          location_address?: string | null
+          location_lat?: number | null
+          location_lng?: number | null
+          notes?: string | null
+          offline_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          synced_at?: string | null
+          tenant_id: string
+          updated_at?: string
+          user_id: string
+          visit_date?: string
+        }
+        Update: {
+          checklist_id?: string | null
+          checklist_responses?: Json | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          location_address?: string | null
+          location_lat?: number | null
+          location_lng?: number | null
+          notes?: string | null
+          offline_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          synced_at?: string | null
+          tenant_id?: string
+          updated_at?: string
+          user_id?: string
+          visit_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visit_reports_checklist_id_fkey"
+            columns: ["checklist_id"]
+            isOneToOne: false
+            referencedRelation: "visit_checklists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visit_reports_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

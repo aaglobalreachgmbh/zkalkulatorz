@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 
-type AppRole = "admin" | "tenant_admin" | "moderator" | "user";
+type AppRole = "superadmin" | "admin" | "tenant_admin" | "moderator" | "user";
 
 // Role priority: higher number = more permissions
 const ROLE_PRIORITY: Record<AppRole, number> = {
+  superadmin: 200,
   admin: 100,
   tenant_admin: 80,
   moderator: 60,
@@ -15,6 +16,7 @@ const ROLE_PRIORITY: Record<AppRole, number> = {
 interface UseUserRoleResult {
   role: AppRole | null;
   allRoles: AppRole[];
+  isSuperAdmin: boolean;
   isAdmin: boolean;
   isTenantAdmin: boolean;
   isModerator: boolean;
@@ -93,9 +95,10 @@ export function useUserRole(): UseUserRoleResult {
   return {
     role,
     allRoles,
-    isAdmin: hasRole("admin"),
-    isTenantAdmin: hasRole("tenant_admin") || hasRole("admin"),
-    isModerator: hasRole("moderator") || hasRole("admin"),
+    isSuperAdmin: hasRole("superadmin"),
+    isAdmin: hasRole("admin") || hasRole("superadmin"),
+    isTenantAdmin: hasRole("tenant_admin") || hasRole("admin") || hasRole("superadmin"),
+    isModerator: hasRole("moderator") || hasRole("admin") || hasRole("superadmin"),
     isLoading,
     error,
   };

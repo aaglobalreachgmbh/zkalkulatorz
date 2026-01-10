@@ -66,41 +66,49 @@ export function useDatasetVersions() {
   // Get real UUID for created_by (only if authenticated with Supabase)
   const createdByUserId = isSupabaseAuth && user?.id ? user.id : null;
 
-  // Fetch all versions for tenant
+  // Fetch all versions for tenant - with graceful error handling
   const { data: versions = [], isLoading, error } = useQuery({
     queryKey: ["dataset-versions", tenantId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("dataset_versions")
-        .select("*")
-        .eq("tenant_id", tenantId)
-        .order("valid_from", { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from("dataset_versions")
+          .select("*")
+          .eq("tenant_id", tenantId)
+          .order("valid_from", { ascending: false });
 
-      if (error) throw error;
+        if (error) {
+          console.warn("[useDatasetVersions] Query error, returning empty array:", error.message);
+          return []; // Graceful fallback statt Exception
+        }
 
-      return (data ?? []).map(row => ({
-        id: row.id,
-        tenantId: row.tenant_id,
-        versionName: row.version_name,
-        validFrom: row.valid_from,
-        validUntil: row.valid_until,
-        isActive: row.is_active,
-        sourceFile: row.source_file,
-        provisions: row.provisions,
-        omoMatrix: row.omo_matrix,
-        hardwareCatalog: row.hardware_catalog,
-        mobileTariffs: row.mobile_tariffs,
-        subVariants: row.sub_variants,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at,
-        createdBy: row.created_by,
-        // New fields
-        status: row.status as DatasetVersion["status"],
-        sourceType: row.source_type as DatasetVersion["sourceType"],
-        sourceDate: row.source_date,
-        publishedAt: row.published_at,
-        publishedBy: row.published_by,
-      })) as DatasetVersion[];
+        return (data ?? []).map(row => ({
+          id: row.id,
+          tenantId: row.tenant_id,
+          versionName: row.version_name,
+          validFrom: row.valid_from,
+          validUntil: row.valid_until,
+          isActive: row.is_active,
+          sourceFile: row.source_file,
+          provisions: row.provisions,
+          omoMatrix: row.omo_matrix,
+          hardwareCatalog: row.hardware_catalog,
+          mobileTariffs: row.mobile_tariffs,
+          subVariants: row.sub_variants,
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+          createdBy: row.created_by,
+          // New fields
+          status: row.status as DatasetVersion["status"],
+          sourceType: row.source_type as DatasetVersion["sourceType"],
+          sourceDate: row.source_date,
+          publishedAt: row.published_at,
+          publishedBy: row.published_by,
+        })) as DatasetVersion[];
+      } catch (err) {
+        console.error("[useDatasetVersions] Unexpected error:", err);
+        return []; // Graceful fallback bei unerwarteten Fehlern
+      }
     },
     enabled: !!tenantId,
   });
@@ -225,37 +233,48 @@ export function useDatasetVersions() {
     },
   });
 
-  // Seed default v2025_10 version
+  // Seed default v2025_10 version - with graceful error handling
   const seedMutation = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase
-        .from("dataset_versions")
-        .insert({
-          tenant_id: tenantId,
-          version_name: "Oktober 2025 (Standard)",
-          valid_from: "2025-10-01",
-          valid_until: "2025-10-31",
-          source_file: "v2025_10 TypeScript-Seed",
-          provisions: provisionTable as unknown as Json,
-          omo_matrix: omoMatrix as unknown as Json,
-          hardware_catalog: hardwareCatalog as unknown as Json,
-          mobile_tariffs: [...mobilePrimeTariffs, ...businessSmartTariffs] as unknown as Json,
-          sub_variants: businessSubVariants as unknown as Json,
-          is_active: true,
-          created_by: createdByUserId,
-        })
-        .select()
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from("dataset_versions")
+          .insert({
+            tenant_id: tenantId,
+            version_name: "Oktober 2025 (Standard)",
+            valid_from: "2025-10-01",
+            valid_until: "2025-10-31",
+            source_file: "v2025_10 TypeScript-Seed",
+            provisions: provisionTable as unknown as Json,
+            omo_matrix: omoMatrix as unknown as Json,
+            hardware_catalog: hardwareCatalog as unknown as Json,
+            mobile_tariffs: [...mobilePrimeTariffs, ...businessSmartTariffs] as unknown as Json,
+            sub_variants: businessSubVariants as unknown as Json,
+            is_active: true,
+            created_by: createdByUserId,
+          })
+          .select()
+          .single();
 
-      if (error) throw error;
-      return data;
+        if (error) {
+          console.warn("[seedDefaultVersion] Insert failed:", error.message);
+          return null; // Graceful fallback statt Exception
+        }
+        return data;
+      } catch (err) {
+        console.error("[seedDefaultVersion] Unexpected error:", err);
+        return null;
+      }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["dataset-versions", tenantId] });
-      toast.success("Standard-Daten geladen");
+    onSuccess: (data) => {
+      if (data) {
+        queryClient.invalidateQueries({ queryKey: ["dataset-versions", tenantId] });
+        toast.success("Standard-Daten geladen");
+      }
     },
     onError: (error) => {
-      toast.error(error.message);
+      console.warn("[seedDefaultVersion] Mutation error:", error);
+      // Kein toast.error - graceful degradation
     },
   });
 

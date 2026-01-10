@@ -230,11 +230,33 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * Safe default context for use outside IdentityProvider
+ * Allows graceful degradation instead of crash
+ */
+const SAFE_DEFAULT_CONTEXT: IdentityContextType = {
+  identity: DEFAULT_IDENTITY,
+  isAuthenticated: false,
+  isSupabaseAuth: false,
+  setMockIdentity: () => {
+    console.warn("[useIdentity] setMockIdentity called outside IdentityProvider");
+  },
+  clearMockIdentity: () => {
+    console.warn("[useIdentity] clearMockIdentity called outside IdentityProvider");
+  },
+  canAccessAdmin: false,
+  jwtClaims: { verified: false },
+};
+
 export function useIdentity(): IdentityContextType {
   const context = useContext(IdentityContext);
+  
+  // GRACEFUL DEGRADATION statt Exception
   if (!context) {
-    throw new Error("useIdentity must be used within IdentityProvider");
+    console.warn("[useIdentity] Used outside IdentityProvider, returning safe default");
+    return SAFE_DEFAULT_CONTEXT;
   }
+  
   return context;
 }
 

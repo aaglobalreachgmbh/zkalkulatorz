@@ -233,7 +233,7 @@ export function usePushProvisions(): UsePushProvisionsReturn {
   const [error, setError] = useState<string | null>(null);
 
   const loadProvisions = useCallback(async () => {
-    if (!identity.tenantId) {
+    if (!identity?.tenantId) {
       setProvisions([]);
       setTariffGroups([]);
       setIsLoading(false);
@@ -263,53 +263,62 @@ export function usePushProvisions(): UsePushProvisionsReturn {
           .eq("is_active", true)
       ]);
 
-      if (provisionsResult.error) throw provisionsResult.error;
-      if (groupsResult.error) throw groupsResult.error;
+      if (provisionsResult.error) {
+        console.warn("[usePushProvisions] Provisions query error, using empty array:", provisionsResult.error.message);
+        setProvisions([]);
+      } else {
+        setProvisions(
+          (provisionsResult.data || []).map((d) => ({
+            id: d.id,
+            tenantId: d.tenant_id,
+            scopeType: d.scope_type as "all" | "user" | "team",
+            scopeId: d.scope_id ?? undefined,
+            tariffId: d.tariff_id,
+            tariffFamily: d.tariff_family ?? undefined,
+            contractType: d.contract_type as "new" | "renewal" | "both" | undefined,
+            bonusAmount: Number(d.bonus_amount) || 0,
+            bonusType: (d.bonus_type as "fixed" | "percent") || "fixed",
+            validFrom: d.valid_from,
+            validUntil: d.valid_until ?? undefined,
+            name: d.name,
+            description: d.description ?? undefined,
+            isActive: d.is_active ?? true,
+            createdAt: d.created_at,
+            createdBy: d.created_by ?? undefined,
+            targetType: (d.target_type as PushProvision["targetType"]) || "tariff",
+            conditions: (d.conditions as PushProvisionConditions) || {},
+          }))
+        );
+      }
 
-      setProvisions(
-        (provisionsResult.data || []).map((d) => ({
-          id: d.id,
-          tenantId: d.tenant_id,
-          scopeType: d.scope_type as "all" | "user" | "team",
-          scopeId: d.scope_id ?? undefined,
-          tariffId: d.tariff_id,
-          tariffFamily: d.tariff_family ?? undefined,
-          contractType: d.contract_type as "new" | "renewal" | "both" | undefined,
-          bonusAmount: Number(d.bonus_amount) || 0,
-          bonusType: (d.bonus_type as "fixed" | "percent") || "fixed",
-          validFrom: d.valid_from,
-          validUntil: d.valid_until ?? undefined,
-          name: d.name,
-          description: d.description ?? undefined,
-          isActive: d.is_active ?? true,
-          createdAt: d.created_at,
-          createdBy: d.created_by ?? undefined,
-          targetType: (d.target_type as PushProvision["targetType"]) || "tariff",
-          conditions: (d.conditions as PushProvisionConditions) || {},
-        }))
-      );
-
-      setTariffGroups(
-        (groupsResult.data || []).map((g) => ({
-          id: g.id,
-          tenantId: g.tenant_id,
-          name: g.name,
-          description: g.description ?? undefined,
-          matchPattern: g.match_pattern ?? undefined,
-          tariffIds: g.tariff_ids || [],
-          isActive: g.is_active ?? true,
-          createdBy: g.created_by ?? undefined,
-          createdAt: g.created_at,
-          updatedAt: g.updated_at,
-        }))
-      );
+      if (groupsResult.error) {
+        console.warn("[usePushProvisions] Groups query error, using empty array:", groupsResult.error.message);
+        setTariffGroups([]);
+      } else {
+        setTariffGroups(
+          (groupsResult.data || []).map((g) => ({
+            id: g.id,
+            tenantId: g.tenant_id,
+            name: g.name,
+            description: g.description ?? undefined,
+            matchPattern: g.match_pattern ?? undefined,
+            tariffIds: g.tariff_ids || [],
+            isActive: g.is_active ?? true,
+            createdBy: g.created_by ?? undefined,
+            createdAt: g.created_at,
+            updatedAt: g.updated_at,
+          }))
+        );
+      }
     } catch (err: unknown) {
-      console.error("Failed to load push provisions:", err);
-      setError(err instanceof Error ? err.message : "Laden fehlgeschlagen");
+      console.warn("[usePushProvisions] Unexpected error, using empty arrays:", err);
+      setProvisions([]); // Graceful fallback
+      setTariffGroups([]);
+      setError(null); // Don't propagate error
     } finally {
       setIsLoading(false);
     }
-  }, [identity.tenantId]);
+  }, [identity?.tenantId]);
 
   useEffect(() => {
     loadProvisions();

@@ -184,15 +184,13 @@ export function useTenants() {
 
       if (emailError) throw emailError;
 
-      // 5. Send invitation email via edge function
+      // 5. Send invitation email via dedicated edge function
       try {
-        const { error: inviteError } = await supabase.functions.invoke("invite-user", {
+        const { error: inviteError } = await supabase.functions.invoke("send-admin-invite", {
           body: {
             email: input.admin_email,
-            inviteToken,
-            tenantName: input.company_name,
-            role: "tenant_admin",
-            senderName: "allenetze.de Team",
+            invite_token: inviteToken,
+            tenant_id: tenantId,
           },
         });
 

@@ -95,17 +95,22 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Check for existing pending invitation
-    const { data: existingInvite } = await supabase
-      .from("tenant_invitations")
-      .select("id")
+    // Check for existing entry in tenant_allowed_emails
+    const { data: existingEmail } = await supabase
+      .from("tenant_allowed_emails")
+      .select("id, registered_at")
       .eq("email", email.toLowerCase())
       .eq("tenant_id", tenant_id)
-      .is("accepted_at", null)
-      .gt("expires_at", new Date().toISOString())
-      .single();
+      .maybeSingle();
 
-    if (existingInvite) {
+    if (existingEmail?.registered_at) {
+      return new Response(
+        JSON.stringify({ error: "Dieser Benutzer ist bereits registriert" }),
+        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (existingEmail && !existingEmail.registered_at) {
       return new Response(
         JSON.stringify({ error: "Eine Einladung für diese E-Mail ist bereits aktiv" }),
         { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -115,19 +120,17 @@ const handler = async (req: Request): Promise<Response> => {
     // Generate secure invite token
     const inviteToken = crypto.randomUUID();
 
-    // Create invitation record
-    const { data: invitation, error: insertError } = await supabase
-      .from("tenant_invitations")
+    // Create allowlist entry with invite token (unified system)
+    const { error: insertError } = await supabase
+      .from("tenant_allowed_emails")
       .insert({
         tenant_id,
         email: email.toLowerCase(),
         role,
-        invited_by: user.id,
         invite_token: inviteToken,
-        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
-      })
-      .select()
-      .single();
+        invited_at: new Date().toISOString(),
+        invited_by: user.id,
+      });
 
     if (insertError) {
       console.error("Insert error:", insertError);
@@ -184,8 +187,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     return new Response(
       JSON.stringify({ 
-        success: true, 
-        invitation,
+        success: true,
         message: resendApiKey ? "Einladung gesendet" : "Einladung erstellt (E-Mail nicht konfiguriert)" 
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }

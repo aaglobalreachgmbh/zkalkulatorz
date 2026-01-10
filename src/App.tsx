@@ -61,6 +61,8 @@ const TenantAdmin = lazy(() => import("./pages/TenantAdmin"));
 const BrandingSettings = lazy(() => import("./pages/BrandingSettings"));
 const Inbox = lazy(() => import("./pages/Inbox"));
 const Calendar = lazy(() => import("./pages/Calendar"));
+const News = lazy(() => import("./pages/News"));
+const AdminNews = lazy(() => import("./pages/AdminNews"));
 
 // Enhanced loading fallback with timeout and retry
 const PageLoader = () => {
@@ -621,6 +623,26 @@ const App = () => (
                         <ProtectedRoute>
                           <Calendar />
                         </ProtectedRoute>
+                      }
+                    />
+                    
+                    {/* News & Aktionen */}
+                    <Route
+                      path="/news"
+                      element={
+                        <ProtectedRoute>
+                          <News />
+                        </ProtectedRoute>
+                      }
+                    />
+                    
+                    {/* Admin News */}
+                    <Route
+                      path="/admin/news"
+                      element={
+                        <TenantAdminRoute>
+                          <AdminNews />
+                        </TenantAdminRoute>
                       }
                     />
                     

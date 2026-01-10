@@ -19,46 +19,61 @@ export type Database = {
           absence_type: string
           approved_at: string | null
           approved_by: string | null
+          auto_forward_events: boolean | null
           created_at: string | null
           end_date: string
+          half_day_end: boolean | null
+          half_day_start: boolean | null
           id: string
           notes: string | null
+          remaining_vacation_before: number | null
           start_date: string
           status: string
           substitute_user_id: string | null
           tenant_id: string
           updated_at: string | null
           user_id: string
+          vacation_days: number | null
         }
         Insert: {
           absence_type?: string
           approved_at?: string | null
           approved_by?: string | null
+          auto_forward_events?: boolean | null
           created_at?: string | null
           end_date: string
+          half_day_end?: boolean | null
+          half_day_start?: boolean | null
           id?: string
           notes?: string | null
+          remaining_vacation_before?: number | null
           start_date: string
           status?: string
           substitute_user_id?: string | null
           tenant_id?: string
           updated_at?: string | null
           user_id: string
+          vacation_days?: number | null
         }
         Update: {
           absence_type?: string
           approved_at?: string | null
           approved_by?: string | null
+          auto_forward_events?: boolean | null
           created_at?: string | null
           end_date?: string
+          half_day_end?: boolean | null
+          half_day_start?: boolean | null
           id?: string
           notes?: string | null
+          remaining_vacation_before?: number | null
           start_date?: string
           status?: string
           substitute_user_id?: string | null
           tenant_id?: string
           updated_at?: string | null
           user_id?: string
+          vacation_days?: number | null
         }
         Relationships: []
       }
@@ -1940,6 +1955,69 @@ export type Database = {
           },
         ]
       }
+      provision_calculations: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          base_provision: number | null
+          bonus_amount: number | null
+          calculated_at: string | null
+          calculation_details: Json | null
+          contract_count: number | null
+          created_at: string | null
+          deductions: number | null
+          id: string
+          month: string
+          net_provision: number | null
+          notes: string | null
+          paid_at: string | null
+          status: string | null
+          tenant_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          base_provision?: number | null
+          bonus_amount?: number | null
+          calculated_at?: string | null
+          calculation_details?: Json | null
+          contract_count?: number | null
+          created_at?: string | null
+          deductions?: number | null
+          id?: string
+          month: string
+          net_provision?: number | null
+          notes?: string | null
+          paid_at?: string | null
+          status?: string | null
+          tenant_id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          base_provision?: number | null
+          bonus_amount?: number | null
+          calculated_at?: string | null
+          calculation_details?: Json | null
+          contract_count?: number | null
+          created_at?: string | null
+          deductions?: number | null
+          id?: string
+          month?: string
+          net_provision?: number | null
+          notes?: string | null
+          paid_at?: string | null
+          status?: string | null
+          tenant_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       push_provisions: {
         Row: {
           bonus_amount: number
@@ -3072,6 +3150,125 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      time_entries: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          break_minutes: number | null
+          clock_in: string
+          clock_out: string | null
+          created_at: string | null
+          date: string
+          id: string
+          location: string | null
+          notes: string | null
+          status: string | null
+          tenant_id: string
+          updated_at: string | null
+          user_id: string
+          work_minutes: number | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          break_minutes?: number | null
+          clock_in?: string
+          clock_out?: string | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          location?: string | null
+          notes?: string | null
+          status?: string | null
+          tenant_id?: string
+          updated_at?: string | null
+          user_id: string
+          work_minutes?: number | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          break_minutes?: number | null
+          clock_in?: string
+          clock_out?: string | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          location?: string | null
+          notes?: string | null
+          status?: string | null
+          tenant_id?: string
+          updated_at?: string | null
+          user_id?: string
+          work_minutes?: number | null
+        }
+        Relationships: []
+      }
+      time_entry_corrections: {
+        Row: {
+          created_at: string | null
+          id: string
+          new_break_minutes: number | null
+          new_clock_in: string | null
+          new_clock_out: string | null
+          original_clock_in: string | null
+          original_clock_out: string | null
+          reason: string
+          requested_by: string
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string | null
+          tenant_id: string
+          time_entry_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          new_break_minutes?: number | null
+          new_clock_in?: string | null
+          new_clock_out?: string | null
+          original_clock_in?: string | null
+          original_clock_out?: string | null
+          reason: string
+          requested_by: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+          tenant_id?: string
+          time_entry_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          new_break_minutes?: number | null
+          new_clock_in?: string | null
+          new_clock_out?: string | null
+          original_clock_in?: string | null
+          original_clock_out?: string | null
+          reason?: string
+          requested_by?: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+          tenant_id?: string
+          time_entry_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_entry_corrections_time_entry_id_fkey"
+            columns: ["time_entry_id"]
+            isOneToOne: false
+            referencedRelation: "time_entries"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_activity_log: {
         Row: {

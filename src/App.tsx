@@ -13,6 +13,7 @@ import { IdentityProvider } from "@/contexts/IdentityContext";
 import { CustomerSessionProvider } from "@/contexts/CustomerSessionContext";
 import { POSModeProvider } from "@/contexts/POSModeContext";
 import { SeatLimitGate } from "@/components/SeatLimitGate";
+import { AdminSetupGate } from "@/components/AdminSetupGate";
 import { FeatureRoute } from "@/components/FeatureRoute";
 import { MobileAccessGate } from "@/components/MobileAccessGate";
 import { OfferBasketProvider } from "@/margenkalkulator/contexts";

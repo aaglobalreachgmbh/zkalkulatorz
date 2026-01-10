@@ -152,6 +152,105 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_notifications: {
+        Row: {
+          action_at: string | null
+          action_taken: string | null
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          message: string | null
+          read_at: string | null
+          read_by: string | null
+          related_email: string | null
+          related_user_id: string | null
+          target_user_id: string | null
+          tenant_id: string
+          title: string
+          type: string
+        }
+        Insert: {
+          action_at?: string | null
+          action_taken?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string | null
+          read_at?: string | null
+          read_by?: string | null
+          related_email?: string | null
+          related_user_id?: string | null
+          target_user_id?: string | null
+          tenant_id: string
+          title: string
+          type: string
+        }
+        Update: {
+          action_at?: string | null
+          action_taken?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string | null
+          read_at?: string | null
+          read_by?: string | null
+          related_email?: string | null
+          related_user_id?: string | null
+          target_user_id?: string | null
+          tenant_id?: string
+          title?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      admin_setup_status: {
+        Row: {
+          created_at: string | null
+          hardware_configured: boolean | null
+          id: string
+          on_top_rules_configured: boolean | null
+          provisions_configured: boolean | null
+          reset_at: string | null
+          reset_reason: string | null
+          setup_completed_at: string | null
+          setup_version: number | null
+          team_configured: boolean | null
+          tenant_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          hardware_configured?: boolean | null
+          id?: string
+          on_top_rules_configured?: boolean | null
+          provisions_configured?: boolean | null
+          reset_at?: string | null
+          reset_reason?: string | null
+          setup_completed_at?: string | null
+          setup_version?: number | null
+          team_configured?: boolean | null
+          tenant_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          hardware_configured?: boolean | null
+          id?: string
+          on_top_rules_configured?: boolean | null
+          provisions_configured?: boolean | null
+          reset_at?: string | null
+          reset_reason?: string | null
+          setup_completed_at?: string | null
+          setup_version?: number | null
+          team_configured?: boolean | null
+          tenant_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_access: {
         Row: {
           created_at: string
@@ -2024,6 +2123,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_status: string | null
           active_team_id: string | null
           approved_at: string | null
           approved_by: string | null
@@ -2034,10 +2134,13 @@ export type Database = {
           id: string
           is_approved: boolean | null
           last_activity_at: string | null
+          paused_at: string | null
+          reactivated_at: string | null
           tenant_id: string | null
           updated_at: string
         }
         Insert: {
+          account_status?: string | null
           active_team_id?: string | null
           approved_at?: string | null
           approved_by?: string | null
@@ -2048,10 +2151,13 @@ export type Database = {
           id: string
           is_approved?: boolean | null
           last_activity_at?: string | null
+          paused_at?: string | null
+          reactivated_at?: string | null
           tenant_id?: string | null
           updated_at?: string
         }
         Update: {
+          account_status?: string | null
           active_team_id?: string | null
           approved_at?: string | null
           approved_by?: string | null
@@ -2062,6 +2168,8 @@ export type Database = {
           id?: string
           is_approved?: boolean | null
           last_activity_at?: string | null
+          paused_at?: string | null
+          reactivated_at?: string | null
           tenant_id?: string | null
           updated_at?: string
         }

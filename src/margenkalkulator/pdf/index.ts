@@ -12,12 +12,25 @@ export { VVLListPdf } from "./VVLListPdf";
 export { CustomerReportPdf } from "./CustomerReportPdf";
 export { ProvisionForecastPdf } from "./ProvisionForecastPdf";
 
+// Premium Components
+export { PremiumCoverPage } from "./components/PremiumCoverPage";
+export { PremiumSummaryPage } from "./components/PremiumSummaryPage";
+export { PremiumTransitionPage } from "./components/PremiumTransitionPage";
+export { PremiumDetailPage } from "./components/PremiumDetailPage";
+export { PremiumUspPage } from "./components/PremiumUspPage";
+export { PremiumContactPage } from "./components/PremiumContactPage";
+
 // Templates
 export { DEFAULT_TEMPLATE, ALLENETZE_CLEAN_TEMPLATE } from "./templates/allenetzeClean";
+export { PREMIUM_O2_TEMPLATE, PREMIUM_VODAFONE_TEMPLATE } from "./templates/premiumO2Template";
 export type { 
   PdfTemplate, 
   OfferCustomerInfo, 
   PdfOfferOptions,
   ProfessionalOfferPdfProps,
   PdfCompanySettings,
+  PdfPageSelection,
+  PeriodColumn,
+  PositionRow,
 } from "./templates/types";
+export { DEFAULT_PAGE_SELECTION } from "./templates/types";

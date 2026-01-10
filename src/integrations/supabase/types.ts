@@ -152,6 +152,45 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_access: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          enabled_at: string | null
+          enabled_by: string | null
+          features: Json | null
+          id: string
+          max_requests_per_day: number | null
+          notes: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          enabled_at?: string | null
+          enabled_by?: string | null
+          features?: Json | null
+          id?: string
+          max_requests_per_day?: number | null
+          notes?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          enabled_at?: string | null
+          enabled_by?: string | null
+          features?: Json | null
+          id?: string
+          max_requests_per_day?: number | null
+          notes?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       badge_definitions: {
         Row: {
           category: string
@@ -3883,6 +3922,7 @@ export type Database = {
         Returns: string
       }
       get_visible_user_ids: { Args: never; Returns: string[] }
+      has_ai_access: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -3900,6 +3940,7 @@ export type Database = {
       }
       is_owner: { Args: { record_user_id: string }; Returns: boolean }
       is_same_tenant: { Args: { _tenant_id: string }; Returns: boolean }
+      is_superadmin: { Args: { _user_id: string }; Returns: boolean }
       is_team_member: {
         Args: { _team_id: string; _user_id: string }
         Returns: boolean
@@ -3959,7 +4000,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "tenant_admin" | "user"
+      app_role: "admin" | "moderator" | "tenant_admin" | "user" | "superadmin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -4087,7 +4128,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "moderator", "tenant_admin", "user"],
+      app_role: ["admin", "moderator", "tenant_admin", "user", "superadmin"],
     },
   },
 } as const

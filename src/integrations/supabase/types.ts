@@ -1581,6 +1581,7 @@ export type Database = {
           id: string
           is_approved: boolean | null
           last_activity_at: string | null
+          tenant_id: string | null
           updated_at: string
         }
         Insert: {
@@ -1593,6 +1594,7 @@ export type Database = {
           id: string
           is_approved?: boolean | null
           last_activity_at?: string | null
+          tenant_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -1605,6 +1607,7 @@ export type Database = {
           id?: string
           is_approved?: boolean | null
           last_activity_at?: string | null
+          tenant_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -2195,6 +2198,82 @@ export type Database = {
           },
         ]
       }
+      tenant_allowed_domains: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          domain: string
+          id: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          domain: string
+          id?: string
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          domain?: string
+          id?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_allowed_domains_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_allowed_emails: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          invite_token: string | null
+          invited_at: string | null
+          invited_by: string | null
+          registered_at: string | null
+          role: string | null
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+          invite_token?: string | null
+          invited_at?: string | null
+          invited_by?: string | null
+          registered_at?: string | null
+          role?: string | null
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          invite_token?: string | null
+          invited_at?: string | null
+          invited_by?: string | null
+          registered_at?: string | null
+          role?: string | null
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_allowed_emails_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_distribution_map: {
         Row: {
           distribution_id: string
@@ -2409,6 +2488,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      tenants: {
+        Row: {
+          address: Json | null
+          company_name: string
+          contact_email: string
+          contact_phone: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: Json | null
+          company_name: string
+          contact_email: string
+          contact_phone?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: Json | null
+          company_name?: string
+          contact_email?: string
+          contact_phone?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       threat_feed_entries: {
         Row: {
@@ -2671,6 +2786,14 @@ export type Database = {
         }[]
       }
       can_view_economics: { Args: { _user_id: string }; Returns: boolean }
+      check_email_allowed: {
+        Args: { p_email: string }
+        Returns: {
+          allowed: boolean
+          role: string
+          tenant_id: string
+        }[]
+      }
       check_rate_limit: {
         Args: {
           _category: string
@@ -2798,6 +2921,15 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      validate_invite_token: {
+        Args: { p_token: string }
+        Returns: {
+          email: string
+          role: string
+          tenant_id: string
+          valid: boolean
+        }[]
       }
     }
     Enums: {

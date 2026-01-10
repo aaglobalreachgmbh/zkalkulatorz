@@ -63,7 +63,6 @@ const Inbox = lazy(() => import("./pages/Inbox"));
 const Calendar = lazy(() => import("./pages/Calendar"));
 const News = lazy(() => import("./pages/News"));
 const AdminNews = lazy(() => import("./pages/AdminNews"));
-const AdminCustomers = lazy(() => import("./pages/AdminCustomers"));
 const SuperAdmin = lazy(() => import("./pages/SuperAdmin"));
 const AdminPermissions = lazy(() => import("./pages/AdminPermissions"));
 
@@ -404,7 +403,8 @@ const App = () => (
                     <Route path="/admin/push-provisions" element={<AdminRoute><AdminPushProvisions /></AdminRoute>} />
                     <Route path="/admin/quantity-bonus" element={<AdminRoute><AdminQuantityBonus /></AdminRoute>} />
                     <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
-                    <Route path="/admin/customers" element={<AdminRoute><AdminCustomers /></AdminRoute>} />
+{/* Redirect old route to new super-admin */}
+                    <Route path="/admin/customers" element={<Navigate to="/super-admin" replace />} />
                     <Route path="/super-admin" element={<AdminRoute><SuperAdmin /></AdminRoute>} />
                     <Route path="/admin/permissions" element={<TenantAdminRoute><AdminPermissions /></TenantAdminRoute>} />
                     

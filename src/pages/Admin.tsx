@@ -335,7 +335,7 @@ export default function Admin() {
                       onClick={() => {
                         clearDeptPolicy(identity.tenantId, selectedDeptForPolicy);
                         setPolicy(getEffectivePolicy(identity.tenantId, selectedDeptForPolicy));
-                        toast({ title: "Abteilungs-Overrides entfernt" });
+                        toast.success("Abteilungs-Overrides entfernt");
                       }}
                     >
                       Abteilungs-Overrides löschen
@@ -556,7 +556,6 @@ export default function Admin() {
 
 function LicenseTab() {
   const { identity } = useIdentity();
-  const { toast } = useToast();
   const {
     license,
     seatUsage,
@@ -622,15 +621,15 @@ function LicenseTab() {
   const handleAssignSeat = (userId: string, userName: string) => {
     const result = assignUserSeat(userId, userName);
     if (result.success) {
-      toast({ title: "Seat zugewiesen", description: userName });
+      toast.success(`Seat zugewiesen: ${userName}`);
     } else {
-      toast({ title: "Fehler", description: result.error, variant: "destructive" });
+      toast.error(`Fehler: ${result.error}`);
     }
   };
 
   const handleRevokeSeat = (userId: string) => {
     if (revokeUserSeat(userId)) {
-      toast({ title: "Seat entzogen" });
+      toast.success("Seat entzogen");
     }
   };
 
@@ -643,11 +642,7 @@ function LicenseTab() {
     
     // For standard features, check if admin has control permission
     if (!canControlFeatures) {
-      toast({
-        title: "Keine Berechtigung",
-        description: "Feature-Steuerung erfordert 'adminFeatureControl' Berechtigung.",
-        variant: "destructive",
-      });
+      toast.error("Keine Berechtigung: Feature-Steuerung erfordert 'adminFeatureControl' Berechtigung.");
       return;
     }
     
@@ -930,35 +925,22 @@ function LocalStorageStatusWidget() {
 // ============================================
 
 function StorageTab() {
-  const { toast } = useToast();
+  
   const { audit, keyDetails, runAudit, cleanup, isLoading } = useLocalStorageAudit();
   
   const handleCleanup = useCallback(() => {
     const result = cleanup();
     
     if (result.errors.length > 0) {
-      toast({
-        title: "Bereinigung mit Fehlern",
-        description: `${result.removed.length} entfernt, ${result.errors.length} Fehler`,
-        variant: "destructive",
-      });
+      toast.error(`Bereinigung mit Fehlern: ${result.removed.length} entfernt, ${result.errors.length} Fehler`);
     } else if (result.removed.length > 0) {
-      toast({
-        title: "Bereinigung erfolgreich",
-        description: `${result.removed.length} migrierte Einträge entfernt`,
-      });
+      toast.success(`Bereinigung erfolgreich: ${result.removed.length} migrierte Einträge entfernt`);
     } else if (result.kept.length > 0) {
-      toast({
-        title: "Keine Bereinigung nötig",
-        description: `${result.kept.length} Einträge noch nicht migriert`,
-      });
+      toast.info(`Keine Bereinigung nötig: ${result.kept.length} Einträge noch nicht migriert`);
     } else {
-      toast({
-        title: "Keine Daten",
-        description: "Keine migrierbaren Daten im localStorage",
-      });
+      toast.info("Keine migrierbaren Daten im localStorage");
     }
-  }, [cleanup, toast]);
+  }, [cleanup]);
 
   // Calculate total size
   const totalSize = keyDetails.reduce((acc, k) => acc + k.size, 0);

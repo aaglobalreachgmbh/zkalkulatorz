@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useIdentity } from "@/contexts/IdentityContext";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useActivityTracker } from "@/hooks/useActivityTracker";
 import type { OfferOptionState } from "../engine/types";
 import type { OfferPreview } from "../storage/types";
@@ -84,7 +84,6 @@ function rowToFolder(row: {
 export function useCloudTemplates() {
   const { user } = useAuth();
   const { identity } = useIdentity();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const { trackTemplateCreated, trackTemplateDeleted, trackTemplateDuplicated, trackFolderCreated, trackFolderDeleted } = useActivityTracker();
 
@@ -165,18 +164,15 @@ export function useCloudTemplates() {
       return rowToTemplate(data);
     },
     onSuccess: (template) => {
-      toast({
-        title: "Vorlage gespeichert",
+      toast.success("Vorlage gespeichert", {
         description: "Die Vorlage wurde erfolgreich erstellt.",
       });
       queryClient.invalidateQueries({ queryKey: TEMPLATES_KEY });
       trackTemplateCreated(template.id, template.name);
     },
     onError: () => {
-      toast({
-        title: "Fehler",
+      toast.error("Fehler", {
         description: "Vorlage konnte nicht erstellt werden.",
-        variant: "destructive",
       });
     },
   });
@@ -209,10 +205,8 @@ export function useCloudTemplates() {
       queryClient.invalidateQueries({ queryKey: TEMPLATES_KEY });
     },
     onError: () => {
-      toast({
-        title: "Fehler",
+      toast.error("Fehler", {
         description: "Vorlage konnte nicht aktualisiert werden.",
-        variant: "destructive",
       });
     },
   });
@@ -240,14 +234,12 @@ export function useCloudTemplates() {
     },
     onError: (err, _, context) => {
       queryClient.setQueryData(TEMPLATES_KEY, context?.previous);
-      toast({
-        title: "Fehler",
+      toast.error("Fehler", {
         description: "Vorlage konnte nicht gelöscht werden.",
-        variant: "destructive",
       });
     },
     onSuccess: (_, id) => {
-      toast({ title: "Vorlage gelöscht" });
+      toast.success("Vorlage gelöscht");
       trackTemplateDeleted(id, "Gelöscht");
     },
     onSettled: () => {
@@ -281,16 +273,14 @@ export function useCloudTemplates() {
       return rowToTemplate(data);
     },
     onSuccess: (template) => {
-      toast({ title: "Vorlage dupliziert" });
+      toast.success("Vorlage dupliziert");
       queryClient.invalidateQueries({ queryKey: TEMPLATES_KEY });
       // Original template name not available, using new name
       trackTemplateDuplicated(template.id, template.name.replace(" (Kopie)", ""), template.name);
     },
     onError: () => {
-      toast({
-        title: "Fehler",
+      toast.error("Fehler", {
         description: "Duplizieren fehlgeschlagen.",
-        variant: "destructive",
       });
     },
   });
@@ -333,15 +323,13 @@ export function useCloudTemplates() {
       return rowToFolder(data);
     },
     onSuccess: (folder) => {
-      toast({ title: "Ordner erstellt" });
+      toast.success("Ordner erstellt");
       queryClient.invalidateQueries({ queryKey: FOLDERS_KEY });
       trackFolderCreated(folder.id, folder.name);
     },
     onError: () => {
-      toast({
-        title: "Fehler",
+      toast.error("Fehler", {
         description: "Ordner konnte nicht erstellt werden.",
-        variant: "destructive",
       });
     },
   });
@@ -386,16 +374,14 @@ export function useCloudTemplates() {
       if (error) throw error;
     },
     onSuccess: (_, id) => {
-      toast({ title: "Ordner gelöscht" });
+      toast.success("Ordner gelöscht");
       queryClient.invalidateQueries({ queryKey: FOLDERS_KEY });
       queryClient.invalidateQueries({ queryKey: TEMPLATES_KEY });
       trackFolderDeleted(id, "Gelöscht");
     },
     onError: () => {
-      toast({
-        title: "Fehler",
+      toast.error("Fehler", {
         description: "Ordner konnte nicht gelöscht werden.",
-        variant: "destructive",
       });
     },
   });

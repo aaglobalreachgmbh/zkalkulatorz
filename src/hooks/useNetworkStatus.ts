@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 /**
  * Hook zur Überwachung des Netzwerkstatus
@@ -17,22 +17,20 @@ export function useNetworkStatus() {
   const [lastOnlineAt, setLastOnlineAt] = useState<Date | null>(
     typeof navigator !== "undefined" && navigator.onLine ? new Date() : null
   );
-  const { toast } = useToast();
 
   const handleOnline = useCallback(() => {
     setIsOnline(true);
     setLastOnlineAt(new Date());
     
     if (wasOffline) {
-      toast({
-        title: "Verbindung wiederhergestellt",
+      toast.success("Verbindung wiederhergestellt", {
         description: "Sie sind wieder online.",
       });
       
       // Log reconnection event (non-sensitive)
       console.info("[Security] Network reconnected");
     }
-  }, [wasOffline, toast]);
+  }, [wasOffline]);
 
   const handleOffline = useCallback(() => {
     setIsOnline(false);

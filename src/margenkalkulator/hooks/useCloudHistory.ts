@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useIdentity } from "@/contexts/IdentityContext";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import type { OfferOptionState } from "../engine/types";
 import type { HistoryEntry } from "../storage/types";
 import type { Json } from "@/integrations/supabase/types";
@@ -54,7 +54,6 @@ function rowToHistoryEntry(row: {
 export function useCloudHistory() {
   const { user } = useAuth();
   const { identity } = useIdentity();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Fetch history for current user (last 10)
@@ -130,7 +129,7 @@ export function useCloudHistory() {
 
       return rowToHistoryEntry(data);
     },
-    onMutate: async ({ config, avgMonthly }) => {
+    onMutate: async ({ config }) => {
       await queryClient.cancelQueries({ queryKey: QUERY_KEY });
       const previous = queryClient.getQueryData<HistoryEntry[]>(QUERY_KEY);
 
@@ -177,15 +176,12 @@ export function useCloudHistory() {
     },
     onError: (err, _, context) => {
       queryClient.setQueryData(QUERY_KEY, context?.previous);
-      toast({
-        title: "Fehler",
+      toast.error("Fehler", {
         description: "Verlauf konnte nicht gelöscht werden.",
-        variant: "destructive",
       });
     },
     onSuccess: () => {
-      toast({
-        title: "Verlauf gelöscht",
+      toast.success("Verlauf gelöscht", {
         description: "Der Berechnungsverlauf wurde gelöscht.",
       });
     },

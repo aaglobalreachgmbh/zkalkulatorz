@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useIdentity } from "@/contexts/IdentityContext";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import type { Json } from "@/integrations/supabase/types";
 
 const DEPARTMENTS_KEY = ["cloud-departments"];
@@ -87,7 +87,6 @@ function rowToAssignment(row: {
 export function useCloudDepartments() {
   const { user } = useAuth();
   const { identity } = useIdentity();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Fetch all departments for tenant
@@ -161,14 +160,12 @@ export function useCloudDepartments() {
       return rowToDepartment(data);
     },
     onSuccess: () => {
-      toast({ title: "Abteilung erstellt" });
+      toast.success("Abteilung erstellt");
       queryClient.invalidateQueries({ queryKey: DEPARTMENTS_KEY });
     },
     onError: () => {
-      toast({
-        title: "Fehler",
+      toast.error("Fehler", {
         description: "Abteilung konnte nicht erstellt werden.",
-        variant: "destructive",
       });
     },
   });
@@ -207,10 +204,8 @@ export function useCloudDepartments() {
       queryClient.invalidateQueries({ queryKey: DEPARTMENTS_KEY });
     },
     onError: () => {
-      toast({
-        title: "Fehler",
+      toast.error("Fehler", {
         description: "Abteilung konnte nicht aktualisiert werden.",
-        variant: "destructive",
       });
     },
   });
@@ -232,15 +227,13 @@ export function useCloudDepartments() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({ title: "Abteilung gelöscht" });
+      toast.success("Abteilung gelöscht");
       queryClient.invalidateQueries({ queryKey: DEPARTMENTS_KEY });
       queryClient.invalidateQueries({ queryKey: ASSIGNMENTS_KEY });
     },
     onError: () => {
-      toast({
-        title: "Fehler",
+      toast.error("Fehler", {
         description: "Abteilung konnte nicht gelöscht werden.",
-        variant: "destructive",
       });
     },
   });
@@ -282,10 +275,8 @@ export function useCloudDepartments() {
       queryClient.invalidateQueries({ queryKey: ASSIGNMENTS_KEY });
     },
     onError: () => {
-      toast({
-        title: "Fehler",
+      toast.error("Fehler", {
         description: "Zuweisung fehlgeschlagen.",
-        variant: "destructive",
       });
     },
   });

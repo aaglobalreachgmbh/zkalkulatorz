@@ -8,7 +8,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useIdentity } from "@/contexts/IdentityContext";
 import { useUserRole } from "@/hooks/useUserRole";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import {
   performFullMigration,
   isMigrationNeeded,
@@ -31,7 +31,6 @@ export function useLocalStorageMigration(): UseMigrationReturn {
   const { user } = useAuth();
   const { identity } = useIdentity();
   const { isAdmin } = useUserRole();
-  const { toast } = useToast();
 
   const [isMigrating, setIsMigrating] = useState(false);
   const [migrationResult, setMigrationResult] = useState<MigrationResult | null>(null);
@@ -91,15 +90,12 @@ export function useLocalStorageMigration(): UseMigrationReturn {
         (result.license ? 1 : 0);
 
       if (result.errors.length > 0) {
-        toast({
-          title: "Migration teilweise abgeschlossen",
+        toast.error("Migration teilweise abgeschlossen", {
           description: `${totalMigrated} Einträge migriert, ${result.errors.length} Fehler aufgetreten.`,
-          variant: "destructive",
         });
         console.error("Migration errors:", result.errors);
       } else if (totalMigrated > 0) {
-        toast({
-          title: "Lokale Daten synchronisiert",
+        toast.success("Lokale Daten synchronisiert", {
           description: `${totalMigrated} Einträge erfolgreich in die Cloud übertragen.`,
         });
         
@@ -139,15 +135,13 @@ export function useLocalStorageMigration(): UseMigrationReturn {
       setMigrationNeeded(false);
     } catch (error) {
       console.error("Migration failed:", error);
-      toast({
-        title: "Migration fehlgeschlagen",
+      toast.error("Migration fehlgeschlagen", {
         description: "Lokale Daten konnten nicht synchronisiert werden.",
-        variant: "destructive",
       });
     } finally {
       setIsMigrating(false);
     }
-  }, [user?.id, identity?.tenantId, isAdmin, toast]);
+  }, [user?.id, identity?.tenantId, isAdmin]);
 
   const triggerMigration = useCallback(async () => {
     await performMigration();

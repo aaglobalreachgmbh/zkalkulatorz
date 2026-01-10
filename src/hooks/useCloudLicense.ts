@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useIdentity } from "@/contexts/IdentityContext";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import type { Json } from "@/integrations/supabase/types";
 
 const QUERY_KEY = ["cloud-license"];
@@ -78,7 +78,6 @@ function rowToLicense(row: {
 export function useCloudLicense() {
   const { user } = useAuth();
   const { identity } = useIdentity();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Fetch license for current tenant
@@ -151,10 +150,8 @@ export function useCloudLicense() {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
     },
     onError: () => {
-      toast({
-        title: "Fehler",
+      toast.error("Fehler", {
         description: "Lizenz konnte nicht aktualisiert werden.",
-        variant: "destructive",
       });
     },
   });

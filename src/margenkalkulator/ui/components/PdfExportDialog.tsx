@@ -229,9 +229,9 @@ export function PdfExportDialog({
       );
     });
     
-    const [{ pdf }, { ProfessionalOfferPdf }] = await Promise.all([
+    const [{ pdf }, { PremiumOfferPdf }] = await Promise.all([
       import("@react-pdf/renderer"),
-      import("../../pdf/ProfessionalOfferPdf"),
+      import("../../pdf/PremiumOfferPdf"),
     ]);
     
     const pdfOptions: PdfOfferOptions = {
@@ -243,7 +243,7 @@ export function PdfExportDialog({
     
     const blob = await Promise.race([
       pdf(
-        <ProfessionalOfferPdf
+        <PremiumOfferPdf
           template={DEFAULT_TEMPLATE}
           customer={effectiveCustomer}
           options={pdfOptions}

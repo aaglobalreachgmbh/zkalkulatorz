@@ -137,6 +137,36 @@ export interface DealerSummaryData {
 }
 
 /**
+ * Company settings for dynamic PDF header/footer
+ */
+export interface PdfCompanySettings {
+  companyInfo: {
+    name: string;
+    street: string;
+    zip: string;
+    city: string;
+    phone: string;
+    email: string;
+    website: string;
+  };
+  billingInfo: {
+    ustId: string;
+    taxNumber: string;
+    bankName: string;
+    iban: string;
+    bic: string;
+    registrationCourt: string;
+    registrationNumber: string;
+  };
+  pdfContact: {
+    name: string;
+    position: string;
+    email: string;
+    phone: string;
+  };
+}
+
+/**
  * Props for the professional offer PDF
  */
 export interface ProfessionalOfferPdfProps {
@@ -144,6 +174,8 @@ export interface ProfessionalOfferPdfProps {
   customer: OfferCustomerInfo;
   options: PdfOfferOptions;
   branding?: TenantBranding;
+  /** Company settings from admin portal */
+  companySettings?: PdfCompanySettings;
   /** Sales contact */
   contact?: {
     name: string;

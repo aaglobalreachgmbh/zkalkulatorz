@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useIdentity } from "@/contexts/IdentityContext";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useActivityTracker } from "@/hooks/useActivityTracker";
 import type { OfferOptionState } from "../engine/types";
 import type { OfferDraft, OfferPreview } from "../storage/types";
@@ -58,7 +58,6 @@ function rowToDraft(row: {
 export function useCloudDrafts() {
   const { user } = useAuth();
   const { identity } = useIdentity();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const { trackDraftCreated, trackDraftDeleted } = useActivityTracker();
 
@@ -134,15 +133,12 @@ export function useCloudDrafts() {
     },
     onError: (err, _, context) => {
       queryClient.setQueryData(QUERY_KEY, context?.previous);
-      toast({
-        title: "Fehler",
+      toast.error("Fehler", {
         description: "Entwurf konnte nicht gespeichert werden.",
-        variant: "destructive",
       });
     },
     onSuccess: (draft) => {
-      toast({
-        title: "Entwurf gespeichert",
+      toast.success("Entwurf gespeichert", {
         description: "Der Entwurf wurde erfolgreich gespeichert.",
       });
       trackDraftCreated(draft.id, draft.name);
@@ -202,10 +198,8 @@ export function useCloudDrafts() {
     },
     onError: (err, _, context) => {
       queryClient.setQueryData(QUERY_KEY, context?.previous);
-      toast({
-        title: "Fehler",
+      toast.error("Fehler", {
         description: "Entwurf konnte nicht aktualisiert werden.",
-        variant: "destructive",
       });
     },
     onSettled: () => {
@@ -238,15 +232,12 @@ export function useCloudDrafts() {
     },
     onError: (err, _, context) => {
       queryClient.setQueryData(QUERY_KEY, context?.previous);
-      toast({
-        title: "Fehler",
+      toast.error("Fehler", {
         description: "Entwurf konnte nicht gelöscht werden.",
-        variant: "destructive",
       });
     },
     onSuccess: (_, id) => {
-      toast({
-        title: "Gelöscht",
+      toast.success("Gelöscht", {
         description: "Entwurf wurde gelöscht.",
       });
       trackDraftDeleted(id, "Gelöscht");
@@ -285,10 +276,8 @@ export function useCloudDrafts() {
     },
     onError: (err, _, context) => {
       queryClient.setQueryData(QUERY_KEY, context?.previous);
-      toast({
-        title: "Fehler",
+      toast.error("Fehler", {
         description: "Umbenennung fehlgeschlagen.",
-        variant: "destructive",
       });
     },
     onSettled: () => {

@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useIdentity } from "@/contexts/IdentityContext";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import type { CanonicalDataset } from "@/margenkalkulator/dataManager/types";
 import type { Json } from "@/integrations/supabase/types";
 
@@ -80,7 +80,6 @@ function rowToCloudDataset(row: {
 export function useCloudDatasets() {
   const { user } = useAuth();
   const { identity } = useIdentity();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Fetch dataset for current tenant
@@ -150,18 +149,15 @@ export function useCloudDatasets() {
       }
     },
     onSuccess: () => {
-      toast({
-        title: "Dataset gespeichert",
+      toast.success("Dataset gespeichert", {
         description: "Das benutzerdefinierte Dataset wurde erfolgreich gespeichert.",
       });
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
     },
     onError: (error) => {
       console.error("Save dataset error:", error);
-      toast({
-        title: "Fehler",
+      toast.error("Fehler", {
         description: "Dataset konnte nicht gespeichert werden. Nur Admins können Datasets speichern.",
-        variant: "destructive",
       });
     },
   });
@@ -179,18 +175,15 @@ export function useCloudDatasets() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({
-        title: "Dataset zurückgesetzt",
+      toast.success("Dataset zurückgesetzt", {
         description: "Das benutzerdefinierte Dataset wurde gelöscht.",
       });
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
     },
     onError: (error) => {
       console.error("Clear dataset error:", error);
-      toast({
-        title: "Fehler",
+      toast.error("Fehler", {
         description: "Dataset konnte nicht gelöscht werden.",
-        variant: "destructive",
       });
     },
   });

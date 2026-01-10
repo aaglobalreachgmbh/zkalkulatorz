@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useIdentity } from "@/contexts/IdentityContext";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useCloudLicense } from "./useCloudLicense";
 
 const QUERY_KEY = ["cloud-seats"];
@@ -47,7 +47,6 @@ function rowToSeatAssignment(row: {
 export function useCloudSeats() {
   const { user } = useAuth();
   const { identity } = useIdentity();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const { license, updateSeatsUsed } = useCloudLicense();
 
@@ -128,17 +127,14 @@ export function useCloudSeats() {
       return rowToSeatAssignment(data);
     },
     onSuccess: () => {
-      toast({
-        title: "Seat zugewiesen",
+      toast.success("Seat zugewiesen", {
         description: "Der Benutzer hat nun Zugriff.",
       });
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
     },
     onError: (error) => {
-      toast({
-        title: "Fehler",
+      toast.error("Fehler", {
         description: error instanceof Error ? error.message : "Seat konnte nicht zugewiesen werden.",
-        variant: "destructive",
       });
     },
   });
@@ -170,15 +166,12 @@ export function useCloudSeats() {
     },
     onError: (err, _, context) => {
       queryClient.setQueryData(QUERY_KEY, context?.previous);
-      toast({
-        title: "Fehler",
+      toast.error("Fehler", {
         description: "Seat konnte nicht entfernt werden.",
-        variant: "destructive",
       });
     },
     onSuccess: () => {
-      toast({
-        title: "Seat entfernt",
+      toast.success("Seat entfernt", {
         description: "Der Benutzer hat keinen Zugriff mehr.",
       });
     },

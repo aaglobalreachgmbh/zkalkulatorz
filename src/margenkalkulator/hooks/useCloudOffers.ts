@@ -9,7 +9,7 @@ import { useActivityTracker } from "@/hooks/useActivityTracker";
 import { useIdentity } from "@/contexts/IdentityContext";
 import type { OfferOptionState } from "../engine/types";
 import type { CloudOffer, OfferPreview } from "../storage/types";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 // Re-export CloudOffer type
 export type { CloudOffer };
@@ -34,7 +34,6 @@ function createPreview(config: OfferOptionState, avgMonthly: number): OfferPrevi
 export function useCloudOffers() {
   const { user } = useAuth();
   const { identity } = useIdentity();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const { trackOfferCreated, trackOfferDeleted, trackOfferRenamed } = useActivityTracker();
 
@@ -131,17 +130,14 @@ export function useCloudOffers() {
         newOffer,
         ...(old || []),
       ]);
-      toast({
-        title: "Gespeichert",
+      toast.success("Gespeichert", {
         description: `"${newOffer.name}" wurde gespeichert.`,
       });
       trackOfferCreated(newOffer.id, newOffer.name);
     },
     onError: (error: Error) => {
-      toast({
-        title: "Fehler",
+      toast.error("Fehler", {
         description: error.message,
-        variant: "destructive",
       });
     },
   });
@@ -160,17 +156,14 @@ export function useCloudOffers() {
       queryClient.setQueryData<CloudOffer[]>(QUERY_KEY, (old) =>
         (old || []).filter((o) => o.id !== id)
       );
-      toast({
-        title: "Gelöscht",
+      toast.success("Gelöscht", {
         description: "Angebot wurde entfernt.",
       });
       trackOfferDeleted(id, "Gelöscht");
     },
     onError: (error: Error) => {
-      toast({
-        title: "Fehler",
+      toast.error("Fehler", {
         description: error.message,
-        variant: "destructive",
       });
     },
   });
@@ -189,17 +182,14 @@ export function useCloudOffers() {
       queryClient.setQueryData<CloudOffer[]>(QUERY_KEY, (old) =>
         (old || []).map((o) => (o.id === id ? { ...o, name } : o))
       );
-      toast({
-        title: "Umbenannt",
+      toast.success("Umbenannt", {
         description: `Angebot wurde in "${name}" umbenannt.`,
       });
       trackOfferRenamed(id, "", name);
     },
     onError: (error: Error) => {
-      toast({
-        title: "Fehler",
+      toast.error("Fehler", {
         description: error.message,
-        variant: "destructive",
       });
     },
   });

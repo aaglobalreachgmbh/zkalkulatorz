@@ -15,6 +15,7 @@ import { AverageMarginWidget } from "@/margenkalkulator/ui/components/AverageMar
 import { ProvisionSourcesWidget } from "@/margenkalkulator/ui/components/ProvisionSourcesWidget";
 import { DiscountUsageWidget } from "@/margenkalkulator/ui/components/DiscountUsageWidget";
 import { CriticalOffersWidget } from "@/margenkalkulator/ui/components/CriticalOffersWidget";
+import { UpcomingEventsWidget } from "@/margenkalkulator/ui/components/UpcomingEventsWidget";
 import { cn } from "@/lib/utils";
 
 const Home = () => {
@@ -140,13 +141,14 @@ const Home = () => {
             </section>
           )}
 
-          {/* Revenue Forecast & Followup Reminders - only for logged in users */}
+          {/* Revenue Forecast, Upcoming Events & Followup Reminders - only for logged in users */}
           {user && (
             <div className={cn(
-              "grid grid-cols-1 lg:grid-cols-2 gap-4 max-w-5xl mx-auto mb-6 w-full",
+              "grid grid-cols-1 lg:grid-cols-3 gap-4 max-w-5xl mx-auto mb-6 w-full",
               isPOSMode && "gap-3 mb-4"
             )}>
               <RevenueForecastWidget />
+              <UpcomingEventsWidget limit={3} compact={isPOSMode} />
               <FollowupReminders />
             </div>
           )}

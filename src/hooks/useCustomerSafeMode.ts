@@ -1,23 +1,26 @@
 // ============================================
 // Customer Safe Mode Hook - Single Source of Truth
-// HOTFIX: Security Lock for Customer/POS Mode
+// CORRECTED: Only Customer Session triggers safe mode
+// POS-Modus ist jetzt ein reiner UI-Modus (Arbeitsplatz)
 // ============================================
 
 import { useCustomerSession } from "@/contexts/CustomerSessionContext";
-import { usePOSMode } from "@/contexts/POSModeContext";
 
 /**
  * Single source of truth for customer-safe mode.
- * Returns true if ANY of these conditions are met:
- * - Customer session is active (customer physically present)
- * - POS mode is enabled (quick sale mode)
+ * Returns true ONLY when customer session is active (customer physically present).
+ * 
+ * WICHTIG: POS-Modus ist KEIN Sicherheits-Feature mehr!
+ * POS-Modus = Arbeitsplatz im Shop (UI-Optimierung)
+ * Customer-Session = Kunde physisch anwesend (Sicherheits-Lock)
  * 
  * When this returns true, NO dealer-sensitive data should be rendered.
  * This includes: EK prices, margins, provisions, OMO rates, etc.
  */
 export function useCustomerSafeMode(): boolean {
   const { session } = useCustomerSession();
-  const { isPOSMode } = usePOSMode();
   
-  return session.isActive || isPOSMode;
+  // NUR Customer-Session aktiviert den Safe-Mode
+  // POS-Modus ist davon unabhängig
+  return session.isActive;
 }

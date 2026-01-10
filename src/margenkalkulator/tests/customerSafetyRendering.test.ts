@@ -1,13 +1,14 @@
 // ============================================
 // Customer Safety Rendering Tests
-// HOTFIX: Verify no dealer data leaks in customer-safe mode
+// CORRECTED: POS mode is no longer a safety feature
+// Only Customer Session triggers safe mode
 // ============================================
 
 import { describe, it, expect } from "vitest";
 import { computeSensitiveFieldsVisibility } from "@/hooks/useSensitiveFieldsVisible";
 import type { AppRole } from "@/contexts/IdentityContext";
 
-describe("Customer Safety Rendering - HOTFIX Security Tests", () => {
+describe("Customer Safety Rendering Tests", () => {
   
   describe("Customer Safe Mode Detection", () => {
     it("should activate customer-safe mode when customer session is active", () => {
@@ -15,8 +16,7 @@ describe("Customer Safety Rendering - HOTFIX Security Tests", () => {
         "sales",
         true, // customerSessionActive
         "dealer",
-        false,
-        false // isPOSMode
+        false
       );
       
       expect(result.isCustomerSafeMode).toBe(true);
@@ -24,70 +24,37 @@ describe("Customer Safety Rendering - HOTFIX Security Tests", () => {
       expect(result.showHardwareEk).toBe(false);
     });
 
-    it("should activate customer-safe mode when POS mode is active", () => {
+    it("should NOT activate customer-safe mode when ONLY view mode is customer (no session)", () => {
       const result = computeSensitiveFieldsVisibility(
         "sales",
         false, // customerSessionActive
-        "dealer",
-        false,
-        true // isPOSMode
+        "customer",
+        false
       );
       
-      expect(result.isCustomerSafeMode).toBe(true);
+      // isCustomerSafeMode is false because session is not active
+      expect(result.isCustomerSafeMode).toBe(false);
+      // But fields are still hidden because viewMode is "customer"
       expect(result.showDealerEconomics).toBe(false);
-      expect(result.showHardwareEk).toBe(false);
-    });
-
-    it("should activate customer-safe mode when BOTH session and POS mode are active", () => {
-      const result = computeSensitiveFieldsVisibility(
-        "admin",
-        true, // customerSessionActive
-        "dealer",
-        true, // adminFullVisibility
-        true // isPOSMode
-      );
-      
-      expect(result.isCustomerSafeMode).toBe(true);
-      expect(result.showDealerEconomics).toBe(false);
-      expect(result.showHardwareEk).toBe(false);
-      expect(result.hasAdminFullVisibility).toBe(false); // Safety overrides admin
+      expect(result.effectiveMode).toBe("customer");
     });
   });
 
-  describe("Zero Dealer Data Leaks in Customer-Safe Mode", () => {
+  describe("Zero Dealer Data Leaks When Customer Present", () => {
     const roles: AppRole[] = ["admin", "manager", "sales"];
     const viewModes = ["customer", "dealer"] as const;
 
     roles.forEach(role => {
       viewModes.forEach(viewMode => {
-        it(`should hide ALL dealer fields for ${role} in ${viewMode} mode when POS active`, () => {
-          const result = computeSensitiveFieldsVisibility(
-            role,
-            false,
-            viewMode,
-            true, // even with admin override enabled
-            true  // POS mode active
-          );
-
-          // CRITICAL: These must ALL be false in customer-safe mode
-          expect(result.showDealerEconomics).toBe(false);
-          expect(result.showHardwareEk).toBe(false);
-          expect(result.showOmoSelector).toBe(false);
-          expect(result.showFhPartnerToggle).toBe(false);
-          expect(result.isCustomerSafeMode).toBe(true);
-          expect(result.effectiveMode).toBe("customer");
-        });
-
-        it(`should hide ALL dealer fields for ${role} in ${viewMode} mode when session active`, () => {
+        it(`should hide ALL dealer fields for ${role} in ${viewMode} mode when customer session active`, () => {
           const result = computeSensitiveFieldsVisibility(
             role,
             true, // customer session active
             viewMode,
-            true, // even with admin override enabled
-            false
+            true // even with admin override enabled
           );
 
-          // CRITICAL: These must ALL be false in customer-safe mode
+          // CRITICAL: These must ALL be false when customer is present
           expect(result.showDealerEconomics).toBe(false);
           expect(result.showHardwareEk).toBe(false);
           expect(result.showOmoSelector).toBe(false);
@@ -99,14 +66,13 @@ describe("Customer Safety Rendering - HOTFIX Security Tests", () => {
     });
   });
 
-  describe("Admin Override Respects Customer Safety", () => {
+  describe("Admin Override Respects Customer Session", () => {
     it("should NOT allow admin override when customer session is active", () => {
       const result = computeSensitiveFieldsVisibility(
         "admin",
         true, // customer session active - should block admin override
         "customer",
-        true, // admin full visibility enabled
-        false
+        true // admin full visibility enabled
       );
 
       expect(result.hasAdminFullVisibility).toBe(false);
@@ -114,27 +80,12 @@ describe("Customer Safety Rendering - HOTFIX Security Tests", () => {
       expect(result.isCustomerSafeMode).toBe(true);
     });
 
-    it("should NOT allow admin override when POS mode is active", () => {
+    it("should allow admin override when NOT in customer session", () => {
       const result = computeSensitiveFieldsVisibility(
         "admin",
-        false,
-        "dealer", // even in dealer mode
-        true, // admin full visibility enabled
-        true  // POS mode active - should block admin override
-      );
-
-      expect(result.hasAdminFullVisibility).toBe(false);
-      expect(result.showDealerEconomics).toBe(false);
-      expect(result.isCustomerSafeMode).toBe(true);
-    });
-
-    it("should allow admin override when NOT in customer-safe mode", () => {
-      const result = computeSensitiveFieldsVisibility(
-        "admin",
-        false,
+        false, // no customer session
         "customer", // customer view mode but no session
-        true, // admin full visibility enabled
-        false // POS mode off
+        true // admin full visibility enabled
       );
 
       expect(result.hasAdminFullVisibility).toBe(true);
@@ -143,13 +94,12 @@ describe("Customer Safety Rendering - HOTFIX Security Tests", () => {
     });
   });
 
-  describe("Dealer Mode Without Safety Lock", () => {
-    it("should show all dealer fields in dealer mode without safety lock", () => {
+  describe("Dealer Mode Without Customer", () => {
+    it("should show all dealer fields in dealer mode without customer", () => {
       const result = computeSensitiveFieldsVisibility(
         "sales",
         false,
         "dealer",
-        false,
         false
       );
 
@@ -162,13 +112,12 @@ describe("Customer Safety Rendering - HOTFIX Security Tests", () => {
     });
   });
 
-  describe("Customer View Mode (without safety lock)", () => {
+  describe("Customer View Mode (without session)", () => {
     it("should hide dealer fields in customer view mode even without session", () => {
       const result = computeSensitiveFieldsVisibility(
         "sales",
         false,
         "customer",
-        false,
         false
       );
 
@@ -180,39 +129,51 @@ describe("Customer Safety Rendering - HOTFIX Security Tests", () => {
   });
 
   describe("LiveCalculationBar Rendering Requirements", () => {
-    // These tests document the expected behavior for LiveCalculationBar
-    
-    it("should return visibility that hides Provision, EK, Marge in customer-safe mode", () => {
+    it("should return visibility that hides Provision, EK, Marge when customer present", () => {
       const result = computeSensitiveFieldsVisibility(
         "sales",
-        false,
+        true, // customer session active
         "dealer",
-        false,
-        true // POS mode
+        false
       );
 
       // LiveCalculationBar checks showDealerEconomics to decide what to render
       expect(result.showDealerEconomics).toBe(false);
-      // This means BottomBar will NOT render: Provision, HW-EK, Marge
-      // Instead it renders: Ø Monat, Verträge, 24 Mon. Gesamt
+    });
+    
+    it("should show dealer data in dealer mode without customer", () => {
+      const result = computeSensitiveFieldsVisibility(
+        "sales",
+        false, // no customer
+        "dealer",
+        false
+      );
+
+      expect(result.showDealerEconomics).toBe(true);
     });
   });
 
   describe("HardwareStep EK Label Requirements", () => {
-    // These tests document the expected behavior for HardwareStep
-    
-    it("should return visibility that hides EK in hardware dropdown in customer-safe mode", () => {
+    it("should hide EK in hardware dropdown when customer present", () => {
       const result = computeSensitiveFieldsVisibility(
         "sales",
-        false,
+        true, // customer present
         "dealer",
-        false,
-        true // POS mode
+        false
       );
 
-      // HardwareStep checks showHardwareEk to decide if EK is shown
       expect(result.showHardwareEk).toBe(false);
-      // This means hardware cards will NOT show: "ab XXX € EK" or "EK: XXX €"
+    });
+    
+    it("should show EK in hardware dropdown without customer", () => {
+      const result = computeSensitiveFieldsVisibility(
+        "sales",
+        false, // no customer
+        "dealer",
+        false
+      );
+
+      expect(result.showHardwareEk).toBe(true);
     });
   });
 });

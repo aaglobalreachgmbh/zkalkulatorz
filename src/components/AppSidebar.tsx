@@ -27,7 +27,8 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { useIdentity, MOCK_IDENTITIES } from "@/contexts/IdentityContext";
 import { useTenantAdmin } from "@/hooks/useTenantAdmin";
 import { useTenantBranding } from "@/hooks/useTenantBranding";
-import { usePOSMode } from "@/contexts/POSModeContext";
+import { useWorkplaceMode } from "@/contexts/WorkplaceModeContext";
+import { Store, Briefcase } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { PUBLISHER } from "@/margenkalkulator/publisherConfig";
 import {
@@ -117,7 +118,7 @@ export function AppSidebar() {
   const { identity, canAccessAdmin, setMockIdentity, clearMockIdentity, isSupabaseAuth } = useIdentity();
   const { isTenantAdmin } = useTenantAdmin();
   const { branding } = useTenantBranding();
-  const { isPOSMode, togglePOSMode } = usePOSMode();
+  const { workplaceMode, isPOS, toggleWorkplaceMode } = useWorkplaceMode();
   const { canAccessMenu, hasFullAccess } = usePermissions();
   
   // Collapsible section states
@@ -145,14 +146,14 @@ export function AppSidebar() {
 
   // Auto-collapse sidebar when POS mode is active
   useEffect(() => {
-    if (isPOSMode) {
+    if (isPOS) {
       setOpen(false);
     }
-  }, [isPOSMode, setOpen]);
+  }, [isPOS, setOpen]);
 
-  const handlePOSToggle = () => {
-    togglePOSMode();
-    if (!isPOSMode) {
+  const handleWorkplaceModeToggle = () => {
+    toggleWorkplaceMode();
+    if (!isPOS) {
       setOpen(false);
     }
   };
@@ -477,24 +478,51 @@ export function AppSidebar() {
         )}
       </SidebarContent>
       
-      {/* Footer with POS Toggle and Identity Selector */}
+      {/* Footer with Workplace Mode Toggle and Identity Selector */}
       <SidebarFooter className="border-t border-sidebar-border space-y-2">
-        {/* POS Mode Toggle */}
+        {/* Workplace Mode Toggle: Shop vs Außendienst */}
         <div className={cn(
-          "flex items-center justify-between px-3 py-2",
+          "flex items-center gap-2 px-3 py-2",
           collapsed && "justify-center px-2"
         )}>
-          {!collapsed && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground/70">
-              <Monitor className="h-4 w-4" />
-              <span>POS-Modus</span>
+          {!collapsed ? (
+            <div className="flex items-center gap-1 w-full">
+              <Button
+                variant={isPOS ? "default" : "ghost"}
+                size="sm"
+                className={cn(
+                  "flex-1 gap-1.5 text-xs",
+                  isPOS && "bg-primary text-primary-foreground"
+                )}
+                onClick={() => !isPOS && handleWorkplaceModeToggle()}
+              >
+                <Store className="h-3.5 w-3.5" />
+                Shop
+              </Button>
+              <Button
+                variant={!isPOS ? "default" : "ghost"}
+                size="sm"
+                className={cn(
+                  "flex-1 gap-1.5 text-xs",
+                  !isPOS && "bg-primary text-primary-foreground"
+                )}
+                onClick={() => isPOS && handleWorkplaceModeToggle()}
+              >
+                <Briefcase className="h-3.5 w-3.5" />
+                Außendienst
+              </Button>
             </div>
+          ) : (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={handleWorkplaceModeToggle}
+              title={isPOS ? "Shop-Modus" : "Außendienst-Modus"}
+            >
+              {isPOS ? <Store className="h-4 w-4" /> : <Briefcase className="h-4 w-4" />}
+            </Button>
           )}
-          <Switch
-            checked={isPOSMode}
-            onCheckedChange={handlePOSToggle}
-            className="data-[state=checked]:bg-primary"
-          />
         </div>
 
         {/* Identity Selector - only for development mode */}

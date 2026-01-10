@@ -1926,7 +1926,9 @@ export type Database = {
       }
       tenant_settings: {
         Row: {
+          billing_info: Json | null
           branding: Json | null
+          company_info: Json | null
           created_at: string
           default_blocked_tariffs: string[] | null
           default_provision_deduction: number | null
@@ -1935,12 +1937,15 @@ export type Database = {
           features_override: Json | null
           hide_margin_for_subusers: boolean | null
           id: string
+          pdf_contact: Json | null
           tenant_id: string
           updated_at: string
           updated_by: string | null
         }
         Insert: {
+          billing_info?: Json | null
           branding?: Json | null
+          company_info?: Json | null
           created_at?: string
           default_blocked_tariffs?: string[] | null
           default_provision_deduction?: number | null
@@ -1949,12 +1954,15 @@ export type Database = {
           features_override?: Json | null
           hide_margin_for_subusers?: boolean | null
           id?: string
+          pdf_contact?: Json | null
           tenant_id: string
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
+          billing_info?: Json | null
           branding?: Json | null
+          company_info?: Json | null
           created_at?: string
           default_blocked_tariffs?: string[] | null
           default_provision_deduction?: number | null
@@ -1963,6 +1971,7 @@ export type Database = {
           features_override?: Json | null
           hide_margin_for_subusers?: boolean | null
           id?: string
+          pdf_contact?: Json | null
           tenant_id?: string
           updated_at?: string
           updated_by?: string | null

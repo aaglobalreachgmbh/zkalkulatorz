@@ -5,7 +5,7 @@
 // ============================================
 
 import { Document, Page, Text, View, Image, StyleSheet } from "@react-pdf/renderer";
-import type { ProfessionalOfferPdfProps, PeriodColumn, PositionRow, DealerSummaryData } from "./templates/types";
+import type { ProfessionalOfferPdfProps, PeriodColumn, PositionRow, DealerSummaryData, PdfCompanySettings } from "./templates/types";
 import { DealerSummaryPage } from "./components/DealerSummaryPage";
 import type { TenantBranding } from "@/hooks/useTenantBranding";
 import { DEFAULT_BRANDING } from "@/hooks/useTenantBranding";
@@ -539,7 +539,7 @@ function CoverPage({
 }
 
 // ============================================
-// Summary Page Component
+// Summary Page Component (Redesigned with separate Mobile/Fixed blocks)
 // ============================================
 
 function SummaryPage({
@@ -552,6 +552,7 @@ function SummaryPage({
   items,
   qrCodeDataUrl,
   branding,
+  companySettings,
   pageNumber,
   totalPages,
 }: {
@@ -564,6 +565,7 @@ function SummaryPage({
   items: ProfessionalOfferPdfProps["items"];
   qrCodeDataUrl?: string;
   branding?: TenantBranding;
+  companySettings?: PdfCompanySettings;
   pageNumber: number;
   totalPages: number;
 }) {
@@ -575,103 +577,115 @@ function SummaryPage({
   const periodColumns = generatePeriodColumns(allPeriods.length > 1 ? allPeriods : []);
   const hasMultiplePeriods = periodColumns.length > 1;
   
-  // Calculate totals
-  const totalOneTime = items.reduce((sum, item) => 
-    sum + item.result.oneTime.reduce((s, o) => s + o.net, 0), 0);
-  
-  const avgMonthly = items.reduce((sum, item) => 
-    sum + item.result.totals.avgTermNet * item.option.mobile.quantity, 0);
-  
-  // Build position rows with discounts
-  const buildPositionRows = (): PositionRow[] => {
-    const rows: PositionRow[] = [];
-    let tariffSubtotal = 0;
-    let hardwareSubtotal = 0;
+  // REDESIGNED: Separate calculation for Mobilfunk and Festnetz
+  const calculateSeparateCosts = () => {
+    let mobileTotal = 0;
+    let fixedNetTotal = 0;
+    let oneTimeTotal = 0;
+    const mobileRows: PositionRow[] = [];
+    const fixedNetRows: PositionRow[] = [];
     
     for (const item of items) {
       const { option, result } = item;
       const qty = option.mobile.quantity;
       
-      // Mobile tariff row
+      // Mobile costs
       const tariffBase = result.breakdown.find(b => b.ruleId === "base");
       const tariffName = tariffBase?.label?.replace(" Grundpreis", "") || "Mobilfunk-Tarif";
       const tariffMonthly = result.periods.map(p => p.monthly.net);
+      const avgMobileMonthly = result.totals.avgTermNet;
       
-      rows.push({
+      mobileRows.push({
         quantity: qty,
-        label: `Mobilfunkvertrag mit ${tariffName}`,
-        oneTime: 0,
-        monthlyByPeriod: hasMultiplePeriods ? tariffMonthly : [result.totals.avgTermNet],
+        label: tariffName,
+        monthlyByPeriod: hasMultiplePeriods ? tariffMonthly : [avgMobileMonthly],
       });
       
-      // Discount rows (TeamDeal, GigaKombi, Promos)
+      // Mobile discounts
       const discounts = result.breakdown.filter(b => 
-        b.appliesTo === "monthly" && b.net < 0
+        b.appliesTo === "monthly" && b.net < 0 && !b.ruleId?.includes("fixed")
       );
       
       for (const discount of discounts) {
-        rows.push({
-          label: `- ${discount.label}`,
+        mobileRows.push({
+          label: `   ${discount.label}`,
           monthlyByPeriod: hasMultiplePeriods 
             ? result.periods.map(() => discount.net)
             : [discount.net],
           isDiscount: true,
         });
-        tariffSubtotal += discount.net * qty;
       }
       
-      tariffSubtotal += result.totals.avgTermNet * qty;
+      mobileTotal += avgMobileMonthly * qty;
       
-      // Hardware row (if present)
+      // Hardware (add to mobile section)
       if (option.hardware.ekNet > 0) {
         const hwMonthly = option.hardware.amortize 
           ? option.hardware.ekNet / (option.hardware.amortMonths || 24)
           : 0;
         
-        rows.push({
-          quantity: qty,
-          label: `Hardware - ${option.hardware.name || "Gerät"}`,
-          oneTime: option.hardware.amortize ? 0 : option.hardware.ekNet,
-          monthlyByPeriod: hasMultiplePeriods 
-            ? result.periods.map(() => hwMonthly)
-            : [hwMonthly],
+        if (option.hardware.amortize) {
+          mobileRows.push({
+            quantity: qty,
+            label: `${option.hardware.name || "Gerät"} (im Monatspreis)`,
+            monthlyByPeriod: [hwMonthly],
+          });
+          mobileTotal += hwMonthly * qty;
+        } else {
+          oneTimeTotal += option.hardware.ekNet * qty;
+        }
+      }
+      
+      // Fixed net costs (separate block)
+      if (option.fixedNet.enabled) {
+        const fixedBase = result.breakdown.find(b => b.ruleId === "fixed_base");
+        const fixedName = fixedBase?.label || `${option.fixedNet.accessType} Internet`;
+        const fixedMonthly = fixedBase?.net || 0;
+        
+        fixedNetRows.push({
+          quantity: 1,
+          label: fixedName,
+          monthlyByPeriod: [fixedMonthly],
         });
         
-        hardwareSubtotal += hwMonthly * qty;
+        // Fixed net discounts
+        const fixedDiscounts = result.breakdown.filter(b => 
+          b.appliesTo === "monthly" && b.net < 0 && b.ruleId?.includes("fixed")
+        );
+        
+        for (const discount of fixedDiscounts) {
+          fixedNetRows.push({
+            label: `   ${discount.label}`,
+            monthlyByPeriod: [discount.net],
+            isDiscount: true,
+          });
+        }
+        
+        fixedNetTotal += fixedMonthly;
       }
     }
     
-    // Subtotals
-    if (rows.length > 1) {
-      rows.push({
-        label: "Zwischensumme Tarife",
-        oneTime: 0,
-        monthlyByPeriod: [tariffSubtotal],
-        isSubtotal: true,
-      });
-      
-      if (hardwareSubtotal > 0) {
-        rows.push({
-          label: "Zwischensumme Hardware",
-          oneTime: totalOneTime,
-          monthlyByPeriod: [hardwareSubtotal],
-          isSubtotal: true,
-        });
-      }
-    }
-    
-    // Grand total
-    rows.push({
-      label: "Gesamtpreis",
-      oneTime: totalOneTime,
-      monthlyByPeriod: [avgMonthly],
-      isTotal: true,
+    // Add subtotals
+    mobileRows.push({
+      label: "Zwischensumme Mobilfunk",
+      monthlyByPeriod: [mobileTotal],
+      isSubtotal: true,
     });
     
-    return rows;
+    if (fixedNetRows.length > 0) {
+      fixedNetRows.push({
+        label: "Zwischensumme Festnetz",
+        monthlyByPeriod: [fixedNetTotal],
+        isSubtotal: true,
+      });
+    }
+    
+    return { mobileRows, fixedNetRows, mobileTotal, fixedNetTotal, oneTimeTotal };
   };
   
-  const positionRows = buildPositionRows();
+  const { mobileRows, fixedNetRows, mobileTotal, fixedNetTotal, oneTimeTotal } = calculateSeparateCosts();
+  const grandTotal = mobileTotal + fixedNetTotal;
+  const hasFixedNet = fixedNetRows.length > 1; // More than just subtotal
   const displayName = branding?.companyName || template.publisherInfo.name;
   
   return (
@@ -745,67 +759,100 @@ function SummaryPage({
         </View>
       )}
       
-      {/* Positions Table */}
+      {/* MOBILFUNK Block */}
       <View style={styles.table}>
-        {/* Table Header */}
-        <View style={styles.tableHeader}>
-          <Text style={[styles.tableHeaderCell, styles.colQty]}></Text>
-          <Text style={[styles.tableHeaderCell, styles.colPosition]}></Text>
-          <Text style={[styles.tableHeaderCell, styles.colOneTime]}>Einmalig</Text>
-          {periodColumns.map((col, i) => (
-            <Text key={i} style={[styles.tableHeaderCell, styles.colPeriod]}>{col.header}</Text>
-          ))}
+        <View style={[styles.tableHeader, { backgroundColor: "#f0f9ff" }]}>
+          <Text style={[styles.tableHeaderCell, { flex: 1, fontWeight: "bold", fontSize: 10 }]}>MOBILFUNK</Text>
+          <Text style={[styles.tableHeaderCell, styles.colPeriod]}>Monatlich</Text>
         </View>
         
-        {/* Table Rows */}
-        {positionRows.map((row, idx) => (
+        {mobileRows.map((row, idx) => (
           <View 
             key={idx} 
             style={[
               styles.tableRow,
               row.isDiscount && styles.tableRowDiscount,
               row.isSubtotal && styles.tableRowSubtotal,
-              row.isTotal && styles.tableRowTotal,
             ]}
           >
-            <Text style={[
-              styles.tableCell, 
-              styles.colQty,
-              row.isTotal && styles.tableCellTotal,
-            ]}>
-              {row.quantity ? `${row.quantity}` : ""}
+            <Text style={[styles.tableCell, styles.colQty]}>
+              {row.quantity ? `${row.quantity}x` : ""}
             </Text>
             <Text style={[
               styles.tableCell, 
               styles.colPosition,
-              (row.isSubtotal || row.isTotal) && styles.tableCellBold,
-              row.isTotal && styles.tableCellTotal,
+              row.isSubtotal && styles.tableCellBold,
             ]}>
               {row.label}
             </Text>
             <Text style={[
               styles.tableCell, 
-              styles.colOneTime,
-              row.isTotal && styles.tableCellTotal,
+              styles.colPeriod,
+              row.isDiscount && styles.tableCellNegative,
+              row.isSubtotal && styles.tableCellBold,
             ]}>
-              {row.oneTime !== undefined && row.oneTime !== 0 ? formatCurrency(row.oneTime) : "–"}
+              {formatCurrency(row.monthlyByPeriod[0])}
             </Text>
-            {row.monthlyByPeriod.map((value, i) => (
-              <Text 
-                key={i} 
-                style={[
-                  styles.tableCell, 
-                  styles.colPeriod,
-                  row.isDiscount && styles.tableCellNegative,
-                  (row.isSubtotal || row.isTotal) && styles.tableCellBold,
-                  row.isTotal && styles.tableCellTotal,
-                ]}
-              >
-                {formatCurrency(value)}
-              </Text>
-            ))}
           </View>
         ))}
+      </View>
+      
+      {/* FESTNETZ Block (if applicable) */}
+      {hasFixedNet && (
+        <View style={[styles.table, { marginTop: 15 }]}>
+          <View style={[styles.tableHeader, { backgroundColor: "#f0fdf4" }]}>
+            <Text style={[styles.tableHeaderCell, { flex: 1, fontWeight: "bold", fontSize: 10 }]}>FESTNETZ</Text>
+            <Text style={[styles.tableHeaderCell, styles.colPeriod]}>Monatlich</Text>
+          </View>
+          
+          {fixedNetRows.map((row, idx) => (
+            <View 
+              key={idx} 
+              style={[
+                styles.tableRow,
+                row.isDiscount && styles.tableRowDiscount,
+                row.isSubtotal && styles.tableRowSubtotal,
+              ]}
+            >
+              <Text style={[styles.tableCell, styles.colQty]}>
+                {row.quantity ? `${row.quantity}x` : ""}
+              </Text>
+              <Text style={[
+                styles.tableCell, 
+                styles.colPosition,
+                row.isSubtotal && styles.tableCellBold,
+              ]}>
+                {row.label}
+              </Text>
+              <Text style={[
+                styles.tableCell, 
+                styles.colPeriod,
+                row.isDiscount && styles.tableCellNegative,
+                row.isSubtotal && styles.tableCellBold,
+              ]}>
+                {formatCurrency(row.monthlyByPeriod[0])}
+              </Text>
+            </View>
+          ))}
+        </View>
+      )}
+      
+      {/* GESAMTÜBERSICHT */}
+      <View style={[styles.table, { marginTop: 15 }]}>
+        <View style={[styles.tableRow, styles.tableRowTotal]}>
+          <Text style={[styles.tableCell, styles.colPosition, styles.tableCellTotal, styles.tableCellBold]}>
+            Gesamtkosten monatlich
+          </Text>
+          <Text style={[styles.tableCell, styles.colPeriod, styles.tableCellTotal, styles.tableCellBold]}>
+            {formatCurrency(grandTotal)}
+          </Text>
+        </View>
+        {oneTimeTotal > 0 && (
+          <View style={styles.tableRow}>
+            <Text style={[styles.tableCell, styles.colPosition]}>Einmalige Kosten</Text>
+            <Text style={[styles.tableCell, styles.colPeriod]}>{formatCurrency(oneTimeTotal)}</Text>
+          </View>
+        )}
       </View>
       
       {/* Validity */}

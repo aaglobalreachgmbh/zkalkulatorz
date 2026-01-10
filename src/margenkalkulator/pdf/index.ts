@@ -17,5 +17,6 @@ export type {
   PdfTemplate, 
   OfferCustomerInfo, 
   PdfOfferOptions,
-  ProfessionalOfferPdfProps 
+  ProfessionalOfferPdfProps,
+  PdfCompanySettings,
 } from "./templates/types";

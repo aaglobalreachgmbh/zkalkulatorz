@@ -4,7 +4,7 @@
  * Full gamification overview with leaderboard, badges, and stats.
  */
 
-import { AppLayout } from "@/components/layout/AppLayout";
+import { MainLayout } from "@/components/MainLayout";
 import { GamificationStats } from "@/components/gamification/GamificationStats";
 import { Leaderboard } from "@/components/gamification/Leaderboard";
 import { BadgeCollection } from "@/components/gamification/BadgeCollection";
@@ -19,10 +19,7 @@ export default function Gamification() {
   const { points, stats } = useGamification();
 
   return (
-    <AppLayout 
-      title="Gamification" 
-      subtitle="Punkte, Badges und Leaderboard"
-    >
+    <MainLayout>
       <div className="space-y-6">
         {/* Stats Overview */}
         <GamificationStats variant="horizontal" />
@@ -105,7 +102,7 @@ export default function Gamification() {
           </TabsContent>
         </Tabs>
       </div>
-    </AppLayout>
+    </MainLayout>
   );
 }
 

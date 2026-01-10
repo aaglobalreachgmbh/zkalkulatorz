@@ -5,7 +5,6 @@ import {
   BarChart3, 
   Building2, 
   Shield, 
-  Database, 
   Settings, 
   Package, 
   Key, 
@@ -19,6 +18,8 @@ import {
   HardDrive,
   Sparkles,
   Megaphone,
+  Calendar,
+  User as UserIcon,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -27,6 +28,7 @@ import { useIdentity, MOCK_IDENTITIES } from "@/contexts/IdentityContext";
 import { useTenantAdmin } from "@/hooks/useTenantAdmin";
 import { useTenantBranding } from "@/hooks/useTenantBranding";
 import { usePOSMode } from "@/contexts/POSModeContext";
+import { usePermissions } from "@/hooks/usePermissions";
 import { PUBLISHER } from "@/margenkalkulator/publisherConfig";
 import {
   Sidebar,
@@ -56,80 +58,88 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { User, ChevronDown } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { ChevronDown } from "lucide-react";
 
 // ============================================
-// NAVIGATION STRUCTURE - Logically grouped
+// NAVIGATION STRUCTURE - Klare deutsche Begriffe
 // ============================================
 
-// SALES - Core business functions
-const salesItems = [
-  { title: "Kalkulator", url: "/calculator", icon: Calculator },
-  { title: "Angebote", url: "/offers", icon: FileText },
-  { title: "Kunden", url: "/customers", icon: Building2 },
-  { title: "Verträge", url: "/contracts", icon: ClipboardList },
-  { title: "Kalender", url: "/calendar", icon: LayoutDashboard },
-  { title: "News & Aktionen", url: "/news", icon: Megaphone },
-  { title: "Bundles", url: "/bundles", icon: Package },
+// TAGESGESCHÄFT - Kernfunktionen für jeden Mitarbeiter
+const dailyItems = [
+  { id: "calculator", title: "Kalkulator", subtitle: "Angebote berechnen", url: "/calculator", icon: Calculator },
+  { id: "offers", title: "Angebote", subtitle: "Erstellte Angebote", url: "/offers", icon: FileText },
+  { id: "customers", title: "Kunden", subtitle: "Kundenstamm", url: "/customers", icon: Building2 },
+  { id: "contracts", title: "Verträge", subtitle: "Laufende Verträge", url: "/contracts", icon: ClipboardList },
 ];
 
-// ORGANIZATION - Team & resources
-const orgItems = [
-  { title: "Team", url: "/team", icon: Users },
-  { title: "Meine Daten", url: "/daten", icon: Database },
+// WERKZEUGE - Unterstützende Funktionen
+const toolItems = [
+  { id: "calendar", title: "Kalender", subtitle: "Termine", url: "/calendar", icon: Calendar },
+  { id: "news", title: "News & Aktionen", subtitle: "Aktuelle Infos", url: "/news", icon: Megaphone },
+  { id: "bundles", title: "Bundles", subtitle: "Paket-Konfigurator", url: "/bundles", icon: Package },
+  { id: "inbox", title: "Posteingang", subtitle: "Nachrichten", url: "/inbox", icon: Inbox },
 ];
 
-// SYSTEM - Backend tools
-const systemItems = [
-  { title: "Posteingang", url: "/inbox", icon: Inbox },
+// AUSWERTUNGEN - Statistiken und Team
+const analyticsItems = [
+  { id: "reporting", title: "Auswertungen", subtitle: "Statistiken", url: "/reporting", icon: BarChart3 },
+  { id: "team", title: "Team", subtitle: "Mein Team", url: "/team", icon: Users },
 ];
 
-// SETTINGS - User settings (collapsible)
-const settingsItems = [
+// MEIN KONTO - Persönliche Einstellungen (immer sichtbar)
+const accountItems = [
+  { title: "Meine Daten", url: "/daten", icon: UserIcon },
   { title: "Sicherheit", url: "/settings/security", icon: Shield },
   { title: "Lizenz", url: "/license", icon: Key },
 ];
 
-// ADMIN - Administration (collapsible, role-gated)
-const adminItems = [
-  { title: "Stammdaten", url: "/tenant-admin", icon: Settings, requiresTenantAdmin: true },
-  { title: "News verwalten", url: "/admin/news", icon: Megaphone, requiresTenantAdmin: true },
-  { title: "Quantity-Boni", url: "/admin/quantity-bonus", icon: Sparkles, requiresTenantAdmin: true },
-  { title: "Benutzerverwaltung", url: "/admin/users", icon: UserCog, requiresAdmin: true },
-  { title: "Kundenverwaltung", url: "/admin/customers", icon: Building2, requiresAdmin: true },
-  { title: "Datenmanager", url: "/data-manager", icon: HardDrive },
-  { title: "Reporting", url: "/reporting", icon: BarChart3 },
+// SHOP-VERWALTUNG - Nur für Tenant-Admins
+const shopAdminItems = [
+  { title: "Shop-Einstellungen", subtitle: "Logo, Farben, Team", url: "/tenant-admin", icon: Settings },
+  { title: "Mitarbeiter-Rechte", subtitle: "Wer darf was", url: "/admin/permissions", icon: UserCog },
+  { title: "News verwalten", subtitle: "News für Mitarbeiter", url: "/admin/news", icon: Megaphone },
+  { title: "Mengen-Boni", subtitle: "Staffelrabatte", url: "/admin/quantity-bonus", icon: Sparkles },
+];
+
+// ALLENETZE ADMIN - Nur für Super-Admins (role='admin')
+const superAdminItems = [
+  { title: "Alle Shops", subtitle: "Tenants verwalten", url: "/super-admin", icon: Building2 },
+  { title: "Benutzer", subtitle: "Alle Benutzer", url: "/admin/users", icon: Users },
+  { title: "Datenmanager", subtitle: "Tarifdaten", url: "/data-manager", icon: HardDrive },
 ];
 
 export function AppSidebar() {
   const { state, setOpen } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
-  const { isAdmin, role } = useUserRole();
+  const { isAdmin } = useUserRole();
   const { identity, canAccessAdmin, setMockIdentity, clearMockIdentity, isSupabaseAuth } = useIdentity();
   const { isTenantAdmin } = useTenantAdmin();
   const { branding } = useTenantBranding();
   const { isPOSMode, togglePOSMode } = usePOSMode();
+  const { canAccessMenu, hasFullAccess } = usePermissions();
   
   // Collapsible section states
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [adminOpen, setAdminOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [shopAdminOpen, setShopAdminOpen] = useState(false);
+  const [superAdminOpen, setSuperAdminOpen] = useState(false);
   
-  // Show admin section if user has admin role, tenant admin, OR can access admin via identity
-  const showAdminSection = isAdmin || canAccessAdmin || isTenantAdmin;
+  // Show sections based on roles
+  const showShopAdmin = isTenantAdmin || isAdmin || canAccessAdmin;
+  const showSuperAdmin = isAdmin || canAccessAdmin;
   
-  // Auto-open section if active route is inside
+  // Auto-open sections if active route is inside
   useEffect(() => {
     const path = location.pathname;
-    if (settingsItems.some(item => path.startsWith(item.url))) {
-      setSettingsOpen(true);
+    if (accountItems.some(item => path.startsWith(item.url))) {
+      setAccountOpen(true);
     }
-    if (
-      adminItems.some(item => path.startsWith(item.url)) ||
-      path.startsWith("/admin") ||
-      path.startsWith("/tenant-admin")
-    ) {
-      setAdminOpen(true);
+    if (shopAdminItems.some(item => path.startsWith(item.url)) || path.startsWith("/tenant-admin")) {
+      setShopAdminOpen(true);
+    }
+    if (superAdminItems.some(item => path.startsWith(item.url)) || path === "/super-admin") {
+      setSuperAdminOpen(true);
     }
   }, [location.pathname]);
 
@@ -158,12 +168,15 @@ export function AppSidebar() {
     return location.pathname.startsWith(path);
   };
 
-  // Filter admin items based on user permissions
-  const visibleAdminItems = adminItems.filter(item => {
-    if (item.requiresAdmin && !isAdmin) return false;
-    if (item.requiresTenantAdmin && !isTenantAdmin && !isAdmin) return false;
-    return true;
-  });
+  // Filter items based on permissions
+  const filterByPermission = <T extends { id?: string }>(items: T[]): T[] => {
+    if (hasFullAccess) return items;
+    return items.filter(item => !item.id || canAccessMenu(item.id));
+  };
+
+  const visibleDailyItems = filterByPermission(dailyItems);
+  const visibleToolItems = filterByPermission(toolItems);
+  const visibleAnalyticsItems = filterByPermission(analyticsItems);
 
   return (
     <Sidebar collapsible="icon">
@@ -197,8 +210,11 @@ export function AppSidebar() {
           )}
         </div>
 
-        {/* Dashboard - Main entry point */}
+        {/* Dashboard - Haupteinstieg */}
         <SidebarGroup>
+          <SidebarGroupLabel className="text-muted-foreground/70 uppercase text-[10px] tracking-wider">
+            Startseite
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
@@ -223,103 +239,120 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Sales - Core business functions */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-muted-foreground/70">Vertrieb</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {salesItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton 
-                    asChild 
-                    isActive={isActive(item.url)}
-                    tooltip={collapsed ? item.title : undefined}
-                    className={cn(
-                      "transition-all",
-                      isActive(item.url) 
-                        ? "bg-primary/10 text-primary font-medium" 
-                        : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50"
-                    )}
-                  >
-                    <NavLink to={item.url}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {/* Tagesgeschäft */}
+        {visibleDailyItems.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-muted-foreground/70 uppercase text-[10px] tracking-wider">
+              Tagesgeschäft
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {visibleDailyItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton 
+                      asChild 
+                      isActive={isActive(item.url)}
+                      tooltip={collapsed ? item.title : undefined}
+                      className={cn(
+                        "transition-all",
+                        isActive(item.url) 
+                          ? "bg-primary/10 text-primary font-medium" 
+                          : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50"
+                      )}
+                    >
+                      <NavLink to={item.url}>
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
-        {/* Organization - Team & Resources */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-muted-foreground/70">Organisation</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {orgItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton 
-                    asChild 
-                    isActive={isActive(item.url)}
-                    tooltip={collapsed ? item.title : undefined}
-                    className={cn(
-                      "transition-all",
-                      isActive(item.url) 
-                        ? "bg-primary/10 text-primary font-medium" 
-                        : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50"
-                    )}
-                  >
-                    <NavLink to={item.url}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {/* Werkzeuge */}
+        {visibleToolItems.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-muted-foreground/70 uppercase text-[10px] tracking-wider">
+              Werkzeuge
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {visibleToolItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton 
+                      asChild 
+                      isActive={isActive(item.url)}
+                      tooltip={collapsed ? item.title : undefined}
+                      className={cn(
+                        "transition-all",
+                        isActive(item.url) 
+                          ? "bg-primary/10 text-primary font-medium" 
+                          : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50"
+                      )}
+                    >
+                      <NavLink to={item.url}>
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
-        {/* System Section */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-muted-foreground/70">System</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {systemItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton 
-                    asChild 
-                    isActive={isActive(item.url)}
-                    tooltip={collapsed ? item.title : undefined}
-                    className={cn(
-                      "transition-all",
-                      isActive(item.url) 
-                        ? "bg-primary/10 text-primary font-medium" 
-                        : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50"
-                    )}
-                  >
-                    <NavLink to={item.url}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {/* Auswertungen */}
+        {visibleAnalyticsItems.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-muted-foreground/70 uppercase text-[10px] tracking-wider">
+              Auswertungen
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {visibleAnalyticsItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton 
+                      asChild 
+                      isActive={isActive(item.url)}
+                      tooltip={collapsed ? item.title : undefined}
+                      className={cn(
+                        "transition-all",
+                        isActive(item.url) 
+                          ? "bg-primary/10 text-primary font-medium" 
+                          : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50"
+                      )}
+                    >
+                      <NavLink to={item.url}>
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
-        {/* Settings section - collapsible */}
+        {/* Trennlinie vor persönlichen Bereichen */}
+        <div className="px-4 py-2">
+          <Separator />
+        </div>
+
+        {/* Mein Konto - Collapsible */}
         <SidebarGroup>
-          <Collapsible open={settingsOpen} onOpenChange={setSettingsOpen}>
+          <Collapsible open={accountOpen} onOpenChange={setAccountOpen}>
             <CollapsibleTrigger className="w-full">
-              <SidebarGroupLabel className="flex items-center justify-between cursor-pointer hover:text-foreground text-muted-foreground/70">
-                <span>Einstellungen</span>
+              <SidebarGroupLabel className="flex items-center justify-between cursor-pointer hover:text-foreground text-muted-foreground/70 uppercase text-[10px] tracking-wider">
+                <span>Mein Konto</span>
                 {!collapsed && (
                   <ChevronRight className={cn(
                     "h-3 w-3 transition-transform",
-                    settingsOpen && "rotate-90"
+                    accountOpen && "rotate-90"
                   )} />
                 )}
               </SidebarGroupLabel>
@@ -327,7 +360,7 @@ export function AppSidebar() {
             <CollapsibleContent>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {settingsItems.map((item) => (
+                  {accountItems.map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton 
                         asChild 
@@ -353,17 +386,17 @@ export function AppSidebar() {
           </Collapsible>
         </SidebarGroup>
 
-        {/* Admin section - collapsible, only for admins/managers/tenant admins */}
-        {showAdminSection && visibleAdminItems.length > 0 && (
+        {/* Shop-Verwaltung - Nur Tenant-Admins */}
+        {showShopAdmin && (
           <SidebarGroup>
-            <Collapsible open={adminOpen} onOpenChange={setAdminOpen}>
+            <Collapsible open={shopAdminOpen} onOpenChange={setShopAdminOpen}>
               <CollapsibleTrigger className="w-full">
-                <SidebarGroupLabel className="flex items-center justify-between cursor-pointer hover:text-foreground text-muted-foreground/70">
-                  <span>Administration</span>
+                <SidebarGroupLabel className="flex items-center justify-between cursor-pointer hover:text-foreground text-muted-foreground/70 uppercase text-[10px] tracking-wider">
+                  <span>Shop-Verwaltung</span>
                   {!collapsed && (
                     <ChevronRight className={cn(
                       "h-3 w-3 transition-transform",
-                      adminOpen && "rotate-90"
+                      shopAdminOpen && "rotate-90"
                     )} />
                   )}
                 </SidebarGroupLabel>
@@ -371,7 +404,52 @@ export function AppSidebar() {
               <CollapsibleContent>
                 <SidebarGroupContent>
                   <SidebarMenu>
-                    {visibleAdminItems.map((item) => (
+                    {shopAdminItems.map((item) => (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton 
+                          asChild 
+                          isActive={isActive(item.url)}
+                          tooltip={collapsed ? item.title : undefined}
+                          className={cn(
+                            "transition-all",
+                            isActive(item.url) 
+                              ? "bg-primary/10 text-primary font-medium" 
+                              : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50"
+                          )}
+                        >
+                          <NavLink to={item.url}>
+                            <item.icon className="h-4 w-4" />
+                            <span>{item.title}</span>
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </CollapsibleContent>
+            </Collapsible>
+          </SidebarGroup>
+        )}
+
+        {/* Super-Admin - Nur für allenetze.de Admins */}
+        {showSuperAdmin && (
+          <SidebarGroup>
+            <Collapsible open={superAdminOpen} onOpenChange={setSuperAdminOpen}>
+              <CollapsibleTrigger className="w-full">
+                <SidebarGroupLabel className="flex items-center justify-between cursor-pointer hover:text-foreground text-primary/70 uppercase text-[10px] tracking-wider font-semibold">
+                  <span>⚡ Allenetze Admin</span>
+                  {!collapsed && (
+                    <ChevronRight className={cn(
+                      "h-3 w-3 transition-transform",
+                      superAdminOpen && "rotate-90"
+                    )} />
+                  )}
+                </SidebarGroupLabel>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {superAdminItems.map((item) => (
                       <SidebarMenuItem key={item.title}>
                         <SidebarMenuButton 
                           asChild 
@@ -427,7 +505,7 @@ export function AppSidebar() {
                 "w-full justify-start gap-2",
                 collapsed && "justify-center px-2"
               )}>
-                <User className="h-4 w-4" />
+                <UserIcon className="h-4 w-4" />
                 {!collapsed && (
                   <>
                     <span className="flex-1 text-left truncate text-muted-foreground/70">{identity.displayName}</span>

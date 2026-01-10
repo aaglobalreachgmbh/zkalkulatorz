@@ -61,22 +61,8 @@ export function WelcomeWidget() {
   // Check if user has offers
   const hasOffers = (offers?.length ?? 0) > 0;
 
-  // Don't show if dismissed or not logged in
-  if (dismissed || !user) return null;
-  
-  // Don't show while loading
-  if (isLoading || isRoleLoading || isBrandingLoading) return null;
-
-  const handleDismiss = () => {
-    localStorage.setItem(STORAGE_KEY, "true");
-    setDismissed(true);
-  };
-
-  const handleStepClick = (step: OnboardingStep) => {
-    navigate(step.href);
-  };
-
   // Build steps - Branding is ALWAYS step 1 for admins
+  // WICHTIG: useMemo muss VOR Early Returns stehen!
   const steps: OnboardingStep[] = useMemo(() => {
     const allSteps: OnboardingStep[] = [];
     let stepNum = 1;
@@ -120,9 +106,26 @@ export function WelcomeWidget() {
     return allSteps;
   }, [isTenantAdmin, hasBranding, hasOffers, completedSteps]);
 
+  // Berechnete Werte (keine Hooks)
   const completedCount = steps.filter(s => s.completed).length;
   const progressPercent = Math.round((completedCount / steps.length) * 100);
   const allComplete = completedCount === steps.length;
+
+  // ===== EARLY RETURNS - NACH allen Hooks =====
+  // Don't show if dismissed or not logged in
+  if (dismissed || !user) return null;
+  
+  // Don't show while loading
+  if (isLoading || isRoleLoading || isBrandingLoading) return null;
+
+  const handleDismiss = () => {
+    localStorage.setItem(STORAGE_KEY, "true");
+    setDismissed(true);
+  };
+
+  const handleStepClick = (step: OnboardingStep) => {
+    navigate(step.href);
+  };
 
   // Auto-dismiss if all steps complete
   if (allComplete && !dismissed) {

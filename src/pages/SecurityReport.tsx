@@ -28,7 +28,6 @@ import {
   XCircle,
   RefreshCw,
   Download,
-  Layers,
   Lock,
   Eye,
   Zap,
@@ -40,7 +39,6 @@ import {
   Server,
   Wifi,
   Brain,
-  Fingerprint,
   Clock,
 } from "lucide-react";
 
@@ -105,15 +103,6 @@ const SECURITY_LAYERS: SecurityLayer[] = [
     file: "src/providers/SecurityProvider.tsx",
   },
   {
-    id: "with-security",
-    name: "withSecurity HOC",
-    icon: Layers,
-    status: "active",
-    description: "Higher-Order Component für automatischen Schutz",
-    protections: ["Component Protection", "Prop Validation", "Auto-Sanitization"],
-    file: "src/lib/withSecurity.tsx",
-  },
-  {
     id: "error-boundary",
     name: "SecurityErrorBoundary",
     icon: Bug,
@@ -175,24 +164,6 @@ const SECURITY_LAYERS: SecurityLayer[] = [
     description: "Sichere Session-Verwaltung",
     protections: ["Session Timeout", "Token Refresh", "Activity Tracking"],
     file: "src/hooks/useSessionSecurity.ts",
-  },
-  {
-    id: "csrf",
-    name: "CSRF Protection",
-    icon: Fingerprint,
-    status: "active",
-    description: "Cross-Site Request Forgery Schutz",
-    protections: ["Token Validation", "Origin Check", "SameSite Cookies"],
-    file: "src/lib/csrfProtection.ts",
-  },
-  {
-    id: "anomaly",
-    name: "Login Anomaly Detection",
-    icon: Eye,
-    status: "active",
-    description: "Erkennung verdächtiger Login-Muster",
-    protections: ["Brute Force Detection", "Unusual Location", "Time Anomalies"],
-    file: "src/lib/anomalyDetection.ts",
   },
   {
     id: "honeypot",

@@ -31,36 +31,56 @@ interface ProvisionForecastResult {
   error: Error | null;
 }
 
-// Simple provision lookup based on tariff family and contract type
-const PROVISION_MAP: Record<string, { new: number; renewal: number }> = {
-  prime_xs: { new: 200, renewal: 100 },
-  prime_s: { new: 300, renewal: 150 },
-  prime_m: { new: 450, renewal: 225 },
-  prime_l: { new: 600, renewal: 300 },
-  prime_xl: { new: 800, renewal: 400 },
-  smart_xs: { new: 100, renewal: 50 },
-  smart_s: { new: 150, renewal: 75 },
-  smart_m: { new: 200, renewal: 100 },
-  smart_l: { new: 250, renewal: 125 },
-  smart_xl: { new: 300, renewal: 150 },
-};
+// HINWEIS: Provisionen werden jetzt bevorzugt aus den Tenant-Daten geladen
+// Dieses Fallback wird nur verwendet, wenn keine Tenant-Provisionen verfügbar sind
+// Für aktuelle Provisionen siehe: useTenantAwareProvisioning Hook
 
-function getProvisionForTariff(tariffId: string | undefined, contractType: "new" | "renewal"): number {
+/**
+ * Get provision for tariff - uses tenant data when available
+ * This is a simplified version for the forecast; full calculation uses useTenantAwareProvisioning
+ */
+function getProvisionForTariff(
+  tariffId: string | undefined, 
+  contractType: "new" | "renewal",
+  tenantProvisions?: Array<{ tariff_id: string; contract_type: string; provision_amount: number }>
+): number {
   if (!tariffId) return 0;
   
-  // Normalize tariff ID
-  const normalized = tariffId.toLowerCase().replace(/[^a-z_]/g, "");
-  
-  // Try exact match first
-  if (PROVISION_MAP[normalized]) {
-    return PROVISION_MAP[normalized][contractType];
+  // Try tenant provisions first
+  if (tenantProvisions && tenantProvisions.length > 0) {
+    const contractKey = contractType === "renewal" ? "extension" : "new";
+    const match = tenantProvisions.find(
+      (p) => p.tariff_id.toLowerCase().includes(tariffId.toLowerCase()) && 
+             p.contract_type === contractKey
+    );
+    if (match) {
+      return match.provision_amount;
+    }
   }
   
-  // Try partial match
-  for (const [key, value] of Object.entries(PROVISION_MAP)) {
-    if (normalized.includes(key) || key.includes(normalized)) {
-      return value[contractType];
-    }
+  // Fallback to defaults based on tariff family
+  const normalized = tariffId.toLowerCase().replace(/[^a-z_]/g, "");
+  
+  // Business Prime defaults
+  if (normalized.includes("prime_unlimited") || normalized.includes("primeunlimited")) {
+    return contractType === "new" ? 650 : 330;
+  }
+  if (normalized.includes("prime_plus") || normalized.includes("primeplus")) {
+    return contractType === "new" ? 360 : 150;
+  }
+  if (normalized.includes("prime_go") || normalized.includes("primego")) {
+    return contractType === "new" ? 290 : 60;
+  }
+  if (normalized.includes("prime")) {
+    return contractType === "new" ? 460 : 105;
+  }
+  
+  // Business Smart defaults
+  if (normalized.includes("smart_plus") || normalized.includes("smartplus")) {
+    return contractType === "new" ? 170 : 145;
+  }
+  if (normalized.includes("smart")) {
+    return contractType === "new" ? 105 : 20;
   }
   
   // Default provision based on contract type

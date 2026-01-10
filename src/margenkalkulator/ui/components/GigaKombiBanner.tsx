@@ -71,6 +71,12 @@ export function GigaKombiBanner({
               <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center">
                 <Check className="w-3 h-3" />
               </div>
+              <span>Unlimited Datenvolumen für bis zu 10 Prime-SIMs</span>
+            </li>
+            <li className="flex items-center gap-2 text-sm">
+              <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center">
+                <Check className="w-3 h-3" />
+              </div>
               <span>Festnetz + Mobilfunk aus einer Hand</span>
             </li>
           </ul>

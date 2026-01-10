@@ -67,10 +67,9 @@ const TEAMDEAL_TIERS = [
 // GigaKombi Staffeln
 // ============================================
 
-const GIGAKOMBI_TIERS = [
-  { minContracts: 1, maxContracts: 4, discount: 5 },
-  { minContracts: 5, maxContracts: Infinity, discount: 10 },
-];
+// GigaKombi Business: Pauschal 5€ Rabatt (keine Staffelung)
+// + Unlimited Datenvolumen für bis zu 10 Business Prime SIMs
+const GIGAKOMBI_DISCOUNT_NET = 5;
 
 // ============================================
 // Main Discount Calculation
@@ -143,13 +142,12 @@ export function calculateTeamDealPercentage(contractCount: number): number {
 }
 
 /**
- * Berechnet GigaKombi-Rabatt basierend auf Vertragsanzahl
+ * Berechnet GigaKombi-Rabatt (pauschal 5€, keine Staffelung)
+ * Zusätzlicher Vorteil: Unlimited Datenvolumen für bis zu 10 Prime-SIMs
  */
-export function calculateGigaKombiDiscount(contractCount: number): number {
-  const tier = GIGAKOMBI_TIERS.find(
-    (t) => contractCount >= t.minContracts && contractCount <= t.maxContracts
-  );
-  return tier?.discount ?? 5;
+export function calculateGigaKombiDiscount(_contractCount: number): number {
+  // GigaKombi Business: Immer 5€ pauschal, keine Staffelung
+  return GIGAKOMBI_DISCOUNT_NET;
 }
 
 /**

@@ -14,8 +14,8 @@ import {
 } from "@/components/ui/accordion";
 import type { HardwareState, DatasetVersion, ViewMode } from "../../engine/types";
 import { listHardwareItems } from "../../engine/catalogResolver";
-import { Smartphone, Upload, Check, Search, Tablet, ChevronDown, Image as ImageIcon, AlertTriangle } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Smartphone, Upload, Check, Search, Tablet, ChevronDown, ChevronUp, Image as ImageIcon, AlertTriangle, RefreshCw } from "lucide-react";
+import { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { 
   groupHardwareFamilies, 
@@ -56,6 +56,10 @@ export function HardwareStep({ value, onChange, onHardwareSelected, datasetVersi
   const [selectedBrand, setSelectedBrand] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>("all");
   const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  // Auto-collapse when hardware is selected (but only after initial selection)
+  const hasSelection = value.name && value.name !== "";
 
   // Hardware images from Supabase
   const { imageMap } = useHardwareImages();
@@ -143,6 +147,7 @@ export function HardwareStep({ value, onChange, onHardwareSelected, datasetVersi
       ekNet: 0,
     });
     setOpenPopoverId(null);
+    setIsCollapsed(true); // Auto-collapse after selection
     onHardwareSelected?.();
   };
 
@@ -153,7 +158,12 @@ export function HardwareStep({ value, onChange, onHardwareSelected, datasetVersi
       ekNet: config.ekNet,
     });
     setOpenPopoverId(null);
+    setIsCollapsed(true); // Auto-collapse after selection
     onHardwareSelected?.();
+  };
+
+  const handleExpandSelection = () => {
+    setIsCollapsed(false);
   };
 
   const updateField = <K extends keyof HardwareState>(
@@ -177,7 +187,7 @@ export function HardwareStep({ value, onChange, onHardwareSelected, datasetVersi
           <Smartphone className="w-5 h-5 text-muted-foreground" />
           <h2 className="text-xl font-semibold">Hardware wählen</h2>
         </div>
-        {showDealerOptions && (
+        {showDealerOptions && !isCollapsed && (
           <div className="flex items-center gap-4">
             <Link to="/data-manager/hardware">
               <Button variant="outline" size="sm" className="gap-2">
@@ -198,6 +208,45 @@ export function HardwareStep({ value, onChange, onHardwareSelected, datasetVersi
           </div>
         )}
       </div>
+
+      {/* Collapsed State - Show selected hardware with change button */}
+      {isCollapsed && hasSelection && (
+        <div className="bg-card rounded-xl border border-border p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                <Check className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <p className="font-semibold text-foreground">
+                  {value.name === "KEINE HARDWARE" ? "SIM Only" : value.name}
+                </p>
+                {showHardwareEk && value.ekNet > 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    EK: {value.ekNet.toFixed(2)} €
+                  </p>
+                )}
+                {value.name === "KEINE HARDWARE" && (
+                  <p className="text-sm text-muted-foreground">Nur Tarif, kein Gerät</p>
+                )}
+              </div>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleExpandSelection}
+              className="gap-2"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Andere Hardware
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Full Selection UI - Only show when not collapsed */}
+      {!isCollapsed && (
+        <>
 
       {/* Filter Section */}
       <div className="bg-card rounded-xl border border-border p-4 space-y-4">
@@ -525,12 +574,14 @@ export function HardwareStep({ value, onChange, onHardwareSelected, datasetVersi
       </div>
 
       {/* Empty State */}
-      {families.length === 0 && !showSimOnly && (
+      {!isCollapsed && families.length === 0 && !showSimOnly && (
         <div className="text-center py-12 text-muted-foreground">
           <Smartphone className="w-12 h-12 mx-auto mb-4 opacity-50" />
           <p>Keine Geräte gefunden</p>
           <p className="text-sm">Versuche andere Filteroptionen</p>
         </div>
+      )}
+      </>
       )}
 
       {/* Hardware im Monatspreis Details */}

@@ -1539,6 +1539,42 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_preferences: {
+        Row: {
+          calendar_sync_enabled: boolean
+          created_at: string
+          email_enabled: boolean
+          id: string
+          notification_types: Json
+          reminder_before_minutes: number
+          tenant_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          calendar_sync_enabled?: boolean
+          created_at?: string
+          email_enabled?: boolean
+          id?: string
+          notification_types?: Json
+          reminder_before_minutes?: number
+          tenant_id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          calendar_sync_enabled?: boolean
+          created_at?: string
+          email_enabled?: boolean
+          id?: string
+          notification_types?: Json
+          reminder_before_minutes?: number
+          tenant_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string | null
@@ -2276,6 +2312,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      scheduled_notifications: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          notification_type: string
+          payload: Json
+          related_id: string | null
+          related_type: string | null
+          scheduled_for: string
+          sent_at: string | null
+          status: string
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          notification_type: string
+          payload?: Json
+          related_id?: string | null
+          related_type?: string | null
+          scheduled_for: string
+          sent_at?: string | null
+          status?: string
+          tenant_id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          notification_type?: string
+          payload?: Json
+          related_id?: string | null
+          related_type?: string | null
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string
+          tenant_id?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       seat_assignments: {
         Row: {
@@ -3326,30 +3407,39 @@ export type Database = {
       }
       user_dashboard_config: {
         Row: {
+          active_mode: string | null
           created_at: string
+          field_layout: Json | null
           hidden_widgets: string[] | null
           id: string
           layout: Json
+          pos_layout: Json | null
           settings: Json | null
           tenant_id: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          active_mode?: string | null
           created_at?: string
+          field_layout?: Json | null
           hidden_widgets?: string[] | null
           id?: string
           layout?: Json
+          pos_layout?: Json | null
           settings?: Json | null
           tenant_id?: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          active_mode?: string | null
           created_at?: string
+          field_layout?: Json | null
           hidden_widgets?: string[] | null
           id?: string
           layout?: Json
+          pos_layout?: Json | null
           settings?: Json | null
           tenant_id?: string
           updated_at?: string

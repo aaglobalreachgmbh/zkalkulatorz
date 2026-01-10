@@ -25,14 +25,7 @@ import {
 import { format, formatDistanceToNow, isPast } from "date-fns";
 import { de } from "date-fns/locale";
 import { useSharedOffers, type SharedOfferData } from "@/margenkalkulator/hooks/useSharedOffers";
-
-function formatCurrency(value: number | undefined | null): string {
-  if (value === undefined || value === null) return "0,00 €";
-  return value.toLocaleString("de-DE", {
-    style: "currency",
-    currency: "EUR",
-  });
-}
+import { formatCurrency } from "@/margenkalkulator/lib/formatters";
 
 export default function SharedOfferPage() {
   const { offerId } = useParams<{ offerId: string }>();

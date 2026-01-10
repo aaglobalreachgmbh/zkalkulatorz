@@ -13,6 +13,7 @@ import { getProvisionForDistributor, getHardwareSubsidy } from "./tariffEngine";
 import type { DiscountResult } from "./discountEngine";
 import { calculateDiscounts, applyPercentageDiscount } from "./discountEngine";
 import { calculateHardwareEconomics } from "./hardwareEngine";
+import { formatCurrency } from "../lib/formatters";
 
 /**
  * Input für Margen-Wasserfallberechnung
@@ -322,6 +323,7 @@ export function calculateMarginWaterfall(
 
 /**
  * Bestimmt Profitability-Status (Ampel)
+ * @deprecated Use getProfitabilityStatus from lib/formatters instead
  */
 export function getProfitabilityStatus(marginPerContract: number): ProfitabilityStatus {
   if (marginPerContract > 50) return "positive";
@@ -344,17 +346,6 @@ export function getStatusDescription(
     case "critical":
       return `Verlust: ${formatCurrency(marginPerContract)} pro Vertrag – Hardware subventioniert`;
   }
-}
-
-/**
- * Formatiert Währung
- */
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-    minimumFractionDigits: 2,
-  }).format(amount);
 }
 
 /**

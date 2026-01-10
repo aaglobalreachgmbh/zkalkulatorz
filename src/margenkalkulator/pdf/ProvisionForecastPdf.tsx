@@ -7,6 +7,7 @@ import { Document, Page, Text, View, Image } from "@react-pdf/renderer";
 import type { TenantBranding } from "@/hooks/useTenantBranding";
 import { DEFAULT_BRANDING } from "@/hooks/useTenantBranding";
 import { createReportStyles } from "./styles";
+import { formatCurrency as formatCurrencyBase } from "../lib/formatters";
 
 export interface ForecastRow {
   offerName: string;
@@ -40,8 +41,9 @@ function formatDate(date: Date | string) {
   });
 }
 
+// PDF-specific currency formatting
 function formatCurrency(value: number) {
-  return `${value.toFixed(2).replace(".", ",")} €`;
+  return formatCurrencyBase(value);
 }
 
 export function ProvisionForecastPdf({ 

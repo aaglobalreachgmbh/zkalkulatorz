@@ -5,6 +5,7 @@
 
 import { cn } from "@/lib/utils";
 import type { ProfitabilityStatus } from "../../engine/marginWaterfallEngine";
+import { formatCurrency } from "../../lib/formatters";
 
 interface ProfitabilityTrafficLightProps {
   /** Gesamte Netto-Marge */
@@ -53,14 +54,6 @@ const STATUS_CONFIG = {
     actionText: "Nicht verkaufen",
   },
 };
-
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-    minimumFractionDigits: 2,
-  }).format(amount);
-}
 
 export function ProfitabilityTrafficLight({
   marginTotal,

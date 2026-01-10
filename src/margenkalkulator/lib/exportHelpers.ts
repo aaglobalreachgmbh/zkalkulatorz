@@ -32,10 +32,12 @@ export function sanitizeFilename(name: string): string {
     .slice(0, 100); // Limit length
 }
 
+// Note: formatCurrency is also available from ./formatters for UI display
+// This version handles null/undefined differently for export purposes
 /**
- * Format currency for display
+ * Format currency for display (export-safe version)
  */
-export function formatCurrency(value: number | null | undefined): string {
+export function formatCurrencyExport(value: number | null | undefined): string {
   if (value === null || value === undefined || isNaN(value)) return "-";
   return `${value.toFixed(2).replace(".", ",")} €`;
 }

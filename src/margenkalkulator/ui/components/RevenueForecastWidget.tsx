@@ -17,15 +17,7 @@ import { useRevenueForecast } from "@/margenkalkulator/hooks/useRevenueForecast"
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
-
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
+import { formatCurrency } from "../../lib/formatters";
 
 function formatQuarter(date: Date): string {
   const quarter = Math.floor(date.getMonth() / 3) + 1;

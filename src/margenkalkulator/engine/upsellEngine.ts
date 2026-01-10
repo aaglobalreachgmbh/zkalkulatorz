@@ -8,6 +8,7 @@ import { TARIFF_CATALOG, listTariffsByCategory } from "./tariffEngine";
 import type { MarginCalculationOutput, ProfitabilityStatus } from "./marginWaterfallEngine";
 import { calculateMarginWaterfall } from "./marginWaterfallEngine";
 import { getNextTeamDealTier } from "./discountEngine";
+import { formatCurrency } from "../lib/formatters";
 
 /**
  * Upsell-Empfehlung
@@ -245,14 +246,6 @@ function estimateLaufzeitExtensionSavings(context: UpsellContext): number {
   // Bei 36 Monaten ist die Hardware-Subvention höher
   // Grob: 30% weniger Zuzahlung
   return context.hardwareEK * 0.3 * 0.25; // 25% davon als Provisions-Vorteil
-}
-
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-    minimumFractionDigits: 0,
-  }).format(amount);
 }
 
 /**

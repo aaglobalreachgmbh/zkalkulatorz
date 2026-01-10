@@ -10,6 +10,7 @@ import { Slider } from "@/components/ui/slider";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { getHardwareSubsidy } from "../../engine/tariffEngine";
 import { calculateHardwareEconomics } from "../../engine/hardwareEngine";
+import { formatCurrency } from "../../lib/formatters";
 
 interface HardwareSubventionAnalysisProps {
   /** Hardware-Informationen */
@@ -35,14 +36,6 @@ interface HardwareAlternative {
   name: string;
   ekPrice: number;
   marginImpact: number;
-}
-
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-    minimumFractionDigits: 0,
-  }).format(amount);
 }
 
 const HARDWARE_ALTERNATIVES: HardwareAlternative[] = [

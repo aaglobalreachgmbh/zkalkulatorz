@@ -8,19 +8,12 @@ import { cn } from "@/lib/utils";
 import { TrendingUp, TrendingDown, Minus, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { MarginCalculationOutput, MarginBreakdownItem } from "../../engine/marginWaterfallEngine";
+import { formatCurrency } from "../../lib/formatters";
 
 interface MarginBreakdownWidgetProps {
   marginData: MarginCalculationOutput;
   showRecommendation?: boolean;
   compact?: boolean;
-}
-
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-    minimumFractionDigits: 2,
-  }).format(amount);
 }
 
 const CATEGORY_COLORS = {

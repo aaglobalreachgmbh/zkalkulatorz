@@ -10,6 +10,7 @@ import type { CloudOffer } from "../hooks/useCloudOffers";
 import type { TenantBranding } from "@/hooks/useTenantBranding";
 import { DEFAULT_BRANDING } from "@/hooks/useTenantBranding";
 import { createReportStyles } from "./styles";
+import { formatCurrency as formatCurrencyBase } from "../lib/formatters";
 
 interface CustomerReportPdfProps {
   customer: Customer;
@@ -29,9 +30,10 @@ function formatDate(date: Date | string | null) {
   });
 }
 
+// PDF-specific currency formatting (handles null/undefined)
 function formatCurrency(value: number | null | undefined) {
   if (value === null || value === undefined) return "-";
-  return `${value.toFixed(2).replace(".", ",")} €`;
+  return formatCurrencyBase(value);
 }
 
 function getRemainingDays(dateStr: string | null): number | null {

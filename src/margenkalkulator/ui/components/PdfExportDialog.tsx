@@ -328,7 +328,7 @@ export function PdfExportDialog({
     }
   };
   
-  // Download the generated PDF
+  // Download the generated PDF with customer-based filename
   const handleDownload = () => {
     if (!previewBlob || !previewUrl) return;
     
@@ -336,11 +336,16 @@ export function PdfExportDialog({
     link.href = previewUrl;
     
     const date = new Date().toISOString().split("T")[0];
-    const tariffName = option.mobile.tariffId
-      ? sanitizeFilename(option.mobile.tariffId)
-      : "Angebot";
-    const suffix = showDealerSummary ? "_Haendler" : "_Kunde";
-    link.download = `${tariffName}${suffix}_${date}.pdf`;
+    
+    // Priority: Firma > Nachname > Tarif > "Angebot"
+    const customerName = effectiveCustomer.firma 
+      || (effectiveCustomer.nachname ? `${effectiveCustomer.anrede || ""}_${effectiveCustomer.nachname}`.replace(/^_/, "") : null)
+      || option.mobile.tariffId
+      || "Angebot";
+    
+    const sanitizedName = sanitizeFilename(customerName);
+    const suffix = showDealerSummary ? "_Haendler" : "";
+    link.download = `Angebot_${sanitizedName}${suffix}_${date}.pdf`;
     
     document.body.appendChild(link);
     link.click();
@@ -348,11 +353,11 @@ export function PdfExportDialog({
     
     toast.success(
       showDealerSummary 
-        ? "Professionelles PDF mit Händler-Zusammenfassung heruntergeladen" 
-        : "Professionelles Kunden-PDF heruntergeladen"
+        ? "PDF mit Händler-Zusammenfassung heruntergeladen" 
+        : "Kunden-PDF heruntergeladen"
     );
     
-    trackPdfExported(undefined, `${tariffName}_professional${suffix}`);
+    trackPdfExported(undefined, `Angebot_${sanitizedName}${suffix}`);
     handleOpenChange(false);
   };
   

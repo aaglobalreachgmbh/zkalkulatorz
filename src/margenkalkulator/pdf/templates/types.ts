@@ -1,5 +1,6 @@
 // ============================================
 // PDF Template System - Type Definitions
+// Extended with page selection and custom pages
 // ============================================
 
 import type { TenantBranding } from "@/hooks/useTenantBranding";
@@ -55,6 +56,42 @@ export interface OfferCustomerInfo {
 }
 
 /**
+ * PDF page selection options for the wizard
+ */
+export interface PdfPageSelection {
+  /** Show lifestyle cover page */
+  showCoverPage: boolean;
+  /** Show summary with cost table */
+  showSummaryPage: boolean;
+  /** Show transition/details page */
+  showTransitionPage: boolean;
+  /** Show detailed tariff features */
+  showDetailPage: boolean;
+  /** Show hardware financing */
+  showHardwarePage: boolean;
+  /** Show USP/benefits page */
+  showUspPage: boolean;
+  /** Show contact page */
+  showContactPage: boolean;
+  /** Show dealer summary (internal) */
+  showDealerPage: boolean;
+  /** Custom pages to include */
+  customPages: CustomPageConfig[];
+}
+
+/**
+ * Custom page configuration
+ */
+export interface CustomPageConfig {
+  id: string;
+  type: "text" | "image" | "attachment";
+  title: string;
+  content?: string;
+  imageUrl?: string;
+  position: "before-summary" | "after-summary" | "before-contact" | "after-contact";
+}
+
+/**
  * Offer options for PDF generation
  */
 export interface PdfOfferOptions {
@@ -68,13 +105,15 @@ export interface PdfOfferOptions {
   offerText?: string;
   /** Promo highlight text */
   promoHighlight?: string;
+  /** Page selection (if wizard used) */
+  pageSelection?: PdfPageSelection;
 }
 
 /**
- * Period column for multi-period pricing tables
+ * Period column for multi-period pricing tables (Vodafone-style)
  */
 export interface PeriodColumn {
-  /** Column header (e.g., "Monat 1-12") */
+  /** Column header (e.g., "1.-12. Monat") */
   header: string;
   /** Start month (1-indexed) */
   fromMonth: number;
@@ -100,6 +139,8 @@ export interface PositionRow {
   isSubtotal?: boolean;
   /** Is this the grand total row? */
   isTotal?: boolean;
+  /** Footnote reference */
+  footnote?: string;
 }
 
 /**
@@ -199,3 +240,18 @@ export interface ProfessionalOfferPdfProps {
   /** Dealer-specific summary data */
   dealerData?: DealerSummaryData;
 }
+
+/**
+ * Default page selection
+ */
+export const DEFAULT_PAGE_SELECTION: PdfPageSelection = {
+  showCoverPage: true,
+  showSummaryPage: true,
+  showTransitionPage: false,
+  showDetailPage: true,
+  showHardwarePage: true,
+  showUspPage: false,
+  showContactPage: true,
+  showDealerPage: false,
+  customPages: [],
+};

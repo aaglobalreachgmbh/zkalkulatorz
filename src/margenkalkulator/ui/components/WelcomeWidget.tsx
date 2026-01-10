@@ -1,6 +1,6 @@
 // ============================================
-// Welcome Widget - Prominentes Onboarding für Firmeninhaber
-// Phase 1: Setup-Wizard Card mit Branding als Schritt 1
+// Welcome Widget - Elegantes Onboarding im Sales Cockpit Style
+// Prominente Positionierung mit Akzent-Border und Progress-Tracking
 // ============================================
 
 import { useState, useMemo } from "react";
@@ -12,8 +12,8 @@ import {
   ChevronRight, 
   X, 
   CheckCircle2,
-  Sparkles,
-  Building2
+  Building2,
+  ArrowRight
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -75,16 +75,7 @@ export function WelcomeWidget() {
   };
 
   const handleStepClick = (step: OnboardingStep) => {
-    // Mark step as started (not completed - that happens on return)
     navigate(step.href);
-  };
-
-  const markStepComplete = (stepId: string) => {
-    if (!completedSteps.includes(stepId)) {
-      const updated = [...completedSteps, stepId];
-      setCompletedSteps(updated);
-      localStorage.setItem(STORAGE_KEY_STEPS, JSON.stringify(updated));
-    }
   };
 
   // Build steps - Branding is ALWAYS step 1 for admins
@@ -138,23 +129,31 @@ export function WelcomeWidget() {
   // Auto-dismiss if all steps complete
   if (allComplete && !dismissed) {
     return (
-      <Card className="border-success/30 bg-gradient-to-r from-success/5 to-success/10 max-w-5xl mx-auto w-full mb-8 animate-fade-in">
-        <CardContent className="py-6 px-6">
+      <Card className="relative overflow-hidden border-0 bg-gradient-to-r from-success/10 via-success/5 to-transparent max-w-5xl mx-auto w-full mb-8 animate-fade-in shadow-sm">
+        {/* Left Accent Border */}
+        <div className="absolute left-0 top-0 bottom-0 w-1 bg-success" />
+        
+        <CardContent className="py-6 px-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-success/20 rounded-2xl flex items-center justify-center">
-                <CheckCircle2 className="w-7 h-7 text-success" />
+              <div className="w-12 h-12 bg-success/20 rounded-xl flex items-center justify-center">
+                <CheckCircle2 className="w-6 h-6 text-success" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-foreground">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-bold uppercase tracking-wider text-success bg-success/10 px-2 py-0.5 rounded">
+                    Abgeschlossen
+                  </span>
+                </div>
+                <h2 className="text-lg font-bold text-foreground">
                   Einrichtung abgeschlossen! 🎉
                 </h2>
-                <p className="text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   Ihr MargenKalkulator ist einsatzbereit.
                 </p>
               </div>
             </div>
-            <Button variant="outline" size="sm" onClick={handleDismiss}>
+            <Button variant="outline" size="sm" onClick={handleDismiss} className="gap-2">
               Schließen
             </Button>
           </div>
@@ -164,24 +163,36 @@ export function WelcomeWidget() {
   }
 
   return (
-    <Card className="border-primary/30 bg-gradient-to-br from-primary/5 via-background to-primary/10 max-w-5xl mx-auto w-full mb-8 animate-fade-in shadow-lg">
-      <CardContent className="py-6 px-6">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-gradient-to-br from-primary to-primary/70 rounded-2xl flex items-center justify-center shadow-lg">
-              <Building2 className="w-7 h-7 text-primary-foreground" />
+    <Card className="relative overflow-hidden border-0 bg-card max-w-5xl mx-auto w-full mb-8 animate-fade-in shadow-lg">
+      {/* Left Accent Border - Primary Color */}
+      <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-primary" />
+      
+      <CardContent className="py-8 px-8">
+        {/* Header with Label */}
+        <div className="flex items-start justify-between mb-8">
+          <div className="flex items-start gap-5">
+            {/* Large Icon */}
+            <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center flex-shrink-0">
+              <Building2 className="w-8 h-8 text-primary" />
             </div>
+            
             <div>
-              <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-                Willkommen im MargenKalkulator!
-                <Sparkles className="w-5 h-5 text-primary" />
+              {/* Category Label */}
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-primary bg-primary/10 px-2.5 py-1 rounded">
+                  Einrichtung
+                </span>
+              </div>
+              
+              <h2 className="text-2xl font-bold text-foreground mb-1">
+                Willkommen im MargenKalkulator
               </h2>
               <p className="text-muted-foreground">
-                Richten Sie Ihr System in {steps.length} Schritten ein
+                Richten Sie Ihr System in {steps.length} einfachen Schritten ein.
               </p>
             </div>
           </div>
+          
           <Button
             variant="ghost"
             size="sm"
@@ -193,58 +204,47 @@ export function WelcomeWidget() {
           </Button>
         </div>
 
-        {/* Progress Bar */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between text-sm mb-2">
-            <span className="text-muted-foreground">Fortschritt</span>
-            <span className="font-medium text-primary">
-              {completedCount}/{steps.length} Schritte
-            </span>
-          </div>
-          <Progress value={progressPercent} className="h-2" />
-        </div>
-
-        {/* Steps Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Steps Grid - Larger Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
           {steps.map((step) => (
             <button
               key={step.id}
               onClick={() => !step.adminOnly && handleStepClick(step)}
               disabled={step.adminOnly}
               className={cn(
-                "group relative flex flex-col p-5 rounded-xl border transition-all text-left",
+                "group relative flex flex-col p-6 rounded-2xl border-2 transition-all text-left",
                 step.completed
                   ? "bg-success/5 border-success/30"
                   : step.adminOnly
-                    ? "bg-muted/30 border-border/50 cursor-not-allowed opacity-70"
-                    : "bg-card hover:bg-card/80 border-border hover:border-primary/40 hover:shadow-md cursor-pointer"
+                    ? "bg-muted/20 border-border cursor-not-allowed opacity-60"
+                    : "bg-card hover:bg-muted/30 border-border hover:border-primary/50 hover:shadow-lg cursor-pointer"
               )}
             >
-              {/* Step Number Badge */}
+              {/* Step Number Badge - Larger */}
               <div className={cn(
-                "absolute -top-2 -left-2 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shadow-sm",
+                "absolute -top-3 -left-3 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shadow-md",
                 step.completed
-                  ? "bg-success text-success-foreground"
-                  : "bg-primary text-primary-foreground"
+                  ? "bg-success text-white"
+                  : "bg-primary text-white"
               )}>
                 {step.completed ? (
-                  <CheckCircle2 className="w-4 h-4" />
+                  <CheckCircle2 className="w-5 h-5" />
                 ) : (
                   step.step
                 )}
               </div>
 
-              {/* Icon */}
+              {/* Icon - Larger */}
               <div className={cn(
-                "w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-colors",
+                "w-14 h-14 rounded-xl flex items-center justify-center mb-4 transition-colors",
                 step.completed
                   ? "bg-success/10"
                   : step.adminOnly
                     ? "bg-muted"
-                    : "bg-primary/10 group-hover:bg-primary/20"
+                    : "bg-primary/10 group-hover:bg-primary/15"
               )}>
                 <step.icon className={cn(
-                  "w-6 h-6",
+                  "w-7 h-7",
                   step.completed
                     ? "text-success"
                     : step.adminOnly
@@ -255,30 +255,30 @@ export function WelcomeWidget() {
 
               {/* Content */}
               <h3 className={cn(
-                "font-semibold text-base mb-1",
+                "font-semibold text-lg mb-2",
                 step.completed ? "text-success" : "text-foreground"
               )}>
                 {step.title}
               </h3>
-              <p className="text-sm text-muted-foreground mb-3">
+              <p className="text-sm text-muted-foreground mb-4 flex-1">
                 {step.description}
               </p>
 
               {/* Action */}
               {!step.completed && !step.adminOnly && (
-                <div className="mt-auto flex items-center gap-1 text-sm font-medium text-primary group-hover:gap-2 transition-all">
+                <div className="flex items-center gap-2 text-sm font-semibold text-primary group-hover:gap-3 transition-all">
                   Starten
-                  <ChevronRight className="w-4 h-4" />
+                  <ArrowRight className="w-4 h-4" />
                 </div>
               )}
               {step.completed && (
-                <div className="mt-auto flex items-center gap-1.5 text-sm font-medium text-success">
+                <div className="flex items-center gap-2 text-sm font-semibold text-success">
                   <CheckCircle2 className="w-4 h-4" />
                   Erledigt
                 </div>
               )}
               {step.adminOnly && !step.completed && (
-                <div className="mt-auto text-xs text-muted-foreground italic">
+                <div className="text-xs text-muted-foreground italic">
                   Nur für Administratoren
                 </div>
               )}
@@ -286,10 +286,19 @@ export function WelcomeWidget() {
           ))}
         </div>
 
-        {/* Help Text */}
-        <p className="text-xs text-muted-foreground text-center mt-6">
-          Sie können diese Einrichtung jederzeit über die Einstellungen fortsetzen.
-        </p>
+        {/* Progress Bar - Enhanced */}
+        <div className="bg-muted/30 rounded-xl p-4">
+          <div className="flex items-center justify-between text-sm mb-3">
+            <span className="text-muted-foreground font-medium">Fortschritt</span>
+            <span className="font-bold text-foreground">
+              {progressPercent}% abgeschlossen
+            </span>
+          </div>
+          <Progress value={progressPercent} className="h-2.5" />
+          <p className="text-xs text-muted-foreground text-center mt-3">
+            Sie können diese Einrichtung jederzeit über die Einstellungen fortsetzen.
+          </p>
+        </div>
       </CardContent>
     </Card>
   );

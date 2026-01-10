@@ -16,6 +16,7 @@ interface InviteValidationResult {
   email: string | null;
   tenantId: string | null;
   role: string | null;
+  companyName: string | null;
 }
 
 /**
@@ -64,7 +65,7 @@ export async function validateInviteToken(token: string): Promise<InviteValidati
 
     if (error) {
       console.warn("[validateInviteToken] RPC error:", error);
-      return { valid: false, email: null, tenantId: null, role: null };
+      return { valid: false, email: null, tenantId: null, role: null, companyName: null };
     }
 
     if (data && data.length > 0) {
@@ -74,13 +75,14 @@ export async function validateInviteToken(token: string): Promise<InviteValidati
         email: result.email,
         tenantId: result.tenant_id,
         role: result.role,
+        companyName: result.company_name,
       };
     }
 
-    return { valid: false, email: null, tenantId: null, role: null };
+    return { valid: false, email: null, tenantId: null, role: null, companyName: null };
   } catch (error) {
     console.error("[validateInviteToken] Unexpected error:", error);
-    return { valid: false, email: null, tenantId: null, role: null };
+    return { valid: false, email: null, tenantId: null, role: null, companyName: null };
   }
 }
 

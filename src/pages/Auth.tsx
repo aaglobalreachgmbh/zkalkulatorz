@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Turnstile, useTurnstile } from "@/components/ui/turnstile";
-import { Calculator, Loader2, Eye, EyeOff, AlertCircle, ShieldAlert, ExternalLink } from "lucide-react";
+import { Calculator, Loader2, Eye, EyeOff, AlertCircle, ShieldAlert, ExternalLink, CheckCircle, Building2 } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,6 +20,8 @@ import {
 } from "@/lib/securityUtils";
 import { PUBLISHER } from "@/margenkalkulator/publisherConfig";
 import { PublisherModal } from "@/components/PublisherModal";
+import { validateInviteToken, getInviteFromUrl } from "@/hooks/useEmailAllowlist";
+import { cn } from "@/lib/utils";
 
 // Validation schemas
 const emailSchema = z.string().email("Ungültige E-Mail-Adresse").max(255, "E-Mail zu lang");
@@ -66,6 +68,17 @@ export default function Auth() {
   const [signupPassword, setSignupPassword] = useState("");
   const [signupDisplayName, setSignupDisplayName] = useState("");
 
+  // Invite token state
+  const [inviteInfo, setInviteInfo] = useState<{
+    valid: boolean;
+    email: string;
+    tenantId: string;
+    role: string;
+    companyName: string;
+  } | null>(null);
+  const [inviteLoading, setInviteLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("login");
+
   // Check lockout status on mount and periodically
   useEffect(() => {
     const checkLockout = () => {
@@ -80,6 +93,34 @@ export default function Auth() {
     checkLockout();
     const interval = setInterval(checkLockout, 1000);
     return () => clearInterval(interval);
+  }, []);
+
+  // Check for invite token in URL
+  useEffect(() => {
+    const checkInviteToken = async () => {
+      const token = getInviteFromUrl();
+      if (!token) {
+        setInviteLoading(false);
+        return;
+      }
+
+      const result = await validateInviteToken(token);
+      if (result.valid && result.email) {
+        setInviteInfo({
+          valid: true,
+          email: result.email,
+          tenantId: result.tenantId || "",
+          role: result.role || "user",
+          companyName: result.companyName || "",
+        });
+        // Pre-fill signup email and switch to signup tab
+        setSignupEmail(result.email);
+        setActiveTab("signup");
+      }
+      setInviteLoading(false);
+    };
+
+    checkInviteToken();
   }, []);
 
   // Redirect if already logged in
@@ -234,7 +275,7 @@ export default function Auth() {
             </div>
           )}
 
-          <Tabs defaultValue="login" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="login">Anmelden</TabsTrigger>
               <TabsTrigger value="signup">Registrieren</TabsTrigger>
@@ -321,6 +362,27 @@ export default function Auth() {
 
             {/* Signup Tab */}
             <TabsContent value="signup" className="space-y-4 mt-4">
+              {/* Invite Banner */}
+              {inviteInfo?.valid && (
+                <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
+                    <div className="space-y-1">
+                      <p className="font-medium text-green-800 dark:text-green-200">
+                        Sie wurden eingeladen!
+                      </p>
+                      <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-300">
+                        <Building2 className="w-4 h-4" />
+                        <span><strong>Firma:</strong> {inviteInfo.companyName}</span>
+                      </div>
+                      <p className="text-sm text-green-700 dark:text-green-300">
+                        <strong>Rolle:</strong> {inviteInfo.role === "tenant_admin" ? "Administrator" : "Mitarbeiter"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <form onSubmit={handleSignup} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="signup-name">Name (optional)</Label>
@@ -352,11 +414,20 @@ export default function Auth() {
                     placeholder="name@firma.de"
                     value={signupEmail}
                     onChange={(e, sanitized) => setSignupEmail(sanitized)}
-                    disabled={isLoading}
+                    disabled={isLoading || !!inviteInfo?.valid}
+                    readOnly={!!inviteInfo?.valid}
                     autoComplete="email"
                     maxLength={255}
-                    className={errors.signupEmail ? "border-destructive" : ""}
+                    className={cn(
+                      errors.signupEmail ? "border-destructive" : "",
+                      inviteInfo?.valid && "bg-muted cursor-not-allowed"
+                    )}
                   />
+                  {inviteInfo?.valid && (
+                    <p className="text-xs text-muted-foreground">
+                      E-Mail-Adresse aus der Einladung
+                    </p>
+                  )}
                   {errors.signupEmail && (
                     <p className="text-xs text-destructive flex items-center gap-1">
                       <AlertCircle className="w-3 h-3" />

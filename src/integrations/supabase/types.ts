@@ -2925,6 +2925,7 @@ export type Database = {
       validate_invite_token: {
         Args: { p_token: string }
         Returns: {
+          company_name: string
           email: string
           role: string
           tenant_id: string

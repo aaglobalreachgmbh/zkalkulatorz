@@ -152,6 +152,48 @@ export type Database = {
         }
         Relationships: []
       }
+      badge_definitions: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string | null
+          icon: string
+          id: string
+          is_active: boolean | null
+          name: string
+          points_reward: number
+          requirement_type: string
+          requirement_value: number
+          sort_order: number | null
+        }
+        Insert: {
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          icon?: string
+          id: string
+          is_active?: boolean | null
+          name: string
+          points_reward?: number
+          requirement_type: string
+          requirement_value?: number
+          sort_order?: number | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          icon?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          points_reward?: number
+          requirement_type?: string
+          requirement_value?: number
+          sort_order?: number | null
+        }
+        Relationships: []
+      }
       blocked_ips: {
         Row: {
           block_count: number | null
@@ -3405,6 +3447,41 @@ export type Database = {
         }
         Relationships: []
       }
+      user_badges: {
+        Row: {
+          badge_id: string
+          earned_at: string | null
+          id: string
+          metadata: Json | null
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          badge_id: string
+          earned_at?: string | null
+          id?: string
+          metadata?: Json | null
+          tenant_id?: string
+          user_id: string
+        }
+        Update: {
+          badge_id?: string
+          earned_at?: string | null
+          id?: string
+          metadata?: Json | null
+          tenant_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_badges_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "badge_definitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_dashboard_config: {
         Row: {
           active_mode: string | null
@@ -3500,6 +3577,39 @@ export type Database = {
           id?: string
           subscription_status?: string | null
           updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_points: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          points: number
+          source_id: string | null
+          source_type: string
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          points: number
+          source_id?: string | null
+          source_type: string
+          tenant_id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          points?: number
+          source_id?: string | null
+          source_type?: string
+          tenant_id?: string
           user_id?: string
         }
         Relationships: []
@@ -3733,6 +3843,17 @@ export type Database = {
       }
       get_dataset_catalog_safe: { Args: { p_tenant_id: string }; Returns: Json }
       get_effective_provision_split: { Args: never; Returns: number }
+      get_leaderboard: {
+        Args: { p_period?: string; p_tenant_id: string }
+        Returns: {
+          badges_count: number
+          display_name: string
+          rank: number
+          total_points: number
+          user_id: string
+          visits_count: number
+        }[]
+      }
       get_my_department_id: { Args: never; Returns: string }
       get_my_distribution_id: { Args: never; Returns: string }
       get_my_distribution_ids: { Args: never; Returns: string[] }

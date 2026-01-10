@@ -2,7 +2,7 @@
 // Configurable Dashboard with Drag & Drop
 // ============================================
 
-import { Suspense, useMemo, useCallback } from "react";
+import { Suspense, useMemo, useCallback, useState } from "react";
 import {
   DndContext,
   closestCenter,
@@ -17,7 +17,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { Settings2, RotateCcw, Check, Loader2 } from "lucide-react";
+import { Settings2, RotateCcw, Check, Loader2, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -31,12 +31,20 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useDashboardConfig } from "@/margenkalkulator/hooks/useDashboardConfig";
 import { DASHBOARD_WIDGETS } from "@/margenkalkulator/config/dashboardWidgets";
 import { SortableWidget } from "./SortableWidget";
 import { AddWidgetPanel } from "./AddWidgetPanel";
+import { QuickBrandingEditor } from "./QuickBrandingEditor";
 
 interface ConfigurableDashboardProps {
   className?: string;
@@ -106,6 +114,25 @@ export function ConfigurableDashboard({ className }: ConfigurableDashboardProps)
         <div className="flex items-center justify-end gap-2">
           {isEditMode ? (
             <>
+              {/* Quick Branding Editor */}
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Palette className="h-4 w-4 mr-2" />
+                    Design anpassen
+                  </Button>
+                </SheetTrigger>
+                <SheetContent className="w-[400px] sm:w-[480px] overflow-y-auto">
+                  <SheetHeader>
+                    <SheetTitle className="flex items-center gap-2">
+                      <Palette className="h-5 w-5" />
+                      Schnell-Design
+                    </SheetTitle>
+                  </SheetHeader>
+                  <QuickBrandingEditor />
+                </SheetContent>
+              </Sheet>
+              
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="outline" size="sm">

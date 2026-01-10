@@ -50,14 +50,14 @@ export function MainLayout({ children }: MainLayoutProps) {
             <div className="flex items-center gap-3">
               <SidebarTrigger />
               <div className="flex flex-col">
-                {branding.logoUrl ? (
+              {branding.logoUrl ? (
                   <img 
                     src={branding.logoUrl} 
                     alt={branding.companyName || "Logo"} 
-                    className="h-7 w-auto object-contain"
+                    className="h-10 md:h-12 w-auto max-w-[180px] object-contain"
                   />
                 ) : (
-                  <span className="font-semibold text-foreground">
+                  <span className="text-lg md:text-xl font-bold text-foreground tracking-tight">
                     {branding.companyName || PUBLISHER.displayName}
                   </span>
                 )}

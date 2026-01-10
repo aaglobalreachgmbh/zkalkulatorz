@@ -19,9 +19,6 @@ import {
   isTomorrow 
 } from "date-fns";
 import { de } from "date-fns/locale";
-import { IntegrationPromptCard } from "./IntegrationPromptCard";
-import { GoogleCalendarIcon, OutlookIcon } from "./icons/IntegrationIcons";
-import { toast } from "sonner";
 
 // Event type colors
 const EVENT_TYPE_COLORS: Record<string, string> = {
@@ -126,11 +123,11 @@ export function MiniCalendarWidget({ compact = false }: MiniCalendarWidgetProps)
     navigate(`/calendar?date=${format(date, "yyyy-MM-dd")}`);
   };
 
-  const handleConnectCalendar = (type: string) => {
-    toast.info(`${type} Integration wird in Kürze verfügbar sein`);
+  const handleConnectCalendar = () => {
+    navigate("/calendar");
   };
 
-  // No integration connected - show prompts
+  // No events yet - show prompt to create or view calendar
   if (!hasCalendarIntegration && !isLoading) {
     return (
       <Card className="h-full">
@@ -144,28 +141,17 @@ export function MiniCalendarWidget({ compact = false }: MiniCalendarWidgetProps)
         </CardHeader>
         <CardContent className="pt-0">
           <p className="text-xs text-muted-foreground mb-3">
-            Verbinden Sie Ihren Kalender für Terminübersicht
+            Keine Termine vorhanden. Erstellen Sie Ihren ersten Termin.
           </p>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex-1 h-auto py-2 px-3"
-              onClick={() => handleConnectCalendar("Google Calendar")}
-            >
-              <GoogleCalendarIcon className="h-4 w-4 mr-1.5" />
-              <span className="text-xs">Google</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex-1 h-auto py-2 px-3"
-              onClick={() => handleConnectCalendar("Outlook")}
-            >
-              <OutlookIcon className="h-4 w-4 mr-1.5" />
-              <span className="text-xs">Outlook</span>
-            </Button>
-          </div>
+          <Button
+            variant="default"
+            size="sm"
+            className="w-full gap-2"
+            onClick={handleConnectCalendar}
+          >
+            <Calendar className="h-4 w-4" />
+            <span className="text-xs">Zum Kalender</span>
+          </Button>
         </CardContent>
       </Card>
     );

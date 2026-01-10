@@ -2,6 +2,8 @@ import { useState } from "react";
 import { MainLayout } from "@/components/MainLayout";
 import { useTeams, TeamWithMembers } from "@/margenkalkulator/hooks/useTeams";
 import { useAuth } from "@/hooks/useAuth";
+import { usePermissions } from "@/hooks/usePermissions";
+import { AccessDeniedCard } from "@/components/AccessDeniedCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -61,6 +63,19 @@ export default function Team() {
   const { user } = useAuth();
   const { teams, isLoading, createTeam, updateTeam, deleteTeam, addMember, removeMember, updateMemberRole } =
     useTeams();
+  const { canViewTeam, hasFullAccess, isLoading: permissionsLoading } = usePermissions();
+
+  // Berechtigungsprüfung
+  if (!permissionsLoading && !hasFullAccess && !canViewTeam) {
+    return (
+      <MainLayout>
+        <AccessDeniedCard 
+          title="Kein Zugriff auf Team"
+          description="Sie haben keine Berechtigung, die Team-Verwaltung einzusehen. Kontaktieren Sie Ihren Shop-Administrator."
+        />
+      </MainLayout>
+    );
+  }
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isAddMemberDialogOpen, setIsAddMemberDialogOpen] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<TeamWithMembers | null>(null);

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { FileText, Loader2, ShieldCheck } from "lucide-react";
 import { useActivityTracker } from "@/hooks/useActivityTracker";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
-import { useEmployeeSettings } from "@/margenkalkulator/hooks/useEmployeeSettings";
+import { usePermissions } from "@/hooks/usePermissions";
 import { useTenantBranding } from "@/hooks/useTenantBranding";
 import type { OfferOptionState, CalculationResult, ViewMode } from "../../engine/types";
 import { toast } from "sonner";
@@ -48,18 +48,19 @@ export function PdfDownloadButton({
   const [loading, setLoading] = useState(false);
   const { trackPdfExported } = useActivityTracker();
   const visibility = useSensitiveFieldsVisible(viewMode);
-  const { settings } = useEmployeeSettings();
+  const { canViewMargins, canExportPdf } = usePermissions();
   const { branding } = useTenantBranding();
 
   // SECURITY: Dealer PDF only allowed when:
   // 1. Not in customer mode
-  // 2. User has permission to view margins (default true if not set)
-  // 3. No active customer session
-  const canViewMargins = settings?.featureOverrides?.can_view_margins !== false;
+  // 2. User has permission to view margins
+  // 3. User has permission to export PDF
+  // 4. No active customer session
   const canGenerateDealerPdf = 
     type === "dealer" &&
     visibility.effectiveMode !== "customer" &&
     canViewMargins &&
+    canExportPdf &&
     !visibility.isCustomerSessionActive;
 
   const handleDownload = async () => {

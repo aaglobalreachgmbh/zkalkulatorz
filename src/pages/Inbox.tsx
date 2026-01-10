@@ -4,6 +4,8 @@
 
 import { useState } from "react";
 import { MainLayout } from "@/components/MainLayout";
+import { usePermissions } from "@/hooks/usePermissions";
+import { AccessDeniedCard } from "@/components/AccessDeniedCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -65,6 +67,19 @@ export default function InboxPage() {
   const { accounts, isLoading: accountsLoading, disconnect } = useEmailAccounts();
   const { emails, isLoading: emailsLoading, refetch: refetchEmails } = useSyncedEmails();
   const { supervisedEmployeeIds } = useEmployeeAssignments();
+  const { canUseInbox, hasFullAccess, isLoading: permissionsLoading } = usePermissions();
+
+  // Berechtigungsprüfung
+  if (!permissionsLoading && !hasFullAccess && !canUseInbox) {
+    return (
+      <MainLayout>
+        <AccessDeniedCard 
+          title="Kein Zugriff auf Posteingang"
+          description="Sie haben keine Berechtigung, den Posteingang zu nutzen. Kontaktieren Sie Ihren Shop-Administrator."
+        />
+      </MainLayout>
+    );
+  }
   
   const [activeTab, setActiveTab] = useState("inbox");
   const [searchQuery, setSearchQuery] = useState("");

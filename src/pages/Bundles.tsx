@@ -9,6 +9,8 @@ import { useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/MainLayout";
 import { Badge } from "@/components/ui/badge";
+import { usePermissions } from "@/hooks/usePermissions";
+import { AccessDeniedCard } from "@/components/AccessDeniedCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -316,6 +318,19 @@ export default function Bundles() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>("campaigns");
   const [activeSector, setActiveSector] = useState<Sector>("business");
+  const { canUseBundles, hasFullAccess, isLoading: permissionsLoading } = usePermissions();
+
+  // Berechtigungsprüfung
+  if (!permissionsLoading && !hasFullAccess && !canUseBundles) {
+    return (
+      <MainLayout>
+        <AccessDeniedCard 
+          title="Kein Zugriff auf Bundles"
+          description="Sie haben keine Berechtigung, den Bundle-Konfigurator zu nutzen. Kontaktieren Sie Ihren Shop-Administrator."
+        />
+      </MainLayout>
+    );
+  }
 
   // Cloud bundles (user-created)
   const { 

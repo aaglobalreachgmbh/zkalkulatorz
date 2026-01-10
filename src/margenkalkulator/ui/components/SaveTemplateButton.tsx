@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import type { OfferOptionState } from "@/margenkalkulator/engine/types";
 import { useTemplates } from "@/margenkalkulator/hooks/useTemplates";
 
@@ -28,7 +28,7 @@ interface SaveTemplateButtonProps {
 }
 
 export function SaveTemplateButton({ config }: SaveTemplateButtonProps) {
-  const { toast } = useToast();
+  
   const { folders, createTemplate, isCreatingTemplate } = useTemplates();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -36,29 +36,18 @@ export function SaveTemplateButton({ config }: SaveTemplateButtonProps) {
 
   const handleSave = async () => {
     if (!name.trim()) {
-      toast({
-        title: "Name erforderlich",
-        description: "Bitte gib einen Namen für das Template ein.",
-        variant: "destructive",
-      });
+      toast.error("Name erforderlich", { description: "Bitte gib einen Namen für das Template ein." });
       return;
     }
 
     try {
       await createTemplate(name.trim(), config, folderId === "none" ? undefined : folderId);
-      toast({
-        title: "Template gespeichert",
-        description: `"${name}" wurde erfolgreich gespeichert.`,
-      });
+      toast.success("Template gespeichert", { description: `"${name}" wurde erfolgreich gespeichert.` });
       setOpen(false);
       setName("");
       setFolderId(undefined);
     } catch {
-      toast({
-        title: "Fehler",
-        description: "Template konnte nicht gespeichert werden.",
-        variant: "destructive",
-      });
+      toast.error("Fehler", { description: "Template konnte nicht gespeichert werden." });
     }
   };
 

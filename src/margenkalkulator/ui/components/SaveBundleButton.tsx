@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import type { OfferOptionState } from "@/margenkalkulator/engine/types";
 import { useCorporateBundles, SECTOR_LABELS, type Sector } from "@/margenkalkulator/hooks/useCorporateBundles";
 
@@ -30,7 +30,7 @@ interface SaveBundleButtonProps {
 }
 
 export function SaveBundleButton({ config }: SaveBundleButtonProps) {
-  const { toast } = useToast();
+  
   const { createBundleAsync, isCreating } = useCorporateBundles();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -41,11 +41,7 @@ export function SaveBundleButton({ config }: SaveBundleButtonProps) {
 
   const handleSave = async () => {
     if (!name.trim()) {
-      toast({
-        title: "Name erforderlich",
-        description: "Bitte gib einen Namen für das Paket ein.",
-        variant: "destructive",
-      });
+      toast.error("Name erforderlich", { description: "Bitte gib einen Namen für das Paket ein." });
       return;
     }
 
@@ -64,18 +60,11 @@ export function SaveBundleButton({ config }: SaveBundleButtonProps) {
         config,
       });
 
-      toast({
-        title: "Paket gespeichert",
-        description: `"${name}" wurde erfolgreich als Paket angelegt.`,
-      });
+      toast.success("Paket gespeichert", { description: `"${name}" wurde erfolgreich als Paket angelegt.` });
       setOpen(false);
       resetForm();
     } catch {
-      toast({
-        title: "Fehler",
-        description: "Paket konnte nicht gespeichert werden.",
-        variant: "destructive",
-      });
+      toast.error("Fehler", { description: "Paket konnte nicht gespeichert werden." });
     }
   };
 

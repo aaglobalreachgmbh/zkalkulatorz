@@ -16,7 +16,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useIdentity } from "@/contexts/IdentityContext";
 import {
   useAllEmployeeSettings,
@@ -50,7 +50,7 @@ const FEATURES = [
 
 export default function AdminEmployees() {
   const navigate = useNavigate();
-  const { toast } = useToast();
+  
   const { identity, canAccessAdmin } = useIdentity();
   const { employees, isLoading, refresh } = useAllEmployeeSettings();
   const { createOrUpdateSettings, deleteEmployeeSettings } = useAdminEmployeeManagement();
@@ -103,15 +103,11 @@ export default function AdminEmployees() {
     try {
       setIsSaving(true);
       await createOrUpdateSettings(editingEmployee.userId, formData);
-      toast({ title: "Gespeichert", description: "Mitarbeiter-Einstellungen aktualisiert." });
+      toast.success("Gespeichert", { description: "Mitarbeiter-Einstellungen aktualisiert." });
       setIsDialogOpen(false);
       refresh();
     } catch (err) {
-      toast({
-        title: "Fehler",
-        description: err instanceof Error ? err.message : "Speichern fehlgeschlagen",
-        variant: "destructive",
-      });
+      toast.error("Fehler", { description: err instanceof Error ? err.message : "Speichern fehlgeschlagen" });
     } finally {
       setIsSaving(false);
     }
@@ -124,14 +120,10 @@ export default function AdminEmployees() {
 
     try {
       await deleteEmployeeSettings(employee.userId);
-      toast({ title: "Gelöscht", description: "Einstellungen entfernt (Standard wird verwendet)." });
+      toast.success("Gelöscht", { description: "Einstellungen entfernt (Standard wird verwendet)." });
       refresh();
     } catch (err) {
-      toast({
-        title: "Fehler",
-        description: err instanceof Error ? err.message : "Löschen fehlgeschlagen",
-        variant: "destructive",
-      });
+      toast.error("Fehler", { description: err instanceof Error ? err.message : "Löschen fehlgeschlagen" });
     }
   };
 

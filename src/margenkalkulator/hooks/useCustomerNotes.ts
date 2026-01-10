@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useActivityTracker } from "@/hooks/useActivityTracker";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 export interface CustomerNote {
   id: string;
@@ -36,7 +36,6 @@ export type NoteType = keyof typeof NOTE_TYPES;
 
 export function useCustomerNotes(customerId: string | undefined) {
   const { user } = useAuth();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const { trackActivity } = useActivityTracker();
 
@@ -87,10 +86,7 @@ export function useCustomerNotes(customerId: string | undefined) {
     },
     onSuccess: (newNote) => {
       queryClient.invalidateQueries({ queryKey });
-      toast({
-        title: "Notiz erstellt",
-        description: "Die Notiz wurde hinzugefügt.",
-      });
+      toast.success("Notiz erstellt", { description: "Die Notiz wurde hinzugefügt." });
       // Activity tracking via customer resource
       trackActivity({
         action: "customer_update",
@@ -101,11 +97,7 @@ export function useCustomerNotes(customerId: string | undefined) {
       });
     },
     onError: (error: Error) => {
-      toast({
-        title: "Fehler",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error("Fehler", { description: error.message });
     },
   });
 
@@ -121,17 +113,10 @@ export function useCustomerNotes(customerId: string | undefined) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
-      toast({
-        title: "Notiz gelöscht",
-        description: "Die Notiz wurde entfernt.",
-      });
+      toast.success("Notiz gelöscht", { description: "Die Notiz wurde entfernt." });
     },
     onError: (error: Error) => {
-      toast({
-        title: "Fehler",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error("Fehler", { description: error.message });
     },
   });
 

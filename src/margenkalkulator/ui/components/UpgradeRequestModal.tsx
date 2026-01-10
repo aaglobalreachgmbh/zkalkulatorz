@@ -22,7 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Crown, Send, Loader2, Check, ExternalLink } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useIdentity } from "@/contexts/IdentityContext";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 interface UpgradeRequestModalProps {
   open: boolean;
@@ -54,7 +54,7 @@ export function UpgradeRequestModal({
 }: UpgradeRequestModalProps) {
   const { user } = useAuth();
   const { identity } = useIdentity();
-  const { toast } = useToast();
+  
 
   const [selectedPlan, setSelectedPlan] = useState("pro");
   const [message, setMessage] = useState("");
@@ -103,10 +103,7 @@ export function UpgradeRequestModal({
     setIsSubmitting(false);
     setSubmitted(true);
 
-    toast({
-      title: "E-Mail-Client geöffnet",
-      description: "Bitte senden Sie die Anfrage über Ihr E-Mail-Programm.",
-    });
+    toast.success("E-Mail-Client geöffnet", { description: "Bitte senden Sie die Anfrage über Ihr E-Mail-Programm." });
   };
 
   if (submitted) {

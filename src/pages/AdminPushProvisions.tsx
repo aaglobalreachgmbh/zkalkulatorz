@@ -21,7 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useIdentity } from "@/contexts/IdentityContext";
 import {
   useAllPushProvisions,
@@ -89,7 +89,7 @@ const EMPTY_GROUP: Omit<PushTariffGroup, "id" | "tenantId" | "createdBy" | "crea
 
 export default function AdminPushProvisions() {
   const navigate = useNavigate();
-  const { toast } = useToast();
+  
   const { canAccessAdmin } = useIdentity();
   const { provisions, isLoading, refresh } = useAllPushProvisions();
   const { createProvision, updateProvision, deleteProvision } = useAdminPushProvisions();
@@ -168,25 +168,25 @@ export default function AdminPushProvisions() {
 
   const handleSave = async () => {
     if (!formData.name) {
-      toast({ title: "Fehler", description: "Name ist erforderlich", variant: "destructive" });
+      toast.error("Fehler", { description: "Name ist erforderlich" });
       return;
     }
 
     // Validate based on target type
     if (formData.targetType === "tariff" && !formData.tariffId) {
-      toast({ title: "Fehler", description: "Tarif ist erforderlich", variant: "destructive" });
+      toast.error("Fehler", { description: "Tarif ist erforderlich" });
       return;
     }
     if (formData.targetType === "family" && !formData.tariffFamily) {
-      toast({ title: "Fehler", description: "Tarif-Familie ist erforderlich", variant: "destructive" });
+      toast.error("Fehler", { description: "Tarif-Familie ist erforderlich" });
       return;
     }
     if (formData.targetType === "pattern" && !formData.tariffId) {
-      toast({ title: "Fehler", description: "Pattern ist erforderlich", variant: "destructive" });
+      toast.error("Fehler", { description: "Pattern ist erforderlich" });
       return;
     }
     if (formData.targetType === "group" && !formData.tariffId) {
-      toast({ title: "Fehler", description: "Tarif-Gruppe ist erforderlich", variant: "destructive" });
+      toast.error("Fehler", { description: "Tarif-Gruppe ist erforderlich" });
       return;
     }
 
@@ -195,20 +195,16 @@ export default function AdminPushProvisions() {
 
       if (editingId) {
         await updateProvision(editingId, formData);
-        toast({ title: "Aktualisiert", description: "Push-Provision gespeichert." });
+        toast.success("Aktualisiert", { description: "Push-Provision gespeichert." });
       } else {
         await createProvision(formData);
-        toast({ title: "Erstellt", description: "Neue Push-Provision angelegt." });
+        toast.success("Erstellt", { description: "Neue Push-Provision angelegt." });
       }
 
       setIsDialogOpen(false);
       refresh();
     } catch (err) {
-      toast({
-        title: "Fehler",
-        description: err instanceof Error ? err.message : "Speichern fehlgeschlagen",
-        variant: "destructive",
-      });
+      toast.error("Fehler", { description: err instanceof Error ? err.message : "Speichern fehlgeschlagen" });
     } finally {
       setIsSaving(false);
     }
@@ -216,7 +212,7 @@ export default function AdminPushProvisions() {
 
   const handleSaveGroup = async () => {
     if (!groupFormData.name) {
-      toast({ title: "Fehler", description: "Name ist erforderlich", variant: "destructive" });
+      toast.error("Fehler", { description: "Name ist erforderlich" });
       return;
     }
 
@@ -225,20 +221,16 @@ export default function AdminPushProvisions() {
 
       if (editingGroupId) {
         await updateGroup(editingGroupId, groupFormData);
-        toast({ title: "Aktualisiert", description: "Tarif-Gruppe gespeichert." });
+        toast.success("Aktualisiert", { description: "Tarif-Gruppe gespeichert." });
       } else {
         await createGroup(groupFormData);
-        toast({ title: "Erstellt", description: "Neue Tarif-Gruppe angelegt." });
+        toast.success("Erstellt", { description: "Neue Tarif-Gruppe angelegt." });
       }
 
       setIsGroupDialogOpen(false);
       refreshGroups();
     } catch (err) {
-      toast({
-        title: "Fehler",
-        description: err instanceof Error ? err.message : "Speichern fehlgeschlagen",
-        variant: "destructive",
-      });
+      toast.error("Fehler", { description: err instanceof Error ? err.message : "Speichern fehlgeschlagen" });
     } finally {
       setIsSaving(false);
     }
@@ -251,14 +243,10 @@ export default function AdminPushProvisions() {
 
     try {
       await deleteProvision(provision.id);
-      toast({ title: "Gelöscht", description: "Push-Provision entfernt." });
+      toast.success("Gelöscht", { description: "Push-Provision entfernt." });
       refresh();
     } catch (err) {
-      toast({
-        title: "Fehler",
-        description: err instanceof Error ? err.message : "Löschen fehlgeschlagen",
-        variant: "destructive",
-      });
+      toast.error("Fehler", { description: err instanceof Error ? err.message : "Löschen fehlgeschlagen" });
     }
   };
 
@@ -269,31 +257,22 @@ export default function AdminPushProvisions() {
 
     try {
       await deleteGroup(group.id);
-      toast({ title: "Gelöscht", description: "Tarif-Gruppe entfernt." });
+      toast.success("Gelöscht", { description: "Tarif-Gruppe entfernt." });
       refreshGroups();
     } catch (err) {
-      toast({
-        title: "Fehler",
-        description: err instanceof Error ? err.message : "Löschen fehlgeschlagen",
-        variant: "destructive",
-      });
+      toast.error("Fehler", { description: err instanceof Error ? err.message : "Löschen fehlgeschlagen" });
     }
   };
 
   const handleToggleActive = async (provision: PushProvision) => {
     try {
       await updateProvision(provision.id, { isActive: !provision.isActive });
-      toast({
-        title: provision.isActive ? "Deaktiviert" : "Aktiviert",
+      toast.success(provision.isActive ? "Deaktiviert" : "Aktiviert", {
         description: `Push-Provision ${provision.isActive ? "pausiert" : "aktiviert"}.`,
       });
       refresh();
     } catch (err) {
-      toast({
-        title: "Fehler",
-        description: err instanceof Error ? err.message : "Aktualisierung fehlgeschlagen",
-        variant: "destructive",
-      });
+      toast.error("Fehler", { description: err instanceof Error ? err.message : "Aktualisierung fehlgeschlagen" });
     }
   };
 

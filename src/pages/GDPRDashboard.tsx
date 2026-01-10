@@ -40,7 +40,7 @@ import {
   ArrowLeft
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { Link } from "react-router-dom";
@@ -70,7 +70,7 @@ export default function GDPRDashboard() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
-  const { toast } = useToast();
+  
 
   // Fetch deletion logs
   const fetchDeletionLogs = async () => {
@@ -85,11 +85,7 @@ export default function GDPRDashboard() {
       setDeletionLogs(data || []);
     } catch (error) {
       console.error("Error fetching deletion logs:", error);
-      toast({
-        title: "Fehler",
-        description: "Konnte Löschprotokolle nicht laden",
-        variant: "destructive",
-      });
+      toast.error("Fehler", { description: "Konnte Löschprotokolle nicht laden" });
     }
   };
 
@@ -133,20 +129,13 @@ export default function GDPRDashboard() {
 
       if (error) throw error;
 
-      toast({
-        title: "Löschung angefordert",
-        description: "Die Benutzerdaten werden gelöscht.",
-      });
+      toast.success("Löschung angefordert", { description: "Die Benutzerdaten werden gelöscht." });
 
       // Refresh data
       await Promise.all([fetchDeletionLogs(), fetchInactiveUsers()]);
     } catch (error) {
       console.error("Error deleting user:", error);
-      toast({
-        title: "Fehler",
-        description: "Konnte Benutzer nicht löschen",
-        variant: "destructive",
-      });
+      toast.error("Fehler", { description: "Konnte Benutzer nicht löschen" });
     } finally {
       setDeletingUserId(null);
     }

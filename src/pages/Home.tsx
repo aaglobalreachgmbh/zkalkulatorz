@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Zap, CheckCircle, TrendingUp, Key, UserPlus, Search, FileText, Bell, LogIn } from "lucide-react";
+import { ArrowRight, Zap, CheckCircle, TrendingUp, Key, UserPlus, Search, FileText, Bell, LogIn, LayoutGrid } from "lucide-react";
 import { MainLayout } from "@/components/MainLayout";
 import { useVVLCounts } from "@/margenkalkulator/hooks/useCustomerContracts";
 import { useAuth } from "@/hooks/useAuth";
@@ -49,14 +49,14 @@ const Home = () => {
         )}
         
         {/* Main Content */}
-        <main className="flex-1 flex flex-col justify-center px-4 lg:px-6 py-6">
+        <main className="flex-1 flex flex-col justify-center px-4 lg:px-6 py-8">
           
           {/* PRIORITY 1: Welcome Widget - Prominently at the very top for new users */}
           {user && <WelcomeWidget />}
 
           {/* Headline */}
-          <div className="text-center mb-6 animate-fade-in">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
+          <div className="text-center mb-8 animate-fade-in">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
               Wie möchten Sie{" "}
               <span className="text-primary italic">kalkulieren</span>?
             </h2>
@@ -66,52 +66,52 @@ const Home = () => {
             </p>
           </div>
 
-          {/* Quickstart Icons */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 max-w-3xl mx-auto mb-8 animate-fade-in">
+          {/* Quickstart Icons - Enhanced */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-3xl mx-auto mb-10 animate-fade-in">
             <button
               onClick={() => navigate("/customers?action=new")}
-              className="group flex flex-col items-center gap-3 p-5 bg-card border border-border rounded-xl hover:border-primary/30 hover:shadow-lg transition-all duration-200"
+              className="group flex flex-col items-center gap-3 p-6 bg-card border-0 rounded-2xl shadow-md hover:shadow-lg transition-all duration-200"
             >
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                <UserPlus className="w-6 h-6 text-primary" />
+              <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center group-hover:bg-primary/15 transition-colors">
+                <UserPlus className="w-7 h-7 text-primary" />
               </div>
-              <span className="text-sm font-medium text-foreground">Neuer Kunde</span>
+              <span className="text-sm font-semibold text-foreground">Neuer Kunde</span>
             </button>
 
             <button
               onClick={() => navigate("/customers")}
-              className="group flex flex-col items-center gap-3 p-5 bg-card border border-border rounded-xl hover:border-primary/30 hover:shadow-lg transition-all duration-200"
+              className="group flex flex-col items-center gap-3 p-6 bg-card border-0 rounded-2xl shadow-md hover:shadow-lg transition-all duration-200"
             >
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                <Search className="w-6 h-6 text-primary" />
+              <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center group-hover:bg-primary/15 transition-colors">
+                <Search className="w-7 h-7 text-primary" />
               </div>
-              <span className="text-sm font-medium text-foreground">Kundensuche</span>
+              <span className="text-sm font-semibold text-foreground">Kundensuche</span>
             </button>
 
             <button
               onClick={() => navigate("/calculator")}
-              className="group flex flex-col items-center gap-3 p-5 bg-card border border-border rounded-xl hover:border-primary/30 hover:shadow-lg transition-all duration-200"
+              className="group flex flex-col items-center gap-3 p-6 bg-card border-0 rounded-2xl shadow-md hover:shadow-lg transition-all duration-200"
             >
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                <FileText className="w-6 h-6 text-primary" />
+              <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center group-hover:bg-primary/15 transition-colors">
+                <FileText className="w-7 h-7 text-primary" />
               </div>
-              <span className="text-sm font-medium text-foreground">Neues Angebot</span>
+              <span className="text-sm font-semibold text-foreground">Neues Angebot</span>
             </button>
 
             <button
               onClick={() => navigate("/contracts")}
-              className="group relative flex flex-col items-center gap-3 p-5 bg-card border border-border rounded-xl hover:border-amber-500/30 hover:shadow-lg transition-all duration-200"
+              className="group relative flex flex-col items-center gap-3 p-6 bg-card border-0 rounded-2xl shadow-md hover:shadow-lg transition-all duration-200"
             >
-              <div className="relative w-12 h-12 bg-amber-500/10 rounded-full flex items-center justify-center group-hover:bg-amber-500/20 transition-colors">
-                <Bell className="w-6 h-6 text-amber-500" />
+              <div className="relative w-14 h-14 bg-amber-500/10 rounded-xl flex items-center justify-center group-hover:bg-amber-500/15 transition-colors">
+                <Bell className="w-7 h-7 text-amber-500" />
                 {/* VVL Badge */}
                 {urgentVVLCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center animate-pulse">
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-white text-xs font-bold rounded-full flex items-center justify-center animate-pulse">
                     {urgentVVLCount > 9 ? '9+' : urgentVVLCount}
                   </span>
                 )}
               </div>
-              <span className="text-sm font-medium text-foreground">VVL-Liste</span>
+              <span className="text-sm font-semibold text-foreground">VVL-Liste</span>
             </button>
           </div>
 
@@ -124,11 +124,17 @@ const Home = () => {
           {/* Margen-Analytics Widgets - only for logged in users */}
           {user && (
             <section className={cn(
-              "max-w-5xl mx-auto w-full mb-6",
-              isPOSMode && "mb-3"
+              "max-w-5xl mx-auto w-full mb-8",
+              isPOSMode && "mb-4"
             )}>
-              <h2 className="text-lg font-semibold mb-4">Margen-Analytics</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+              {/* Section Header */}
+              <div className="flex items-center gap-2 mb-4">
+                <LayoutGrid className="w-4 h-4 text-primary" />
+                <span className="text-xs font-bold uppercase tracking-wider text-primary">
+                  Margen-Analytics
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <AverageMarginWidget />
                 <ProvisionSourcesWidget />
                 <DiscountUsageWidget />
@@ -140,8 +146,8 @@ const Home = () => {
           {/* Revenue Forecast & Followup Reminders - only for logged in users */}
           {user && (
             <div className={cn(
-              "grid grid-cols-1 lg:grid-cols-2 gap-4 max-w-5xl mx-auto mb-6 w-full",
-              isPOSMode && "gap-3 mb-3"
+              "grid grid-cols-1 lg:grid-cols-2 gap-5 max-w-5xl mx-auto mb-8 w-full",
+              isPOSMode && "gap-3 mb-4"
             )}>
               <RevenueForecastWidget />
               <FollowupReminders />
@@ -151,27 +157,27 @@ const Home = () => {
           {/* Recent Activity Feed - only for logged in users */}
           {user && (
             <div className={cn(
-              "max-w-5xl mx-auto w-full mb-6",
-              isPOSMode && "mb-3"
+              "max-w-5xl mx-auto w-full mb-8",
+              isPOSMode && "mb-4"
             )}>
               <RecentActivityFeed limit={8} compact={isPOSMode} />
             </div>
           )}
 
           {/* Option Cards */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 max-w-5xl mx-auto w-full mb-6 items-stretch">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-5xl mx-auto w-full mb-8 items-stretch">
             {/* Individual Configuration Card (White) */}
             <div
               onClick={() => navigate("/calculator")}
-              className="group relative bg-card rounded-2xl border border-border p-6 cursor-pointer transition-all duration-300 hover:shadow-xl hover:border-primary/20 animate-fade-in min-h-[280px] flex flex-col"
+              className="group relative bg-card rounded-2xl border-0 p-7 cursor-pointer transition-all duration-300 shadow-lg hover:shadow-xl animate-fade-in min-h-[300px] flex flex-col"
             >
-              {/* Icon in gray circle */}
-              <div className="w-14 h-14 bg-muted rounded-xl flex items-center justify-center mb-6">
-                <Key className="w-7 h-7 text-muted-foreground" />
+              {/* Icon in colored box */}
+              <div className="w-16 h-16 bg-muted rounded-xl flex items-center justify-center mb-6">
+                <Key className="w-8 h-8 text-muted-foreground" />
               </div>
 
               {/* Decorative SVG - top right */}
-              <div className="absolute top-8 right-8 opacity-20">
+              <div className="absolute top-8 right-8 opacity-15">
                 <svg width="140" height="60" viewBox="0 0 140 60" fill="none">
                   <circle cx="30" cy="30" r="20" stroke="currentColor" strokeWidth="1.5" className="text-muted-foreground" />
                   <line x1="50" y1="30" x2="90" y2="30" stroke="currentColor" strokeWidth="1.5" className="text-muted-foreground" />
@@ -188,17 +194,17 @@ const Home = () => {
                 </p>
 
                 {/* Bullet Points */}
-                <ul className="space-y-2 mb-6 flex-1">
-                  <li className="flex items-center gap-2 text-sm text-foreground">
-                    <span className="w-1.5 h-1.5 bg-primary rounded-full" />
+                <ul className="space-y-2.5 mb-6 flex-1">
+                  <li className="flex items-center gap-2.5 text-sm text-foreground">
+                    <span className="w-2 h-2 bg-primary rounded-full" />
                     Freie Hardware-Wahl
                   </li>
-                  <li className="flex items-center gap-2 text-sm text-foreground">
-                    <span className="w-1.5 h-1.5 bg-primary rounded-full" />
+                  <li className="flex items-center gap-2.5 text-sm text-foreground">
+                    <span className="w-2 h-2 bg-primary rounded-full" />
                     Detaillierte Tarif-Optionen
                   </li>
-                  <li className="flex items-center gap-2 text-sm text-foreground">
-                    <span className="w-1.5 h-1.5 bg-primary rounded-full" />
+                  <li className="flex items-center gap-2.5 text-sm text-foreground">
+                    <span className="w-2 h-2 bg-primary rounded-full" />
                     Manuelle Rabattierung
                   </li>
                 </ul>
@@ -213,11 +219,11 @@ const Home = () => {
             {/* Bundles Card (Dark) */}
             <div
               onClick={() => navigate("/bundles")}
-              className="group relative bg-panel-dark rounded-2xl p-6 cursor-pointer transition-all duration-300 hover:shadow-xl animate-fade-in overflow-hidden min-h-[280px] flex flex-col"
+              className="group relative bg-panel-dark rounded-2xl p-7 cursor-pointer transition-all duration-300 shadow-lg hover:shadow-xl animate-fade-in overflow-hidden min-h-[300px] flex flex-col"
             >
               {/* NEU Badge */}
               <div className="absolute top-6 right-6">
-                <span className="bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full">
+                <span className="bg-primary text-primary-foreground text-xs font-bold px-3 py-1.5 rounded-full">
                   NEU
                 </span>
               </div>
@@ -234,8 +240,8 @@ const Home = () => {
               </div>
 
               {/* Icon */}
-              <div className="w-14 h-14 bg-panel-dark-foreground/10 rounded-xl flex items-center justify-center mb-6">
-                <svg className="w-7 h-7 text-panel-dark-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <div className="w-16 h-16 bg-panel-dark-foreground/10 rounded-xl flex items-center justify-center mb-6">
+                <svg className="w-8 h-8 text-panel-dark-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <rect x="3" y="3" width="7" height="7" rx="1" />
                   <rect x="14" y="3" width="7" height="7" rx="1" />
                   <rect x="3" y="14" width="7" height="7" rx="1" />
@@ -255,24 +261,24 @@ const Home = () => {
                 <div className="flex gap-3 mb-6 flex-1">
                   <button 
                     onClick={(e) => { e.stopPropagation(); navigate("/bundles"); }}
-                    className="flex flex-col items-center justify-center gap-2 px-5 py-3 bg-panel-dark-foreground/5 rounded-xl border border-panel-dark-foreground/20 hover:bg-panel-dark-foreground/10 transition-colors min-w-[90px]"
+                    className="flex flex-col items-center justify-center gap-2 px-5 py-3.5 bg-panel-dark-foreground/5 rounded-xl border border-panel-dark-foreground/20 hover:bg-panel-dark-foreground/10 transition-colors min-w-[95px]"
                   >
                     <Zap className="w-5 h-5 text-panel-dark-foreground" />
-                    <span className="text-xs font-semibold text-panel-dark-foreground tracking-wide">START-UP</span>
+                    <span className="text-xs font-bold text-panel-dark-foreground tracking-wide">START-UP</span>
                   </button>
                   <button 
                     onClick={(e) => { e.stopPropagation(); navigate("/bundles"); }}
-                    className="flex flex-col items-center justify-center gap-2 px-5 py-3 bg-panel-dark-foreground/5 rounded-xl border border-panel-dark-foreground/20 hover:bg-panel-dark-foreground/10 transition-colors min-w-[90px]"
+                    className="flex flex-col items-center justify-center gap-2 px-5 py-3.5 bg-panel-dark-foreground/5 rounded-xl border border-panel-dark-foreground/20 hover:bg-panel-dark-foreground/10 transition-colors min-w-[95px]"
                   >
                     <CheckCircle className="w-5 h-5 text-panel-dark-foreground" />
-                    <span className="text-xs font-semibold text-panel-dark-foreground tracking-wide">PROFI</span>
+                    <span className="text-xs font-bold text-panel-dark-foreground tracking-wide">PROFI</span>
                   </button>
                   <button 
                     onClick={(e) => { e.stopPropagation(); navigate("/bundles"); }}
-                    className="flex flex-col items-center justify-center gap-2 px-5 py-3 bg-panel-dark-foreground/5 rounded-xl border border-panel-dark-foreground/20 hover:bg-panel-dark-foreground/10 transition-colors min-w-[90px]"
+                    className="flex flex-col items-center justify-center gap-2 px-5 py-3.5 bg-panel-dark-foreground/5 rounded-xl border border-panel-dark-foreground/20 hover:bg-panel-dark-foreground/10 transition-colors min-w-[95px]"
                   >
                     <TrendingUp className="w-5 h-5 text-panel-dark-foreground" />
-                    <span className="text-xs font-semibold text-panel-dark-foreground tracking-wide">EXECUTIVE</span>
+                    <span className="text-xs font-bold text-panel-dark-foreground tracking-wide">EXECUTIVE</span>
                   </button>
                 </div>
 
@@ -286,23 +292,23 @@ const Home = () => {
         </main>
 
         {/* System Status Footer */}
-        <footer className="border-t border-border py-4 shrink-0">
+        <footer className="border-t border-border py-5 shrink-0 bg-muted/30">
           <div className="container mx-auto px-4 lg:px-6">
             <div className="text-center">
               <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-4">
                 Aktueller Systemstatus
               </p>
-              <div className="flex flex-wrap items-center justify-center gap-4 lg:gap-8 text-sm">
+              <div className="flex flex-wrap items-center justify-center gap-6 lg:gap-10 text-sm">
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 bg-success rounded-full" />
+                  <span className="w-2.5 h-2.5 bg-success rounded-full animate-pulse-dot" />
                   <span className="text-muted-foreground">API Verbunden</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 bg-success rounded-full" />
+                  <span className="w-2.5 h-2.5 bg-success rounded-full animate-pulse-dot" />
                   <span className="text-muted-foreground">Katalog: v24.10.1</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 bg-success rounded-full" />
+                  <span className="w-2.5 h-2.5 bg-success rounded-full animate-pulse-dot" />
                   <span className="text-muted-foreground">AI Engine: Ready</span>
                 </div>
               </div>

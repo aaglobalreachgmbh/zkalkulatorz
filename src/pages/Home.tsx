@@ -10,12 +10,13 @@ import { RecentActivityFeed } from "@/margenkalkulator/ui/components/RecentActiv
 import { RevenueForecastWidget } from "@/margenkalkulator/ui/components/RevenueForecastWidget";
 import { FollowupReminders } from "@/margenkalkulator/ui/components/FollowupReminders";
 import { WelcomeWidget } from "@/margenkalkulator/ui/components/WelcomeWidget";
-import { DailyDeltaWidget } from "@/margenkalkulator/ui/components/DailyDeltaWidget";
+import { TodayTasksWidget } from "@/margenkalkulator/ui/components/TodayTasksWidget";
 import { AverageMarginWidget } from "@/margenkalkulator/ui/components/AverageMarginWidget";
 import { ProvisionSourcesWidget } from "@/margenkalkulator/ui/components/ProvisionSourcesWidget";
 import { DiscountUsageWidget } from "@/margenkalkulator/ui/components/DiscountUsageWidget";
 import { CriticalOffersWidget } from "@/margenkalkulator/ui/components/CriticalOffersWidget";
 import { cn } from "@/lib/utils";
+
 const Home = () => {
   const navigate = useNavigate();
   const { user, isLoading } = useAuth();
@@ -49,6 +50,10 @@ const Home = () => {
         
         {/* Main Content */}
         <main className="flex-1 flex flex-col justify-center px-4 lg:px-6 py-6">
+          
+          {/* PRIORITY 1: Welcome Widget - Prominently at the very top for new users */}
+          {user && <WelcomeWidget />}
+
           {/* Headline */}
           <div className="text-center mb-6 animate-fade-in">
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
@@ -110,11 +115,8 @@ const Home = () => {
             </button>
           </div>
 
-          {/* Daily Delta Widget - Taktgeber für den Arbeitstag */}
-          {user && <DailyDeltaWidget />}
-
-          {/* Welcome Widget for new users */}
-          {user && <WelcomeWidget />}
+          {/* Today Tasks Widget - Replaces DailyDeltaWidget with real tasks */}
+          {user && <TodayTasksWidget />}
 
           {/* Dashboard Widgets */}
           <DashboardWidgets />

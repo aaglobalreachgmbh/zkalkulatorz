@@ -1,13 +1,33 @@
 // ============================================
 // SeatLimitGate Component - Phase 3C.2
 // Enforce seat limits for non-admin users
+// PHASE 4: Safe fallback - always render children on error
 // ============================================
 
 import { ReactNode } from "react";
-import { useIdentity } from "@/contexts/IdentityContext";
-import { useLicense } from "@/hooks/useLicense";
 import { AlertCircle, Users, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+// Safe hook imports with error handling
+let useIdentity: () => { identity: any; canAccessAdmin: boolean };
+let useLicense: () => { seatLimitExceeded: boolean; currentUserHasSeat: boolean; seatUsage: any; license: any };
+
+try {
+  useIdentity = require("@/contexts/IdentityContext").useIdentity;
+} catch {
+  useIdentity = () => ({ identity: null, canAccessAdmin: true });
+}
+
+try {
+  useLicense = require("@/hooks/useLicense").useLicense;
+} catch {
+  useLicense = () => ({ 
+    seatLimitExceeded: false, 
+    currentUserHasSeat: true, 
+    seatUsage: { used: 0, limit: 999, available: 999 },
+    license: { plan: 'enterprise' }
+  });
+}
 
 interface SeatLimitGateProps {
   /** Content to render when user has access */
@@ -17,36 +37,35 @@ interface SeatLimitGateProps {
 /**
  * Blocks access for non-admin users when seat limit is exceeded.
  * Admins can always access (to resolve the issue).
- * 
- * @example
- * <SeatLimitGate>
- *   <ProtectedRoute>
- *     <AppContent />
- *   </ProtectedRoute>
- * </SeatLimitGate>
+ * PHASE 4: On any error, always render children to prevent blocking
  */
 export function SeatLimitGate({ children }: SeatLimitGateProps) {
-  const { identity, canAccessAdmin } = useIdentity();
-  const { seatLimitExceeded, currentUserHasSeat, seatUsage, license } = useLicense();
-  
-  // Admins always have access (to resolve issues)
-  if (canAccessAdmin) {
+  try {
+    const { canAccessAdmin } = useIdentity();
+    const { seatLimitExceeded, currentUserHasSeat, seatUsage, license } = useLicense();
+    
+    // Admins always have access (to resolve issues)
+    if (canAccessAdmin) {
+      return <>{children}</>;
+    }
+    
+    // User has a seat assigned - allow access
+    if (currentUserHasSeat) {
+      return <>{children}</>;
+    }
+    
+    // Seat limit exceeded and user doesn't have a seat - block access
+    if (seatLimitExceeded || seatUsage.available === 0) {
+      return <SeatLimitBlockedScreen seatUsage={seatUsage} plan={license.plan} />;
+    }
+    
+    // Seats available but user doesn't have one - this is a warning state
+    return <>{children}</>;
+  } catch (error) {
+    // PHASE 4: On any error, render children to prevent blocking
+    console.warn("[SeatLimitGate] Error checking seat access, allowing access:", error);
     return <>{children}</>;
   }
-  
-  // User has a seat assigned - allow access
-  if (currentUserHasSeat) {
-    return <>{children}</>;
-  }
-  
-  // Seat limit exceeded and user doesn't have a seat - block access
-  if (seatLimitExceeded || seatUsage.available === 0) {
-    return <SeatLimitBlockedScreen seatUsage={seatUsage} plan={license.plan} />;
-  }
-  
-  // Seats available but user doesn't have one - this is a warning state
-  // For now, allow access but could require seat assignment in stricter mode
-  return <>{children}</>;
 }
 
 /**

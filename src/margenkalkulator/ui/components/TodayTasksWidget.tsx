@@ -1,6 +1,6 @@
 // ============================================
-// Today Tasks Widget - Sales Cockpit Style
-// Elegantes Karten-Layout mit farbigen Badges
+// Today Tasks Widget - Clean, Modern Design
+// Kompakte Aufgabenliste mit klarer Hierarchie
 // ============================================
 
 import { useMemo } from "react";
@@ -8,14 +8,12 @@ import { useNavigate } from "react-router-dom";
 import { 
   CheckCircle2, 
   Clock, 
-  AlertTriangle, 
+  AlertCircle, 
   Phone,
   FileText,
   ChevronRight,
-  ListTodo,
-  ArrowRight
+  CalendarClock
 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useVVLCounts, useCustomerContracts } from "@/margenkalkulator/hooks/useCustomerContracts";
 import { useCloudOffers } from "@/margenkalkulator/hooks/useCloudOffers";
@@ -27,7 +25,6 @@ interface TaskItem {
   title: string;
   subtitle?: string;
   urgency: "critical" | "soon" | "normal";
-  dueDate?: string;
   dueLabel?: string;
   href: string;
   icon: React.ElementType;
@@ -62,8 +59,7 @@ export function TodayTasksWidget() {
           title: contract.tarif_name || "Vertrag",
           subtitle: contract.handy_nr || undefined,
           urgency: daysUntil < 7 ? "critical" : daysUntil < 14 ? "soon" : "normal",
-          dueDate: `${daysUntil} Tage`,
-          dueLabel: daysUntil === 0 ? "Heute" : daysUntil === 1 ? "Morgen" : `In ${daysUntil} Tagen`,
+          dueLabel: daysUntil === 0 ? "Heute" : daysUntil === 1 ? "Morgen" : `${daysUntil} Tage`,
           href: `/contracts?highlight=${contract.id}`,
           icon: Phone,
         });
@@ -86,10 +82,9 @@ export function TodayTasksWidget() {
             id: `followup-${offer.id}`,
             type: "followup",
             title: offer.name,
-            subtitle: "Kunde kontaktieren",
+            subtitle: "Nachfassen empfohlen",
             urgency: daysSinceCreated > 7 ? "critical" : "normal",
-            dueDate: `${daysSinceCreated}d`,
-            dueLabel: `Seit ${daysSinceCreated} Tagen offen`,
+            dueLabel: `${daysSinceCreated}d offen`,
             href: `/offers?id=${offer.id}`,
             icon: FileText,
           });
@@ -101,102 +96,56 @@ export function TodayTasksWidget() {
     return taskList.sort((a, b) => {
       const urgencyOrder = { critical: 0, soon: 1, normal: 2 };
       return urgencyOrder[a.urgency] - urgencyOrder[b.urgency];
-    }).slice(0, 5);
+    }).slice(0, 4);
   }, [contracts, offers]);
 
   const totalOpen = tasks.length;
   const criticalCount = tasks.filter(t => t.urgency === "critical").length;
 
-  // Badge styling based on type
-  const getBadgeStyles = (type: TaskItem["type"], urgency: TaskItem["urgency"]) => {
-    if (urgency === "critical") {
-      return "bg-destructive/10 text-destructive border-destructive/20";
-    }
-    switch (type) {
-      case "vvl":
-        return "bg-amber-500/10 text-amber-600 border-amber-500/20";
-      case "followup":
-        return "bg-blue-500/10 text-blue-600 border-blue-500/20";
-      default:
-        return "bg-muted text-muted-foreground border-border";
-    }
-  };
-
-  const getBadgeLabel = (type: TaskItem["type"], urgency: TaskItem["urgency"]) => {
-    if (urgency === "critical") return "KRITISCH";
-    switch (type) {
-      case "vvl":
-        return "VVL";
-      case "followup":
-        return "FOLLOW-UP";
-      default:
-        return "AUFGABE";
-    }
-  };
-
   // Don't render if no tasks
   if (totalOpen === 0) {
     return (
-      <Card className="relative overflow-hidden border-0 bg-success/5 max-w-5xl mx-auto w-full mb-6 animate-fade-in">
-        {/* Left Accent Border */}
-        <div className="absolute left-0 top-0 bottom-0 w-1 bg-success" />
-        
-        <CardContent className="py-5 px-6">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-success/10 rounded-xl flex items-center justify-center">
-              <CheckCircle2 className="w-6 h-6 text-success" />
+      <div className="max-w-5xl mx-auto w-full mb-6 animate-fade-in">
+        <div className="bg-success/5 border border-success/20 rounded-xl p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-success/10 rounded-lg flex items-center justify-center">
+              <CheckCircle2 className="w-5 h-5 text-success" />
             </div>
             <div>
-              <p className="font-semibold text-success text-lg">Alles erledigt!</p>
-              <p className="text-sm text-muted-foreground">
-                Keine dringenden Aufgaben für heute
+              <p className="font-medium text-foreground text-sm">Alles erledigt!</p>
+              <p className="text-xs text-muted-foreground">
+                Keine dringenden Aufgaben
               </p>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Card className="relative overflow-hidden border-0 bg-card max-w-5xl mx-auto w-full mb-6 animate-fade-in shadow-md">
-      {/* Left Accent Border */}
-      <div className={cn(
-        "absolute left-0 top-0 bottom-0 w-1.5",
-        criticalCount > 0 ? "bg-destructive" : "bg-primary"
-      )} />
-      
-      <CardContent className="py-5 px-6">
+    <div className="max-w-5xl mx-auto w-full mb-6 animate-fade-in">
+      <div className="bg-card border border-border/50 rounded-2xl shadow-sm overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border/50">
+          <div className="flex items-center gap-3">
             <div className={cn(
-              "w-12 h-12 rounded-xl flex items-center justify-center",
-              criticalCount > 0 ? "bg-destructive/10" : "bg-primary/10"
+              "w-9 h-9 rounded-lg flex items-center justify-center",
+              criticalCount > 0 ? "bg-destructive/10" : "bg-amber-500/10"
             )}>
-              <ListTodo className={cn(
-                "w-6 h-6",
-                criticalCount > 0 ? "text-destructive" : "text-primary"
+              <CalendarClock className={cn(
+                "w-5 h-5",
+                criticalCount > 0 ? "text-destructive" : "text-amber-500"
               )} />
             </div>
             <div>
-              <div className="flex items-center gap-3 mb-1">
-                <h3 className="text-lg font-bold text-foreground">
-                  Heute zu erledigen
-                </h3>
-                <span className={cn(
-                  "text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded border",
-                  criticalCount > 0 
-                    ? "bg-destructive/10 text-destructive border-destructive/20" 
-                    : "bg-muted text-muted-foreground border-border"
-                )}>
-                  {totalOpen} offen
-                </span>
-              </div>
-              <p className="text-sm text-muted-foreground">
+              <h3 className="font-semibold text-foreground text-sm">
+                Anstehende Aufgaben
+              </h3>
+              <p className="text-xs text-muted-foreground">
                 {criticalCount > 0 
-                  ? `${criticalCount} kritische Aufgabe${criticalCount > 1 ? "n" : ""}`
-                  : "Anstehende Aufgaben"
+                  ? `${criticalCount} kritisch · ${totalOpen} gesamt`
+                  : `${totalOpen} offen`
                 }
               </p>
             </div>
@@ -205,39 +154,42 @@ export function TodayTasksWidget() {
             variant="ghost"
             size="sm"
             onClick={() => navigate("/contracts")}
-            className="text-muted-foreground hover:text-foreground gap-1"
+            className="text-xs text-muted-foreground hover:text-foreground h-8 px-2"
           >
-            Alle anzeigen
-            <ChevronRight className="w-4 h-4" />
+            Alle
+            <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
           </Button>
         </div>
 
-        {/* Task Cards */}
-        <div className="space-y-3">
+        {/* Task List */}
+        <div className="divide-y divide-border/30">
           {tasks.map((task) => (
             <button
               key={task.id}
               onClick={() => navigate(task.href)}
-              className={cn(
-                "w-full flex items-start gap-4 p-4 rounded-xl border-2 transition-all text-left group",
-                task.urgency === "critical"
-                  ? "bg-destructive/5 border-destructive/20 hover:border-destructive/40 hover:shadow-md"
-                  : task.urgency === "soon"
-                    ? "bg-amber-500/5 border-amber-500/20 hover:border-amber-500/40 hover:shadow-md"
-                    : "bg-muted/30 border-border hover:border-primary/40 hover:shadow-md"
-              )}
+              className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-muted/30 transition-colors text-left group"
             >
+              {/* Status Dot */}
+              <div className={cn(
+                "w-2 h-2 rounded-full flex-shrink-0",
+                task.urgency === "critical"
+                  ? "bg-destructive"
+                  : task.urgency === "soon"
+                    ? "bg-amber-500"
+                    : "bg-muted-foreground/50"
+              )} />
+
               {/* Icon */}
               <div className={cn(
-                "w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0",
+                "w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0",
                 task.urgency === "critical"
                   ? "bg-destructive/10"
                   : task.urgency === "soon"
                     ? "bg-amber-500/10"
-                    : "bg-muted"
+                    : "bg-muted/50"
               )}>
                 <task.icon className={cn(
-                  "w-5 h-5",
+                  "w-4 h-4",
                   task.urgency === "critical"
                     ? "text-destructive"
                     : task.urgency === "soon"
@@ -248,51 +200,42 @@ export function TodayTasksWidget() {
 
               {/* Content */}
               <div className="flex-1 min-w-0">
-                {/* Badge & Time Row */}
-                <div className="flex items-center justify-between mb-2">
-                  <span className={cn(
-                    "text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded border",
-                    getBadgeStyles(task.type, task.urgency)
-                  )}>
-                    {getBadgeLabel(task.type, task.urgency)}
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-sm text-foreground truncate">
+                    {task.title}
                   </span>
-                  <span className={cn(
-                    "text-xs font-medium flex items-center gap-1",
-                    task.urgency === "critical" 
-                      ? "text-destructive" 
-                      : task.urgency === "soon"
-                        ? "text-amber-600"
-                        : "text-muted-foreground"
-                  )}>
-                    <Clock className="w-3 h-3" />
-                    {task.dueLabel}
-                  </span>
-                </div>
-
-                {/* Title */}
-                <h4 className="font-semibold text-foreground mb-1 flex items-center gap-2">
-                  {task.title}
                   {task.urgency === "critical" && (
-                    <AlertTriangle className="w-4 h-4 text-destructive flex-shrink-0" />
+                    <AlertCircle className="w-3.5 h-3.5 text-destructive flex-shrink-0" />
                   )}
-                </h4>
-
-                {/* Subtitle */}
+                </div>
                 {task.subtitle && (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs text-muted-foreground truncate">
                     {task.subtitle}
                   </p>
                 )}
               </div>
 
-              {/* Arrow */}
-              <div className="flex items-center self-center">
-                <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all" />
+              {/* Due Label */}
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                <Clock className="w-3 h-3 text-muted-foreground" />
+                <span className={cn(
+                  "text-xs font-medium",
+                  task.urgency === "critical" 
+                    ? "text-destructive" 
+                    : task.urgency === "soon"
+                      ? "text-amber-600"
+                      : "text-muted-foreground"
+                )}>
+                  {task.dueLabel}
+                </span>
               </div>
+
+              {/* Arrow */}
+              <ChevronRight className="w-4 h-4 text-muted-foreground/50 group-hover:text-foreground/70 transition-colors flex-shrink-0" />
             </button>
           ))}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

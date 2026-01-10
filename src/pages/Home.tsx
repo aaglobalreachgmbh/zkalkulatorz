@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Zap, CheckCircle, TrendingUp, Key, UserPlus, Search, FileText, Bell, LogIn, LayoutGrid } from "lucide-react";
+import { ArrowRight, Zap, CheckCircle, TrendingUp, Key, UserPlus, Search, FileText, Bell, LogIn } from "lucide-react";
 import { MainLayout } from "@/components/MainLayout";
 import { useVVLCounts } from "@/margenkalkulator/hooks/useCustomerContracts";
 import { useAuth } from "@/hooks/useAuth";
@@ -49,69 +49,69 @@ const Home = () => {
         )}
         
         {/* Main Content */}
-        <main className="flex-1 flex flex-col justify-center px-4 lg:px-6 py-8">
+        <main className="flex-1 flex flex-col justify-center px-4 lg:px-6 py-6">
           
           {/* PRIORITY 1: Welcome Widget - Prominently at the very top for new users */}
           {user && <WelcomeWidget />}
 
           {/* Headline */}
-          <div className="text-center mb-8 animate-fade-in">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
+          <div className="text-center mb-6 animate-fade-in">
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
               Wie möchten Sie{" "}
-              <span className="text-primary italic">kalkulieren</span>?
+              <span className="text-primary">kalkulieren</span>?
             </h2>
             <p className="text-muted-foreground text-sm max-w-xl mx-auto">
               Wählen Sie zwischen der detaillierten Einzelkonfiguration oder unseren
-              optimierten Best-Practice Lösungen für Geschäftskunden.
+              optimierten Best-Practice Lösungen.
             </p>
           </div>
 
-          {/* Quickstart Icons - Enhanced */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-3xl mx-auto mb-10 animate-fade-in">
+          {/* Quickstart Icons */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 max-w-2xl mx-auto mb-6 animate-fade-in">
             <button
               onClick={() => navigate("/customers?action=new")}
-              className="group flex flex-col items-center gap-3 p-6 bg-card border-0 rounded-2xl shadow-md hover:shadow-lg transition-all duration-200"
+              className="group flex flex-col items-center gap-2.5 p-4 bg-card border border-border/50 rounded-xl hover:border-primary/30 hover:shadow-sm transition-all"
             >
-              <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center group-hover:bg-primary/15 transition-colors">
-                <UserPlus className="w-7 h-7 text-primary" />
+              <div className="w-11 h-11 bg-primary/8 rounded-lg flex items-center justify-center group-hover:bg-primary/12 transition-colors">
+                <UserPlus className="w-5 h-5 text-primary" />
               </div>
-              <span className="text-sm font-semibold text-foreground">Neuer Kunde</span>
+              <span className="text-xs font-medium text-foreground">Neuer Kunde</span>
             </button>
 
             <button
               onClick={() => navigate("/customers")}
-              className="group flex flex-col items-center gap-3 p-6 bg-card border-0 rounded-2xl shadow-md hover:shadow-lg transition-all duration-200"
+              className="group flex flex-col items-center gap-2.5 p-4 bg-card border border-border/50 rounded-xl hover:border-primary/30 hover:shadow-sm transition-all"
             >
-              <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center group-hover:bg-primary/15 transition-colors">
-                <Search className="w-7 h-7 text-primary" />
+              <div className="w-11 h-11 bg-primary/8 rounded-lg flex items-center justify-center group-hover:bg-primary/12 transition-colors">
+                <Search className="w-5 h-5 text-primary" />
               </div>
-              <span className="text-sm font-semibold text-foreground">Kundensuche</span>
+              <span className="text-xs font-medium text-foreground">Kundensuche</span>
             </button>
 
             <button
               onClick={() => navigate("/calculator")}
-              className="group flex flex-col items-center gap-3 p-6 bg-card border-0 rounded-2xl shadow-md hover:shadow-lg transition-all duration-200"
+              className="group flex flex-col items-center gap-2.5 p-4 bg-card border border-border/50 rounded-xl hover:border-primary/30 hover:shadow-sm transition-all"
             >
-              <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center group-hover:bg-primary/15 transition-colors">
-                <FileText className="w-7 h-7 text-primary" />
+              <div className="w-11 h-11 bg-primary/8 rounded-lg flex items-center justify-center group-hover:bg-primary/12 transition-colors">
+                <FileText className="w-5 h-5 text-primary" />
               </div>
-              <span className="text-sm font-semibold text-foreground">Neues Angebot</span>
+              <span className="text-xs font-medium text-foreground">Neues Angebot</span>
             </button>
 
             <button
               onClick={() => navigate("/contracts")}
-              className="group relative flex flex-col items-center gap-3 p-6 bg-card border-0 rounded-2xl shadow-md hover:shadow-lg transition-all duration-200"
+              className="group relative flex flex-col items-center gap-2.5 p-4 bg-card border border-border/50 rounded-xl hover:border-amber-500/30 hover:shadow-sm transition-all"
             >
-              <div className="relative w-14 h-14 bg-amber-500/10 rounded-xl flex items-center justify-center group-hover:bg-amber-500/15 transition-colors">
-                <Bell className="w-7 h-7 text-amber-500" />
+              <div className="relative w-11 h-11 bg-amber-500/8 rounded-lg flex items-center justify-center group-hover:bg-amber-500/12 transition-colors">
+                <Bell className="w-5 h-5 text-amber-500" />
                 {/* VVL Badge */}
                 {urgentVVLCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-white text-xs font-bold rounded-full flex items-center justify-center animate-pulse">
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                     {urgentVVLCount > 9 ? '9+' : urgentVVLCount}
                   </span>
                 )}
               </div>
-              <span className="text-sm font-semibold text-foreground">VVL-Liste</span>
+              <span className="text-xs font-medium text-foreground">VVL-Liste</span>
             </button>
           </div>
 
@@ -124,17 +124,14 @@ const Home = () => {
           {/* Margen-Analytics Widgets - only for logged in users */}
           {user && (
             <section className={cn(
-              "max-w-5xl mx-auto w-full mb-8",
+              "max-w-5xl mx-auto w-full mb-6",
               isPOSMode && "mb-4"
             )}>
-              {/* Section Header */}
-              <div className="flex items-center gap-2 mb-4">
-                <LayoutGrid className="w-4 h-4 text-primary" />
-                <span className="text-xs font-bold uppercase tracking-wider text-primary">
-                  Margen-Analytics
-                </span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Section Label */}
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3 px-1">
+                Margen-Analytics
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 <AverageMarginWidget />
                 <ProvisionSourcesWidget />
                 <DiscountUsageWidget />
@@ -146,7 +143,7 @@ const Home = () => {
           {/* Revenue Forecast & Followup Reminders - only for logged in users */}
           {user && (
             <div className={cn(
-              "grid grid-cols-1 lg:grid-cols-2 gap-5 max-w-5xl mx-auto mb-8 w-full",
+              "grid grid-cols-1 lg:grid-cols-2 gap-4 max-w-5xl mx-auto mb-6 w-full",
               isPOSMode && "gap-3 mb-4"
             )}>
               <RevenueForecastWidget />
@@ -157,7 +154,7 @@ const Home = () => {
           {/* Recent Activity Feed - only for logged in users */}
           {user && (
             <div className={cn(
-              "max-w-5xl mx-auto w-full mb-8",
+              "max-w-5xl mx-auto w-full mb-6",
               isPOSMode && "mb-4"
             )}>
               <RecentActivityFeed limit={8} compact={isPOSMode} />
@@ -165,7 +162,7 @@ const Home = () => {
           )}
 
           {/* Option Cards */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-5xl mx-auto w-full mb-8 items-stretch">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 max-w-5xl mx-auto w-full mb-6 items-stretch">
             {/* Individual Configuration Card (White) */}
             <div
               onClick={() => navigate("/calculator")}

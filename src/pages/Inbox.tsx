@@ -80,7 +80,7 @@ function formatEmailDate(dateStr: string): string {
 export default function InboxPage() {
   const { user } = useAuth();
   const { identity } = useIdentity();
-  const { accounts, isLoading: accountsLoading, deleteAccount } = useEmailAccounts();
+  const { accounts, isLoading: accountsLoading, disconnect } = useEmailAccounts();
   const { emails, isLoading: emailsLoading, refetch: refetchEmails } = useSyncedEmails();
   const { supervisedEmployeeIds } = useEmployeeAssignments();
   
@@ -206,7 +206,7 @@ export default function InboxPage() {
   // Disconnect account
   const handleDisconnect = async (accountId: string) => {
     try {
-      await deleteAccount(accountId);
+      await disconnect(accountId);
       toast.success("Konto getrennt");
     } catch (error) {
       toast.error("Trennen fehlgeschlagen");

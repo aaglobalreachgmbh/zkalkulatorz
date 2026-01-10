@@ -60,6 +60,7 @@ const DistributionDashboard = lazy(() => import("./pages/DistributionDashboard")
 const TenantAdmin = lazy(() => import("./pages/TenantAdmin"));
 const BrandingSettings = lazy(() => import("./pages/BrandingSettings"));
 const Inbox = lazy(() => import("./pages/Inbox"));
+const Calendar = lazy(() => import("./pages/Calendar"));
 
 // Enhanced loading fallback with timeout and retry
 const PageLoader = () => {
@@ -609,6 +610,16 @@ const App = () => (
                       element={
                         <ProtectedRoute>
                           <Inbox />
+                        </ProtectedRoute>
+                      }
+                    />
+                    
+                    {/* Calendar */}
+                    <Route
+                      path="/calendar"
+                      element={
+                        <ProtectedRoute>
+                          <Calendar />
                         </ProtectedRoute>
                       }
                     />

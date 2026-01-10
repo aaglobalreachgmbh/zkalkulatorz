@@ -67,6 +67,7 @@ const salesItems = [
   { title: "Angebote", url: "/offers", icon: FileText },
   { title: "Kunden", url: "/customers", icon: Building2 },
   { title: "Verträge", url: "/contracts", icon: ClipboardList },
+  { title: "Kalender", url: "/calendar", icon: LayoutDashboard },
   { title: "Bundles", url: "/bundles", icon: Package },
 ];
 

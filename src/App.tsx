@@ -66,6 +66,8 @@ const AdminNews = lazy(() => import("./pages/AdminNews"));
 const SuperAdmin = lazy(() => import("./pages/SuperAdmin"));
 const AdminPermissions = lazy(() => import("./pages/AdminPermissions"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const TimeTracking = lazy(() => import("./pages/TimeTracking"));
+const Provisions = lazy(() => import("./pages/Provisions"));
 
 // Enhanced loading fallback with timeout and retry
 const PageLoader = () => {
@@ -501,6 +503,24 @@ const App = () => (
                       element={
                         <ProtectedRoute>
                           <DistributionDashboard />
+                        </ProtectedRoute>
+                      }
+                    />
+                    {/* Time Tracking */}
+                    <Route
+                      path="/time-tracking"
+                      element={
+                        <ProtectedRoute>
+                          <TimeTracking />
+                        </ProtectedRoute>
+                      }
+                    />
+                    {/* Provisions */}
+                    <Route
+                      path="/provisions"
+                      element={
+                        <ProtectedRoute>
+                          <Provisions />
                         </ProtectedRoute>
                       }
                     />

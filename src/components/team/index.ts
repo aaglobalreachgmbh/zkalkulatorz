@@ -9,3 +9,6 @@ export { TeamKanbanBoard } from "./TeamKanbanBoard";
 export { TeamActivityTimeline } from "./TeamActivityTimeline";
 export { MemberPermissionsSheet } from "./MemberPermissionsSheet";
 export { SortableTeamMemberCard } from "./SortableTeamMemberCard";
+export { VacationCalendar } from "./VacationCalendar";
+export { VacationRequestDialog } from "./VacationRequestDialog";
+export { VacationApprovalQueue } from "./VacationApprovalQueue";

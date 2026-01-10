@@ -181,7 +181,10 @@ export function useOnboardingProgress() {
   // Complete step mutation
   const completeStepMutation = useMutation({
     mutationFn: async (stepId: string) => {
-      if (!user || !progress) throw new Error("Kein Fortschritt gefunden");
+      if (!user || !progress) {
+        console.warn("[useOnboardingProgress] No progress found");
+        return null;
+      }
 
       const newCompletedSteps = [...(progress.completed_steps || [])];
       if (!newCompletedSteps.includes(stepId)) {
@@ -211,7 +214,10 @@ export function useOnboardingProgress() {
   // Skip onboarding mutation
   const skipOnboardingMutation = useMutation({
     mutationFn: async () => {
-      if (!user || !progress) throw new Error("Kein Fortschritt gefunden");
+      if (!user || !progress) {
+        console.warn("[useOnboardingProgress] No progress found");
+        return null;
+      }
 
       const { data, error } = await supabase
         .from("onboarding_progress")

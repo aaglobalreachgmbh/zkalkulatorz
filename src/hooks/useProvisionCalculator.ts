@@ -342,7 +342,9 @@ export function useProvisionCalculator(options?: {
   const saveCalculationMutation = useMutation({
     mutationFn: async () => {
       if (!targetUserId || !identity.tenantId) {
-        throw new Error("Nicht authentifiziert");
+        console.warn("[useProvisionCalculator] Not authenticated");
+        toast.error("Bitte zuerst einloggen");
+        return null;
       }
 
       const calculationData = {
@@ -380,7 +382,11 @@ export function useProvisionCalculator(options?: {
   // Approve calculation mutation
   const approveCalculationMutation = useMutation({
     mutationFn: async (calculationId: string) => {
-      if (!user) throw new Error("Nicht authentifiziert");
+      if (!user) {
+        console.warn("[useProvisionCalculator] Not authenticated");
+        toast.error("Bitte zuerst einloggen");
+        return null;
+      }
 
       const { data, error } = await supabase
         .from("provision_calculations")

@@ -131,7 +131,9 @@ export function useAbsences(options?: { startDate?: Date; endDate?: Date }) {
   const createMutation = useMutation({
     mutationFn: async (input: CreateAbsenceInput) => {
       if (!user || !identity.tenantId) {
-        throw new Error("Nicht authentifiziert");
+        console.warn("[useAbsences] Not authenticated");
+        toast.error("Bitte zuerst einloggen");
+        return null;
       }
 
       const { data, error } = await supabase
@@ -168,7 +170,11 @@ export function useAbsences(options?: { startDate?: Date; endDate?: Date }) {
       absenceId: string;
       status: AbsenceStatus;
     }) => {
-      if (!user) throw new Error("Nicht authentifiziert");
+      if (!user) {
+        console.warn("[useAbsences] Not authenticated");
+        toast.error("Bitte zuerst einloggen");
+        return null;
+      }
 
       const updateData: Record<string, unknown> = {
         status: input.status,

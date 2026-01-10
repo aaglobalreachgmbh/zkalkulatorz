@@ -122,8 +122,16 @@ export function useCloudLicense() {
       seatLimit: number;
       validUntil: string | null;
     }>) => {
-      if (!user) throw new Error("Nicht authentifiziert");
-      if (!license) throw new Error("Keine Lizenz gefunden");
+      if (!user) {
+        console.warn("[useCloudLicense] Not authenticated");
+        toast.error("Bitte zuerst einloggen");
+        return;
+      }
+      if (!license) {
+        console.warn("[useCloudLicense] No license found");
+        toast.error("Keine Lizenz gefunden");
+        return;
+      }
 
       const payload: Record<string, unknown> = {
         updated_at: new Date().toISOString(),
@@ -159,7 +167,10 @@ export function useCloudLicense() {
   // Update seat count
   const updateSeatsUsedMutation = useMutation({
     mutationFn: async (seatsUsed: number) => {
-      if (!license) throw new Error("Keine Lizenz gefunden");
+      if (!license) {
+        console.warn("[useCloudLicense] No license found");
+        return;
+      }
 
       const { error } = await supabase
         .from("licenses")

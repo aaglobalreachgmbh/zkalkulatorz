@@ -186,7 +186,9 @@ export function useTimeTracking(options?: {
   const clockInMutation = useMutation({
     mutationFn: async (input?: { location?: string; notes?: string }) => {
       if (!user || !identity.tenantId) {
-        throw new Error("Nicht authentifiziert");
+        console.warn("[useTimeTracking] Not authenticated");
+        toast.error("Bitte zuerst einloggen");
+        return null;
       }
 
       // Check if already clocked in
@@ -224,7 +226,9 @@ export function useTimeTracking(options?: {
   const clockOutMutation = useMutation({
     mutationFn: async (input?: { breakMinutes?: number; notes?: string }) => {
       if (!activeEntry) {
-        throw new Error("Kein aktiver Zeiteintrag gefunden");
+        console.warn("[useTimeTracking] No active entry");
+        toast.error("Kein aktiver Zeiteintrag gefunden");
+        return null;
       }
 
       const { data, error } = await supabase
@@ -257,7 +261,9 @@ export function useTimeTracking(options?: {
   const addBreakMutation = useMutation({
     mutationFn: async (minutes: number) => {
       if (!activeEntry) {
-        throw new Error("Kein aktiver Zeiteintrag gefunden");
+        console.warn("[useTimeTracking] No active entry");
+        toast.error("Kein aktiver Zeiteintrag gefunden");
+        return null;
       }
 
       const { data, error } = await supabase
@@ -291,7 +297,9 @@ export function useTimeTracking(options?: {
       reason: string;
     }) => {
       if (!user || !identity.tenantId) {
-        throw new Error("Nicht authentifiziert");
+        console.warn("[useTimeTracking] Not authenticated");
+        toast.error("Bitte zuerst einloggen");
+        return null;
       }
 
       const entry = entries.find((e) => e.id === input.timeEntryId);
@@ -331,7 +339,11 @@ export function useTimeTracking(options?: {
   // Approve entry mutation (admin)
   const approveEntryMutation = useMutation({
     mutationFn: async (entryId: string) => {
-      if (!user) throw new Error("Nicht authentifiziert");
+      if (!user) {
+        console.warn("[useTimeTracking] Not authenticated");
+        toast.error("Bitte zuerst einloggen");
+        return null;
+      }
 
       const { data, error } = await supabase
         .from("time_entries")
@@ -428,7 +440,11 @@ export function useTimeEntryCorrections() {
       approved: boolean;
       reviewNotes?: string;
     }) => {
-      if (!user) throw new Error("Nicht authentifiziert");
+      if (!user) {
+        console.warn("[useTimeEntryCorrections] Not authenticated");
+        toast.error("Bitte zuerst einloggen");
+        return null;
+      }
 
       const correction = corrections.find((c) => c.id === input.correctionId);
       if (!correction) throw new Error("Korrektur nicht gefunden");

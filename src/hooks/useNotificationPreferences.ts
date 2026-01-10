@@ -84,7 +84,11 @@ export function useNotificationPreferences() {
 
   const updatePreferencesMutation = useMutation({
     mutationFn: async (updates: Partial<Omit<NotificationPreferences, "id" | "user_id" | "tenant_id">>) => {
-      if (!user) throw new Error("Not authenticated");
+      if (!user) {
+        console.warn("[useNotificationPreferences] Not authenticated");
+        toast.error("Bitte zuerst einloggen");
+        return;
+      }
 
       // Check if preferences exist
       const { data: existing } = await supabase

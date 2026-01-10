@@ -105,8 +105,15 @@ export function useEmailAccounts() {
         },
       });
 
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (error) {
+        console.warn("[useEmailAccounts] Gmail connect error:", error);
+        toast.error("Gmail-Verbindung fehlgeschlagen");
+        return null;
+      }
+      if (data?.error) {
+        toast.error(data.error);
+        return null;
+      }
       
       return data;
     },
@@ -124,7 +131,9 @@ export function useEmailAccounts() {
   const connectIonosMutation = useMutation({
     mutationFn: async (input: ConnectIonosInput) => {
       if (!user || !identity?.tenantId) {
-        throw new Error("Nicht authentifiziert");
+        console.warn("[useEmailAccounts] Not authenticated");
+        toast.error("Bitte zuerst einloggen");
+        return null;
       }
 
       const { data, error } = await supabase.functions.invoke("ionos-connect", {
@@ -135,9 +144,15 @@ export function useEmailAccounts() {
         },
       });
 
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      
+      if (error) {
+        console.warn("[useEmailAccounts] IONOS connect error:", error);
+        toast.error("IONOS-Verbindung fehlgeschlagen");
+        return null;
+      }
+      if (data?.error) {
+        toast.error(data.error);
+        return null;
+      }
       return data;
     },
     onSuccess: () => {
@@ -177,9 +192,15 @@ export function useEmailAccounts() {
         body: { accountId },
       });
 
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      
+      if (error) {
+        console.warn("[useEmailAccounts] Sync error:", error);
+        toast.error("Synchronisierung fehlgeschlagen");
+        return null;
+      }
+      if (data?.error) {
+        toast.error(data.error);
+        return null;
+      }
       return data;
     },
     onSuccess: (data) => {

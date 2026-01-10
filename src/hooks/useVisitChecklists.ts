@@ -112,7 +112,9 @@ export function useVisitChecklists() {
   const createChecklist = useMutation({
     mutationFn: async (input: CreateChecklistInput) => {
       if (!userId || !tenantId) {
-        throw new Error("Nicht authentifiziert");
+        console.warn("[useVisitChecklists] Not authenticated");
+        toast.error("Bitte zuerst einloggen");
+        return null;
       }
 
       const { data, error } = await supabase
@@ -146,11 +148,15 @@ export function useVisitChecklists() {
   const createTemplate = useMutation({
     mutationFn: async (input: CreateChecklistInput) => {
       if (!tenantId) {
-        throw new Error("Kein Tenant verfügbar");
+        console.warn("[useVisitChecklists] No tenant available");
+        toast.error("Kein Tenant verfügbar");
+        return null;
       }
 
       if (!isAdmin && !isTenantAdmin) {
-        throw new Error("Keine Berechtigung");
+        console.warn("[useVisitChecklists] No permission");
+        toast.error("Keine Berechtigung");
+        return null;
       }
 
       const { data, error } = await supabase

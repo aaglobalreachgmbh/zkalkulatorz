@@ -65,7 +65,10 @@ export function useOfferEmails() {
   // Mutation to log a sent email
   const logEmailMutation = useMutation({
     mutationFn: async (emailData: InsertOfferEmail) => {
-      if (!user) throw new Error("Not authenticated");
+      if (!user) {
+        console.warn("[useOfferEmails] Not authenticated");
+        return null;
+      }
 
       const { data, error } = await supabase
         .from("offer_emails")

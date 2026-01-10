@@ -104,7 +104,11 @@ export function useCloudDatasets() {
   // Save dataset mutation (Admin only)
   const saveMutation = useMutation({
     mutationFn: async (dataset: CanonicalDataset) => {
-      if (!user) throw new Error("Nicht authentifiziert");
+      if (!user) {
+        console.warn("[useCloudDatasets] Not authenticated");
+        toast.error("Bitte zuerst einloggen");
+        return;
+      }
 
       const payload = {
         tenant_id: identity.tenantId,
@@ -165,7 +169,11 @@ export function useCloudDatasets() {
   // Clear dataset mutation (Admin only)
   const clearMutation = useMutation({
     mutationFn: async () => {
-      if (!user) throw new Error("Nicht authentifiziert");
+      if (!user) {
+        console.warn("[useCloudDatasets] Not authenticated");
+        toast.error("Bitte zuerst einloggen");
+        return;
+      }
 
       const { error } = await supabase
         .from("custom_datasets")

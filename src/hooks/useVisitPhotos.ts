@@ -43,7 +43,11 @@ export function useVisitPhotos() {
   // Foto hochladen
   const uploadPhoto = useMutation({
     mutationFn: async ({ visitReportId, file, caption }: UploadPhotoInput) => {
-      if (!userId) throw new Error("Nicht authentifiziert");
+      if (!userId) {
+        console.warn("[useVisitPhotos] Not authenticated");
+        toast.error("Bitte zuerst einloggen");
+        return { offline: false, id: "" };
+      }
 
       // Offline: Als Base64 speichern
       if (!isOnline) {

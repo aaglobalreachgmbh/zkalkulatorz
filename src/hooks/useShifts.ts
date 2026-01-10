@@ -238,7 +238,9 @@ export function useShifts(options?: { startDate?: Date; endDate?: Date }) {
   const createShiftMutation = useMutation({
     mutationFn: async (input: CreateShiftInput) => {
       if (!user || !identity.tenantId) {
-        throw new Error("Nicht authentifiziert");
+        console.warn("[useShifts] Not authenticated, cannot create shift");
+        toast.error("Bitte zuerst einloggen");
+        return null;
       }
 
       const { data, error } = await supabase
@@ -333,7 +335,9 @@ export function useShifts(options?: { startDate?: Date; endDate?: Date }) {
       reason?: string;
     }) => {
       if (!user || !identity.tenantId) {
-        throw new Error("Nicht authentifiziert");
+        console.warn("[useShifts] Not authenticated, cannot create swap request");
+        toast.error("Bitte zuerst einloggen");
+        return null;
       }
 
       const { data, error } = await supabase
@@ -365,7 +369,11 @@ export function useShifts(options?: { startDate?: Date; endDate?: Date }) {
   // Approve/reject swap request mutation
   const updateSwapRequestMutation = useMutation({
     mutationFn: async (input: { id: string; status: SwapRequestStatus }) => {
-      if (!user) throw new Error("Nicht authentifiziert");
+      if (!user) {
+        console.warn("[useShifts] Not authenticated, cannot update swap request");
+        toast.error("Bitte zuerst einloggen");
+        return null;
+      }
 
       const updateData: Record<string, unknown> = {
         status: input.status,

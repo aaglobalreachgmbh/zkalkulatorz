@@ -155,7 +155,9 @@ export function useMFA() {
       
       const totpFactor = factorsData.totp.find(f => f.status === "verified");
       if (!totpFactor) {
-        throw new Error("Kein verifizierter TOTP-Faktor gefunden");
+        console.warn("[useMFA] No verified TOTP factor found");
+        toast.error("Kein verifizierter TOTP-Faktor gefunden");
+        return false;
       }
       
       // Create challenge

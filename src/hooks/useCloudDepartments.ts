@@ -141,7 +141,11 @@ export function useCloudDepartments() {
       parentId?: string;
       policy?: DepartmentPolicy;
     }) => {
-      if (!user) throw new Error("Nicht authentifiziert");
+      if (!user) {
+        console.warn("[useCloudDepartments] Not authenticated");
+        toast.error("Bitte zuerst einloggen");
+        return null;
+      }
 
       const { data, error } = await supabase
         .from("departments")
@@ -183,7 +187,11 @@ export function useCloudDepartments() {
       parentId?: string | null;
       policy?: DepartmentPolicy;
     }) => {
-      if (!user) throw new Error("Nicht authentifiziert");
+      if (!user) {
+        console.warn("[useCloudDepartments] Not authenticated");
+        toast.error("Bitte zuerst einloggen");
+        return;
+      }
 
       const updates: Record<string, unknown> = {
         updated_at: new Date().toISOString(),
@@ -213,7 +221,11 @@ export function useCloudDepartments() {
   // Delete department mutation (Admin only)
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      if (!user) throw new Error("Nicht authentifiziert");
+      if (!user) {
+        console.warn("[useCloudDepartments] Not authenticated");
+        toast.error("Bitte zuerst einloggen");
+        return;
+      }
 
       // First remove all user assignments
       await supabase
@@ -247,7 +259,11 @@ export function useCloudDepartments() {
       userId: string;
       departmentId: string;
     }) => {
-      if (!user) throw new Error("Nicht authentifiziert");
+      if (!user) {
+        console.warn("[useCloudDepartments] Not authenticated");
+        toast.error("Bitte zuerst einloggen");
+        return null;
+      }
 
       // Remove existing assignment first
       await supabase
@@ -284,7 +300,11 @@ export function useCloudDepartments() {
   // Remove user from department
   const removeUserMutation = useMutation({
     mutationFn: async (userId: string) => {
-      if (!user) throw new Error("Nicht authentifiziert");
+      if (!user) {
+        console.warn("[useCloudDepartments] Not authenticated");
+        toast.error("Bitte zuerst einloggen");
+        return;
+      }
 
       const { error } = await supabase
         .from("user_department_assignments")

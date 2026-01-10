@@ -96,6 +96,7 @@ const adminItems = [
   { title: "News verwalten", url: "/admin/news", icon: Megaphone, requiresTenantAdmin: true },
   { title: "Quantity-Boni", url: "/admin/quantity-bonus", icon: Sparkles, requiresTenantAdmin: true },
   { title: "Benutzerverwaltung", url: "/admin/users", icon: UserCog, requiresAdmin: true },
+  { title: "Kundenverwaltung", url: "/admin/customers", icon: Building2, requiresAdmin: true },
   { title: "Datenmanager", url: "/data-manager", icon: HardDrive },
   { title: "Reporting", url: "/reporting", icon: BarChart3 },
 ];

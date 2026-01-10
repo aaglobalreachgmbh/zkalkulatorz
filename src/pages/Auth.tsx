@@ -175,6 +175,10 @@ export default function Auth() {
     if (!emailValid || !passwordValid || !nameValid) return;
 
     setIsLoading(true);
+    
+    // Check if email is in allowlist (skip for now - handled by trigger)
+    // Future: Add pre-registration check here
+    
     const { error } = await signUp(sanitizedEmail, signupPassword, sanitizedDisplayName || undefined);
 
     if (error) {

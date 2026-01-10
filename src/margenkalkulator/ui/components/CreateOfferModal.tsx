@@ -161,9 +161,8 @@ export function CreateOfferModal() {
         step === "quick" ? "max-w-xl" : "max-w-4xl"
       )}>
         <DialogHeader>
-          <DialogTitle className="text-xl flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-primary" />
-            Personalisiertes Angebot erstellen
+          <DialogTitle className="text-xl font-semibold">
+            Personalisiertes Angebot herunterladen
           </DialogTitle>
         </DialogHeader>
 
@@ -278,57 +277,59 @@ function QuickPersonalizationStep({
         Geben Sie hier die Daten des Kunden / der Kundin an, um das Angebot zu personalisieren.
       </p>
 
-      {/* Customer Search */}
-      <div className="relative">
-        <Label className="text-xs text-muted-foreground mb-1 block">Bestehenden Kunden suchen</Label>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Kunde suchen ..."
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              setShowCustomerSearch(true);
-            }}
-            onFocus={() => setShowCustomerSearch(true)}
-            className="pl-9"
-          />
-          
-          {showCustomerSearch && filteredCustomers.length > 0 && (
-            <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-lg max-h-48 overflow-y-auto">
-              {filteredCustomers.map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => selectCustomer(c)}
-                  className="w-full text-left px-3 py-2 hover:bg-muted transition-colors"
-                >
-                  <p className="font-medium">{c.company_name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {c.contact_name} {c.email && `• ${c.email}`}
-                  </p>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
       {/* Section: Firmenanschrift */}
       <div className="space-y-4">
-        <div className="flex items-center gap-2 border-b pb-2">
-          <Building className="w-4 h-4 text-primary" />
-          <h3 className="font-semibold">Firmenanschrift des Kunden/der Kundin</h3>
+        <div className="border-b pb-2">
+          <h3 className="font-semibold text-foreground">Firmenanschrift des Kunden/der Kundin</h3>
         </div>
 
         <div className="space-y-3">
-          <div>
+          {/* Customer Search integrated into Firmenname */}
+          <div className="relative">
             <Label className="text-xs text-primary">Firmenname</Label>
-            <Input
-              value={customer.firma}
-              onChange={(e) => setCustomer({ ...customer, firma: e.target.value })}
-              placeholder="z.B. Musterfirma GmbH"
-              className="mt-1"
-            />
+            <div className="relative mt-1">
+              <Input
+                value={searchQuery || customer.firma}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setSearchQuery(value);
+                  setCustomer({ ...customer, firma: value });
+                  setShowCustomerSearch(true);
+                }}
+                onFocus={() => {
+                  if (customer.firma) {
+                    setSearchQuery(customer.firma);
+                  }
+                  setShowCustomerSearch(true);
+                }}
+                onBlur={() => {
+                  // Delay to allow click on dropdown
+                  setTimeout(() => setShowCustomerSearch(false), 200);
+                }}
+                placeholder="z.B. allenetze.de"
+                className="border-primary/50 focus:border-primary"
+              />
+              
+              {showCustomerSearch && filteredCustomers.length > 0 && (
+                <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                  {filteredCustomers.map((c) => (
+                    <button
+                      key={c.id}
+                      onClick={() => {
+                        selectCustomer(c);
+                        setSearchQuery("");
+                      }}
+                      className="w-full text-left px-3 py-2 hover:bg-muted transition-colors"
+                    >
+                      <p className="font-medium">{c.company_name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {c.contact_name} {c.email && `• ${c.email}`}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           <div>
@@ -344,7 +345,7 @@ function QuickPersonalizationStep({
                 }
               }}
               placeholder="z.B. Königstr. 22"
-              className="mt-1"
+              className="mt-1 border-primary/50 focus:border-primary"
             />
           </div>
 
@@ -355,7 +356,7 @@ function QuickPersonalizationStep({
                 value={customer.plz}
                 onChange={(e) => setCustomer({ ...customer, plz: e.target.value })}
                 placeholder="47051"
-                className="mt-1"
+                className="mt-1 border-primary/50 focus:border-primary"
               />
             </div>
             <div className="col-span-2">
@@ -364,7 +365,7 @@ function QuickPersonalizationStep({
                 value={customer.ort}
                 onChange={(e) => setCustomer({ ...customer, ort: e.target.value })}
                 placeholder="Duisburg"
-                className="mt-1"
+                className="mt-1 border-primary/50 focus:border-primary"
               />
             </div>
           </div>
@@ -373,23 +374,22 @@ function QuickPersonalizationStep({
 
       {/* Section: Kontaktdaten Ansprechpartner */}
       <div className="space-y-4">
-        <div className="flex items-center gap-2 border-b pb-2">
-          <User className="w-4 h-4 text-primary" />
-          <h3 className="font-semibold">Kontaktdaten des Ansprechpartners</h3>
+        <div className="border-b pb-2">
+          <h3 className="font-semibold text-foreground">Kontaktdaten des Ansprechpartners</h3>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-end gap-4">
           <RadioGroup
             value={customer.anrede}
             onValueChange={(v) => setCustomer({ ...customer, anrede: v as OfferCustomerInfo["anrede"] })}
-            className="flex gap-4"
+            className="flex gap-4 pb-2"
           >
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="Frau" id="anrede-frau" />
+              <RadioGroupItem value="Frau" id="anrede-frau" className="border-primary text-primary" />
               <Label htmlFor="anrede-frau" className="cursor-pointer">Frau</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="Herr" id="anrede-herr" />
+              <RadioGroupItem value="Herr" id="anrede-herr" className="border-primary text-primary" />
               <Label htmlFor="anrede-herr" className="cursor-pointer">Herr</Label>
             </div>
           </RadioGroup>
@@ -399,54 +399,47 @@ function QuickPersonalizationStep({
             <Input
               value={customer.nachname}
               onChange={(e) => setCustomer({ ...customer, nachname: e.target.value })}
-              placeholder="Mustermann"
-              className="mt-1"
+              placeholder="Akar"
+              className="mt-1 border-primary/50 focus:border-primary"
             />
           </div>
         </div>
       </div>
 
-      {/* Tarife Summary */}
-      <div className="bg-muted/50 p-3 rounded-lg">
-        <p className="text-sm text-muted-foreground">
-          <span className="font-medium text-foreground">{items.length} Tarife</span> im Angebot
-        </p>
-      </div>
+      {/* Main Action Button */}
+      <Button
+        onClick={onDownload}
+        disabled={items.length === 0 || isGenerating}
+        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-6 text-base font-medium"
+      >
+        {isGenerating ? (
+          <>
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            Wird erstellt...
+          </>
+        ) : (
+          <>
+            Personalisiertes Angebot herunterladen
+            <ChevronRight className="w-4 h-4 ml-2" />
+          </>
+        )}
+      </Button>
 
-      {/* Actions */}
-      <div className="flex items-center justify-between pt-4 border-t">
+      {/* Secondary Actions */}
+      <div className="flex items-center justify-between pt-2">
         <Button
           variant="ghost"
           size="sm"
           onClick={onExtended}
-          className="text-muted-foreground hover:text-foreground"
+          className="text-muted-foreground hover:text-foreground text-xs"
         >
           Erweiterte Optionen
-          <ChevronRight className="w-4 h-4 ml-1" />
+          <ChevronRight className="w-3 h-3 ml-1" />
         </Button>
-
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={onClose}>
-            Abbrechen
-          </Button>
-          <Button
-            onClick={onDownload}
-            disabled={items.length === 0 || isGenerating}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground min-w-[200px]"
-          >
-            {isGenerating ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Wird erstellt...
-              </>
-            ) : (
-              <>
-                Personalisiertes Angebot herunterladen
-                <ChevronRight className="w-4 h-4 ml-2" />
-              </>
-            )}
-          </Button>
-        </div>
+        
+        <p className="text-xs text-muted-foreground">
+          {items.length} {items.length === 1 ? 'Position' : 'Positionen'} im Angebot
+        </p>
       </div>
     </div>
   );

@@ -346,7 +346,11 @@ export type Database = {
           id: string
           image_url: string | null
           is_active: boolean | null
+          is_promo: boolean | null
           name: string
+          promo_badge_text: string | null
+          promo_valid_from: string | null
+          promo_valid_until: string | null
           sector: string
           sort_order: number | null
           tags: string[] | null
@@ -362,7 +366,11 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean | null
+          is_promo?: boolean | null
           name: string
+          promo_badge_text?: string | null
+          promo_valid_from?: string | null
+          promo_valid_until?: string | null
           sector: string
           sort_order?: number | null
           tags?: string[] | null
@@ -378,7 +386,11 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean | null
+          is_promo?: boolean | null
           name?: string
+          promo_badge_text?: string | null
+          promo_valid_from?: string | null
+          promo_valid_until?: string | null
           sector?: string
           sort_order?: number | null
           tags?: string[] | null
@@ -1341,6 +1353,51 @@ export type Database = {
           used?: boolean | null
           used_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      news_items: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          is_pinned: boolean | null
+          tenant_id: string
+          title: string
+          type: string
+          updated_at: string | null
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_pinned?: boolean | null
+          tenant_id?: string
+          title: string
+          type?: string
+          updated_at?: string | null
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_pinned?: boolean | null
+          tenant_id?: string
+          title?: string
+          type?: string
+          updated_at?: string | null
+          valid_from?: string | null
+          valid_until?: string | null
         }
         Relationships: []
       }

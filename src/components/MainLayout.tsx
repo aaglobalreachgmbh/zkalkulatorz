@@ -44,29 +44,32 @@ export function MainLayout({ children }: MainLayoutProps) {
           
           {/* Header */}
           <header className={cn(
-            "h-14 border-b border-border bg-card/80 backdrop-blur-sm flex items-center justify-between px-4 sticky top-0 z-40",
+            "h-20 border-b border-border bg-card/80 backdrop-blur-sm flex items-center justify-between px-4 sticky top-0 z-40",
             isPOSMode && "h-12 px-2"
           )}>
             <div className="flex items-center gap-4">
               <SidebarTrigger />
-              {branding.logoUrl ? (
-                <img 
-                  src={branding.logoUrl} 
-                  alt={branding.companyName || "Logo"} 
-                  className="h-8 md:h-10 w-auto max-w-[200px] object-contain"
-                />
-              ) : (
-                <div className="flex flex-col">
+              <div className="flex flex-col">
+                {/* Publisher-Text oben */}
+                {!isPOSMode && (
+                  <span className="text-[10px] text-muted-foreground leading-tight">
+                    {PUBLISHER.subline}
+                  </span>
+                )}
+                
+                {/* Logo oder Firmenname darunter - größer */}
+                {branding.logoUrl ? (
+                  <img 
+                    src={branding.logoUrl} 
+                    alt={branding.companyName || "Logo"} 
+                    className="h-10 md:h-12 w-auto max-w-[200px] object-contain mt-0.5"
+                  />
+                ) : (
                   <span className="text-lg md:text-xl font-bold text-foreground tracking-tight">
                     {branding.companyName || PUBLISHER.displayName}
                   </span>
-                  {!isPOSMode && (
-                    <span className="text-[10px] text-muted-foreground leading-tight">
-                      {PUBLISHER.subline}
-                    </span>
-                  )}
-                </div>
-              )}
+                )}
+              </div>
               {isPOSMode && (
                 <Badge variant="secondary" className="gap-1 text-xs">
                   <Monitor className="h-3 w-3" />

@@ -48,27 +48,9 @@ import { de } from "date-fns/locale";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-// Gmail Icon Component
-function GmailIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none">
-      <path d="M22 6L12 13L2 6V4L12 11L22 4V6Z" fill="#EA4335"/>
-      <path d="M22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6L12 13L22 6Z" fill="#FBBC05"/>
-      <path d="M22 6L12 13V20H20C21.1 20 22 19.1 22 18V6Z" fill="#34A853"/>
-      <path d="M2 6L12 13V20H4C2.9 20 2 19.1 2 18V6Z" fill="#4285F4"/>
-    </svg>
-  );
-}
-
-// IONOS Icon Component
-function IonosIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none">
-      <rect width="24" height="24" rx="4" fill="#003D8F"/>
-      <text x="12" y="16" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold">IO</text>
-    </svg>
-  );
-}
+// Import branded icons
+import { GmailIcon, IonosIcon } from "@/margenkalkulator/ui/components/icons/IntegrationIcons";
+import { IntegrationPromptCard } from "@/margenkalkulator/ui/components/IntegrationPromptCard";
 
 function formatEmailDate(dateStr: string): string {
   const date = parseISO(dateStr);
@@ -249,11 +231,11 @@ export default function InboxPage() {
           </div>
         </div>
 
-        {/* Connected Accounts */}
-        {accounts.length > 0 && (
-          <div className="flex flex-wrap gap-3">
+        {/* Connected Accounts - Multiple accounts */}
+        {accounts.length > 1 && (
+          <div className="flex flex-wrap items-center gap-3">
             {accounts.map((account) => (
-              <Card key={account.id} className="flex items-center gap-3 p-3 pr-4">
+              <Card key={account.id} className="flex items-center gap-3 p-3 pr-4 border-success/30 bg-success/5">
                 {account.provider === "gmail" ? (
                   <GmailIcon className="w-8 h-8" />
                 ) : (
@@ -294,33 +276,71 @@ export default function InboxPage() {
           </div>
         )}
 
-        {/* No accounts connected */}
+        {/* No accounts connected - Show prominent integration prompts */}
         {accounts.length === 0 && !accountsLoading && (
-          <Card className="border-dashed">
-            <CardContent className="py-12 text-center">
-              <Mail className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-semibold mb-2">Kein E-Mail-Konto verbunden</h3>
-              <p className="text-muted-foreground mb-4">
-                Verbinden Sie Ihr Gmail- oder IONOS-Konto, um E-Mails direkt hier zu sehen.
-              </p>
-              <div className="flex justify-center gap-3">
-                <Button 
-                  variant="outline" 
-                  onClick={() => { setConnectProvider("gmail"); setShowConnectDialog(true); }}
-                >
-                  <GmailIcon className="w-5 h-5 mr-2" />
-                  Gmail verbinden
-                </Button>
-                <Button 
-                  variant="outline"
-                  onClick={() => { setConnectProvider("ionos"); setShowConnectDialog(true); }}
-                >
-                  <IonosIcon className="w-5 h-5 mr-2" />
-                  IONOS verbinden
-                </Button>
+          <Card className="border-dashed border-2">
+            <CardContent className="py-10">
+              <div className="text-center mb-6">
+                <Mail className="w-14 h-14 mx-auto mb-4 text-muted-foreground/40" />
+                <h3 className="text-xl font-semibold mb-2">E-Mail-Integration starten</h3>
+                <p className="text-muted-foreground max-w-md mx-auto">
+                  Verbinden Sie Ihre E-Mail-Konten, um Nachrichten direkt hier zu verwalten und mit Kunden zu verknüpfen.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg mx-auto">
+                <IntegrationPromptCard
+                  type="gmail"
+                  onConnect={() => { setConnectProvider("gmail"); setShowConnectDialog(true); }}
+                  variant="card"
+                />
+                <IntegrationPromptCard
+                  type="ionos"
+                  onConnect={() => { setConnectProvider("ionos"); setShowConnectDialog(true); }}
+                  variant="card"
+                />
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {/* One account connected - suggest adding another */}
+        {accounts.length === 1 && !accountsLoading && (
+          <div className="flex flex-wrap items-center gap-3">
+            {accounts.map((account) => (
+              <Card key={account.id} className="flex items-center gap-3 p-3 pr-4 border-success/30 bg-success/5">
+                {account.provider === "gmail" ? (
+                  <GmailIcon className="w-8 h-8" />
+                ) : (
+                  <IonosIcon className="w-8 h-8" />
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm truncate">{account.email_address}</p>
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <CheckCircle className="w-3 h-3 text-success" />
+                    Verbunden
+                  </p>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  className="text-muted-foreground hover:text-destructive"
+                  onClick={() => handleDisconnect(account.id)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </Card>
+            ))}
+            
+            {/* Suggest adding another integration */}
+            <IntegrationPromptCard
+              type={accounts[0].provider === "gmail" ? "ionos" : "gmail"}
+              onConnect={() => { 
+                setConnectProvider(accounts[0].provider === "gmail" ? "ionos" : "gmail"); 
+                setShowConnectDialog(true); 
+              }}
+              variant="dashed"
+            />
+          </div>
         )}
 
         {/* Email List */}

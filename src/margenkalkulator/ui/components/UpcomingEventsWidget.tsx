@@ -133,20 +133,52 @@ export function UpcomingEventsWidget({ limit = 3, compact = false }: UpcomingEve
       </CardHeader>
       <CardContent className={cn(compact && "px-4 pb-4")}>
         {eventsToShow.length === 0 ? (
-          <div className="text-center py-6">
-            <Calendar className="w-10 h-10 mx-auto mb-3 text-muted-foreground/50" />
-            <p className="text-sm text-muted-foreground mb-3">
+          <div className="text-center py-4">
+            <Calendar className="w-10 h-10 mx-auto mb-3 text-muted-foreground/40" />
+            <p className="text-sm text-muted-foreground mb-4">
               Keine anstehenden Termine
             </p>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="gap-2"
-              onClick={() => navigate("/calendar")}
-            >
-              <Plus className="w-4 h-4" />
-              Termin erstellen
-            </Button>
+            
+            {/* Integration prompts for calendar */}
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">Kalender verbinden:</p>
+              <div className="flex justify-center gap-2">
+                <button
+                  onClick={() => navigate("/calendar")}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[#4285F4]/30 bg-[#4285F4]/5 hover:bg-[#4285F4]/10 transition-all"
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
+                    <rect x="3" y="4" width="18" height="18" rx="2" fill="#FFFFFF" stroke="#4285F4" strokeWidth="2"/>
+                    <rect x="3" y="4" width="18" height="5" rx="2" fill="#4285F4"/>
+                    <text x="12" y="17" textAnchor="middle" fill="#4285F4" fontSize="8" fontWeight="bold">31</text>
+                    <circle cx="7" cy="6.5" r="1" fill="#EA4335"/>
+                    <circle cx="12" cy="6.5" r="1" fill="#FBBC05"/>
+                    <circle cx="17" cy="6.5" r="1" fill="#34A853"/>
+                  </svg>
+                  <span className="text-xs font-medium">Google</span>
+                </button>
+                <button
+                  onClick={() => navigate("/calendar")}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[#0078D4]/30 bg-[#0078D4]/5 hover:bg-[#0078D4]/10 transition-all"
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
+                    <rect x="2" y="4" width="20" height="16" rx="2" fill="#0078D4"/>
+                    <ellipse cx="9" cy="12" rx="4" ry="4.5" fill="white"/>
+                    <path d="M14 7L22 11V17L14 13V7Z" fill="white" fillOpacity="0.8"/>
+                  </svg>
+                  <span className="text-xs font-medium">Outlook</span>
+                </button>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="gap-2 text-xs"
+                onClick={() => navigate("/calendar")}
+              >
+                <Plus className="w-3 h-3" />
+                Termin erstellen
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="space-y-2">

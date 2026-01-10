@@ -7,7 +7,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useIdentity } from "@/contexts/IdentityContext";
+import { useIdentity, type IdentityState } from "@/contexts/IdentityContext";
 import { offlineStorage } from "@/lib/offlineStorage";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import { toast } from "sonner";
@@ -70,7 +70,8 @@ export interface GeoPosition {
 
 export function useVisitReports() {
   const queryClient = useQueryClient();
-  const { userId, tenantId } = useIdentity();
+  const { identity } = useIdentity();
+  const { userId, tenantId } = identity;
   const { isOnline } = useNetworkStatus();
 
   // Alle Berichte laden
@@ -134,9 +135,14 @@ export function useVisitReports() {
       // Offline: Lokal speichern
       if (!isOnline) {
         const offlineId = await offlineStorage.addPendingVisit({
-          ...input,
-          user_id: userId,
-          tenant_id: tenantId,
+          customerId: input.customer_id,
+          visitDate: input.visit_date,
+          locationLat: input.location_lat,
+          locationLng: input.location_lng,
+          locationAddress: input.location_address,
+          notes: input.notes,
+          checklistId: input.checklist_id,
+          checklistResponses: input.checklist_responses as Record<string, unknown>,
         });
         toast.info("Besuchsbericht offline gespeichert");
         return offlineId;

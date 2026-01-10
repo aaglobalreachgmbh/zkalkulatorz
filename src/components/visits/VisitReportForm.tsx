@@ -33,7 +33,7 @@ import {
 import { useVisitReports, type CreateVisitReportInput, type GeoPosition } from "@/hooks/useVisitReports";
 import { useVisitChecklists, type ChecklistResponse } from "@/hooks/useVisitChecklists";
 import { useVisitPhotos } from "@/hooks/useVisitPhotos";
-import { useCustomers } from "@/hooks/useCustomers";
+import { useCustomers } from "@/margenkalkulator/hooks/useCustomers";
 import { ChecklistRenderer } from "./ChecklistRenderer";
 import { VisitPhotoGrid } from "./VisitPhotoGrid";
 import { cn } from "@/lib/utils";

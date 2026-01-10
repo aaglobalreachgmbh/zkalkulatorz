@@ -284,14 +284,19 @@ export default function DataHub() {
                   Verwalte laufende Aktionen und Sonderrabatte für deine Tarife
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <Alert>
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription>
-                    Die Aktionsverwaltung wird bald verfügbar sein. 
-                    Aktuell werden die Standard-Aktionen aus dem System verwendet.
-                  </AlertDescription>
-                </Alert>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Aktionspakete und Rabattaktionen werden zentral im News-Bereich verwaltet.
+                  Dort können Sie neue Promo-Bundles erstellen und bestehende bearbeiten.
+                </p>
+                <Button 
+                  onClick={() => navigate("/admin/news")}
+                  className="gap-2"
+                >
+                  <Tags className="h-4 w-4" />
+                  Zur Aktionsverwaltung
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
               </CardContent>
             </Card>
           </TabsContent>

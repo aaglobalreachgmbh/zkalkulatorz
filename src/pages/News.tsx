@@ -7,7 +7,6 @@
 import { useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/MainLayout";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -20,13 +19,18 @@ import {
   Calendar,
   RefreshCw,
   Pin,
+  Clock,
+  Plus,
 } from "lucide-react";
 
-import { useNews, NEWS_TYPE_CONFIG, type NewsType } from "@/margenkalkulator/hooks/useNews";
+import { useNews, type NewsType } from "@/margenkalkulator/hooks/useNews";
 import { usePromoBundles, type Sector } from "@/margenkalkulator/hooks/usePromoBundles";
+import { useCalendarEvents } from "@/margenkalkulator/hooks/useCalendarEvents";
 import { NewsCard } from "@/margenkalkulator/ui/components/NewsCard";
 import { PromoBundleCard } from "@/margenkalkulator/ui/components/PromoBundleCard";
-import { MOCK_NEWS, TICKER_ITEMS } from "@/margenkalkulator/data/news";
+import { TICKER_ITEMS } from "@/margenkalkulator/data/news";
+import { format, addDays, startOfDay, endOfDay, isToday, isTomorrow } from "date-fns";
+import { de } from "date-fns/locale";
 
 // ============================================
 // Sub-Components
@@ -157,27 +161,15 @@ export default function News() {
     sector: activeSector === "all" ? undefined : activeSector,
   });
 
-  // Combine DB news with mock news for now (until DB is populated)
-  const allNews = useMemo(() => {
-    if (dbNews.length > 0) {
-      return dbNews;
-    }
-    // Fallback to mock data
-    return MOCK_NEWS.map((item) => ({
-      id: item.id,
-      tenant_id: "",
-      title: item.title,
-      description: item.description,
-      content: null,
-      type: item.type,
-      is_pinned: item.id === "1",
-      valid_from: null,
-      valid_until: null,
-      created_by: null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    }));
-  }, [dbNews]);
+  // Fetch upcoming events for next 7 days
+  const today = new Date();
+  const { events: upcomingEvents, isLoading: isLoadingEvents } = useCalendarEvents({
+    startDate: startOfDay(today),
+    endDate: endOfDay(addDays(today, 6)),
+  });
+
+  // Use DB news directly (no mock fallback)
+  const allNews = dbNews;
 
   // Filter news
   const filteredNews = useMemo(() => {
@@ -356,16 +348,69 @@ export default function News() {
 
             {/* Events Tab */}
             <TabsContent value="events" className="space-y-6">
-              <div className="text-center py-16 bg-muted/20 rounded-xl">
-                <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p className="font-medium">Termine & Schulungen</p>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Kommende Termine werden hier angezeigt
-                </p>
-                <Button variant="outline" asChild>
-                  <Link to="/calendar">Zum Kalender</Link>
+              <div className="flex items-center justify-between">
+                <h2 className="font-semibold text-sm uppercase tracking-wide">
+                  Nächste 7 Tage
+                </h2>
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/calendar" className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    Neuer Termin
+                  </Link>
                 </Button>
               </div>
+
+              {isLoadingEvents ? (
+                <div className="text-center py-12">
+                  <RefreshCw className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
+                  <p className="text-muted-foreground mt-2">Lade Termine...</p>
+                </div>
+              ) : upcomingEvents.length > 0 ? (
+                <div className="bg-background border border-border rounded-xl overflow-hidden divide-y divide-border">
+                  {upcomingEvents.map((event) => {
+                    const eventDate = new Date(event.start_time);
+                    let dateLabel = format(eventDate, "EEEE, dd.MM.", { locale: de });
+                    if (isToday(eventDate)) dateLabel = "Heute";
+                    else if (isTomorrow(eventDate)) dateLabel = "Morgen";
+                    
+                    return (
+                      <div 
+                        key={event.id} 
+                        className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors cursor-pointer"
+                        onClick={() => navigate(`/calendar?date=${format(eventDate, "yyyy-MM-dd")}`)}
+                      >
+                        <div className="flex-shrink-0 w-16 text-center">
+                          <div className="text-xs text-muted-foreground">{dateLabel}</div>
+                          <div className="font-semibold">{format(eventDate, "HH:mm")}</div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium truncate">{event.title}</div>
+                          {event.description && (
+                            <div className="text-sm text-muted-foreground truncate">
+                              {event.description}
+                            </div>
+                          )}
+                        </div>
+                        <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-16 bg-muted/20 rounded-xl">
+                  <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p className="font-medium">Keine anstehenden Termine</p>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Erstellen Sie Ihren ersten Termin im Kalender
+                  </p>
+                  <Button variant="default" asChild>
+                    <Link to="/calendar" className="gap-2">
+                      <Plus className="h-4 w-4" />
+                      Zum Kalender
+                    </Link>
+                  </Button>
+                </div>
+              )}
             </TabsContent>
           </Tabs>
         </div>

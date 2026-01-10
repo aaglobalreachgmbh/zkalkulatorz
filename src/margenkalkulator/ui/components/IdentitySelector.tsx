@@ -17,7 +17,12 @@ import { Badge } from "@/components/ui/badge";
 import { useIdentity, MOCK_IDENTITIES } from "@/contexts/IdentityContext";
 
 export function IdentitySelector() {
-  const { identity, setMockIdentity, clearMockIdentity } = useIdentity();
+  const { identity, setMockIdentity, clearMockIdentity, isSupabaseAuth } = useIdentity();
+
+  // Only render in development mode and when not using Supabase auth
+  if (!import.meta.env.DEV || isSupabaseAuth) {
+    return null;
+  }
 
   const roleColors: Record<string, string> = {
     admin: "bg-primary text-primary-foreground",
@@ -47,7 +52,7 @@ export function IdentitySelector() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel>Benutzer wechseln</DropdownMenuLabel>
+        <DropdownMenuLabel>Benutzer wechseln (DEV)</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {MOCK_IDENTITIES.map((id) => (
           <DropdownMenuItem

@@ -143,13 +143,16 @@ export default function TenantAdmin() {
                     Wenn aktiviert, sehen Mitarbeiter (Subuser) keine Margen-Informationen im Dealer-Modus.
                   </div>
                 </div>
-                <Badge variant="outline">Demnächst</Badge>
+                <Badge variant="secondary" className="bg-emerald-500/20 text-emerald-600 border-emerald-500/30">
+                  Aktiv via Policy
+                </Badge>
               </div>
-              <Alert>
-                <Info className="h-4 w-4" />
-                <AlertTitle>Weitere Berechtigungen in Planung</AlertTitle>
+              <Alert className="border-primary/30 bg-primary/5">
+                <Info className="h-4 w-4 text-primary" />
+                <AlertTitle>Berechtigungen werden über Policies gesteuert</AlertTitle>
                 <AlertDescription>
-                  Feingranulare Rechteverwaltung wie Export-Beschränkungen und Tarif-Sperrungen werden bald verfügbar sein.
+                  Sensible Felder werden automatisch basierend auf der Benutzerrolle und dem aktiven Modus (Dealer/Kunden/POS) verborgen.
+                  Admins haben immer vollen Zugriff auf alle Margen- und EK-Daten.
                 </AlertDescription>
               </Alert>
             </CardContent>

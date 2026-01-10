@@ -418,8 +418,8 @@ export function AppSidebar() {
           />
         </div>
 
-        {/* Identity Selector - only for dev mode */}
-        {!isSupabaseAuth && (
+        {/* Identity Selector - only for development mode */}
+        {import.meta.env.DEV && !isSupabaseAuth && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className={cn(

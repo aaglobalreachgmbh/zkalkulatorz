@@ -211,9 +211,13 @@ export function FixedNetStep({ value, onChange, datasetVersion, onFixedNetEnable
           {/* GigaKombi Info */}
           <div className="p-4 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 rounded-lg">
             <div className="flex items-start gap-2">
-              <p className="text-sm text-emerald-800 dark:text-emerald-200 flex-1">
-                <strong>GigaKombi Vorteil:</strong> Mit aktivem Festnetz-Vertrag erhalten berechtigte Mobilfunk-Tarife automatisch -5€/Monat Rabatt.
-              </p>
+              <div className="text-sm text-emerald-800 dark:text-emerald-200 flex-1">
+                <p className="font-semibold mb-1">GigaKombi Business Vorteil:</p>
+                <ul className="list-disc list-inside space-y-0.5 text-xs">
+                  <li>5€ monatlicher Rabatt auf Mobilfunk</li>
+                  <li>Unlimited Datenvolumen für bis zu 10 Business Prime SIMs</li>
+                </ul>
+              </div>
               <HelpTooltip term="gigaKombi" iconClassName="text-emerald-600" />
             </div>
           </div>

@@ -5,17 +5,11 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { type CalculationResult, type ViewMode } from "@/margenkalkulator";
+import { formatCurrency } from "../../lib/formatters";
 
 interface BreakdownAccordionProps {
   result: CalculationResult;
   viewMode: ViewMode;
-}
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-  }).format(value);
 }
 
 export function BreakdownAccordion({ result, viewMode }: BreakdownAccordionProps) {

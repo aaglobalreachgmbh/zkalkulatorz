@@ -9,6 +9,7 @@ import { ArrowRight, Trophy, Download, ArrowLeftRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { MarginCalculationOutput, ProfitabilityStatus } from "../../engine/marginWaterfallEngine";
 import type { TariffDefinition } from "../../engine/tariffEngine";
+import { formatCurrency } from "../../lib/formatters";
 
 interface OptionConfig {
   label: string;
@@ -31,14 +32,6 @@ interface MarginComparisonProps {
   onExport?: () => void;
   /** Kompakte Ansicht */
   compact?: boolean;
-}
-
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-    minimumFractionDigits: 2,
-  }).format(amount);
 }
 
 const STATUS_CONFIG: Record<ProfitabilityStatus, { color: string; bgLight: string; emoji: string }> = {

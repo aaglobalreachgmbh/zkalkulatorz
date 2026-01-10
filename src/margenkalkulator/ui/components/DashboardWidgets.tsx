@@ -9,16 +9,7 @@ import { useDashboardWidgets } from "@/margenkalkulator/hooks/useDashboardWidget
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { EmptyStateCard } from "./EmptyStateCard";
-
-// Format currency
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
+import { formatCurrency } from "../../lib/formatters";
 
 export function DashboardWidgets() {
   const { user } = useAuth();

@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { ChevronDown, ChevronUp, Lightbulb, Calendar } from "lucide-react";
 import type { DiscountResult } from "../../engine/discountEngine";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { formatCurrency } from "../../lib/formatters";
 
 interface AirtimeProvisionTimelineProps {
   /** Monatliche Provision (nach Rabatten) */
@@ -29,14 +30,6 @@ interface QuarterBlock {
   months: string;
   provision: number;
   cumulative: number;
-}
-
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-    minimumFractionDigits: 2,
-  }).format(amount);
 }
 
 export function AirtimeProvisionTimeline({

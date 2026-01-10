@@ -10,6 +10,7 @@ import { DealerSummaryPage } from "./components/DealerSummaryPage";
 import type { TenantBranding } from "@/hooks/useTenantBranding";
 import { DEFAULT_BRANDING } from "@/hooks/useTenantBranding";
 import { DEFAULT_TEMPLATE } from "./templates/allenetzeClean";
+import { formatCurrency as formatCurrencyBase } from "../lib/formatters";
 
 // ============================================
 // Style Factory
@@ -472,10 +473,11 @@ function sanitizeText(text: string | undefined | null, maxLength = 200): string 
     .slice(0, maxLength);
 }
 
+// PDF-specific currency formatting (handles null/undefined)
 function formatCurrency(value: number | undefined | null): string {
   const num = value ?? 0;
   if (isNaN(num)) return "0,00 €";
-  return `${num.toFixed(2).replace(".", ",")} €`;
+  return formatCurrencyBase(num);
 }
 
 function formatDate(date: Date): string {

@@ -12,6 +12,7 @@ import { StyleSheet, Font } from "@react-pdf/renderer";
 import type { OfferConfig } from "../contexts/OfferBasketContext";
 import type { TenantBranding } from "@/hooks/useTenantBranding";
 import { DEFAULT_BRANDING } from "@/hooks/useTenantBranding";
+import { formatCurrency as formatCurrencyBase } from "../lib/formatters";
 
 interface MultiOfferPdfProps {
   config: OfferConfig;
@@ -27,8 +28,9 @@ function sanitize(text: string | undefined | null, maxLength = 500): string {
     .slice(0, maxLength);
 }
 
+// PDF-specific currency formatting
 function formatCurrency(value: number): string {
-  return `${value.toFixed(2).replace(".", ",")} €`;
+  return formatCurrencyBase(value);
 }
 
 function formatDate(date: Date): string {

@@ -1,17 +1,11 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { type CalculationResult, type ViewMode } from "@/margenkalkulator";
 import { TrendingUp, TrendingDown, Euro, Calendar } from "lucide-react";
+import { formatCurrency } from "../../lib/formatters";
 
 interface KpiSummaryProps {
   result: CalculationResult;
   viewMode: ViewMode;
-}
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-  }).format(value);
 }
 
 export function KpiSummary({ result, viewMode }: KpiSummaryProps) {

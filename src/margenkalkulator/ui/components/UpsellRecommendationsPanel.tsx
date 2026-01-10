@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { UpsellRecommendation, UpsellType } from "../../engine/upsellEngine";
+import { formatCurrency } from "../../lib/formatters";
 
 interface UpsellRecommendationsPanelProps {
   /** Liste der Empfehlungen */
@@ -27,14 +28,6 @@ interface UpsellRecommendationsPanelProps {
   compact?: boolean;
   /** Max. Anzahl angezeigter Empfehlungen */
   maxItems?: number;
-}
-
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-    minimumFractionDigits: 0,
-  }).format(amount);
 }
 
 const ICON_MAP: Record<UpsellType, typeof TrendingUp> = {

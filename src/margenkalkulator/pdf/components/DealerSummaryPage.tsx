@@ -6,6 +6,7 @@
 import { Page, Text, View, Image, StyleSheet } from "@react-pdf/renderer";
 import type { PdfTemplate, DealerSummaryData } from "../templates/types";
 import type { TenantBranding } from "@/hooks/useTenantBranding";
+import { formatCurrency as formatCurrencyBase } from "../../lib/formatters";
 
 // ============================================
 // Dealer-specific Styles
@@ -284,17 +285,18 @@ const dealerStyles = StyleSheet.create({
 // Helper Functions
 // ============================================
 
+// PDF-specific currency formatting with sign
 function formatCurrency(value: number | undefined | null): string {
   const num = value ?? 0;
   if (isNaN(num)) return "0,00 €";
   const sign = num >= 0 ? "+" : "";
-  return `${sign}${num.toFixed(2).replace(".", ",")} €`;
+  return `${sign}${formatCurrencyBase(Math.abs(num))}`.replace("+", num >= 0 ? "+" : "-");
 }
 
 function formatCurrencyNoSign(value: number | undefined | null): string {
   const num = value ?? 0;
   if (isNaN(num)) return "0,00 €";
-  return `${num.toFixed(2).replace(".", ",")} €`;
+  return formatCurrencyBase(num);
 }
 
 // ============================================

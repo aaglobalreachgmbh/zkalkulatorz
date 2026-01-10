@@ -14,7 +14,7 @@ import {
   Percent,
   Zap,
 } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { TemplateGenerator } from "./TemplateGenerator";
 import { businessCatalog2025_09 } from "@/margenkalkulator";
 
@@ -175,10 +175,7 @@ function DataTab<T>({ icon, title, data, renderItem, getKey }: DataTabProps<T>) 
     await new Promise(r => setTimeout(r, 500));
     setIsLoading(false);
     
-    toast({
-      title: "Import-Vorschau",
-      description: "Import-Funktion wird in der nächsten Version verfügbar.",
-    });
+    toast.info("Import-Funktion wird in der nächsten Version verfügbar");
   }, []);
 
   return (

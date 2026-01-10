@@ -51,7 +51,7 @@ import { parsePdf, validatePdfFile, type PdfDetectionResult } from "@/margenkalk
 import { parseProvisionPdf } from "@/margenkalkulator/dataManager/importers/pdfParsers/provisionPdfParser";
 import type { ProvisionRow, OMOMatrixRow } from "@/margenkalkulator/dataManager/types";
 import type { Json } from "@/integrations/supabase/types";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { showPublishSuccessToast, showVersionActivatedToast } from "@/lib/errorHandling";
 import { DatasetStatusBadge, type DatasetStatus, type SourceType } from "./DatasetStatusBadge";
 
@@ -162,11 +162,7 @@ export function DatasetVersionManager() {
   const processPdfFile = async (file: File) => {
     const validation = validatePdfFile(file);
     if (!validation.valid) {
-      toast({
-        title: "Ungültige Datei",
-        description: validation.error,
-        variant: "destructive",
-      });
+      toast.error(validation.error || "Ungültige Datei");
       return;
     }
 
@@ -209,18 +205,10 @@ export function DatasetVersionManager() {
         
         setIsCreateOpen(true);
       } else {
-        toast({
-          title: "Unbekanntes Format",
-          description: `Das PDF-Format wurde nicht erkannt. Erkannte Hinweise: ${detection.hints.slice(0, 3).join(", ")}`,
-          variant: "destructive",
-        });
+        toast.error(`Format nicht erkannt: ${detection.hints.slice(0, 3).join(", ")}`);
       }
     } catch (error) {
-      toast({
-        title: "Fehler beim Verarbeiten",
-        description: error instanceof Error ? error.message : "PDF konnte nicht gelesen werden",
-        variant: "destructive",
-      });
+      toast.error(error instanceof Error ? error.message : "PDF konnte nicht gelesen werden");
     } finally {
       setPdfProcessing(false);
     }
@@ -237,11 +225,7 @@ export function DatasetVersionManager() {
     if (pdfFile) {
       await processPdfFile(pdfFile);
     } else {
-      toast({
-        title: "Keine PDF-Datei",
-        description: "Bitte eine PDF-Datei ziehen",
-        variant: "destructive",
-      });
+      toast.error("Bitte eine PDF-Datei ziehen");
     }
   }, []);
 

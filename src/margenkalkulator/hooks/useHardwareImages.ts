@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 interface HardwareImage {
   id: string;
@@ -95,17 +95,10 @@ export function useHardwareImages() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["hardware-images"] });
-      toast({
-        title: "Bild hochgeladen",
-        description: "Das Produktbild wurde erfolgreich gespeichert.",
-      });
+      toast.success("Bild hochgeladen");
     },
     onError: (error) => {
-      toast({
-        title: "Upload fehlgeschlagen",
-        description: error instanceof Error ? error.message : "Unbekannter Fehler",
-        variant: "destructive",
-      });
+      toast.error(error instanceof Error ? error.message : "Upload fehlgeschlagen");
     },
   });
 
@@ -141,17 +134,10 @@ export function useHardwareImages() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["hardware-images"] });
-      toast({
-        title: "Bild gelöscht",
-        description: "Das Produktbild wurde entfernt.",
-      });
+      toast.success("Bild gelöscht");
     },
     onError: (error) => {
-      toast({
-        title: "Löschen fehlgeschlagen",
-        description: error instanceof Error ? error.message : "Unbekannter Fehler",
-        variant: "destructive",
-      });
+      toast.error(error instanceof Error ? error.message : "Löschen fehlgeschlagen");
     },
   });
 

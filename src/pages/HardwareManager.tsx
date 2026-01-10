@@ -37,7 +37,7 @@ import {
   type HardwareValidationResult,
   type HardwareDiffResult,
 } from "@/margenkalkulator";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { HardwareImageUploader } from "@/margenkalkulator/ui/components/HardwareImageUploader";
 
 export default function HardwareManager() {
@@ -92,11 +92,7 @@ export default function HardwareManager() {
     // Validate file extension
     const validExtensions = /\.(xlsx|xls|csv)$/i;
     if (!selectedFile.name.match(validExtensions)) {
-      toast({
-        title: "Ungültiges Dateiformat",
-        description: "Bitte laden Sie eine XLSX-, XLS- oder CSV-Datei hoch. Andere Formate werden nicht unterstützt.",
-        variant: "destructive",
-      });
+      toast.error("Bitte laden Sie eine XLSX-, XLS- oder CSV-Datei hoch");
       return;
     }
     
@@ -118,16 +114,11 @@ export default function HardwareManager() {
       setValidation(validationResult);
       
       if (!validationResult.isValid) {
-        // Summarize missing columns for better UX
         const missingColumnsErrors = validationResult.errors.filter(e => 
           e.message.includes("Spalte") || e.message.includes("fehlt")
         );
         if (missingColumnsErrors.length > 0) {
-          toast({
-            title: "Pflichtfelder fehlen",
-            description: `Die Spalten "brand", "model" und "ek_net" sind erforderlich. Bitte prüfen Sie Ihre Datei.`,
-            variant: "destructive",
-          });
+          toast.error('Pflichtfelder fehlen: "brand", "model" und "ek_net" sind erforderlich');
         }
         return;
       }
@@ -139,11 +130,7 @@ export default function HardwareManager() {
       setDiff(diffResult);
       
     } catch (err) {
-      toast({
-        title: "Fehler beim Parsen",
-        description: err instanceof Error ? err.message : "Die Datei konnte nicht gelesen werden. Bitte prüfen Sie das Format.",
-        variant: "destructive",
-      });
+      toast.error(err instanceof Error ? err.message : "Datei konnte nicht gelesen werden");
     } finally {
       setIsLoading(false);
     }
@@ -155,10 +142,7 @@ export default function HardwareManager() {
     try {
       updateHardwareCatalog(parsedData);
       setRefreshKey(k => k + 1);
-      toast({
-        title: "Hardware aktualisiert",
-        description: `${parsedData.length} Geräte wurden gespeichert.`,
-      });
+      toast.success(`${parsedData.length} Geräte wurden gespeichert`);
       
       // Reset form
       setFile(null);
@@ -167,11 +151,7 @@ export default function HardwareManager() {
       setDiff(null);
       
     } catch (err) {
-      toast({
-        title: "Fehler beim Speichern",
-        description: err instanceof Error ? err.message : "Unbekannter Fehler",
-        variant: "destructive",
-      });
+      toast.error(err instanceof Error ? err.message : "Fehler beim Speichern");
     }
   }, [parsedData, validation]);
 
@@ -182,10 +162,7 @@ export default function HardwareManager() {
     setParsedData(null);
     setValidation(null);
     setDiff(null);
-    toast({
-      title: "Zurückgesetzt",
-      description: "Standard-Hardware ist wieder aktiv.",
-    });
+    toast.success("Standard-Hardware ist wieder aktiv");
   }, []);
 
   const handleDownloadTemplate = useCallback(() => {

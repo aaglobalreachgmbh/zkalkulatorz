@@ -126,6 +126,3 @@ export {
   useFormField,
 } from "./form";
 
-// Toast
-export { Toaster } from "./toaster";
-export { toast, useToast } from "./use-toast";

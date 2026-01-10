@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Download, FileSpreadsheet } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import * as XLSX from "xlsx";
 
 interface SheetDefinition {
@@ -120,16 +120,9 @@ export function TemplateGenerator() {
       // Generate and download
       XLSX.writeFile(workbook, "margenkalkulator_vorlage.xlsx");
       
-      toast({
-        title: "Vorlage heruntergeladen",
-        description: "Die XLSX-Vorlage mit allen Sheets wurde erstellt.",
-      });
+      toast.success("XLSX-Vorlage heruntergeladen");
     } catch (err) {
-      toast({
-        title: "Fehler",
-        description: err instanceof Error ? err.message : "Vorlage konnte nicht erstellt werden",
-        variant: "destructive",
-      });
+      toast.error(err instanceof Error ? err.message : "Vorlage konnte nicht erstellt werden");
     }
   }, []);
 

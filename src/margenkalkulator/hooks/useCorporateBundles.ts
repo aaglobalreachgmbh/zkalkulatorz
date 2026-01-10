@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import type { OfferOptionState } from "../engine/types";
 import type { Json } from "@/integrations/supabase/types";
 
@@ -110,17 +110,10 @@ export function useCorporateBundles(options?: { sector?: Sector; includeInactive
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["corporate-bundles"] });
-      toast({
-        title: "Bundle erstellt",
-        description: "Das Bundle wurde erfolgreich angelegt.",
-      });
+      toast.success("Bundle erstellt");
     },
     onError: (error) => {
-      toast({
-        title: "Fehler beim Erstellen",
-        description: error instanceof Error ? error.message : "Unbekannter Fehler",
-        variant: "destructive",
-      });
+      toast.error(error instanceof Error ? error.message : "Fehler beim Erstellen");
     },
   });
 
@@ -144,17 +137,10 @@ export function useCorporateBundles(options?: { sector?: Sector; includeInactive
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["corporate-bundles"] });
-      toast({
-        title: "Bundle aktualisiert",
-        description: "Die Änderungen wurden gespeichert.",
-      });
+      toast.success("Bundle aktualisiert");
     },
     onError: (error) => {
-      toast({
-        title: "Fehler beim Aktualisieren",
-        description: error instanceof Error ? error.message : "Unbekannter Fehler",
-        variant: "destructive",
-      });
+      toast.error(error instanceof Error ? error.message : "Fehler beim Aktualisieren");
     },
   });
 
@@ -170,17 +156,10 @@ export function useCorporateBundles(options?: { sector?: Sector; includeInactive
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["corporate-bundles"] });
-      toast({
-        title: "Bundle gelöscht",
-        description: "Das Bundle wurde entfernt.",
-      });
+      toast.success("Bundle gelöscht");
     },
     onError: (error) => {
-      toast({
-        title: "Fehler beim Löschen",
-        description: error instanceof Error ? error.message : "Unbekannter Fehler",
-        variant: "destructive",
-      });
+      toast.error(error instanceof Error ? error.message : "Fehler beim Löschen");
     },
   });
 

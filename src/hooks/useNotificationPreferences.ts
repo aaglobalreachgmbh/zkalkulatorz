@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { toast } from "sonner";
+import type { Json } from "@/integrations/supabase/types";
 
 export interface NotificationTypes {
   visit_reminder: boolean;
@@ -92,32 +93,28 @@ export function useNotificationPreferences() {
         .eq("user_id", user.id)
         .maybeSingle();
 
-      const updateData = {
-        ...updates,
-        notification_types: updates.notification_types as unknown as Record<string, unknown>,
-        updated_at: new Date().toISOString(),
-      };
-
       if (existing) {
         const { error } = await supabase
           .from("notification_preferences")
-          .update(updateData)
+          .update({
+            ...updates,
+            notification_types: updates.notification_types as unknown as Json,
+            updated_at: new Date().toISOString(),
+          })
           .eq("user_id", user.id);
 
         if (error) throw error;
       } else {
-        const insertData = {
-          user_id: user.id,
-          tenant_id: "tenant_default",
-          email_enabled: DEFAULT_PREFERENCES.email_enabled,
-          calendar_sync_enabled: DEFAULT_PREFERENCES.calendar_sync_enabled,
-          reminder_before_minutes: DEFAULT_PREFERENCES.reminder_before_minutes,
-          notification_types: (updates.notification_types || DEFAULT_NOTIFICATION_TYPES) as unknown as Record<string, unknown>,
-        };
-        
         const { error } = await supabase
           .from("notification_preferences")
-          .insert(insertData);
+          .insert({
+            user_id: user.id,
+            tenant_id: "tenant_default",
+            email_enabled: DEFAULT_PREFERENCES.email_enabled,
+            calendar_sync_enabled: DEFAULT_PREFERENCES.calendar_sync_enabled,
+            reminder_before_minutes: DEFAULT_PREFERENCES.reminder_before_minutes,
+            notification_types: (updates.notification_types || DEFAULT_NOTIFICATION_TYPES) as unknown as Json,
+          });
 
         if (error) throw error;
       }

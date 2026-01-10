@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { MainLayout } from "@/components/MainLayout";
 import { useCustomers, Customer, CustomerInput } from "@/margenkalkulator/hooks/useCustomers";
+import { usePermissions } from "@/hooks/usePermissions";
+import { AccessDeniedCard } from "@/components/AccessDeniedCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -78,6 +80,19 @@ export default function Customers() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { customers, isLoading, createCustomer, updateCustomer, deleteCustomer } = useCustomers();
   const { isPOSMode } = usePOSMode();
+  const { canManageCustomers, hasFullAccess, isLoading: permissionsLoading } = usePermissions();
+
+  // Berechtigungsprüfung
+  if (!permissionsLoading && !hasFullAccess && !canManageCustomers) {
+    return (
+      <MainLayout>
+        <AccessDeniedCard 
+          title="Kein Zugriff auf Kunden"
+          description="Sie haben keine Berechtigung, die Kundenverwaltung zu nutzen. Kontaktieren Sie Ihren Shop-Administrator."
+        />
+      </MainLayout>
+    );
+  }
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [formData, setFormData] = useState<CustomerInput>(initialFormData);

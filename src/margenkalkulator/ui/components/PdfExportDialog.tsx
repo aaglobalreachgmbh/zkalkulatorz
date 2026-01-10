@@ -37,7 +37,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
-import { useEmployeeSettings } from "@/margenkalkulator/hooks/useEmployeeSettings";
+import { usePermissions } from "@/hooks/usePermissions";
 import { useTenantBranding } from "@/hooks/useTenantBranding";
 import { useActivityTracker } from "@/hooks/useActivityTracker";
 import { useSharedOffers } from "@/margenkalkulator/hooks/useSharedOffers";
@@ -147,15 +147,15 @@ export function PdfExportDialog({
   
   // Hooks
   const visibility = useSensitiveFieldsVisible(viewMode);
-  const { settings } = useEmployeeSettings();
+  const { canViewMargins, canExportPdf } = usePermissions();
   const { branding } = useTenantBranding();
   const { trackPdfExported } = useActivityTracker();
   
-  // Check dealer permission
-  const canViewMargins = settings?.featureOverrides?.can_view_margins !== false;
+  // Check dealer permission using usePermissions
   const canShowDealerOption = 
     visibility.effectiveMode !== "customer" &&
     canViewMargins &&
+    canExportPdf &&
     !visibility.isCustomerSessionActive;
   
   // Check if hardware is selected

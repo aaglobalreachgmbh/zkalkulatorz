@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { MainLayout } from "@/components/MainLayout";
 import { useReporting, TimeRange, SalesLeaderboardEntry } from "@/margenkalkulator/hooks/useReporting";
+import { usePermissions } from "@/hooks/usePermissions";
+import { AccessDeniedCard } from "@/components/AccessDeniedCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -58,6 +60,19 @@ export default function Reporting() {
   const { data: stats, isLoading, error } = useReporting(timeRange);
   const [showVVLExport, setShowVVLExport] = useState(false);
   const [showProvisionExport, setShowProvisionExport] = useState(false);
+  const { canViewReporting, hasFullAccess, isLoading: permissionsLoading } = usePermissions();
+
+  // Berechtigungsprüfung
+  if (!permissionsLoading && !hasFullAccess && !canViewReporting) {
+    return (
+      <MainLayout>
+        <AccessDeniedCard 
+          title="Kein Zugriff auf Auswertungen"
+          description="Sie haben keine Berechtigung, Auswertungen einzusehen. Kontaktieren Sie Ihren Shop-Administrator."
+        />
+      </MainLayout>
+    );
+  }
 
   const timeRangeLabels: Record<TimeRange, string> = {
     week: "Diese Woche",

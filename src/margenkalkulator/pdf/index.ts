@@ -19,6 +19,7 @@ export { PremiumTransitionPage } from "./components/PremiumTransitionPage";
 export { PremiumDetailPage } from "./components/PremiumDetailPage";
 export { PremiumUspPage } from "./components/PremiumUspPage";
 export { PremiumContactPage } from "./components/PremiumContactPage";
+export { CustomPage } from "./components/CustomPage";
 
 // Templates
 export { DEFAULT_TEMPLATE, ALLENETZE_CLEAN_TEMPLATE } from "./templates/allenetzeClean";

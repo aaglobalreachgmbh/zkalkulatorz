@@ -1,8 +1,9 @@
 // ============================================
 // PDF Page Selector Component
-// Step 1 of the PDF Export Wizard
+// Step 1 of the PDF Export Wizard - Now with Custom Pages
 // ============================================
 
+import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { 
@@ -15,11 +16,14 @@ import {
   Contact, 
   ShieldCheck,
   GripVertical,
-  Plus
+  Plus,
+  Pencil,
+  Trash2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { PdfPageSelection } from "../../pdf/templates/types";
+import { CustomPageEditor } from "./CustomPageEditor";
+import type { PdfPageSelection, CustomPageConfig } from "../../pdf/templates/types";
 
 interface PageOption {
   key: keyof Omit<PdfPageSelection, "customPages">;
@@ -83,6 +87,19 @@ const PAGE_OPTIONS: PageOption[] = [
   },
 ];
 
+const POSITION_LABELS: Record<CustomPageConfig["position"], string> = {
+  "before-summary": "Vor Zusammenfassung",
+  "after-summary": "Nach Zusammenfassung",
+  "before-contact": "Vor Kontaktseite",
+  "after-contact": "Nach Kontaktseite",
+};
+
+const TYPE_ICONS: Record<CustomPageConfig["type"], React.ReactNode> = {
+  text: <FileText className="w-4 h-4" />,
+  image: <Image className="w-4 h-4" />,
+  attachment: <FileText className="w-4 h-4" />,
+};
+
 interface PdfPageSelectorProps {
   selection: PdfPageSelection;
   onChange: (selection: PdfPageSelection) => void;
@@ -96,6 +113,9 @@ export function PdfPageSelector({
   canShowDealerPage,
   hasHardware,
 }: PdfPageSelectorProps) {
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editingPage, setEditingPage] = useState<CustomPageConfig | null>(null);
+
   const handleToggle = (key: keyof Omit<PdfPageSelection, "customPages">) => {
     onChange({
       ...selection,
@@ -103,13 +123,47 @@ export function PdfPageSelector({
     });
   };
 
+  const handleAddCustomPage = (page: CustomPageConfig) => {
+    onChange({
+      ...selection,
+      customPages: [...selection.customPages, page],
+    });
+    setEditingPage(null);
+  };
+
+  const handleEditCustomPage = (page: CustomPageConfig) => {
+    setEditingPage(page);
+    setEditorOpen(true);
+  };
+
+  const handleUpdateCustomPage = (updatedPage: CustomPageConfig) => {
+    onChange({
+      ...selection,
+      customPages: selection.customPages.map(p => 
+        p.id === updatedPage.id ? updatedPage : p
+      ),
+    });
+    setEditingPage(null);
+  };
+
+  const handleRemoveCustomPage = (pageId: string) => {
+    onChange({
+      ...selection,
+      customPages: selection.customPages.filter(p => p.id !== pageId),
+    });
+  };
+
   const filteredOptions = PAGE_OPTIONS.filter((option) => {
-    // Hide dealer page if not allowed
     if (option.isConfidential && !canShowDealerPage) return false;
-    // Hide hardware page if no hardware selected
     if (option.requiresHardware && !hasHardware) return false;
     return true;
   });
+
+  const standardPageCount = Object.entries(selection)
+    .filter(([key, value]) => key !== "customPages" && value === true)
+    .length;
+
+  const totalPageCount = standardPageCount + selection.customPages.length;
 
   return (
     <div className="space-y-3">
@@ -118,15 +172,15 @@ export function PdfPageSelector({
           Seiten im Angebot
         </Label>
         <span className="text-xs text-muted-foreground">
-          {Object.values(selection).filter((v) => v === true).length} von{" "}
-          {filteredOptions.length} aktiv
+          {totalPageCount} von {filteredOptions.length + selection.customPages.length} aktiv
         </span>
       </div>
 
+      {/* Standard Pages */}
       <div className="space-y-2">
         {filteredOptions.map((option) => {
           const isChecked = selection[option.key];
-          const isDisabled = option.key === "showSummaryPage"; // Summary is always required
+          const isDisabled = option.key === "showSummaryPage";
 
           return (
             <div
@@ -180,19 +234,76 @@ export function PdfPageSelector({
         })}
       </div>
 
-      {/* Add Custom Page Button (placeholder for future) */}
+      {/* Custom Pages Section */}
+      {selection.customPages.length > 0 && (
+        <div className="space-y-2 pt-2 border-t">
+          <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            Eigene Seiten
+          </Label>
+          
+          {selection.customPages.map((page) => (
+            <div
+              key={page.id}
+              className="flex items-center gap-3 p-3 rounded-lg border bg-background border-border"
+            >
+              <div className="flex items-center gap-2">
+                <GripVertical className="w-4 h-4 text-muted-foreground/40 cursor-grab" />
+                <span className="p-1.5 rounded bg-muted text-muted-foreground">
+                  {TYPE_ICONS[page.type]}
+                </span>
+              </div>
+              
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{page.title}</p>
+                <p className="text-xs text-muted-foreground">
+                  {POSITION_LABELS[page.position]}
+                </p>
+              </div>
+              
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0"
+                  onClick={() => handleEditCustomPage(page)}
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                  onClick={() => handleRemoveCustomPage(page.id)}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Add Custom Page Button */}
       <Button
         variant="outline"
         size="sm"
-        className="w-full mt-2 gap-2 text-muted-foreground"
-        disabled
+        className="w-full mt-2 gap-2"
+        onClick={() => {
+          setEditingPage(null);
+          setEditorOpen(true);
+        }}
       >
         <Plus className="w-4 h-4" />
         Eigene Seite hinzufügen
-        <span className="text-[10px] uppercase tracking-wide bg-muted px-1.5 py-0.5 rounded ml-auto">
-          Bald verfügbar
-        </span>
       </Button>
+
+      {/* Custom Page Editor Modal */}
+      <CustomPageEditor
+        open={editorOpen}
+        onOpenChange={setEditorOpen}
+        onSave={editingPage ? handleUpdateCustomPage : handleAddCustomPage}
+        editingPage={editingPage}
+      />
     </div>
   );
 }

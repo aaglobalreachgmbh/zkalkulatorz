@@ -1,21 +1,15 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Zap, CheckCircle, TrendingUp, Key, UserPlus, Search, FileText, Bell, LogIn } from "lucide-react";
+import { ArrowRight, Zap, CheckCircle, TrendingUp, Key, LogIn } from "lucide-react";
 import { MainLayout } from "@/components/MainLayout";
-import { useVVLCounts } from "@/margenkalkulator/hooks/useCustomerContracts";
 import { useAuth } from "@/hooks/useAuth";
 import { usePOSMode } from "@/contexts/POSModeContext";
 import { Button } from "@/components/ui/button";
 import { ConfigurableDashboard } from "@/margenkalkulator/ui/components/ConfigurableDashboard";
-import { cn } from "@/lib/utils";
 
 const Home = () => {
   const navigate = useNavigate();
   const { user, isLoading } = useAuth();
   const { isPOSMode } = usePOSMode();
-  const vvlCounts = useVVLCounts();
-  
-  // Badge shows critical (< 30 days) count
-  const urgentVVLCount = vvlCounts.critical;
 
   return (
     <MainLayout>
@@ -42,68 +36,7 @@ const Home = () => {
         {/* Main Content */}
         <main className="flex-1 flex flex-col justify-center px-4 lg:px-6 py-6">
           
-          {/* Headline */}
-          <div className="text-center mb-6 animate-fade-in">
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-              Wie möchten Sie{" "}
-              <span className="text-primary">kalkulieren</span>?
-            </h2>
-            <p className="text-muted-foreground text-sm max-w-xl mx-auto">
-              Wählen Sie zwischen der detaillierten Einzelkonfiguration oder unseren
-              optimierten Best-Practice Lösungen.
-            </p>
-          </div>
-
-          {/* Quickstart Icons */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 max-w-2xl mx-auto mb-6 animate-fade-in">
-            <button
-              onClick={() => navigate("/customers?action=new")}
-              className="group flex flex-col items-center gap-2.5 p-4 bg-card border border-border/50 rounded-xl hover:border-primary/30 hover:shadow-sm transition-all"
-            >
-              <div className="w-11 h-11 bg-primary/8 rounded-lg flex items-center justify-center group-hover:bg-primary/12 transition-colors">
-                <UserPlus className="w-5 h-5 text-primary" />
-              </div>
-              <span className="text-xs font-medium text-foreground">Neuer Kunde</span>
-            </button>
-
-            <button
-              onClick={() => navigate("/customers")}
-              className="group flex flex-col items-center gap-2.5 p-4 bg-card border border-border/50 rounded-xl hover:border-primary/30 hover:shadow-sm transition-all"
-            >
-              <div className="w-11 h-11 bg-primary/8 rounded-lg flex items-center justify-center group-hover:bg-primary/12 transition-colors">
-                <Search className="w-5 h-5 text-primary" />
-              </div>
-              <span className="text-xs font-medium text-foreground">Kundensuche</span>
-            </button>
-
-            <button
-              onClick={() => navigate("/calculator")}
-              className="group flex flex-col items-center gap-2.5 p-4 bg-card border border-border/50 rounded-xl hover:border-primary/30 hover:shadow-sm transition-all"
-            >
-              <div className="w-11 h-11 bg-primary/8 rounded-lg flex items-center justify-center group-hover:bg-primary/12 transition-colors">
-                <FileText className="w-5 h-5 text-primary" />
-              </div>
-              <span className="text-xs font-medium text-foreground">Neues Angebot</span>
-            </button>
-
-            <button
-              onClick={() => navigate("/contracts")}
-              className="group relative flex flex-col items-center gap-2.5 p-4 bg-card border border-border/50 rounded-xl hover:border-amber-500/30 hover:shadow-sm transition-all"
-            >
-              <div className="relative w-11 h-11 bg-amber-500/8 rounded-lg flex items-center justify-center group-hover:bg-amber-500/12 transition-colors">
-                <Bell className="w-5 h-5 text-amber-500" />
-                {/* VVL Badge */}
-                {urgentVVLCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                    {urgentVVLCount > 9 ? '9+' : urgentVVLCount}
-                  </span>
-                )}
-              </div>
-              <span className="text-xs font-medium text-foreground">VVL-Liste</span>
-            </button>
-          </div>
-
-          {/* Configurable Dashboard - All widgets are managed here */}
+          {/* Configurable Dashboard - All widgets including headline and quick actions */}
           <div className="max-w-5xl mx-auto w-full mb-6">
             <ConfigurableDashboard />
           </div>

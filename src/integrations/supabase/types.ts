@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      absences: {
+        Row: {
+          absence_type: string
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string | null
+          end_date: string
+          id: string
+          notes: string | null
+          start_date: string
+          status: string
+          substitute_user_id: string | null
+          tenant_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          absence_type?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          end_date: string
+          id?: string
+          notes?: string | null
+          start_date: string
+          status?: string
+          substitute_user_id?: string | null
+          tenant_id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          absence_type?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          end_date?: string
+          id?: string
+          notes?: string | null
+          start_date?: string
+          status?: string
+          substitute_user_id?: string | null
+          tenant_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       access_audit_log: {
         Row: {
           client_fingerprint: string | null
@@ -238,6 +286,9 @@ export type Database = {
       }
       calendar_events: {
         Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          assigned_to: string | null
           color: string | null
           contract_id: string | null
           created_at: string | null
@@ -263,6 +314,9 @@ export type Database = {
           visibility: string | null
         }
         Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          assigned_to?: string | null
           color?: string | null
           contract_id?: string | null
           created_at?: string | null
@@ -288,6 +342,9 @@ export type Database = {
           visibility?: string | null
         }
         Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          assigned_to?: string | null
           color?: string | null
           contract_id?: string | null
           created_at?: string | null
@@ -1059,6 +1116,51 @@ export type Database = {
         }
         Relationships: []
       }
+      employee_goals: {
+        Row: {
+          bonus_amount: number | null
+          created_at: string | null
+          created_by: string | null
+          current_value: number
+          goal_type: string
+          id: string
+          month: string
+          notes: string | null
+          target_value: number
+          tenant_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          bonus_amount?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          current_value?: number
+          goal_type?: string
+          id?: string
+          month: string
+          notes?: string | null
+          target_value?: number
+          tenant_id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          bonus_amount?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          current_value?: number
+          goal_type?: string
+          id?: string
+          month?: string
+          notes?: string | null
+          target_value?: number
+          tenant_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       employee_settings: {
         Row: {
           allowed_menu_items: string[] | null
@@ -1422,6 +1524,45 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          link: string | null
+          message: string | null
+          metadata: Json | null
+          tenant_id: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          link?: string | null
+          message?: string | null
+          metadata?: Json | null
+          tenant_id?: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          link?: string | null
+          message?: string | null
+          metadata?: Json | null
+          tenant_id?: string
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       offer_activities: {
         Row: {
           activity_type: string
@@ -1591,6 +1732,89 @@ export type Database = {
           },
         ]
       }
+      onboarding_progress: {
+        Row: {
+          completed_at: string | null
+          completed_steps: string[] | null
+          created_at: string | null
+          id: string
+          skipped_at: string | null
+          started_at: string | null
+          template_id: string | null
+          tenant_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          completed_steps?: string[] | null
+          created_at?: string | null
+          id?: string
+          skipped_at?: string | null
+          started_at?: string | null
+          template_id?: string | null
+          tenant_id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          completed_steps?: string[] | null
+          created_at?: string | null
+          id?: string
+          skipped_at?: string | null
+          started_at?: string | null
+          template_id?: string | null
+          tenant_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_progress_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "onboarding_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      onboarding_templates: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          is_default: boolean | null
+          name: string
+          steps: Json
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_default?: boolean | null
+          name: string
+          steps?: Json
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          steps?: Json
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       password_reset_tokens: {
         Row: {
           created_at: string | null
@@ -1618,6 +1842,51 @@ export type Database = {
           token?: string
           used_at?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      permission_templates: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          is_system: boolean | null
+          name: string
+          permissions: Json
+          sort_order: number | null
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_system?: boolean | null
+          name: string
+          permissions?: Json
+          sort_order?: number | null
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_system?: boolean | null
+          name?: string
+          permissions?: Json
+          sort_order?: number | null
+          tenant_id?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -2058,6 +2327,154 @@ export type Database = {
           view_count?: number | null
         }
         Relationships: []
+      }
+      shift_swap_requests: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string | null
+          id: string
+          reason: string | null
+          requesting_user_id: string
+          shift_id: string
+          status: string
+          target_user_id: string | null
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          id?: string
+          reason?: string | null
+          requesting_user_id: string
+          shift_id: string
+          status?: string
+          target_user_id?: string | null
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          id?: string
+          reason?: string | null
+          requesting_user_id?: string
+          shift_id?: string
+          status?: string
+          target_user_id?: string | null
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shift_swap_requests_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "shifts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shift_templates: {
+        Row: {
+          break_minutes: number | null
+          color: string | null
+          created_at: string | null
+          created_by: string | null
+          end_time: string
+          id: string
+          is_active: boolean | null
+          name: string
+          start_time: string
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          break_minutes?: number | null
+          color?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          end_time: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          start_time: string
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          break_minutes?: number | null
+          color?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          end_time?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          start_time?: string
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      shifts: {
+        Row: {
+          break_minutes: number | null
+          created_at: string | null
+          created_by: string | null
+          date: string
+          end_time: string
+          id: string
+          notes: string | null
+          start_time: string
+          status: string
+          template_id: string | null
+          tenant_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          break_minutes?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          date: string
+          end_time: string
+          id?: string
+          notes?: string | null
+          start_time: string
+          status?: string
+          template_id?: string | null
+          tenant_id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          break_minutes?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          date?: string
+          end_time?: string
+          id?: string
+          notes?: string | null
+          start_time?: string
+          status?: string
+          template_id?: string | null
+          tenant_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shifts_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "shift_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       synced_emails: {
         Row: {

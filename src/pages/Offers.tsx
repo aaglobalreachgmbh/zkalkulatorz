@@ -151,6 +151,26 @@ export default function Offers() {
         .eq("id", offerId);
 
       if (error) throw error;
+
+      // Automatische Status-Synchronisation: Angebot "angenommen" → Kunde "gewonnen"
+      if (newStatus === "angenommen") {
+        const offer = offers.find(o => o.id === offerId);
+        if (offer?.customer_id) {
+          const { error: customerError } = await supabase
+            .from("customers")
+            .update({ 
+              customer_status: "gewonnen",
+              won_at: new Date().toISOString()
+            })
+            .eq("id", offer.customer_id);
+          
+          if (!customerError) {
+            toast.success(`Kunde als "gewonnen" markiert`);
+            queryClient.invalidateQueries({ queryKey: ["customers"] });
+          }
+        }
+      }
+
       toast.success(`Status auf "${getStatusLabel(newStatus)}" geändert`);
       queryClient.invalidateQueries({ queryKey: ["cloudOffers"] });
     } catch (error) {

@@ -476,9 +476,10 @@ export default function Customers() {
                             <SelectValue placeholder="Status auswählen" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="aktiv">Aktiv</SelectItem>
-                            <SelectItem value="inaktiv">Inaktiv</SelectItem>
                             <SelectItem value="interessent">Interessent</SelectItem>
+                            <SelectItem value="aktiv">Aktiv</SelectItem>
+                            <SelectItem value="gewonnen">Gewonnen ✓</SelectItem>
+                            <SelectItem value="inaktiv">Inaktiv</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>

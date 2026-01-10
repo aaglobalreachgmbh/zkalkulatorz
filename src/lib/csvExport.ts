@@ -118,3 +118,12 @@ export const ACTIVITY_LOG_COLUMNS = [
   { key: "resource_name", label: "Ressourcen-Name" },
   { key: "summary", label: "Zusammenfassung" },
 ] as const;
+
+export const SALES_LEADERBOARD_COLUMNS = [
+  { key: "userName", label: "Verkäufer" },
+  { key: "customerName", label: "Kunde" },
+  { key: "wonAt", label: "Gewonnen am" },
+  { key: "monthlyRevenue", label: "Mtl. Umsatz (€)" },
+  { key: "yearlyRevenue", label: "Jahresumsatz (€)" },
+  { key: "contractCount", label: "Verträge" },
+] as const;

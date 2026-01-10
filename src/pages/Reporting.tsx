@@ -1,16 +1,17 @@
 import { useState } from "react";
 import { MainLayout } from "@/components/MainLayout";
-import { useReporting, TimeRange } from "@/margenkalkulator/hooks/useReporting";
+import { useReporting, TimeRange, SalesLeaderboardEntry } from "@/margenkalkulator/hooks/useReporting";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Loader2, FileText, TrendingUp, Target, Euro, Calendar, AlertTriangle, Package, Receipt, Download } from "lucide-react";
+import { Loader2, FileText, TrendingUp, Target, Euro, Calendar, AlertTriangle, Package, Receipt, Download, Trophy, Users } from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -26,6 +27,10 @@ import {
 } from "recharts";
 import { VVLExportDialog } from "@/margenkalkulator/ui/components/VVLExportDialog";
 import { ProvisionForecastDialog } from "@/margenkalkulator/ui/components/ProvisionForecastDialog";
+import { exportToCSV, SALES_LEADERBOARD_COLUMNS } from "@/lib/csvExport";
+import { format, parseISO } from "date-fns";
+import { de } from "date-fns/locale";
+import { toast } from "sonner";
 
 const COLORS = {
   positive: "hsl(142 76% 36%)",
@@ -143,6 +148,7 @@ export default function Reporting() {
             <TabsTrigger value="overview">Übersicht</TabsTrigger>
             <TabsTrigger value="offers">Angebote</TabsTrigger>
             <TabsTrigger value="contracts">Verträge</TabsTrigger>
+            <TabsTrigger value="sales">Verkäufer</TabsTrigger>
           </TabsList>
 
           {/* === ÜBERSICHT TAB === */}
@@ -260,6 +266,57 @@ export default function Reporting() {
                     {formatCurrency(stats?.ekVsProvision.difference || 0)}
                   </div>
                   <p className="text-xs text-muted-foreground">Differenz</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* KPI Cards - Row 3: Akquirierter Umsatz */}
+            <div className="grid gap-4 md:grid-cols-4">
+              <Card className="border-amber-500/30 bg-amber-500/5">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Gewonnene Kunden</CardTitle>
+                  <Trophy className="h-4 w-4 text-amber-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-amber-600">{stats?.acquiredRevenue.customerCount || 0}</div>
+                  <p className="text-xs text-muted-foreground">Status: gewonnen</p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-amber-500/30 bg-amber-500/5">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Akqu. Verträge</CardTitle>
+                  <Receipt className="h-4 w-4 text-amber-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-amber-600">{stats?.acquiredRevenue.contractCount || 0}</div>
+                  <p className="text-xs text-muted-foreground">Aktive Verträge</p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-amber-500/30 bg-amber-500/5">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Akqu. Monatsumsatz</CardTitle>
+                  <Euro className="h-4 w-4 text-amber-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-amber-600">
+                    {formatCurrency(stats?.acquiredRevenue.monthly || 0)}
+                  </div>
+                  <p className="text-xs text-muted-foreground">pro Monat</p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-amber-500/30 bg-amber-500/5">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Akqu. Jahresumsatz</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-amber-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-amber-600">
+                    {formatCurrency(stats?.acquiredRevenue.yearly || 0)}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Hochrechnung</p>
                 </CardContent>
               </Card>
             </div>
@@ -560,6 +617,123 @@ export default function Reporting() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* === VERKÄUFER TAB === */}
+          <TabsContent value="sales" className="space-y-6">
+            {/* Header mit Export */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold flex items-center gap-2">
+                  <Trophy className="h-5 w-5 text-amber-500" />
+                  Verkäufer-Leaderboard
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Akquirierter Umsatz von gewonnenen Kunden
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (!stats?.salesLeaderboard?.length) return;
+                  const exportData = stats.salesLeaderboard.flatMap(seller =>
+                    seller.sales.map(sale => ({
+                      userName: seller.userName,
+                      customerName: sale.customerName,
+                      wonAt: sale.date ? format(parseISO(sale.date), "dd.MM.yyyy", { locale: de }) : "-",
+                      monthlyRevenue: sale.monthlyRevenue.toFixed(2).replace(".", ","),
+                      yearlyRevenue: (sale.monthlyRevenue * 12).toFixed(2).replace(".", ","),
+                      contractCount: sale.contractCount,
+                    }))
+                  );
+                  exportToCSV(
+                    exportData,
+                    SALES_LEADERBOARD_COLUMNS as unknown as { key: keyof typeof exportData[0]; label: string }[],
+                    `verkaufsleaderboard_${format(new Date(), "yyyy-MM-dd")}`
+                  );
+                  toast.success(`${exportData.length} Verkäufe exportiert`);
+                }}
+                disabled={!stats?.salesLeaderboard?.length}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                CSV Export
+              </Button>
+            </div>
+
+            {/* Leaderboard */}
+            {(stats?.salesLeaderboard?.length || 0) > 0 ? (
+              <div className="space-y-4">
+                {stats!.salesLeaderboard.map((seller, index) => {
+                  const maxRevenue = stats!.salesLeaderboard[0]?.monthlyRevenue || 1;
+                  const percentage = Math.round((seller.monthlyRevenue / maxRevenue) * 100);
+                  
+                  return (
+                    <Card key={seller.userId} className={index === 0 ? "border-amber-500/50 bg-amber-500/5" : ""}>
+                      <CardContent className="pt-4">
+                        <div className="flex items-center gap-4">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                            index === 0 ? "bg-amber-500 text-white" :
+                            index === 1 ? "bg-gray-400 text-white" :
+                            index === 2 ? "bg-amber-700 text-white" :
+                            "bg-muted text-muted-foreground"
+                          }`}>
+                            #{index + 1}
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="font-semibold">{seller.userName}</span>
+                              <span className="font-bold text-amber-600">
+                                {seller.monthlyRevenue.toFixed(2).replace(".", ",")} €/Monat
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
+                              <span className="flex items-center gap-1">
+                                <Users className="h-3 w-3" />
+                                {seller.customerCount} Kunden
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Receipt className="h-3 w-3" />
+                                {seller.contractCount} Verträge
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <TrendingUp className="h-3 w-3" />
+                                {seller.yearlyRevenue.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ".")} €/Jahr
+                              </span>
+                            </div>
+                            <Progress value={percentage} className="h-2" />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+
+                {/* Gesamt-Übersicht */}
+                <Card className="bg-muted/50">
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-medium">Gesamt</span>
+                      <div className="flex gap-6">
+                        <span>{stats?.acquiredRevenue.customerCount} Kunden</span>
+                        <span>{stats?.acquiredRevenue.contractCount} Verträge</span>
+                        <span className="font-bold text-amber-600">
+                          {stats?.acquiredRevenue.monthly.toFixed(2).replace(".", ",")} €/Monat
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            ) : (
+              <Card>
+                <CardContent className="py-12 text-center text-muted-foreground">
+                  <Trophy className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Noch keine gewonnenen Kunden</p>
+                  <p className="text-sm">Setzen Sie Kunden-Status auf "Gewonnen" um hier Statistiken zu sehen</p>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       </div>

@@ -445,6 +445,7 @@ export type Database = {
           user_id: string
           vip_kunde: boolean | null
           vorname: string | null
+          won_at: string | null
         }
         Insert: {
           anrede?: string | null
@@ -476,6 +477,7 @@ export type Database = {
           user_id: string
           vip_kunde?: boolean | null
           vorname?: string | null
+          won_at?: string | null
         }
         Update: {
           anrede?: string | null
@@ -507,6 +509,7 @@ export type Database = {
           user_id?: string
           vip_kunde?: boolean | null
           vorname?: string | null
+          won_at?: string | null
         }
         Relationships: []
       }

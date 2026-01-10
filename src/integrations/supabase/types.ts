@@ -161,6 +161,106 @@ export type Database = {
         }
         Relationships: []
       }
+      calendar_events: {
+        Row: {
+          color: string | null
+          contract_id: string | null
+          created_at: string | null
+          customer_id: string | null
+          description: string | null
+          end_time: string
+          event_type: string | null
+          external_calendar: string | null
+          external_id: string | null
+          id: string
+          is_all_day: boolean | null
+          last_synced_at: string | null
+          location: string | null
+          offer_id: string | null
+          recurrence_rule: string | null
+          reminder_minutes: number | null
+          start_time: string
+          status: string | null
+          tenant_id: string
+          title: string
+          updated_at: string | null
+          user_id: string
+          visibility: string | null
+        }
+        Insert: {
+          color?: string | null
+          contract_id?: string | null
+          created_at?: string | null
+          customer_id?: string | null
+          description?: string | null
+          end_time: string
+          event_type?: string | null
+          external_calendar?: string | null
+          external_id?: string | null
+          id?: string
+          is_all_day?: boolean | null
+          last_synced_at?: string | null
+          location?: string | null
+          offer_id?: string | null
+          recurrence_rule?: string | null
+          reminder_minutes?: number | null
+          start_time: string
+          status?: string | null
+          tenant_id: string
+          title: string
+          updated_at?: string | null
+          user_id: string
+          visibility?: string | null
+        }
+        Update: {
+          color?: string | null
+          contract_id?: string | null
+          created_at?: string | null
+          customer_id?: string | null
+          description?: string | null
+          end_time?: string
+          event_type?: string | null
+          external_calendar?: string | null
+          external_id?: string | null
+          id?: string
+          is_all_day?: boolean | null
+          last_synced_at?: string | null
+          location?: string | null
+          offer_id?: string | null
+          recurrence_rule?: string | null
+          reminder_minutes?: number | null
+          start_time?: string
+          status?: string | null
+          tenant_id?: string
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+          visibility?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_events_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "customer_contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_events_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "saved_offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       corporate_bundles: {
         Row: {
           config: Json
@@ -776,6 +876,99 @@ export type Database = {
           status?: string
           trial_ends_at?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      email_accounts: {
+        Row: {
+          access_token_encrypted: string | null
+          created_at: string | null
+          display_name: string | null
+          email_address: string
+          id: string
+          imap_host: string | null
+          imap_password_encrypted: string | null
+          imap_port: number | null
+          last_sync_at: string | null
+          provider: string
+          refresh_token_encrypted: string | null
+          smtp_host: string | null
+          smtp_port: number | null
+          sync_enabled: boolean | null
+          sync_error: string | null
+          tenant_id: string
+          token_expiry: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          access_token_encrypted?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          email_address: string
+          id?: string
+          imap_host?: string | null
+          imap_password_encrypted?: string | null
+          imap_port?: number | null
+          last_sync_at?: string | null
+          provider: string
+          refresh_token_encrypted?: string | null
+          smtp_host?: string | null
+          smtp_port?: number | null
+          sync_enabled?: boolean | null
+          sync_error?: string | null
+          tenant_id: string
+          token_expiry?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          access_token_encrypted?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          email_address?: string
+          id?: string
+          imap_host?: string | null
+          imap_password_encrypted?: string | null
+          imap_port?: number | null
+          last_sync_at?: string | null
+          provider?: string
+          refresh_token_encrypted?: string | null
+          smtp_host?: string | null
+          smtp_port?: number | null
+          sync_enabled?: boolean | null
+          sync_error?: string | null
+          tenant_id?: string
+          token_expiry?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      employee_assignments: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          employee_id: string
+          id: string
+          supervisor_id: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          employee_id: string
+          id?: string
+          supervisor_id: string
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          employee_id?: string
+          id?: string
+          supervisor_id?: string
+          tenant_id?: string
         }
         Relationships: []
       }
@@ -1677,6 +1870,99 @@ export type Database = {
         }
         Relationships: []
       }
+      synced_emails: {
+        Row: {
+          account_id: string | null
+          attachments: Json | null
+          body_html: string | null
+          body_preview: string | null
+          created_at: string | null
+          customer_id: string | null
+          folder: string | null
+          id: string
+          is_archived: boolean | null
+          is_read: boolean | null
+          is_starred: boolean | null
+          labels: string[] | null
+          linked_at: string | null
+          message_id: string
+          received_at: string
+          recipients: Json | null
+          sender_email: string | null
+          sender_name: string | null
+          subject: string | null
+          tenant_id: string
+          thread_id: string | null
+          user_id: string
+          visibility: string | null
+        }
+        Insert: {
+          account_id?: string | null
+          attachments?: Json | null
+          body_html?: string | null
+          body_preview?: string | null
+          created_at?: string | null
+          customer_id?: string | null
+          folder?: string | null
+          id?: string
+          is_archived?: boolean | null
+          is_read?: boolean | null
+          is_starred?: boolean | null
+          labels?: string[] | null
+          linked_at?: string | null
+          message_id: string
+          received_at: string
+          recipients?: Json | null
+          sender_email?: string | null
+          sender_name?: string | null
+          subject?: string | null
+          tenant_id: string
+          thread_id?: string | null
+          user_id: string
+          visibility?: string | null
+        }
+        Update: {
+          account_id?: string | null
+          attachments?: Json | null
+          body_html?: string | null
+          body_preview?: string | null
+          created_at?: string | null
+          customer_id?: string | null
+          folder?: string | null
+          id?: string
+          is_archived?: boolean | null
+          is_read?: boolean | null
+          is_starred?: boolean | null
+          labels?: string[] | null
+          linked_at?: string | null
+          message_id?: string
+          received_at?: string
+          recipients?: Json | null
+          sender_email?: string | null
+          sender_name?: string | null
+          subject?: string | null
+          tenant_id?: string
+          thread_id?: string | null
+          user_id?: string
+          visibility?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "synced_emails_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "email_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "synced_emails_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_members: {
         Row: {
           id: string
@@ -2280,6 +2566,7 @@ export type Database = {
         Args: { _team_id: string; _user_id: string }
         Returns: string
       }
+      get_visible_user_ids: { Args: never; Returns: string[] }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

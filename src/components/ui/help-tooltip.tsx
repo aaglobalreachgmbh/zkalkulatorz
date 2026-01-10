@@ -46,10 +46,10 @@ const TERM_DEFINITIONS: Record<string, { title: string; description: string; exa
     description: "Kombivorteil bei Vodafone: Kunden mit Festnetz + Mobilfunk erhalten 5€ Rabatt pro Monat auf den Mobilfunk-Tarif.",
     example: "Cable 250 + Business Prime M = 5€ GigaKombi-Rabatt",
   },
-  amortisieren: {
-    title: "Monatlich amortisieren",
-    description: "Aktiviert: Hardware-Kosten werden auf 24 Monate verteilt und im monatlichen Kundenpreis angezeigt. Deaktiviert: Hardware-Kosten erscheinen NICHT im Kundenpreis, nur in der Händler-Marge.",
-    example: "Tipp: Für Kunden-Präsentationen aktivieren, damit der echte Monatspreis sichtbar wird",
+  hwImMonatspreis: {
+    title: "Im Monatspreis anzeigen",
+    description: "Aktiviert: Hardware-Kosten werden auf 24 Monate verteilt und im monatlichen Kundenpreis angezeigt. So sieht der Kunde den realen Gesamtpreis. Deaktiviert: Hardware-Kosten erscheinen nur in der Händler-Marge.",
+    example: "Tipp: Für Kunden-Präsentationen aktivieren, damit der Kunde den echten Monatspreis sieht",
   },
   // Provision & Marge
   provision: {

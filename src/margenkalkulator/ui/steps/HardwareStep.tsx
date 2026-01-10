@@ -187,8 +187,8 @@ export function HardwareStep({ value, onChange, onHardwareSelected, datasetVersi
             </Link>
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground inline-flex items-center gap-1">
-                Monatlich amortisieren
-                <HelpTooltip term="amortisieren" iconClassName="w-3.5 h-3.5" />
+                Im Monatspreis anzeigen
+                <HelpTooltip term="hwImMonatspreis" iconClassName="w-3.5 h-3.5" />
               </span>
               <Switch
                 checked={value.amortize}
@@ -533,18 +533,18 @@ export function HardwareStep({ value, onChange, onHardwareSelected, datasetVersi
         </div>
       )}
 
-      {/* Amortization Details */}
+      {/* Hardware im Monatspreis Details */}
       {showDealerOptions && value.amortize && value.ekNet > 0 && (
         <div className="p-4 bg-muted/50 rounded-lg flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium">Hardware-Amortisation</p>
+            <p className="text-sm font-medium">Hardware im Monatspreis</p>
             <p className="text-xs text-muted-foreground">
-              {value.ekNet} € EK über {value.amortMonths || 24} Monate
+              {value.ekNet} € EK auf {value.amortMonths || 24} Monate verteilt
             </p>
           </div>
           <div className="text-right">
             <p className="text-lg font-semibold font-mono">
-              {((value.ekNet || 0) / (value.amortMonths || 24)).toFixed(2)} €
+              +{((value.ekNet || 0) / (value.amortMonths || 24)).toFixed(2)} €
             </p>
             <p className="text-xs text-muted-foreground">pro Monat</p>
           </div>

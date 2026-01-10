@@ -237,7 +237,7 @@ export function generateBreakdown(
     );
     breakdown.push({
       key: "hardware_amort",
-      label: `Hardware Amortisierung (${state.hardware.amortMonths} Mo.)`,
+      label: `Hardware im Monatspreis (${state.hardware.amortMonths} Mo.)`,
       appliesTo: "monthly",
       net: amortPerMonth,
       gross: calculateGross(amortPerMonth, vatRate),

@@ -1,16 +1,19 @@
-import { useState } from "react";
+// ============================================
+// Team Page - Kanban-Style Team Management
+// Redesigned after SugarCRM pattern
+// ============================================
+
+import { useState, useMemo } from "react";
 import { MainLayout } from "@/components/MainLayout";
-import { useTeams, TeamWithMembers } from "@/margenkalkulator/hooks/useTeams";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useTenantAdmin } from "@/hooks/useTenantAdmin";
+import { useTenantInvitations, TenantInvitation } from "@/margenkalkulator/hooks/useTenantInvitations";
 import { AccessDeniedCard } from "@/components/AccessDeniedCard";
+import { TeamStatsBar, TeamKanbanBoard, TeamMemberData } from "@/components/team";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Dialog,
   DialogContent,
@@ -18,7 +21,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -27,332 +29,368 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Plus,
-  MoreVertical,
-  Users,
-  UserPlus,
-  Trash2,
-  Crown,
-  Shield,
-  User,
-  Loader2,
-  Pencil,
-} from "lucide-react";
+import { ArrowLeft, Users, Loader2, UserPlus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useIdentity } from "@/contexts/IdentityContext";
 
-const roleLabels: Record<string, string> = {
-  owner: "Inhaber",
-  admin: "Admin",
-  member: "Mitglied",
-};
-
-const roleIcons: Record<string, React.ReactNode> = {
-  owner: <Crown className="h-3 w-3" />,
-  admin: <Shield className="h-3 w-3" />,
-  member: <User className="h-3 w-3" />,
-};
+// Type definitions
+interface ProfileWithRole {
+  id: string;
+  email: string | null;
+  display_name: string | null;
+  created_at: string;
+  is_approved: boolean | null;
+  role?: string;
+}
 
 export default function Team() {
+  const navigate = useNavigate();
   const { user } = useAuth();
-  const { teams, isLoading, createTeam, updateTeam, deleteTeam, addMember, removeMember, updateMemberRole } =
-    useTeams();
+  const { identity } = useIdentity();
+  const queryClient = useQueryClient();
   const { canViewTeam, hasFullAccess, isLoading: permissionsLoading } = usePermissions();
+  const { isTenantAdmin } = useTenantAdmin();
+  
+  // Invitations hook
+  const {
+    pendingInvitations,
+    expiredInvitations,
+    isLoading: invitationsLoading,
+    sendInvitation,
+    revokeInvitation,
+    resendInvitation,
+  } = useTenantInvitations();
 
-  // Berechtigungsprüfung
+  // State
+  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState<"tenant_admin" | "user">("user");
+
+  // Fetch all tenant members with roles
+  const membersQuery = useQuery({
+    queryKey: ["tenant-members", identity.tenantId],
+    queryFn: async (): Promise<ProfileWithRole[]> => {
+      if (!identity.tenantId) return [];
+
+      // Get profiles in this tenant
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, email, display_name, created_at, is_approved")
+        .eq("tenant_id", identity.tenantId);
+
+      if (profilesError) {
+        console.warn("[Team] Profiles query error:", profilesError.message);
+        return [];
+      }
+
+      // Get roles for each profile
+      const profilesWithRoles = await Promise.all(
+        (profiles || []).map(async (profile) => {
+          const { data: roles } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", profile.id);
+
+          // Determine highest role
+          const roleList = roles?.map((r) => r.role) || [];
+          let highestRole = "user";
+          if (roleList.includes("admin")) highestRole = "admin";
+          if (roleList.includes("tenant_admin")) highestRole = "tenant_admin";
+
+          return {
+            ...profile,
+            role: highestRole,
+          };
+        })
+      );
+
+      return profilesWithRoles;
+    },
+    enabled: !!identity.tenantId,
+  });
+
+  // Transform data for Kanban board
+  const { admins, members, invitations, inactive, stats } = useMemo(() => {
+    const allProfiles = membersQuery.data || [];
+    const allInvitations = [...pendingInvitations, ...expiredInvitations];
+
+    // Separate admins from regular members
+    const adminsList: TeamMemberData[] = allProfiles
+      .filter((p) => p.is_approved && (p.role === "tenant_admin" || p.role === "admin"))
+      .map((p) => ({
+        id: p.id,
+        type: "member" as const,
+        name: p.display_name || p.email?.split("@")[0] || "Unbekannt",
+        email: p.email || "",
+        role: p.role || "user",
+        joinedAt: p.created_at,
+        isCurrentUser: p.id === user?.id,
+      }));
+
+    const membersList: TeamMemberData[] = allProfiles
+      .filter((p) => p.is_approved && p.role !== "tenant_admin" && p.role !== "admin")
+      .map((p) => ({
+        id: p.id,
+        type: "member" as const,
+        name: p.display_name || p.email?.split("@")[0] || "Unbekannt",
+        email: p.email || "",
+        role: p.role || "user",
+        joinedAt: p.created_at,
+        isCurrentUser: p.id === user?.id,
+      }));
+
+    const invitationsList: TeamMemberData[] = allInvitations.map((inv) => ({
+      id: inv.id,
+      type: "invitation" as const,
+      name: inv.email.split("@")[0],
+      email: inv.email,
+      role: inv.role,
+      expiresAt: inv.expires_at,
+    }));
+
+    const inactiveList: TeamMemberData[] = allProfiles
+      .filter((p) => !p.is_approved)
+      .map((p) => ({
+        id: p.id,
+        type: "member" as const,
+        name: p.display_name || p.email?.split("@")[0] || "Unbekannt",
+        email: p.email || "",
+        role: p.role || "user",
+        joinedAt: p.created_at,
+        isCurrentUser: p.id === user?.id,
+      }));
+
+    // Calculate expiring invitations (within 2 days)
+    const expiringCount = pendingInvitations.filter((inv) => {
+      const expiresAt = new Date(inv.expires_at);
+      const twoDaysFromNow = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
+      return expiresAt < twoDaysFromNow;
+    }).length;
+
+    return {
+      admins: adminsList,
+      members: membersList,
+      invitations: invitationsList,
+      inactive: inactiveList,
+      stats: {
+        totalMembers: adminsList.length + membersList.length,
+        admins: adminsList.length,
+        pendingInvitations: pendingInvitations.length,
+        expiringInvitations: expiringCount,
+      },
+    };
+  }, [membersQuery.data, pendingInvitations, expiredInvitations, user?.id]);
+
+  // Handle invite
+  const handleInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteEmail.trim()) return;
+
+    try {
+      await sendInvitation.mutateAsync({
+        email: inviteEmail.trim(),
+        role: inviteRole,
+      });
+      setIsInviteDialogOpen(false);
+      setInviteEmail("");
+      setInviteRole("user");
+    } catch (error) {
+      // Error handled by mutation
+    }
+  };
+
+  // Handle actions
+  const handleRemove = async (member: TeamMemberData) => {
+    if (!window.confirm(`${member.name} wirklich entfernen?`)) return;
+    
+    // For now, set is_approved to false (soft delete)
+    const { error } = await supabase
+      .from("profiles")
+      .update({ is_approved: false })
+      .eq("id", member.id);
+    
+    if (error) {
+      toast.error("Fehler beim Entfernen: " + error.message);
+    } else {
+      toast.success("Mitarbeiter deaktiviert");
+      queryClient.invalidateQueries({ queryKey: ["tenant-members"] });
+    }
+  };
+
+  const handlePromote = async (member: TeamMemberData) => {
+    const { error } = await supabase
+      .from("user_roles")
+      .upsert({ user_id: member.id, role: "tenant_admin" });
+    
+    if (error) {
+      toast.error("Fehler beim Befördern: " + error.message);
+    } else {
+      toast.success(`${member.name} zum Admin befördert`);
+      queryClient.invalidateQueries({ queryKey: ["tenant-members"] });
+    }
+  };
+
+  const handleDemote = async (member: TeamMemberData) => {
+    const { error } = await supabase
+      .from("user_roles")
+      .delete()
+      .eq("user_id", member.id)
+      .eq("role", "tenant_admin");
+    
+    if (error) {
+      toast.error("Fehler beim Herabstufen: " + error.message);
+    } else {
+      toast.success(`${member.name} ist jetzt Mitarbeiter`);
+      queryClient.invalidateQueries({ queryKey: ["tenant-members"] });
+    }
+  };
+
+  const handleResendInvitation = (member: TeamMemberData) => {
+    const invitation = [...pendingInvitations, ...expiredInvitations].find(
+      (inv) => inv.id === member.id
+    );
+    if (invitation) {
+      resendInvitation.mutate(invitation);
+    }
+  };
+
+  const handleRevokeInvitation = (member: TeamMemberData) => {
+    if (!window.confirm(`Einladung an ${member.email} wirklich widerrufen?`)) return;
+    revokeInvitation.mutate(member.id);
+  };
+
+  // Access check
   if (!permissionsLoading && !hasFullAccess && !canViewTeam) {
     return (
       <MainLayout>
-        <AccessDeniedCard 
+        <AccessDeniedCard
           title="Kein Zugriff auf Team"
-          description="Sie haben keine Berechtigung, die Team-Verwaltung einzusehen. Kontaktieren Sie Ihren Shop-Administrator."
+          description="Sie haben keine Berechtigung, die Team-Verwaltung einzusehen."
         />
       </MainLayout>
     );
   }
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isAddMemberDialogOpen, setIsAddMemberDialogOpen] = useState(false);
-  const [selectedTeam, setSelectedTeam] = useState<TeamWithMembers | null>(null);
-  const [teamName, setTeamName] = useState("");
-  const [teamDescription, setTeamDescription] = useState("");
-  const [memberEmail, setMemberEmail] = useState("");
-  const [memberRole, setMemberRole] = useState<"admin" | "member">("member");
 
-  const handleCreateTeam = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!teamName.trim()) return;
-    await createTeam.mutateAsync({ name: teamName, description: teamDescription });
-    setIsCreateDialogOpen(false);
-    setTeamName("");
-    setTeamDescription("");
-  };
-
-  const handleAddMember = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedTeam || !memberEmail.trim()) return;
-    await addMember.mutateAsync({
-      teamId: selectedTeam.id,
-      email: memberEmail,
-      role: memberRole,
-    });
-    setIsAddMemberDialogOpen(false);
-    setMemberEmail("");
-    setMemberRole("member");
-  };
-
-  const handleDeleteTeam = async (team: TeamWithMembers) => {
-    if (window.confirm(`Team "${team.name}" wirklich löschen?`)) {
-      await deleteTeam.mutateAsync(team.id);
-    }
-  };
-
-  const handleRemoveMember = async (teamId: string, userId: string) => {
-    if (window.confirm("Mitglied wirklich entfernen?")) {
-      await removeMember.mutateAsync({ teamId, userId });
-    }
-  };
+  const isLoading = membersQuery.isLoading || invitationsLoading;
+  const canManage = isTenantAdmin || hasFullAccess;
 
   return (
     <MainLayout>
       <div className="space-y-6 animate-fade-in">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Teams</h1>
-            <p className="text-muted-foreground">Verwalten Sie Ihre Teams und teilen Sie Angebote</p>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(-1)}
+              className="shrink-0"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <div className="flex items-center gap-2">
+                <Users className="h-6 w-6 text-primary" />
+                <h1 className="text-2xl font-bold text-foreground">Team-Verwaltung</h1>
+              </div>
+              <p className="text-muted-foreground mt-1">
+                Verwalten Sie Ihre Mitarbeiter und Einladungen
+              </p>
+            </div>
           </div>
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Neues Team
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <form onSubmit={handleCreateTeam}>
-                <DialogHeader>
-                  <DialogTitle>Neues Team erstellen</DialogTitle>
-                  <DialogDescription>
-                    Erstellen Sie ein Team, um Angebote mit Kollegen zu teilen.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="team-name">Teamname *</Label>
-                    <Input
-                      id="team-name"
-                      value={teamName}
-                      onChange={(e) => setTeamName(e.target.value)}
-                      placeholder="Vertrieb Nord"
-                      required
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="team-description">Beschreibung</Label>
-                    <Textarea
-                      id="team-description"
-                      value={teamDescription}
-                      onChange={(e) => setTeamDescription(e.target.value)}
-                      placeholder="Optional: Beschreibung des Teams..."
-                      rows={3}
-                    />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                    Abbrechen
-                  </Button>
-                  <Button type="submit" disabled={createTeam.isPending}>
-                    {createTeam.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                    Erstellen
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
         </div>
 
-        {/* Add Member Dialog */}
-        <Dialog open={isAddMemberDialogOpen} onOpenChange={setIsAddMemberDialogOpen}>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <>
+            {/* Stats Bar */}
+            <TeamStatsBar stats={stats} />
+
+            {/* Kanban Board */}
+            <TeamKanbanBoard
+              admins={admins}
+              members={members}
+              invitations={invitations}
+              inactive={inactive}
+              canManage={canManage}
+              onPromote={handlePromote}
+              onDemote={handleDemote}
+              onRemove={handleRemove}
+              onResendInvitation={handleResendInvitation}
+              onRevokeInvitation={handleRevokeInvitation}
+              onAddMember={() => setIsInviteDialogOpen(true)}
+            />
+          </>
+        )}
+
+        {/* Invite Dialog */}
+        <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
           <DialogContent>
-            <form onSubmit={handleAddMember}>
+            <form onSubmit={handleInvite}>
               <DialogHeader>
-                <DialogTitle>Mitglied hinzufügen</DialogTitle>
+                <DialogTitle className="flex items-center gap-2">
+                  <UserPlus className="h-5 w-5" />
+                  Mitarbeiter einladen
+                </DialogTitle>
                 <DialogDescription>
-                  Fügen Sie ein neues Mitglied zu "{selectedTeam?.name}" hinzu.
+                  Senden Sie eine Einladung per E-Mail an einen neuen Mitarbeiter.
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="member-email">E-Mail-Adresse *</Label>
+                  <Label htmlFor="invite-email">E-Mail-Adresse *</Label>
                   <Input
-                    id="member-email"
+                    id="invite-email"
                     type="email"
-                    value={memberEmail}
-                    onChange={(e) => setMemberEmail(e.target.value)}
-                    placeholder="kollege@firma.de"
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    placeholder="mitarbeiter@firma.de"
                     required
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="member-role">Rolle</Label>
-                  <Select value={memberRole} onValueChange={(v) => setMemberRole(v as "admin" | "member")}>
+                  <Label htmlFor="invite-role">Rolle</Label>
+                  <Select
+                    value={inviteRole}
+                    onValueChange={(v) => setInviteRole(v as "tenant_admin" | "user")}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="member">Mitglied</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="user">Mitarbeiter</SelectItem>
+                      <SelectItem value="tenant_admin">Admin</SelectItem>
                     </SelectContent>
                   </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Admins können Mitarbeiter verwalten und Einstellungen ändern.
+                  </p>
                 </div>
               </div>
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsAddMemberDialogOpen(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsInviteDialogOpen(false)}
+                >
                   Abbrechen
                 </Button>
-                <Button type="submit" disabled={addMember.isPending}>
-                  {addMember.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                  Hinzufügen
+                <Button type="submit" disabled={sendInvitation.isPending}>
+                  {sendInvitation.isPending && (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  )}
+                  Einladung senden
                 </Button>
               </DialogFooter>
             </form>
           </DialogContent>
         </Dialog>
-
-        {/* Teams Grid */}
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        ) : teams.length === 0 ? (
-          <Card className="py-12">
-            <CardContent className="text-center">
-              <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-              <h3 className="font-semibold mb-2">Noch keine Teams</h3>
-              <p className="text-muted-foreground text-sm mb-4">
-                Erstellen Sie Ihr erstes Team, um Angebote mit Kollegen zu teilen.
-              </p>
-              <Button onClick={() => setIsCreateDialogOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Team erstellen
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-6 md:grid-cols-2">
-            {teams.map((team) => (
-              <Card key={team.id}>
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle className="flex items-center gap-2">
-                        <Users className="h-5 w-5" />
-                        {team.name}
-                      </CardTitle>
-                      {team.description && (
-                        <CardDescription className="mt-1">{team.description}</CardDescription>
-                      )}
-                    </div>
-                    {(team.myRole === "owner" || team.myRole === "admin") && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => {
-                              setSelectedTeam(team);
-                              setIsAddMemberDialogOpen(true);
-                            }}
-                          >
-                            <UserPlus className="h-4 w-4 mr-2" />
-                            Mitglied hinzufügen
-                          </DropdownMenuItem>
-                          {team.myRole === "owner" && (
-                            <>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                onClick={() => handleDeleteTeam(team)}
-                                className="text-destructive"
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Team löschen
-                              </DropdownMenuItem>
-                            </>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between text-sm text-muted-foreground">
-                      <span>{team.members.length} Mitglieder</span>
-                      <Badge variant="secondary">{roleLabels[team.myRole || "member"]}</Badge>
-                    </div>
-                    <div className="space-y-2">
-                      {team.members.slice(0, 5).map((member) => (
-                        <div
-                          key={member.id}
-                          className="flex items-center justify-between py-1 px-2 rounded-md hover:bg-muted/50"
-                        >
-                          <div className="flex items-center gap-2">
-                            <Avatar className="h-7 w-7">
-                              <AvatarFallback className="text-xs">
-                                {(member.profile?.display_name || member.profile?.email || "U")
-                                  .substring(0, 2)
-                                  .toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <span className="text-sm">
-                                {member.profile?.display_name || member.profile?.email || "Unbekannt"}
-                                {member.user_id === user?.id && " (Sie)"}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="gap-1">
-                              {roleIcons[member.role]}
-                              {roleLabels[member.role]}
-                            </Badge>
-                            {(team.myRole === "owner" || team.myRole === "admin") &&
-                              member.user_id !== user?.id &&
-                              member.role !== "owner" && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6"
-                                  onClick={() => handleRemoveMember(team.id, member.user_id)}
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
-                              )}
-                          </div>
-                        </div>
-                      ))}
-                      {team.members.length > 5 && (
-                        <p className="text-xs text-muted-foreground text-center">
-                          +{team.members.length - 5} weitere Mitglieder
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
       </div>
     </MainLayout>
   );

@@ -21,6 +21,7 @@ import {
 
 // Lazy load all widget components
 const WelcomeWidget = lazy(() => import("@/margenkalkulator/ui/components/WelcomeWidget").then(m => ({ default: m.WelcomeWidget })));
+const WelcomeBanner = lazy(() => import("@/margenkalkulator/ui/components/widgets/WelcomeBanner").then(m => ({ default: m.WelcomeBanner })));
 const TodayTasksWidget = lazy(() => import("@/margenkalkulator/ui/components/TodayTasksWidget").then(m => ({ default: m.TodayTasksWidget })));
 const DashboardWidgets = lazy(() => import("@/margenkalkulator/ui/components/DashboardWidgets").then(m => ({ default: m.DashboardWidgets })));
 const AverageMarginWidget = lazy(() => import("@/margenkalkulator/ui/components/AverageMarginWidget").then(m => ({ default: m.AverageMarginWidget })));
@@ -60,10 +61,22 @@ export interface WidgetLayout {
 
 // Widget Registry
 export const DASHBOARD_WIDGETS: Record<string, WidgetDefinition> = {
+  "welcome-banner": {
+    id: "welcome-banner",
+    name: "Willkommen Banner",
+    description: "Großes Begrüßungs-Banner mit Firmenlogo",
+    component: WelcomeBanner,
+    icon: Sparkles,
+    defaultSize: { w: 4, h: 2 },
+    minSize: { w: 2, h: 1 },
+    category: "general",
+    requiresAuth: true,
+    isNew: true,
+  },
   "welcome": {
     id: "welcome",
-    name: "Willkommen",
-    description: "Begrüßung und Schnellstart",
+    name: "Willkommen (kompakt)",
+    description: "Kompakte Begrüßung und Schnellstart",
     component: WelcomeWidget,
     icon: Sparkles,
     defaultSize: { w: 4, h: 1 },
@@ -196,15 +209,15 @@ export const DASHBOARD_WIDGETS: Record<string, WidgetDefinition> = {
 
 // Default layout for new users
 export const DEFAULT_DASHBOARD_LAYOUT: WidgetLayout[] = [
-  { id: "welcome", x: 0, y: 0, w: 4, h: 1, visible: true },
-  { id: "tasks", x: 0, y: 1, w: 4, h: 2, visible: true },
-  { id: "dashboard-widgets", x: 0, y: 3, w: 4, h: 1, visible: true },
-  { id: "margin-analytics", x: 0, y: 4, w: 4, h: 1, visible: true },
-  { id: "calendar-mini", x: 0, y: 5, w: 1, h: 2, visible: true },
-  { id: "revenue-forecast", x: 1, y: 5, w: 1, h: 2, visible: true },
-  { id: "upcoming-events", x: 2, y: 5, w: 1, h: 2, visible: true },
-  { id: "followup-reminders", x: 3, y: 5, w: 1, h: 2, visible: true },
-  { id: "recent-activity", x: 0, y: 7, w: 4, h: 2, visible: true },
+  { id: "welcome-banner", x: 0, y: 0, w: 4, h: 2, visible: true },
+  { id: "tasks", x: 0, y: 2, w: 4, h: 2, visible: true },
+  { id: "dashboard-widgets", x: 0, y: 4, w: 4, h: 1, visible: true },
+  { id: "margin-analytics", x: 0, y: 5, w: 4, h: 1, visible: true },
+  { id: "calendar-mini", x: 0, y: 6, w: 1, h: 2, visible: true },
+  { id: "revenue-forecast", x: 1, y: 6, w: 1, h: 2, visible: true },
+  { id: "upcoming-events", x: 2, y: 6, w: 1, h: 2, visible: true },
+  { id: "followup-reminders", x: 3, y: 6, w: 1, h: 2, visible: true },
+  { id: "recent-activity", x: 0, y: 8, w: 4, h: 2, visible: true },
 ];
 
 // Category labels

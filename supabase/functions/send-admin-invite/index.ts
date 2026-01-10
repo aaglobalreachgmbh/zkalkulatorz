@@ -1,6 +1,7 @@
 // ============================================
 // Send Admin Invite Edge Function
 // Sends invitation emails to new tenant administrators
+// With professional HTML template and tenant branding
 // ============================================
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
@@ -15,6 +16,12 @@ interface InviteAdminRequest {
   email: string;
   invite_token: string;
   tenant_id: string;
+}
+
+interface TenantBranding {
+  logoUrl?: string | null;
+  primaryColor?: string;
+  companyName?: string | null;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -84,9 +91,131 @@ const handler = async (req: Request): Promise<Response> => {
 
     const companyName = tenant?.company_name || "MargenKalkulator";
 
+    // Get tenant branding from tenant_settings
+    const { data: tenantSettings } = await supabase
+      .from("tenant_settings")
+      .select("branding")
+      .eq("tenant_id", tenant_id)
+      .maybeSingle();
+
+    const branding = (tenantSettings?.branding as TenantBranding) || {};
+    const logoUrl = branding.logoUrl || null;
+    const primaryColor = branding.primaryColor || "#e60000";
+
     // Build invite link
     const appUrl = Deno.env.get("APP_URL") || "https://margenkalkulator.lovable.app";
     const inviteLink = `${appUrl}/auth?invite=${invite_token}`;
+
+    // Professional HTML Email Template with Branding
+    const emailHtml = `
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f4f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f4f4f5;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="max-width: 600px; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
+          
+          <!-- Header with Logo -->
+          <tr>
+            <td style="background: ${primaryColor}; padding: 32px 40px; text-align: center;">
+              ${logoUrl 
+                ? `<img src="${logoUrl}" alt="${companyName}" style="max-height: 80px; max-width: 280px; object-fit: contain; margin-bottom: 8px;" />`
+                : `<h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -0.5px;">${companyName}</h1>`
+              }
+              ${logoUrl ? `<p style="color: rgba(255,255,255,0.9); margin: 8px 0 0; font-size: 14px;">${companyName}</p>` : ''}
+            </td>
+          </tr>
+          
+          <!-- Main Content -->
+          <tr>
+            <td style="padding: 48px 40px 32px;">
+              <h2 style="color: #18181b; margin: 0 0 16px; font-size: 28px; font-weight: 700;">
+                🎉 Sie wurden eingeladen!
+              </h2>
+              <p style="color: #52525b; margin: 0 0 24px; font-size: 17px; line-height: 1.7;">
+                Sie wurden als <strong style="color: ${primaryColor};">Administrator</strong> für 
+                <strong>${companyName}</strong> eingeladen.
+              </p>
+              
+              <!-- Benefits Box -->
+              <div style="background: linear-gradient(135deg, ${primaryColor}08 0%, ${primaryColor}04 100%); border-radius: 12px; padding: 24px; margin: 24px 0; border-left: 4px solid ${primaryColor};">
+                <p style="margin: 0 0 16px; font-weight: 600; color: #18181b; font-size: 16px;">
+                  Als Administrator können Sie:
+                </p>
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                  <tr>
+                    <td style="padding: 8px 0; color: #3f3f46; font-size: 15px;">
+                      <span style="color: ${primaryColor}; margin-right: 12px;">✓</span>
+                      Mitarbeiter einladen und verwalten
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0; color: #3f3f46; font-size: 15px;">
+                      <span style="color: ${primaryColor}; margin-right: 12px;">✓</span>
+                      Provisionen und Tarife konfigurieren
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0; color: #3f3f46; font-size: 15px;">
+                      <span style="color: ${primaryColor}; margin-right: 12px;">✓</span>
+                      Hardware-EK-Preise pflegen
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0; color: #3f3f46; font-size: 15px;">
+                      <span style="color: ${primaryColor}; margin-right: 12px;">✓</span>
+                      Kalkulationen und Angebote einsehen
+                    </td>
+                  </tr>
+                </table>
+              </div>
+            </td>
+          </tr>
+          
+          <!-- CTA Button -->
+          <tr>
+            <td style="padding: 0 40px 48px; text-align: center;">
+              <a href="${inviteLink}" 
+                 style="display: inline-block; background: ${primaryColor}; color: #ffffff; 
+                        padding: 18px 48px; text-decoration: none; border-radius: 12px; 
+                        font-weight: 700; font-size: 18px; 
+                        box-shadow: 0 4px 16px ${primaryColor}40;
+                        transition: all 0.2s ease;">
+                Jetzt Konto erstellen →
+              </a>
+              <p style="color: #a1a1aa; margin: 20px 0 0; font-size: 13px;">
+                Oder kopieren Sie diesen Link: <br>
+                <span style="color: #71717a; word-break: break-all;">${inviteLink}</span>
+              </p>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="background: #18181b; padding: 32px 40px; text-align: center;">
+              ${logoUrl 
+                ? `<img src="${logoUrl}" alt="${companyName}" style="max-height: 40px; max-width: 160px; opacity: 0.8; margin-bottom: 16px;" />`
+                : `<p style="color: #a1a1aa; margin: 0 0 16px; font-size: 16px; font-weight: 600;">${companyName}</p>`
+              }
+              <p style="color: #71717a; margin: 0; font-size: 13px; line-height: 1.6;">
+                Dieser Link ist <strong>7 Tage</strong> gültig.<br>
+                Falls Sie diese E-Mail nicht erwartet haben, ignorieren Sie sie bitte.
+              </p>
+            </td>
+          </tr>
+          
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `.trim();
 
     // Send email via Resend
     if (resendApiKey) {
@@ -98,47 +227,10 @@ const handler = async (req: Request): Promise<Response> => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            from: `MargenKalkulator <${senderEmail}>`,
+            from: `${companyName} <${senderEmail}>`,
             to: [email],
-            subject: `Einladung als Administrator für ${companyName}`,
-            html: `
-              <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                <div style="text-align: center; margin-bottom: 30px;">
-                  <h1 style="color: #e60000; margin: 0; font-size: 28px;">MargenKalkulator</h1>
-                  <p style="color: #666; margin-top: 8px;">Vodafone Business Partner Portal</p>
-                </div>
-                
-                <div style="background: #f8f9fa; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
-                  <h2 style="color: #333; margin-top: 0;">Sie wurden eingeladen!</h2>
-                  <p style="color: #555; line-height: 1.6;">
-                    Sie wurden als <strong>Administrator</strong> für <strong>${companyName}</strong> eingeladen.
-                  </p>
-                  <p style="color: #555; line-height: 1.6;">
-                    Als Administrator können Sie:
-                  </p>
-                  <ul style="color: #555; line-height: 1.8;">
-                    <li>Mitarbeiter einladen und verwalten</li>
-                    <li>Provisionen und Tarife konfigurieren</li>
-                    <li>Hardware-EK-Preise pflegen</li>
-                    <li>Kalkulationen und Angebote einsehen</li>
-                  </ul>
-                </div>
-                
-                <div style="text-align: center; margin: 32px 0;">
-                  <a href="${inviteLink}" 
-                     style="display: inline-block; background: #e60000; color: white; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
-                    Konto erstellen
-                  </a>
-                </div>
-                
-                <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px;">
-                  <p style="color: #999; font-size: 12px; text-align: center;">
-                    Dieser Link ist 7 Tage gültig.<br>
-                    Falls Sie diese E-Mail nicht erwartet haben, ignorieren Sie sie bitte.
-                  </p>
-                </div>
-              </div>
-            `,
+            subject: `🎉 Einladung als Administrator für ${companyName}`,
+            html: emailHtml,
           }),
         });
 

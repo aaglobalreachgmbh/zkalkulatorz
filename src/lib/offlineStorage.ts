@@ -6,7 +6,7 @@
  */
 
 const DB_NAME = "margenkalkulator_offline";
-const DB_VERSION = 1;
+const DB_VERSION = 2; // Increased for new stores
 
 // Store-Namen
 const STORES = {
@@ -15,6 +15,10 @@ const STORES = {
   FIXED_NET: "fixed_net_products",
   PENDING_OFFERS: "pending_offers",
   PENDING_CALCULATIONS: "pending_calculations",
+  PENDING_VISITS: "pending_visits",
+  PENDING_PHOTOS: "pending_photos",
+  CACHED_CHECKLISTS: "cached_checklists",
+  CACHED_CUSTOMERS: "cached_customers",
   METADATA: "sync_metadata",
 } as const;
 
@@ -41,6 +45,28 @@ interface PendingCalculation {
   summary: string;
   createdAt: string;
   syncStatus: "pending" | "syncing" | "failed";
+}
+
+interface PendingVisit {
+  id: string;
+  customerId: string;
+  visitDate: string;
+  locationLat?: number;
+  locationLng?: number;
+  locationAddress?: string;
+  notes?: string;
+  checklistId?: string;
+  checklistResponses?: Record<string, unknown>;
+  createdAt: string;
+  syncStatus: "pending" | "syncing" | "failed";
+}
+
+interface PendingPhoto {
+  id: string;
+  visitId: string;
+  base64: string;
+  caption?: string;
+  createdAt: string;
 }
 
 let dbInstance: IDBDatabase | null = null;
@@ -97,6 +123,30 @@ async function initDB(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains(STORES.PENDING_CALCULATIONS)) {
         const store = db.createObjectStore(STORES.PENDING_CALCULATIONS, { keyPath: "id" });
         store.createIndex("syncStatus", "syncStatus", { unique: false });
+      }
+
+      // Pending Visits Store (for field service)
+      if (!db.objectStoreNames.contains(STORES.PENDING_VISITS)) {
+        const store = db.createObjectStore(STORES.PENDING_VISITS, { keyPath: "id" });
+        store.createIndex("syncStatus", "syncStatus", { unique: false });
+        store.createIndex("customerId", "customerId", { unique: false });
+      }
+
+      // Pending Photos Store (Base64 for offline)
+      if (!db.objectStoreNames.contains(STORES.PENDING_PHOTOS)) {
+        const store = db.createObjectStore(STORES.PENDING_PHOTOS, { keyPath: "id" });
+        store.createIndex("visitId", "visitId", { unique: false });
+      }
+
+      // Cached Checklists Store
+      if (!db.objectStoreNames.contains(STORES.CACHED_CHECKLISTS)) {
+        db.createObjectStore(STORES.CACHED_CHECKLISTS, { keyPath: "id" });
+      }
+
+      // Cached Customers Store
+      if (!db.objectStoreNames.contains(STORES.CACHED_CUSTOMERS)) {
+        const store = db.createObjectStore(STORES.CACHED_CUSTOMERS, { keyPath: "id" });
+        store.createIndex("company_name", "company_name", { unique: false });
       }
 
       // Sync Metadata Store
@@ -306,6 +356,78 @@ export const offlineStorage = {
     await deleteItem(STORES.PENDING_CALCULATIONS, id);
   },
 
+  // Pending Visits (for field service offline)
+  async addPendingVisit(visit: Omit<PendingVisit, "id" | "createdAt" | "syncStatus">): Promise<string> {
+    const id = crypto.randomUUID();
+    const pendingVisit: PendingVisit = {
+      id,
+      ...visit,
+      createdAt: new Date().toISOString(),
+      syncStatus: "pending",
+    };
+    await setItem(STORES.PENDING_VISITS, pendingVisit);
+    return id;
+  },
+
+  async getPendingVisits(): Promise<PendingVisit[]> {
+    return getAllItems<PendingVisit>(STORES.PENDING_VISITS);
+  },
+
+  async removePendingVisit(id: string) {
+    await deleteItem(STORES.PENDING_VISITS, id);
+  },
+
+  async updateVisitSyncStatus(id: string, status: PendingVisit["syncStatus"]) {
+    const visit = await getItem<PendingVisit>(STORES.PENDING_VISITS, id);
+    if (visit) {
+      visit.syncStatus = status;
+      await setItem(STORES.PENDING_VISITS, visit);
+    }
+  },
+
+  // Pending Photos (Base64 for offline)
+  async addPendingPhoto(visitId: string, base64: string, caption?: string): Promise<string> {
+    const id = crypto.randomUUID();
+    const photo: PendingPhoto = {
+      id,
+      visitId,
+      base64,
+      caption,
+      createdAt: new Date().toISOString(),
+    };
+    await setItem(STORES.PENDING_PHOTOS, photo);
+    return id;
+  },
+
+  async getPendingPhotos(visitId?: string): Promise<PendingPhoto[]> {
+    if (visitId) {
+      return getByIndex<PendingPhoto>(STORES.PENDING_PHOTOS, "visitId", visitId);
+    }
+    return getAllItems<PendingPhoto>(STORES.PENDING_PHOTOS);
+  },
+
+  async removePendingPhoto(id: string) {
+    await deleteItem(STORES.PENDING_PHOTOS, id);
+  },
+
+  // Cached Checklists
+  async cacheChecklists(checklists: Array<{ id: string; [key: string]: unknown }>) {
+    await bulkInsert(STORES.CACHED_CHECKLISTS, checklists);
+  },
+
+  async getCachedChecklists() {
+    return getAllItems<{ id: string; name: string; items: unknown[] }>(STORES.CACHED_CHECKLISTS);
+  },
+
+  // Cached Customers
+  async cacheCustomers(customers: Array<{ id: string; [key: string]: unknown }>) {
+    await bulkInsert(STORES.CACHED_CUSTOMERS, customers);
+  },
+
+  async getCachedCustomers() {
+    return getAllItems<{ id: string; company_name: string }>(STORES.CACHED_CUSTOMERS);
+  },
+
   // Metadata
   async updateMetadata(store: StoreName, itemCount: number) {
     const metadata: SyncMetadata = {
@@ -375,4 +497,4 @@ export const offlineStorage = {
   },
 };
 
-export type { PendingOffer, PendingCalculation, SyncMetadata };
+export type { PendingOffer, PendingCalculation, PendingVisit, PendingPhoto, SyncMetadata };

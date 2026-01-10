@@ -12,6 +12,14 @@ import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import { offlineStorage } from "@/lib/offlineStorage";
 import { toast } from "sonner";
 
+export interface VisitPhoto {
+  id: string;
+  visit_report_id: string;
+  storage_path: string;
+  caption: string | null;
+  created_at: string;
+}
+
 export interface UploadPhotoInput {
   visitReportId: string;
   file: File;
@@ -28,7 +36,8 @@ export interface PendingPhoto {
 
 export function useVisitPhotos() {
   const queryClient = useQueryClient();
-  const { userId } = useIdentity();
+  const { identity } = useIdentity();
+  const { userId } = identity;
   const { isOnline } = useNetworkStatus();
 
   // Foto hochladen

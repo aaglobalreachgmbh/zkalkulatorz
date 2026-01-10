@@ -51,7 +51,8 @@ export interface ChecklistResponse {
 
 export function useVisitChecklists() {
   const queryClient = useQueryClient();
-  const { userId, tenantId } = useIdentity();
+  const { identity } = useIdentity();
+  const { userId, tenantId } = identity;
   const { isAdmin, isTenantAdmin } = useUserRole();
 
   // Alle verfügbaren Checklisten laden

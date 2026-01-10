@@ -1061,10 +1061,17 @@ export type Database = {
       }
       employee_settings: {
         Row: {
+          allowed_menu_items: string[] | null
           blocked_tariffs: string[] | null
+          can_create_offers: boolean | null
           can_export_pdf: boolean | null
           can_manage_customers: boolean | null
+          can_use_bundles: boolean | null
+          can_use_calculator: boolean | null
+          can_use_inbox: boolean | null
           can_view_margins: boolean | null
+          can_view_reporting: boolean | null
+          can_view_team: boolean | null
           created_at: string
           department: string | null
           display_name: string | null
@@ -1079,10 +1086,17 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          allowed_menu_items?: string[] | null
           blocked_tariffs?: string[] | null
+          can_create_offers?: boolean | null
           can_export_pdf?: boolean | null
           can_manage_customers?: boolean | null
+          can_use_bundles?: boolean | null
+          can_use_calculator?: boolean | null
+          can_use_inbox?: boolean | null
           can_view_margins?: boolean | null
+          can_view_reporting?: boolean | null
+          can_view_team?: boolean | null
           created_at?: string
           department?: string | null
           display_name?: string | null
@@ -1097,10 +1111,17 @@ export type Database = {
           user_id: string
         }
         Update: {
+          allowed_menu_items?: string[] | null
           blocked_tariffs?: string[] | null
+          can_create_offers?: boolean | null
           can_export_pdf?: boolean | null
           can_manage_customers?: boolean | null
+          can_use_bundles?: boolean | null
+          can_use_calculator?: boolean | null
+          can_use_inbox?: boolean | null
           can_view_margins?: boolean | null
+          can_view_reporting?: boolean | null
+          can_view_team?: boolean | null
           created_at?: string
           department?: string | null
           display_name?: string | null

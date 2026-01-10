@@ -64,6 +64,8 @@ const Calendar = lazy(() => import("./pages/Calendar"));
 const News = lazy(() => import("./pages/News"));
 const AdminNews = lazy(() => import("./pages/AdminNews"));
 const AdminCustomers = lazy(() => import("./pages/AdminCustomers"));
+const SuperAdmin = lazy(() => import("./pages/SuperAdmin"));
+const AdminPermissions = lazy(() => import("./pages/AdminPermissions"));
 
 // Enhanced loading fallback with timeout and retry
 const PageLoader = () => {
@@ -403,6 +405,8 @@ const App = () => (
                     <Route path="/admin/quantity-bonus" element={<AdminRoute><AdminQuantityBonus /></AdminRoute>} />
                     <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
                     <Route path="/admin/customers" element={<AdminRoute><AdminCustomers /></AdminRoute>} />
+                    <Route path="/super-admin" element={<AdminRoute><SuperAdmin /></AdminRoute>} />
+                    <Route path="/admin/permissions" element={<TenantAdminRoute><AdminPermissions /></TenantAdminRoute>} />
                     
                     <Route
                       path="/offers"

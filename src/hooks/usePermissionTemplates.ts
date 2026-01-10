@@ -84,18 +84,20 @@ export function usePermissionTemplates() {
       color?: string;
       permissions: PermissionTemplateData;
     }) => {
+      const insertData = {
+        tenant_id: identity.tenantId || "",
+        name: input.name,
+        description: input.description || null,
+        icon: input.icon || "Shield",
+        color: input.color || "#3b82f6",
+        permissions: JSON.parse(JSON.stringify(input.permissions)),
+        is_system: false,
+        sort_order: templates.length + 1,
+      };
+
       const { data, error } = await supabase
         .from("permission_templates")
-        .insert([{
-          tenant_id: identity.tenantId || "",
-          name: input.name,
-          description: input.description || null,
-          icon: input.icon || "Shield",
-          color: input.color || "#3b82f6",
-          permissions: input.permissions as unknown as Record<string, unknown>,
-          is_system: false,
-          sort_order: templates.length + 1,
-        }])
+        .insert([insertData])
         .select()
         .single();
 
@@ -122,11 +124,11 @@ export function usePermissionTemplates() {
       color?: string;
       permissions?: PermissionTemplateData;
     }) => {
-      const { id, ...updates } = input;
+      const { id, permissions, ...rest } = input;
       
-      const updateData: Record<string, unknown> = { ...updates };
-      if (updates.permissions) {
-        updateData.permissions = updates.permissions as unknown as Record<string, unknown>;
+      const updateData: Record<string, unknown> = { ...rest };
+      if (permissions) {
+        updateData.permissions = JSON.parse(JSON.stringify(permissions));
       }
 
       const { data, error } = await supabase
@@ -195,14 +197,14 @@ export function usePermissionTemplates() {
       if (error) throw error;
 
       // Create in-app notification
-      await supabase.from("notifications").insert({
+      await supabase.from("notifications").insert([{
         user_id: userId,
         tenant_id: identity.tenantId || "",
         type: "permission_change",
         title: "Berechtigungen aktualisiert",
         message: `Die Vorlage "${template.name}" wurde auf Ihr Konto angewendet.`,
         link: "/team",
-      });
+      }]);
 
       queryClient.invalidateQueries({ queryKey: ["employee-settings"] });
       toast.success(`Vorlage "${template.name}" angewendet`);

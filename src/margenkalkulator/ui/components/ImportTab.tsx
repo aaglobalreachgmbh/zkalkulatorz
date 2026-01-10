@@ -12,7 +12,7 @@ import {
   Loader2,
   FileSpreadsheet,
 } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 export interface ImportValidationResult {
   isValid: boolean;
@@ -90,11 +90,7 @@ export function ImportTab<T>({
         setDiff(diffResult);
       }
     } catch (err) {
-      toast({
-        title: "Fehler beim Parsen",
-        description: err instanceof Error ? err.message : "Unbekannter Fehler",
-        variant: "destructive",
-      });
+      toast.error(err instanceof Error ? err.message : "Fehler beim Parsen");
     } finally {
       setIsLoading(false);
     }
@@ -105,10 +101,7 @@ export function ImportTab<T>({
 
     try {
       onImport(parsedRows);
-      toast({
-        title: "Import erfolgreich",
-        description: `${parsedRows.length} Einträge importiert`,
-      });
+      toast.success(`${parsedRows.length} Einträge importiert`);
       
       // Reset
       setFile(null);
@@ -116,11 +109,7 @@ export function ImportTab<T>({
       setValidation(null);
       setDiff(null);
     } catch (err) {
-      toast({
-        title: "Import fehlgeschlagen",
-        description: err instanceof Error ? err.message : "Unbekannter Fehler",
-        variant: "destructive",
-      });
+      toast.error(err instanceof Error ? err.message : "Import fehlgeschlagen");
     }
   }, [parsedRows, validation, onImport]);
 

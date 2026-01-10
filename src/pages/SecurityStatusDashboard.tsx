@@ -20,7 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useSessionSecurity } from "@/hooks/useSessionSecurity";
 import { useLicense } from "@/hooks/useLicense";
 import { useAdminAuditLog } from "@/hooks/useAdminAuditLog";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { 
   Shield, 
   ShieldCheck, 
@@ -382,20 +382,13 @@ export default function SecurityStatusDashboard() {
         newValues: { role: newRole },
       });
 
-      toast({
-        title: "Rolle geändert",
-        description: `Benutzerrolle wurde auf "${newRole}" geändert.`,
-      });
+      toast.success(`Benutzerrolle wurde auf "${newRole}" geändert`);
 
       // Refresh users
       await fetchUsers();
     } catch (err) {
       console.error("Error changing role:", err);
-      toast({
-        title: "Fehler",
-        description: "Rolle konnte nicht geändert werden.",
-        variant: "destructive",
-      });
+      toast.error("Rolle konnte nicht geändert werden");
     }
   };
 
@@ -412,10 +405,7 @@ export default function SecurityStatusDashboard() {
         newValues: { hasLicense },
       });
 
-      toast({
-        title: hasLicense ? "Lizenz aktiviert" : "Lizenz deaktiviert",
-        description: `Benutzer-Lizenz wurde ${hasLicense ? "aktiviert" : "deaktiviert"}.`,
-      });
+      toast.success(`Lizenz ${hasLicense ? "aktiviert" : "deaktiviert"}`);
 
       // Update local state
       setUsers(prev => prev.map(u => 
@@ -423,11 +413,7 @@ export default function SecurityStatusDashboard() {
       ));
     } catch (err) {
       console.error("Error toggling license:", err);
-      toast({
-        title: "Fehler",
-        description: "Lizenz konnte nicht geändert werden.",
-        variant: "destructive",
-      });
+      toast.error("Lizenz konnte nicht geändert werden");
     }
   };
 

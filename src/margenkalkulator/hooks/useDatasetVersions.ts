@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useIdentity } from "@/contexts/IdentityContext";
 import { useAuth } from "@/hooks/useAuth";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import type { Json } from "@/integrations/supabase/types";
 
 // Seed data imports
@@ -135,17 +135,10 @@ export function useDatasetVersions() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dataset-versions", tenantId] });
-      toast({
-        title: "Version erstellt",
-        description: "Die neue Provisions-Version wurde gespeichert.",
-      });
+      toast.success("Version erstellt");
     },
     onError: (error) => {
-      toast({
-        title: "Fehler",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message);
     },
   });
 
@@ -165,17 +158,10 @@ export function useDatasetVersions() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["dataset-versions", tenantId] });
-      toast({
-        title: "Version aktiviert",
-        description: `"${data.version_name}" ist jetzt die aktive Version.`,
-      });
+      toast.success(`"${data.version_name}" ist jetzt aktiv`);
     },
     onError: (error) => {
-      toast({
-        title: "Fehler",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message);
     },
   });
 
@@ -191,17 +177,10 @@ export function useDatasetVersions() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dataset-versions", tenantId] });
-      toast({
-        title: "Version gelöscht",
-        description: "Die Version wurde entfernt.",
-      });
+      toast.success("Version gelöscht");
     },
     onError: (error) => {
-      toast({
-        title: "Fehler",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message);
     },
   });
 
@@ -242,11 +221,7 @@ export function useDatasetVersions() {
       queryClient.invalidateQueries({ queryKey: ["dataset-versions", tenantId] });
     },
     onError: (error) => {
-      toast({
-        title: "Fehler",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message);
     },
   });
 
@@ -277,17 +252,10 @@ export function useDatasetVersions() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dataset-versions", tenantId] });
-      toast({
-        title: "Standard-Daten geladen",
-        description: "v2025_10 wurde als aktive Version eingerichtet.",
-      });
+      toast.success("Standard-Daten geladen");
     },
     onError: (error) => {
-      toast({
-        title: "Fehler beim Seeding",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message);
     },
   });
 

@@ -43,7 +43,7 @@ import {
   type PdfFormatType,
 } from "@/margenkalkulator/dataManager/importers";
 import type { HardwareItemRow, ProvisionRow, OMOMatrixRow } from "@/margenkalkulator/dataManager/types";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useIdentity } from "@/contexts/IdentityContext";
 import { useFeature } from "@/hooks/useFeature";
 import { 
@@ -123,11 +123,7 @@ export default function DataManager() {
         // PDF Import Flow
         const pdfValidation = validatePdfFile(selectedFile);
         if (!pdfValidation.valid) {
-          toast({
-            title: "Ungültige PDF",
-            description: pdfValidation.error,
-            variant: "destructive",
-          });
+          toast.error(pdfValidation.error || "Ungültige PDF");
           return;
         }
         
@@ -156,11 +152,7 @@ export default function DataManager() {
             rowsExtracted: result.meta.rowsExtracted,
           });
         } else {
-          toast({
-            title: "Format nicht erkannt",
-            description: "Die PDF konnte nicht als Provisionsliste oder Hardware-Preisliste identifiziert werden.",
-            variant: "destructive",
-          });
+          toast.error("PDF konnte nicht als Provisionsliste oder Hardware-Preisliste identifiziert werden");
         }
       } else {
         // XLSX Import Flow (existing)
@@ -186,11 +178,7 @@ export default function DataManager() {
       }
       
     } catch (err) {
-      toast({
-        title: "Fehler beim Parsen",
-        description: err instanceof Error ? err.message : "Unbekannter Fehler",
-        variant: "destructive",
-      });
+      toast.error(err instanceof Error ? err.message : "Fehler beim Parsen");
     } finally {
       setIsLoading(false);
     }
@@ -200,7 +188,7 @@ export default function DataManager() {
   const handleCreateDraft = useCallback((publishImmediately: boolean = false) => {
     if (!parsedData || !validation?.isValid) return;
     if (!canImport(identity.role)) {
-      toast({ title: "Keine Berechtigung", variant: "destructive" });
+      toast.error("Keine Berechtigung");
       return;
     }
     
@@ -247,15 +235,9 @@ export default function DataManager() {
           "published"
         );
         
-        toast({
-          title: "Direkt veröffentlicht",
-          description: `Version "${newDataset.datasetVersion}" ist jetzt aktiv (Approval übersprungen).`,
-        });
+        toast.success(`Version "${newDataset.datasetVersion}" direkt veröffentlicht`);
       } else {
-        toast({
-          title: "Entwurf erstellt",
-          description: `Version "${newDataset.datasetVersion}" als Entwurf gespeichert.`,
-        });
+        toast.success(`Version "${newDataset.datasetVersion}" als Entwurf gespeichert`);
       }
       
       refreshDatasets();
@@ -268,11 +250,7 @@ export default function DataManager() {
       setDetection(null);
       
     } catch (err) {
-      toast({
-        title: "Fehler",
-        description: err instanceof Error ? err.message : "Unbekannter Fehler",
-        variant: "destructive",
-      });
+      toast.error(err instanceof Error ? err.message : "Fehler");
     }
   }, [parsedData, validation, identity, refreshDatasets, canBypassApproval]);
 
@@ -280,7 +258,7 @@ export default function DataManager() {
   const handlePdfImport = useCallback(() => {
     if (!pdfResult || pdfResult.errors.length > 0) return;
     if (!canImport(identity.role)) {
-      toast({ title: "Keine Berechtigung", variant: "destructive" });
+      toast.error("Keine Berechtigung");
       return;
     }
     
@@ -323,10 +301,7 @@ export default function DataManager() {
         newDataset.datasetVersion
       );
       
-      toast({
-        title: "PDF-Entwurf erstellt",
-        description: `${pdfResult.rowsExtracted} Einträge als Entwurf gespeichert.`,
-      });
+      toast.success(`${pdfResult.rowsExtracted} Einträge als PDF-Entwurf gespeichert`);
       
       refreshDatasets();
       setFile(null);
@@ -334,11 +309,7 @@ export default function DataManager() {
       setPdfResult(null);
       
     } catch (err) {
-      toast({
-        title: "Fehler",
-        description: err instanceof Error ? err.message : "Unbekannter Fehler",
-        variant: "destructive",
-      });
+      toast.error(err instanceof Error ? err.message : "Fehler");
     }
   }, [pdfResult, file, identity, refreshDatasets]);
 
@@ -371,10 +342,7 @@ export default function DataManager() {
       );
       
       refreshDatasets();
-      toast({
-        title: "Status geändert",
-        description: `${result.datasetVersion} → ${newStatus}`,
-      });
+      toast.success(`${result.datasetVersion} → ${newStatus}`);
     }
   }, [datasets, identity, refreshDatasets]);
 

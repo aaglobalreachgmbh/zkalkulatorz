@@ -22,13 +22,8 @@ import {
   Bell,
   Target,
   ArrowRight,
-  FileText,
-  Download,
-  Calendar,
-  BarChart3,
   Megaphone,
   Trash2,
-  Edit,
   Plus,
 } from "lucide-react";
 
@@ -45,12 +40,9 @@ import {
 } from "@/margenkalkulator/hooks/useCorporateBundles";
 import { 
   TICKER_ITEMS, 
-  MOCK_NEWS, 
-  NEWS_TYPE_CONFIG, 
   STRATEGIC_FOCUS,
-  QUICK_TOOLS,
-  type NewsItem,
 } from "@/margenkalkulator/data/news";
+import { BundleContentIcons } from "@/margenkalkulator/ui/components/BundleContentIcons";
 import { useAuth } from "@/hooks/useAuth";
 
 // ============================================
@@ -254,11 +246,6 @@ interface BundleCardProps {
 }
 
 function BundleCard({ bundle, badgeInfo, onClick, onDelete, showDelete }: BundleCardProps) {
-  // Extract display info from config
-  const hardwareName = bundle.config.hardware?.name || "SIM Only";
-  const tariffId = bundle.config.mobile?.tariffId || "PRIME_S";
-  const tariffLabel = tariffId.replace("_", " ");
-  
   return (
     <div 
       className={`bg-background border rounded-xl overflow-hidden hover:shadow-md transition-shadow ${
@@ -292,30 +279,18 @@ function BundleCard({ bundle, badgeInfo, onClick, onDelete, showDelete }: Bundle
         </div>
         
         {/* Description */}
-        <p className="text-sm text-muted-foreground mb-5">
+        <p className="text-sm text-muted-foreground mb-4">
           {bundle.description}
         </p>
         
-        {/* Hardware Row */}
-        <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg mb-2">
-          <div className="h-10 w-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center text-white text-xs font-bold">
-            📱
-          </div>
-          <div>
-            <p className="font-medium text-sm">{hardwareName}</p>
-            <p className="text-xs text-muted-foreground">Hardware</p>
-          </div>
-        </div>
-        
-        {/* Tariff Row */}
-        <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
-          <div className="h-10 w-10 bg-primary/10 rounded-lg flex items-center justify-center">
-            <BarChart3 className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <p className="font-medium text-sm">Business {tariffLabel}</p>
-            <p className="text-xs text-muted-foreground">Tarif</p>
-          </div>
+        {/* Dynamic Content Icons */}
+        <div className="mb-2">
+          <p className="text-xs text-muted-foreground mb-1.5">Enthält:</p>
+          <BundleContentIcons 
+            config={bundle.config as any} 
+            size="md" 
+            showLabels 
+          />
         </div>
       </div>
       
@@ -331,59 +306,6 @@ function BundleCard({ bundle, badgeInfo, onClick, onDelete, showDelete }: Bundle
   );
 }
 
-interface NewsCardProps {
-  news: NewsItem;
-}
-
-function NewsCard({ news }: NewsCardProps) {
-  const typeConfig = NEWS_TYPE_CONFIG[news.type];
-  
-  return (
-    <div className="p-4 border-l-2 border-primary/20 hover:border-primary transition-colors">
-      <div className="flex items-start justify-between mb-2">
-        <Badge className={`${typeConfig.bgColor} text-xs font-medium`}>
-          {typeConfig.label}
-        </Badge>
-        <span className="text-xs text-muted-foreground">
-          {news.time ? `${news.date}, ${news.time}` : news.date}
-        </span>
-      </div>
-      <h4 className="font-semibold text-sm mb-1">{news.title}</h4>
-      <p className="text-sm text-muted-foreground mb-2">{news.description}</p>
-      <button className="text-sm text-foreground hover:text-primary inline-flex items-center gap-1 transition-colors">
-        Mehr lesen <ArrowRight className="h-3 w-3" />
-      </button>
-    </div>
-  );
-}
-
-function QuickToolsCard() {
-  const icons: Record<string, typeof FileText> = {
-    FileText,
-    Download,
-    Calendar,
-  };
-  
-  return (
-    <div className="bg-slate-900 rounded-xl p-5">
-      <h3 className="text-white font-semibold mb-4">Quick Tools</h3>
-      <div className="space-y-2">
-        {QUICK_TOOLS.map((tool) => {
-          const Icon = icons[tool.icon] || FileText;
-          return (
-            <button
-              key={tool.id}
-              className="w-full flex items-center gap-3 px-4 py-3 bg-slate-800 hover:bg-slate-700 rounded-lg text-white text-sm transition-colors"
-            >
-              <Icon className="h-4 w-4 text-slate-400" />
-              {tool.label}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 
 // ============================================
 // Main Component
@@ -570,30 +492,6 @@ export default function Bundles() {
               )}
             </div>
 
-            {/* Right Column: Sidebar */}
-            <aside className="w-full lg:w-80 shrink-0 space-y-6">
-              {/* News Section */}
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <Megaphone className="h-4 w-4 text-muted-foreground" />
-                    <h2 className="font-semibold">Salesworld News</h2>
-                  </div>
-                  <button className="text-sm text-primary hover:underline">
-                    Alle anzeigen
-                  </button>
-                </div>
-
-                <div className="bg-background border border-border rounded-xl overflow-hidden divide-y divide-border">
-                  {MOCK_NEWS.slice(0, 3).map((news) => (
-                    <NewsCard key={news.id} news={news} />
-                  ))}
-                </div>
-              </div>
-
-              {/* Quick Tools */}
-              <QuickToolsCard />
-            </aside>
           </div>
         </div>
       </div>

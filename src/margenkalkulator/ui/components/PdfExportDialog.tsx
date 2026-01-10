@@ -1,8 +1,8 @@
 // ============================================
-// PDF Export Dialog Component
-// Options for cover page, dealer summary, validity
-// With PDF Preview before download
-// Extended: QR-Code + Email sending (DSGVO-compliant)
+// PDF Export Dialog Component - 3-Step Wizard
+// Step 1: Page Selection
+// Step 2: Preview with enhanced controls
+// Step 3: Export (Download/Email/Print)
 // ============================================
 
 import { useState, useMemo, useCallback } from "react";
@@ -16,7 +16,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -25,18 +24,31 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FileText, Loader2, ShieldCheck, Download, Eye, ArrowLeft, ZoomIn, ZoomOut, RotateCcw, Printer, Mail } from "lucide-react";
+import { 
+  FileText, 
+  Loader2, 
+  Download, 
+  Eye, 
+  ArrowLeft, 
+  ArrowRight,
+  Printer, 
+  Mail,
+  Settings2
+} from "lucide-react";
 import { toast } from "sonner";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
 import { useEmployeeSettings } from "@/margenkalkulator/hooks/useEmployeeSettings";
 import { useTenantBranding } from "@/hooks/useTenantBranding";
 import { useActivityTracker } from "@/hooks/useActivityTracker";
 import { useSharedOffers } from "@/margenkalkulator/hooks/useSharedOffers";
-import { generateOfferQrCode, generateOfferId as generateQrOfferId, generateAccessToken } from "@/margenkalkulator/utils/qrCodeGenerator";
+import { generateOfferId as generateQrOfferId } from "@/margenkalkulator/utils/qrCodeGenerator";
 import { EmailSendDialog } from "./EmailSendDialog";
+import { PdfPageSelector } from "./PdfPageSelector";
+import { PdfPreviewPane } from "./PdfPreviewPane";
 import type { OfferOptionState, CalculationResult, ViewMode } from "../../engine/types";
-import type { DealerSummaryData, OfferCustomerInfo, PdfOfferOptions } from "../../pdf/templates/types";
+import type { DealerSummaryData, OfferCustomerInfo, PdfOfferOptions, PdfPageSelection } from "../../pdf/templates/types";
 import { DEFAULT_TEMPLATE } from "../../pdf/templates/allenetzeClean";
+import { DEFAULT_PAGE_SELECTION } from "../../pdf/templates/types";
 
 interface PdfExportDialogProps {
   option: OfferOptionState;
@@ -44,9 +56,7 @@ interface PdfExportDialogProps {
   viewMode?: ViewMode;
   customer?: OfferCustomerInfo;
   children?: React.ReactNode;
-  /** Controlled open state */
   open?: boolean;
-  /** Controlled open state setter */
   onOpenChange?: (open: boolean) => void;
 }
 
@@ -62,7 +72,7 @@ function sanitizeFilename(name: string): string {
     .slice(0, 100);
 }
 
-// Generate unique offer ID (fallback)
+// Generate unique offer ID
 function generateOfferId(): string {
   const date = new Date();
   const dateStr = date.toISOString().slice(0, 10).replace(/-/g, "");
@@ -70,7 +80,7 @@ function generateOfferId(): string {
   return `AN-${dateStr}-${random}`;
 }
 
-type DialogStep = "options" | "preview" | "email";
+type DialogStep = "pages" | "preview";
 
 export function PdfExportDialog({
   option,
@@ -83,7 +93,7 @@ export function PdfExportDialog({
 }: PdfExportDialogProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState<DialogStep>("options");
+  const [step, setStep] = useState<DialogStep>("pages");
   
   // Preview state
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -93,7 +103,6 @@ export function PdfExportDialog({
   // QR Code + Share state
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
   const [sharedOfferId, setSharedOfferId] = useState<string | null>(null);
-  const [accessToken, setAccessToken] = useState<string | null>(null);
   
   // Email dialog state
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
@@ -104,12 +113,19 @@ export function PdfExportDialog({
   const open = isControlled ? controlledOpen : internalOpen;
   const setOpen = isControlled ? controlledOnOpenChange! : setInternalOpen;
   
-  // Export options state
-  const [showCoverPage, setShowCoverPage] = useState(true);
-  const [showDealerSummary, setShowDealerSummary] = useState(false);
+  // Page selection state
+  const [pageSelection, setPageSelection] = useState<PdfPageSelection>({
+    ...DEFAULT_PAGE_SELECTION,
+    showCoverPage: true,
+    showSummaryPage: true,
+    showDetailPage: true,
+    showContactPage: true,
+  });
+  
+  // Validity option
   const [validDays, setValidDays] = useState("14");
   
-  // Generated offer ID (persisted during session)
+  // Generated offer ID
   const [offerId] = useState(() => generateOfferId());
   
   // Shared offers hook
@@ -128,9 +144,18 @@ export function PdfExportDialog({
     canViewMargins &&
     !visibility.isCustomerSessionActive;
   
+  // Check if hardware is selected
+  const hasHardware = option.hardware.ekNet > 0;
+  
+  // Auto-enable hardware page if hardware selected
+  const effectivePageSelection = useMemo(() => ({
+    ...pageSelection,
+    showHardwarePage: hasHardware ? pageSelection.showHardwarePage : false,
+  }), [pageSelection, hasHardware]);
+  
   // Build dealer data from result
   const dealerData = useMemo<DealerSummaryData | undefined>(() => {
-    if (!showDealerSummary || !result.dealer) return undefined;
+    if (!effectivePageSelection.showDealerPage || !result.dealer) return undefined;
     
     const economics = result.dealer;
     const quantity = option.mobile.quantity;
@@ -153,7 +178,7 @@ export function PdfExportDialog({
           }]
         : undefined,
     };
-  }, [showDealerSummary, result.dealer, option]);
+  }, [effectivePageSelection.showDealerPage, result.dealer, option]);
   
   // Default customer if not provided
   const effectiveCustomer: OfferCustomerInfo = customer || {
@@ -166,11 +191,22 @@ export function PdfExportDialog({
     ort: "",
   };
   
+  // Get customer-based filename
+  const getCustomerBasedFilename = useCallback(() => {
+    const date = new Date().toISOString().split("T")[0];
+    const customerName = effectiveCustomer.firma 
+      || (effectiveCustomer.nachname ? `${effectiveCustomer.anrede || ""}_${effectiveCustomer.nachname}`.replace(/^_/, "") : null)
+      || option.mobile.tariffId
+      || "Angebot";
+    const sanitizedName = sanitizeFilename(customerName);
+    const suffix = effectivePageSelection.showDealerPage ? "_Haendler" : "";
+    return `Angebot_${sanitizedName}${suffix}_${date}.pdf`;
+  }, [effectiveCustomer, option.mobile.tariffId, effectivePageSelection.showDealerPage]);
+  
   // Cleanup preview URL on close
   const handleOpenChange = useCallback((newOpen: boolean) => {
     if (!newOpen) {
-      // Reset state when closing
-      setStep("options");
+      setStep("pages");
       if (previewUrl) {
         URL.revokeObjectURL(previewUrl);
         setPreviewUrl(null);
@@ -179,7 +215,6 @@ export function PdfExportDialog({
       setZoom(100);
       setQrCodeDataUrl(null);
       setSharedOfferId(null);
-      setAccessToken(null);
       setPdfBase64(null);
     }
     setOpen(newOpen);
@@ -201,8 +236,9 @@ export function PdfExportDialog({
     
     const pdfOptions: PdfOfferOptions = {
       templateId: DEFAULT_TEMPLATE.id,
-      showCoverPage,
+      showCoverPage: effectivePageSelection.showCoverPage,
       validDays: parseInt(validDays, 10),
+      pageSelection: effectivePageSelection,
     };
     
     const blob = await Promise.race([
@@ -214,7 +250,7 @@ export function PdfExportDialog({
           branding={branding}
           offerId={offerId}
           items={[{ option, result }]}
-          showDealerSummary={showDealerSummary}
+          showDealerSummary={effectivePageSelection.showDealerPage}
           dealerData={dealerData}
           qrCodeDataUrl={qrCode}
         />
@@ -234,11 +270,7 @@ export function PdfExportDialog({
     setLoading(true);
     
     try {
-      // Step 1: Create shared offer for QR code
-      const newOfferId = generateQrOfferId();
-      const newAccessToken = generateAccessToken();
-      
-      // Prepare offer data (customer-facing only, NO dealer info)
+      // Create shared offer for QR code
       const sharedOfferData = {
         tariffName: option.mobile.tariffId || "Business Tarif",
         hardwareName: option.hardware.name || "SIM-Only",
@@ -250,11 +282,10 @@ export function PdfExportDialog({
         quantity: option.mobile.quantity,
         fixedNet: option.fixedNet.enabled ? {
           product: option.fixedNet.productId,
-          monthlyPrice: result.totals.avgTermNet, // Simplified
+          monthlyPrice: result.totals.avgTermNet,
         } : undefined,
       };
       
-      // Save shared offer to database
       const savedOffer = await saveSharedOffer(
         sharedOfferData,
         effectiveCustomer.vorname && effectiveCustomer.nachname 
@@ -264,14 +295,11 @@ export function PdfExportDialog({
       
       if (savedOffer.success && savedOffer.offerId && savedOffer.accessToken) {
         setSharedOfferId(savedOffer.offerId);
-        setAccessToken(savedOffer.accessToken);
         
-        // Use the QR code from the saved offer
         if (savedOffer.qrCodeDataUrl) {
           setQrCodeDataUrl(savedOffer.qrCodeDataUrl);
         }
         
-        // Step 3: Generate PDF with QR code
         const blob = await generatePdfBlob(savedOffer.qrCodeDataUrl);
         
         // Convert to base64 for email sending
@@ -282,7 +310,6 @@ export function PdfExportDialog({
         };
         reader.readAsDataURL(blob);
         
-        // Cleanup old URL if exists
         if (previewUrl) {
           URL.revokeObjectURL(previewUrl);
         }
@@ -297,7 +324,6 @@ export function PdfExportDialog({
         // Fallback: Generate PDF without QR code
         const blob = await generatePdfBlob();
         
-        // Convert to base64 for email sending
         const reader = new FileReader();
         reader.onload = () => {
           const base64 = (reader.result as string).split(',')[1];
@@ -314,7 +340,7 @@ export function PdfExportDialog({
         setPreviewBlob(blob);
         setStep("preview");
         
-        toast.success("Vorschau wurde generiert (ohne QR-Code)");
+        toast.success("Vorschau wurde generiert");
       }
     } catch (e) {
       console.error("PDF preview generation failed:", e);
@@ -328,54 +354,37 @@ export function PdfExportDialog({
     }
   };
   
-  // Download the generated PDF with customer-based filename
+  // Download the generated PDF
   const handleDownload = () => {
     if (!previewBlob || !previewUrl) return;
     
     const link = document.createElement("a");
     link.href = previewUrl;
-    
-    const date = new Date().toISOString().split("T")[0];
-    
-    // Priority: Firma > Nachname > Tarif > "Angebot"
-    const customerName = effectiveCustomer.firma 
-      || (effectiveCustomer.nachname ? `${effectiveCustomer.anrede || ""}_${effectiveCustomer.nachname}`.replace(/^_/, "") : null)
-      || option.mobile.tariffId
-      || "Angebot";
-    
-    const sanitizedName = sanitizeFilename(customerName);
-    const suffix = showDealerSummary ? "_Haendler" : "";
-    link.download = `Angebot_${sanitizedName}${suffix}_${date}.pdf`;
+    link.download = getCustomerBasedFilename();
     
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     
     toast.success(
-      showDealerSummary 
+      effectivePageSelection.showDealerPage 
         ? "PDF mit Händler-Zusammenfassung heruntergeladen" 
         : "Kunden-PDF heruntergeladen"
     );
     
-    trackPdfExported(undefined, `Angebot_${sanitizedName}${suffix}`);
+    trackPdfExported(undefined, getCustomerBasedFilename().replace(".pdf", ""));
     handleOpenChange(false);
   };
   
-  // Go back to options
-  const handleBackToOptions = () => {
-    setStep("options");
+  // Go back to page selection
+  const handleBackToPages = () => {
+    setStep("pages");
   };
-  
-  // Zoom controls
-  const handleZoomIn = () => setZoom(prev => Math.min(prev + 25, 200));
-  const handleZoomOut = () => setZoom(prev => Math.max(prev - 25, 50));
-  const handleZoomReset = () => setZoom(100);
   
   // Print PDF
   const handlePrint = () => {
     if (!previewUrl) return;
     
-    // Open PDF in new window and trigger print
     const printWindow = window.open(previewUrl, '_blank');
     if (printWindow) {
       printWindow.onload = () => {
@@ -383,37 +392,36 @@ export function PdfExportDialog({
         printWindow.print();
       };
     } else {
-      // Fallback: use iframe print
       const iframe = document.querySelector('iframe[title="PDF Vorschau"]') as HTMLIFrameElement;
       if (iframe?.contentWindow) {
         iframe.contentWindow.focus();
         iframe.contentWindow.print();
       } else {
-        toast.error("Drucken konnte nicht gestartet werden. Bitte laden Sie das PDF herunter.");
+        toast.error("Drucken konnte nicht gestartet werden.");
       }
     }
   };
   
-  // Open email dialog
-  const handleOpenEmailDialog = () => {
-    setEmailDialogOpen(true);
-  };
-  
-  // Email sent successfully
+  // Email dialog handlers
+  const handleOpenEmailDialog = () => setEmailDialogOpen(true);
   const handleEmailSent = () => {
     setEmailDialogOpen(false);
     toast.success("Angebot wurde per E-Mail gesendet!");
   };
   
-  // Get PDF filename
-  const getPdfFilename = () => {
-    const date = new Date().toISOString().split("T")[0];
-    const tariffName = option.mobile.tariffId
-      ? sanitizeFilename(option.mobile.tariffId)
-      : "Angebot";
-    const suffix = showDealerSummary ? "_Haendler" : "_Kunde";
-    return `${tariffName}${suffix}_${date}.pdf`;
-  };
+  // Count selected pages
+  const selectedPageCount = useMemo(() => {
+    let count = 0;
+    if (effectivePageSelection.showCoverPage) count++;
+    if (effectivePageSelection.showSummaryPage) count++;
+    if (effectivePageSelection.showTransitionPage) count++;
+    if (effectivePageSelection.showDetailPage) count++;
+    if (effectivePageSelection.showHardwarePage && hasHardware) count++;
+    if (effectivePageSelection.showUspPage) count++;
+    if (effectivePageSelection.showContactPage) count++;
+    if (effectivePageSelection.showDealerPage && canShowDealerOption) count++;
+    return count;
+  }, [effectivePageSelection, hasHardware, canShowDealerOption]);
   
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -423,54 +431,36 @@ export function PdfExportDialog({
         </DialogTrigger>
       )}
       
-      <DialogContent className={step === "preview" ? "sm:max-w-[900px] h-[90vh] flex flex-col" : "sm:max-w-[425px]"}>
-        {step === "options" ? (
+      <DialogContent 
+        className={step === "preview" 
+          ? "sm:max-w-[1000px] h-[90vh] flex flex-col" 
+          : "sm:max-w-[500px] max-h-[85vh] flex flex-col"
+        }
+      >
+        {step === "pages" ? (
           <>
-            <DialogHeader>
+            {/* Step 1: Page Selection */}
+            <DialogHeader className="flex-shrink-0">
               <DialogTitle className="flex items-center gap-2">
-                <FileText className="w-5 h-5" />
-                Professionelles Angebots-PDF
+                <Settings2 className="w-5 h-5" />
+                Angebot konfigurieren
               </DialogTitle>
               <DialogDescription>
-                Erstellen Sie ein professionelles Angebot im allenetze.de Design.
+                Wählen Sie die Seiten, die im PDF enthalten sein sollen.
               </DialogDescription>
             </DialogHeader>
             
-            <div className="grid gap-4 py-4">
-              {/* Cover Page Option */}
-              <div className="flex items-center space-x-3">
-                <Checkbox
-                  id="cover"
-                  checked={showCoverPage}
-                  onCheckedChange={(checked) => setShowCoverPage(checked === true)}
-                />
-                <Label htmlFor="cover" className="text-sm font-medium cursor-pointer">
-                  Deckblatt anzeigen
-                </Label>
-              </div>
+            <div className="flex-1 overflow-y-auto py-4 space-y-6">
+              {/* Page Selector */}
+              <PdfPageSelector
+                selection={pageSelection}
+                onChange={setPageSelection}
+                canShowDealerPage={canShowDealerOption}
+                hasHardware={hasHardware}
+              />
               
-              {/* Dealer Summary Option (only in dealer mode) */}
-              {canShowDealerOption && (
-                <div className="flex items-start space-x-3">
-                  <Checkbox
-                    id="dealer"
-                    checked={showDealerSummary}
-                    onCheckedChange={(checked) => setShowDealerSummary(checked === true)}
-                  />
-                  <div className="grid gap-1">
-                    <Label htmlFor="dealer" className="text-sm font-medium cursor-pointer flex items-center gap-2">
-                      <ShieldCheck className="w-4 h-4 text-amber-500" />
-                      Händler-Zusammenfassung anhängen
-                    </Label>
-                    <p className="text-xs text-muted-foreground">
-                      Vertrauliche Seite mit Provisions- und Margen-Kalkulation
-                    </p>
-                  </div>
-                </div>
-              )}
-              
-              {/* Validity */}
-              <div className="grid gap-2">
+              {/* Validity Option */}
+              <div className="space-y-2 pt-2 border-t">
                 <Label htmlFor="validity" className="text-sm font-medium">
                   Gültigkeit des Angebots
                 </Label>
@@ -488,7 +478,7 @@ export function PdfExportDialog({
               </div>
             </div>
             
-            <DialogFooter className="gap-2 sm:gap-0">
+            <DialogFooter className="flex-shrink-0 gap-2 sm:gap-0 pt-4 border-t">
               <Button variant="ghost" onClick={() => handleOpenChange(false)} disabled={loading}>
                 Abbrechen
               </Button>
@@ -501,7 +491,8 @@ export function PdfExportDialog({
                 ) : (
                   <>
                     <Eye className="w-4 h-4" />
-                    Vorschau anzeigen
+                    Vorschau ({selectedPageCount} Seiten)
+                    <ArrowRight className="w-4 h-4 ml-1" />
                   </>
                 )}
               </Button>
@@ -509,78 +500,30 @@ export function PdfExportDialog({
           </>
         ) : (
           <>
-            {/* Preview Step */}
-            <DialogHeader className="flex-shrink-0">
-              <div className="flex items-center justify-between">
-                <DialogTitle className="flex items-center gap-2">
-                  <FileText className="w-5 h-5" />
-                  PDF-Vorschau
-                </DialogTitle>
-                
-                {/* Zoom Controls */}
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleZoomOut}
-                    disabled={zoom <= 50}
-                    className="h-8 w-8"
-                  >
-                    <ZoomOut className="w-4 h-4" />
-                  </Button>
-                  <span className="text-sm text-muted-foreground w-12 text-center">{zoom}%</span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleZoomIn}
-                    disabled={zoom >= 200}
-                    className="h-8 w-8"
-                  >
-                    <ZoomIn className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleZoomReset}
-                    className="h-8 w-8"
-                  >
-                    <RotateCcw className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
+            {/* Step 2: Preview */}
+            <DialogHeader className="flex-shrink-0 pb-2">
+              <DialogTitle className="flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                PDF-Vorschau
+              </DialogTitle>
               <DialogDescription>
-                Überprüfen Sie das Angebot vor dem Download.
-                {showDealerSummary && (
-                  <span className="ml-2 text-amber-600 font-medium">
-                    🔒 Enthält Händler-Informationen
-                  </span>
-                )}
+                Überprüfen Sie das Angebot vor dem Download oder Versand.
               </DialogDescription>
             </DialogHeader>
             
-            {/* PDF Viewer */}
-            <div className="flex-1 min-h-0 bg-muted/50 rounded-lg overflow-auto border">
-              {previewUrl && (
-                <div 
-                  className="flex justify-center p-4"
-                  style={{ transform: `scale(${zoom / 100})`, transformOrigin: "top center" }}
-                >
-                  <iframe
-                    src={previewUrl}
-                    className="w-full bg-white shadow-lg rounded"
-                    style={{ 
-                      height: "calc(100vh - 280px)",
-                      minHeight: "500px",
-                      maxWidth: "800px"
-                    }}
-                    title="PDF Vorschau"
-                  />
-                </div>
-              )}
+            {/* PDF Preview Pane */}
+            <div className="flex-1 min-h-0 border rounded-lg overflow-hidden">
+              <PdfPreviewPane
+                previewUrl={previewUrl}
+                zoom={zoom}
+                onZoomChange={setZoom}
+                showDealerSummary={effectivePageSelection.showDealerPage}
+                pageCount={selectedPageCount}
+              />
             </div>
             
-            <DialogFooter className="flex-shrink-0 gap-2 pt-4">
-              <Button variant="ghost" onClick={handleBackToOptions} className="gap-2">
+            <DialogFooter className="flex-shrink-0 gap-2 pt-4 border-t">
+              <Button variant="ghost" onClick={handleBackToPages} className="gap-2">
                 <ArrowLeft className="w-4 h-4" />
                 Zurück
               </Button>
@@ -592,7 +535,7 @@ export function PdfExportDialog({
                 className="gap-2"
               >
                 <Mail className="w-4 h-4" />
-                Per E-Mail senden
+                E-Mail
               </Button>
               <Button variant="outline" onClick={handlePrint} className="gap-2">
                 <Printer className="w-4 h-4" />
@@ -610,7 +553,7 @@ export function PdfExportDialog({
                 open={emailDialogOpen}
                 onOpenChange={setEmailDialogOpen}
                 pdfBase64={pdfBase64}
-                pdfFilename={getPdfFilename()}
+                pdfFilename={getCustomerBasedFilename()}
                 offerId={sharedOfferId || offerId}
                 customerName={effectiveCustomer.vorname && effectiveCustomer.nachname 
                   ? `${effectiveCustomer.vorname} ${effectiveCustomer.nachname}`.trim()

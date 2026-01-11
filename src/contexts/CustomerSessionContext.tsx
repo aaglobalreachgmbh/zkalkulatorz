@@ -60,10 +60,30 @@ export function CustomerSessionProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// ============================================
+// Safe Default - NIEMALS throw in Hooks!
+// ============================================
+const SAFE_DEFAULT_CUSTOMER_SESSION: CustomerSessionContextType = {
+  session: {
+    isActive: false,
+    startedAt: null,
+  },
+  startSession: () => {
+    console.warn("[useCustomerSession] Called outside provider - no-op");
+  },
+  endSession: () => {
+    console.warn("[useCustomerSession] Called outside provider - no-op");
+  },
+  toggleSession: () => {
+    console.warn("[useCustomerSession] Called outside provider - no-op");
+  },
+};
+
 export function useCustomerSession(): CustomerSessionContextType {
   const context = useContext(CustomerSessionContext);
   if (!context) {
-    throw new Error("useCustomerSession must be used within CustomerSessionProvider");
+    console.warn("[useCustomerSession] Used outside CustomerSessionProvider, returning safe default");
+    return SAFE_DEFAULT_CUSTOMER_SESSION;
   }
   return context;
 }

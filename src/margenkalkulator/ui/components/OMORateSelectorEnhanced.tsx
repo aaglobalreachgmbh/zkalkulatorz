@@ -16,7 +16,8 @@ import { Badge } from "@/components/ui/badge";
 import { Percent, Lock, AlertTriangle } from "lucide-react";
 import type { MobileTariff } from "@/margenkalkulator/engine/types";
 
-export type OMORate = 0 | 5 | 10 | 15 | 17.5 | 20 | 25;
+// Erweitert um 30% und 35% (Dataset-driven)
+export type OMORate = 0 | 5 | 10 | 15 | 17.5 | 20 | 25 | 30 | 35;
 
 interface OMORateSelectorEnhancedProps {
   value: OMORate;
@@ -26,7 +27,8 @@ interface OMORateSelectorEnhancedProps {
   disabled?: boolean;
 }
 
-const ALL_OMO_RATES: OMORate[] = [0, 5, 10, 15, 17.5, 20, 25];
+// Alle möglichen OMO-Stufen inkl. 30%/35% (werden nur angezeigt wenn im Dataset)
+const ALL_OMO_RATES: OMORate[] = [0, 5, 10, 15, 17.5, 20, 25, 30, 35];
 
 const OMO_RATE_LABELS: Record<OMORate, string> = {
   0: "Kein OMO",
@@ -36,6 +38,8 @@ const OMO_RATE_LABELS: Record<OMORate, string> = {
   17.5: "OMO 17,5%",
   20: "OMO 20%",
   25: "OMO 25%",
+  30: "OMO 30%",
+  35: "OMO 35%",
 };
 
 /**

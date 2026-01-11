@@ -3934,6 +3934,65 @@ export type Database = {
           },
         ]
       }
+      won_offer_data: {
+        Row: {
+          billing_address: Json
+          captured_at: string | null
+          company_data: Json
+          contact_data: Json
+          created_at: string
+          id: string
+          offer_id: string | null
+          payment_data: Json | null
+          sim_options: Json | null
+          status: string
+          submitted_at: string | null
+          tenant_id: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          billing_address?: Json
+          captured_at?: string | null
+          company_data?: Json
+          contact_data?: Json
+          created_at?: string
+          id?: string
+          offer_id?: string | null
+          payment_data?: Json | null
+          sim_options?: Json | null
+          status?: string
+          submitted_at?: string | null
+          tenant_id?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          billing_address?: Json
+          captured_at?: string | null
+          company_data?: Json
+          contact_data?: Json
+          created_at?: string
+          id?: string
+          offer_id?: string | null
+          payment_data?: Json | null
+          sim_options?: Json | null
+          status?: string
+          submitted_at?: string | null
+          tenant_id?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "won_offer_data_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "saved_offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

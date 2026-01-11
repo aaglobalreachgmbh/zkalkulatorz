@@ -717,7 +717,7 @@ export function PremiumSummaryPage({
       <View style={styles.footer}>
         <View style={styles.footerRow}>
           <Text style={styles.footerText}>
-            {template.publisherInfo.subline} | Alle Preise zzgl. MwSt.
+            {template.publisherInfo.subline} | Alle Preise zzgl. MwSt. | RV180000
           </Text>
           <Text style={styles.pageNumber}>Seite {pageNumber} von {totalPages}</Text>
         </View>

@@ -143,7 +143,11 @@ export function useCloudTemplates() {
       config: OfferOptionState;
       folderId?: string;
     }) => {
-      if (!user) throw new Error("Nicht authentifiziert");
+      if (!user) {
+        console.warn("[useCloudTemplates] createTemplate: Nicht authentifiziert");
+        toast.error("Bitte zuerst einloggen");
+        return null as unknown as CloudTemplate;
+      }
 
       const preview = createPreview(config);
       const { data, error } = await supabase
@@ -186,7 +190,11 @@ export function useCloudTemplates() {
       id: string;
       config: OfferOptionState;
     }) => {
-      if (!user) throw new Error("Nicht authentifiziert");
+      if (!user) {
+        console.warn("[useCloudTemplates] updateTemplate: Nicht authentifiziert");
+        toast.error("Bitte zuerst einloggen");
+        return;
+      }
 
       const preview = createPreview(config);
       const { error } = await supabase
@@ -214,7 +222,11 @@ export function useCloudTemplates() {
   // Delete template
   const deleteTemplateMutation = useMutation({
     mutationFn: async (id: string) => {
-      if (!user) throw new Error("Nicht authentifiziert");
+      if (!user) {
+        console.warn("[useCloudTemplates] deleteTemplate: Nicht authentifiziert");
+        toast.error("Bitte zuerst einloggen");
+        return;
+      }
 
       const { error } = await supabase
         .from("offer_drafts")
@@ -250,10 +262,18 @@ export function useCloudTemplates() {
   // Duplicate template
   const duplicateTemplateMutation = useMutation({
     mutationFn: async (id: string) => {
-      if (!user) throw new Error("Nicht authentifiziert");
+      if (!user) {
+        console.warn("[useCloudTemplates] duplicateTemplate: Nicht authentifiziert");
+        toast.error("Bitte zuerst einloggen");
+        return null as unknown as CloudTemplate;
+      }
 
       const template = templates.find((t) => t.id === id);
-      if (!template) throw new Error("Vorlage nicht gefunden");
+      if (!template) {
+        console.warn("[useCloudTemplates] duplicateTemplate: Vorlage nicht gefunden");
+        toast.error("Vorlage nicht gefunden");
+        return null as unknown as CloudTemplate;
+      }
 
       const { data, error } = await supabase
         .from("offer_drafts")
@@ -288,7 +308,11 @@ export function useCloudTemplates() {
   // Move template to folder
   const moveTemplateMutation = useMutation({
     mutationFn: async ({ id, folderId }: { id: string; folderId: string | null }) => {
-      if (!user) throw new Error("Nicht authentifiziert");
+      if (!user) {
+        console.warn("[useCloudTemplates] moveTemplate: Nicht authentifiziert");
+        toast.error("Bitte zuerst einloggen");
+        return;
+      }
 
       const { error } = await supabase
         .from("offer_drafts")
@@ -306,7 +330,11 @@ export function useCloudTemplates() {
   // Create folder
   const createFolderMutation = useMutation({
     mutationFn: async ({ name, parentId }: { name: string; parentId?: string }) => {
-      if (!user) throw new Error("Nicht authentifiziert");
+      if (!user) {
+        console.warn("[useCloudTemplates] createFolder: Nicht authentifiziert");
+        toast.error("Bitte zuerst einloggen");
+        return null as unknown as CloudFolder;
+      }
 
       const { data, error } = await supabase
         .from("template_folders")
@@ -337,7 +365,11 @@ export function useCloudTemplates() {
   // Rename folder
   const renameFolderMutation = useMutation({
     mutationFn: async ({ id, name }: { id: string; name: string }) => {
-      if (!user) throw new Error("Nicht authentifiziert");
+      if (!user) {
+        console.warn("[useCloudTemplates] renameFolder: Nicht authentifiziert");
+        toast.error("Bitte zuerst einloggen");
+        return;
+      }
 
       const { error } = await supabase
         .from("template_folders")
@@ -355,7 +387,11 @@ export function useCloudTemplates() {
   // Delete folder (move contents to root)
   const deleteFolderMutation = useMutation({
     mutationFn: async (id: string) => {
-      if (!user) throw new Error("Nicht authentifiziert");
+      if (!user) {
+        console.warn("[useCloudTemplates] deleteFolder: Nicht authentifiziert");
+        toast.error("Bitte zuerst einloggen");
+        return;
+      }
 
       // Move templates to root
       await supabase

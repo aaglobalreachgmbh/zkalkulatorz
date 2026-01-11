@@ -162,7 +162,10 @@ class OfflineSyncService {
    */
   private async uploadPendingOffer(offer: PendingOffer): Promise<void> {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Not authenticated");
+    if (!user) {
+      console.warn("[offlineSync] uploadPendingOffer: Not authenticated, skipping");
+      return;
+    }
 
     const { error } = await supabase.from("saved_offers").insert([{
       user_id: user.id,
@@ -186,7 +189,10 @@ class OfflineSyncService {
     createdAt: string;
   }): Promise<void> {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Not authenticated");
+    if (!user) {
+      console.warn("[offlineSync] uploadPendingCalculation: Not authenticated, skipping");
+      return;
+    }
 
     const { error } = await supabase.from("calculation_history").insert([{
       user_id: user.id,

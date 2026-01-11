@@ -606,7 +606,9 @@ export function usePushTariffGroups() {
   const createGroup = useCallback(
     async (group: Omit<PushTariffGroup, "id" | "tenantId" | "createdBy" | "createdAt" | "updatedAt">) => {
       if (!user?.id || !identity.tenantId) {
-        throw new Error("Nicht authentifiziert");
+        console.warn("[usePushProvisions] createGroup: Nicht authentifiziert");
+        toast.error("Bitte zuerst einloggen");
+        return null;
       }
 
       const { data, error } = await supabase

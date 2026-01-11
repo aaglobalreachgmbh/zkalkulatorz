@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 // Helper to get tenant ID from JWT claims
 async function getTenantId(): Promise<string> {
@@ -65,7 +66,9 @@ export function useHardwareImports() {
   const logImportMutation = useMutation({
     mutationFn: async (input: HardwareImportInput) => {
       if (!user?.id) {
-        throw new Error("User not available");
+        console.warn("[useHardwareImports] logImport: User not available");
+        toast.error("Bitte zuerst einloggen");
+        return null;
       }
 
       const tenantId = await getTenantId();

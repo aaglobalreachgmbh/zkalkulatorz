@@ -16,6 +16,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { FolderOpen, Trash2, Clock, Smartphone, Signal, Loader2 } from "lucide-react";
 import type { OfferOptionState } from "../../engine/types";
 import { useDrafts } from "../../hooks/useDrafts";
+import { formatMonthlyPrice } from "../../lib/formatters";
 import { toast } from "sonner";
 import { useState } from "react";
 
@@ -114,7 +115,7 @@ export function DraftManager({
                       </span>
                     </div>
                     <div className="mt-1 text-sm font-medium text-primary">
-                      {draft.preview.avgMonthly.toFixed(2)} € /mtl.
+                      {formatMonthlyPrice(draft.preview.avgMonthly)}
                       {draft.preview.quantity > 1 && (
                         <span className="text-muted-foreground"> (×{draft.preview.quantity})</span>
                       )}

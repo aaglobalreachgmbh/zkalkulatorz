@@ -2,6 +2,7 @@ import { type MobileTariff, type FixedNetProduct } from "@/margenkalkulator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Check, Info, Wifi, Phone, Router, Shield } from "lucide-react";
+import { formatCurrency } from "../../lib/formatters";
 
 interface MobileTariffFactsProps {
   type: "mobile";
@@ -163,18 +164,18 @@ function FixedNetFacts({
           <div className="space-y-1 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Bereitstellung</span>
-              <span>{product.setupWaived ? <span className="text-green-600">erlassen</span> : `${SETUP_FEE.toFixed(2)} €`}</span>
+              <span>{product.setupWaived ? <span className="text-green-600">erlassen</span> : formatCurrency(SETUP_FEE)}</span>
             </div>
             {!product.setupWaived && (
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Versand Hardware</span>
-                <span>{SHIPPING_FEE.toFixed(2)} €</span>
+                <span>{formatCurrency(SHIPPING_FEE)}</span>
               </div>
             )}
             {expertSetupEnabled && (
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Experten-Service</span>
-                <span>{expertSetupNet.toFixed(2)} €</span>
+                <span>{formatCurrency(expertSetupNet)}</span>
               </div>
             )}
           </div>
@@ -187,7 +188,7 @@ function FixedNetFacts({
               {product.fixedIpIncluded ? (
                 <span className="text-green-600">inklusive</span>
               ) : fixedIpEnabled ? (
-                <span>+{(product.fixedIpAddonNet ?? 5).toFixed(2)} €/Mo</span>
+                <span>+{formatCurrency(product.fixedIpAddonNet ?? 5)}/Mo</span>
               ) : (
                 <span className="text-muted-foreground">zubuchbar</span>
               )}

@@ -1,4 +1,6 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+// GigaKombi Toast ref - track if we've shown the toast
+
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
@@ -100,6 +102,7 @@ export function Wizard() {
   // Dataset Versions - Auto-seed if none exist
   const { versions, isLoading: isLoadingVersions, seedDefaultVersion, isSeeding } = useDatasetVersions();
   const hasSeeded = useRef(false);
+  const shownGigaKombiToast = useRef(false);
   const { canAccessAdmin, isSupabaseAuth } = useIdentity();
   
   // Tenant Data Status Check
@@ -379,6 +382,21 @@ export function Wizard() {
   // GigaKombi eligibility check
   const isGigaKombiEligible = option1.fixedNet.enabled && 
     option1.mobile.tariffId.toLowerCase().includes("prime");
+
+  // GigaKombi Toast - show once when becoming eligible
+  useEffect(() => {
+    if (isGigaKombiEligible && !shownGigaKombiToast.current) {
+      shownGigaKombiToast.current = true;
+      toast.success("GigaKombi aktiv!", {
+        description: "−5€/mtl. Rabatt auf Ihren Tarif angewendet",
+        duration: 5000,
+      });
+    }
+    // Reset when GigaKombi deactivated so it can show again
+    if (!isGigaKombiEligible) {
+      shownGigaKombiToast.current = false;
+    }
+  }, [isGigaKombiEligible]);
 
   // Super-Admin bypass
   const { isAdmin: isSuperAdmin } = useUserRole();
@@ -712,10 +730,7 @@ export function Wizard() {
                 )}
               </Accordion>
 
-              {/* GigaKombi Banner - compact version shown inline */}
-              {isGigaKombiEligible && (
-                <GigaKombiBanner isEligible={isGigaKombiEligible} />
-              )}
+              {/* GigaKombi Toast - shown once when eligible (replaces inline banner) */}
 
               {/* Price Period Breakdown - Shows when multiple periods exist */}
               {result1.periods.length > 1 && (

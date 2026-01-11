@@ -13,6 +13,7 @@
 // ============================================
 
 import { useMemo } from "react";
+import { formatCurrency, formatMonthlyPrice } from "../../lib/formatters";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Smartphone, Signal, Plus, Check, ShoppingCart, TrendingDown, FileText, Info } from "lucide-react";
@@ -159,13 +160,13 @@ export function StickyPriceBar({
                           Monat {period.fromMonth}–{period.toMonth}:
                         </span>
                         <span className={period.monthly.net < 0.01 ? "text-emerald-500 font-medium" : ""}>
-                          {period.monthly.net < 0.01 ? "Kostenfrei" : `${period.monthly.net.toFixed(2)} €`}
+                          {period.monthly.net < 0.01 ? "Kostenfrei" : formatCurrency(period.monthly.net)}
                         </span>
                       </div>
                     ))}
                     <div className="border-t border-border pt-2 mt-2 flex justify-between text-xs font-medium">
                       <span>Ø Durchschnitt:</span>
-                      <span>{avgMonthly.toFixed(2)} €/mtl.</span>
+                      <span>{formatMonthlyPrice(avgMonthly)}</span>
                     </div>
                   </div>
                 </TooltipContent>

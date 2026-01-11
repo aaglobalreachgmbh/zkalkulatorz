@@ -712,11 +712,9 @@ export function Wizard() {
                 )}
               </Accordion>
 
-              {/* GigaKombi Banner */}
+              {/* GigaKombi Banner - compact version shown inline */}
               {isGigaKombiEligible && (
-                <div className="mt-4">
-                  <GigaKombiBanner isEligible={isGigaKombiEligible} />
-                </div>
+                <GigaKombiBanner isEligible={isGigaKombiEligible} />
               )}
 
               {/* Price Period Breakdown - Shows when multiple periods exist */}
@@ -752,33 +750,33 @@ export function Wizard() {
             {/* NOTE: FloatingActionBar on Desktop removed - now inline in tariff selection via InlineTariffConfig */}
           </div>
 
-          {/* Summary + Basket Sidebar - Desktop only (Overview only, no actions) */}
+          {/* Summary + Basket Sidebar - Desktop only - STICKY for always-visible overview */}
           {!isMobile && (
-            <aside className="w-64 xl:w-72 flex-shrink-0 hidden lg:block space-y-4">
-              <SummarySidebar
-                option={option1}
-                result={result1}
-                viewMode={effectiveViewMode}
-                quantityBonus={quantityBonusForOption1}
-              />
-              <OfferBasketPanel />
+            <aside className="w-72 xl:w-80 flex-shrink-0 hidden lg:block">
+              <div className="sticky top-20 space-y-4 max-h-[calc(100vh-100px)] overflow-y-auto scrollbar-thin">
+                <SummarySidebar
+                  option={option1}
+                  result={result1}
+                  viewMode={effectiveViewMode}
+                  quantityBonus={quantityBonusForOption1}
+                />
+                <OfferBasketPanel />
+              </div>
             </aside>
           )}
         </div>
       </main>
 
-      {/* Mobile Footer with Floating Action Bar */}
-      {isMobile && (
-        <footer className="sticky bottom-0 z-40 shrink-0 pb-safe">
-          <FloatingActionBar
-            option={option1}
-            result={activeResult}
-            viewMode={effectiveViewMode}
-            quantityBonus={quantityBonusForOption1}
-            onResetForNewTariff={resetForNewTariff}
-          />
-        </footer>
-      )}
+      {/* Footer with Floating Action Bar - Desktop + Mobile */}
+      <footer className="sticky bottom-0 z-40 shrink-0 pb-safe">
+        <FloatingActionBar
+          option={option1}
+          result={activeResult}
+          viewMode={effectiveViewMode}
+          quantityBonus={quantityBonusForOption1}
+          onResetForNewTariff={resetForNewTariff}
+        />
+      </footer>
 
       {/* AI Consultant */}
       {!isPOSMode && activeState.mobile.tariffId && (

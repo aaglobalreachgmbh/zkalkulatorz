@@ -25,30 +25,49 @@ export function ViewModeToggle({ value, onChange, allowCustomerMode = true, disa
         onValueChange={(v) => v && !disabled && onChange(v as ViewMode)}
         className={cn("bg-muted p-1 rounded-lg", disabled && "opacity-60")}
       >
-        <ToggleGroupItem
-          value="customer"
-          disabled={!allowCustomerMode || disabled}
-          className={cn(
-            "data-[state=on]:bg-background data-[state=on]:text-foreground px-3 py-1.5 text-sm",
-            "transition-transform duration-100 active:scale-95",
-            (!allowCustomerMode || disabled) && "opacity-50 cursor-not-allowed"
-          )}
-        >
-          <Eye className="w-4 h-4 mr-1.5" />
-          Kunde
-        </ToggleGroupItem>
-        <ToggleGroupItem
-          value="dealer"
-          disabled={disabled}
-          className={cn(
-            "data-[state=on]:bg-background data-[state=on]:text-foreground px-3 py-1.5 text-sm",
-            "transition-transform duration-100 active:scale-95",
-            disabled && "opacity-50 cursor-not-allowed"
-          )}
-        >
-          <Calculator className="w-4 h-4 mr-1.5" />
-          Händler
-        </ToggleGroupItem>
+        {/* Customer Mode with Tooltip */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <ToggleGroupItem
+              value="customer"
+              disabled={!allowCustomerMode || disabled}
+              className={cn(
+                "data-[state=on]:bg-background data-[state=on]:text-foreground px-3 py-1.5 text-sm",
+                "transition-transform duration-100 active:scale-95",
+                (!allowCustomerMode || disabled) && "opacity-50 cursor-not-allowed"
+              )}
+            >
+              <Eye className="w-4 h-4 mr-1.5" />
+              Kunde
+            </ToggleGroupItem>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="max-w-xs">
+            <p className="font-medium">Kundenansicht</p>
+            <p className="text-xs text-muted-foreground">Zeigt nur Kundenpreise – keine EK, Provisionen oder Marge</p>
+          </TooltipContent>
+        </Tooltip>
+        
+        {/* Dealer Mode with Tooltip */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <ToggleGroupItem
+              value="dealer"
+              disabled={disabled}
+              className={cn(
+                "data-[state=on]:bg-background data-[state=on]:text-foreground px-3 py-1.5 text-sm",
+                "transition-transform duration-100 active:scale-95",
+                disabled && "opacity-50 cursor-not-allowed"
+              )}
+            >
+              <Calculator className="w-4 h-4 mr-1.5" />
+              Händler
+            </ToggleGroupItem>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="max-w-xs">
+            <p className="font-medium">Händleransicht</p>
+            <p className="text-xs text-muted-foreground">Zeigt EK, Provisionen, Marge und alle Optionen</p>
+          </TooltipContent>
+        </Tooltip>
       </ToggleGroup>
       
       {/* Security lock indicator when customer-safe mode is active */}

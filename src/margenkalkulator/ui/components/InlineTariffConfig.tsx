@@ -195,8 +195,9 @@ export function InlineTariffConfig({
     addItem(tariffName, fullOption, result);
     toast.success(`"${tariffName}" zum Angebot hinzugefügt`, {
       description: mobileState.quantity > 1 ? `${mobileState.quantity} Verträge` : undefined,
+      duration: 2000, // Shorter toast duration for rapid workflows
     });
-    fireConfetti({ duration: 1500 });
+    fireConfetti({ duration: 1000, quick: true }); // Quick mode for faster workflows
     onAddedToOffer?.();
   };
   
@@ -351,6 +352,41 @@ export function InlineTariffConfig({
         )}
       </div>
       
+      
+      {/* OMO Quick-Access (extracted from Experten-Optionen) */}
+      {showOmoSelector && onOmoChange && tariff.family !== "teamdeal" && (
+        <div className="mb-4 p-4 bg-card rounded-lg border border-border">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <Percent className="w-4 h-4 text-muted-foreground" />
+              <Label className="text-sm font-medium">OMO-Rate</Label>
+              <HelpTooltip term="omo" />
+            </div>
+            <div className="flex-1 max-w-xs">
+              <OMORateSelectorEnhanced
+                value={(mobileState.omoRate ?? 0) as OMORate}
+                onChange={(rate) => {
+                  // OMO und Promo sind nicht kombinierbar
+                  if (rate > 0 && mobileState.promoId !== "NONE") {
+                    onOmoChange(rate);
+                    onPromoChange("NONE");
+                  } else {
+                    onOmoChange(rate);
+                  }
+                }}
+                tariff={tariff}
+                contractType={mobileState.contractType}
+              />
+            </div>
+          </div>
+          {(mobileState.omoRate ?? 0) > 0 && (
+            <p className="text-xs text-amber-600 mt-2">
+              ⚠️ OMO-Rabatte und Aktionen sind nicht kombinierbar
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Price Breakdown (Collapsible) */}
       {periods.length > 1 && (
         <Collapsible className="mb-4">
@@ -385,8 +421,8 @@ export function InlineTariffConfig({
         </Collapsible>
       )}
       
-      {/* Expert Options (OMO, FH-Partner) - Collapsible */}
-      {hasExpertOptions && (
+      {/* FH-Partner Toggle (simplified - only this remains in collapsible) */}
+      {showFhPartnerToggle && onFHPartnerChange && tariff.family !== "teamdeal" && (
         <Collapsible open={expertOptionsOpen} onOpenChange={setExpertOptionsOpen} className="mb-4">
           <CollapsibleTrigger asChild>
             <Button 
@@ -395,49 +431,19 @@ export function InlineTariffConfig({
             >
               <div className="flex items-center gap-2">
                 <Settings2 className="w-4 h-4" />
-                <span className="font-medium">Experten-Optionen</span>
-                <span className="text-xs text-muted-foreground">(OMO, FH-Partner)</span>
+                <span className="font-medium">Weitere Optionen</span>
+                <span className="text-xs text-muted-foreground">(FH-Partner)</span>
               </div>
               <ChevronDown className={cn("w-4 h-4 transition-transform duration-200", expertOptionsOpen && "rotate-180")} />
             </Button>
           </CollapsibleTrigger>
           <CollapsibleContent className="pt-3">
-            <div className="grid gap-4 p-4 bg-card rounded-lg border border-border">
-              {showOmoSelector && onOmoChange && (
-                <div className="space-y-2">
-                  <Label className="text-sm text-muted-foreground flex items-center gap-1.5">
-                    <Percent className="w-4 h-4" />
-                    OMO-Rate
-                    <HelpTooltip term="omo" />
-                  </Label>
-                  <OMORateSelectorEnhanced
-                    value={(mobileState.omoRate ?? 0) as OMORate}
-                    onChange={(rate) => {
-                      // OMO und Promo sind nicht kombinierbar
-                      if (rate > 0 && mobileState.promoId !== "NONE") {
-                        onOmoChange(rate);
-                        onPromoChange("NONE");
-                      } else {
-                        onOmoChange(rate);
-                      }
-                    }}
-                    tariff={tariff}
-                    contractType={mobileState.contractType}
-                  />
-                  {(mobileState.omoRate ?? 0) > 0 && (
-                    <p className="text-xs text-amber-600">
-                      ⚠️ OMO-Rabatte und Aktionen sind nicht kombinierbar
-                    </p>
-                  )}
-                </div>
-              )}
-              {showFhPartnerToggle && onFHPartnerChange && (
-                <FHPartnerToggle
-                  checked={mobileState.isFHPartner ?? false}
-                  onChange={onFHPartnerChange}
-                  fhPartnerProvision={tariff.fhPartnerNet}
-                />
-              )}
+            <div className="p-4 bg-card rounded-lg border border-border">
+              <FHPartnerToggle
+                checked={mobileState.isFHPartner ?? false}
+                onChange={onFHPartnerChange}
+                fhPartnerProvision={tariff.fhPartnerNet}
+              />
             </div>
           </CollapsibleContent>
         </Collapsible>

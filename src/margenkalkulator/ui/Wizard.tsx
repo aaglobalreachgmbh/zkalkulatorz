@@ -42,6 +42,7 @@ import { FloatingActionBar } from "./components/FloatingActionBar";
 import { SummarySidebar } from "./components/SummarySidebar";
 import { OfferBasketPanel } from "./components/OfferBasketPanel";
 import { GigaKombiBanner } from "./components/GigaKombiBanner";
+import { WizardProgress } from "./components/WizardProgress";
 import { SavingsBreakdown } from "./components/SavingsBreakdown";
 import { StickyPriceBar } from "./components/StickyPriceBar";
 import { PricePeriodBreakdown } from "./components/PricePeriodBreakdown";
@@ -121,7 +122,8 @@ export function Wizard() {
   }, [isLoadingVersions, versions.length, seedDefaultVersion, isSeeding, isSupabaseAuth, canAccessAdmin]);
   
   // Accordion open sections (multiple can be open)
-  const [openSections, setOpenSections] = useState<string[]>(["hardware", "mobile"]);
+  // Initial: Only hardware section open for clearer first-5-seconds focus
+  const [openSections, setOpenSections] = useState<string[]>(["hardware"]);
   const [activeOption, setActiveOption] = useState<1 | 2>(1);
   const [viewMode, setViewMode] = useState<ViewMode>(policy.defaultViewMode);
   
@@ -476,14 +478,33 @@ export function Wizard() {
         </div>
       )}
       
-      {/* Header - Simplified: No logo/POS/Identity (already in Sidebar) */}
+      {/* Header - Simplified with Progress Indicator */}
       <header className="border-b border-border bg-card shrink-0 sticky top-0 z-40 bg-card/95 backdrop-blur-sm">
         <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-2 sm:py-3 flex items-center justify-between gap-2">
-          {/* Left: Step context badge */}
+          {/* Left: Progress Indicator */}
+          <WizardProgress
+            currentStep={
+              basketItems.length > 0 ? 3 :
+              option1.mobile.tariffId ? 2 : 1
+            }
+            hasHardware={option1.hardware.ekNet > 0 || option1.hardware.name === "KEINE HARDWARE"}
+            hasTariff={!!option1.mobile.tariffId}
+            hasOffer={basketItems.length > 0}
+            onStepClick={(step) => {
+              if (step === 1) {
+                setOpenSections(prev => 
+                  prev.includes("hardware") ? prev : [...prev, "hardware"]
+                );
+              } else if (step === 2) {
+                setOpenSections(prev =>
+                  prev.includes("mobile") ? prev : [...prev, "mobile"]
+                );
+              }
+            }}
+          />
+          
+          {/* Center: Session Badge */}
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-xs">
-              Option {activeOption}
-            </Badge>
             {customerSession.isActive && (
               <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 gap-1">
                 <Lock className="w-3 h-3" />

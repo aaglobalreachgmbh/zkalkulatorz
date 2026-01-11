@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useIdentity } from "@/contexts/IdentityContext";
 import { useActivityTracker } from "@/hooks/useActivityTracker";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import type { SubVariantId } from "../engine/types";
 
 export interface EmployeeSettings {
@@ -197,7 +198,9 @@ export function useAdminEmployeeManagement() {
       }>
     ) => {
       if (!user?.id || !identity.tenantId) {
-        throw new Error("Nicht authentifiziert");
+        console.warn("[useEmployeeSettings] createOrUpdateSettings: Nicht authentifiziert");
+        toast.error("Bitte zuerst einloggen");
+        return null;
       }
 
       const payload = {
@@ -269,7 +272,11 @@ export function useAdminEmployeeManagement() {
 
   const deleteEmployeeSettings = useCallback(
     async (targetUserId: string) => {
-      if (!identity.tenantId) throw new Error("Kein Tenant");
+      if (!identity.tenantId) {
+        console.warn("[useEmployeeSettings] deleteEmployeeSettings: Kein Tenant");
+        toast.error("Kein Tenant vorhanden");
+        return;
+      }
 
       const { error } = await supabase
         .from("employee_settings")

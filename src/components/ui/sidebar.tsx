@@ -31,10 +31,21 @@ type SidebarContext = {
 
 const SidebarContext = React.createContext<SidebarContext | null>(null);
 
+const SAFE_DEFAULT_SIDEBAR: SidebarContext = {
+  state: "expanded",
+  open: true,
+  setOpen: () => {},
+  openMobile: false,
+  setOpenMobile: () => {},
+  isMobile: false,
+  toggleSidebar: () => {},
+};
+
 function useSidebar() {
   const context = React.useContext(SidebarContext);
   if (!context) {
-    throw new Error("useSidebar must be used within a SidebarProvider.");
+    console.warn("[useSidebar] Used outside SidebarProvider, returning safe default");
+    return SAFE_DEFAULT_SIDEBAR;
   }
 
   return context;

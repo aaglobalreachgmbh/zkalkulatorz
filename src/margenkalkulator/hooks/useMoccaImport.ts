@@ -77,7 +77,11 @@ export function useMoccaImport() {
   // ============================================
   const saveMapping = useMutation({
     mutationFn: async (mapping: Omit<ColumnMapping, "id">) => {
-      if (!user) throw new Error("Nicht eingeloggt");
+      if (!user) {
+        console.warn("[useMoccaImport] saveMapping: Nicht eingeloggt");
+        toast.error("Bitte zuerst einloggen");
+        return null;
+      }
 
       // If this should be default, unset other defaults first
       if (mapping.is_default) {

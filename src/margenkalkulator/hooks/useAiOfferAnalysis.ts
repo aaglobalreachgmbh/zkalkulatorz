@@ -180,7 +180,9 @@ export function useAiOfferAnalysis(
       });
 
       if (response.error) {
-        throw new Error(response.error.message);
+        console.warn("[useAiOfferAnalysis] AI response error:", response.error.message);
+        setError(`AI-Analyse fehlgeschlagen: ${response.error.message}`);
+        return;
       }
 
       const aiAnalysis = response.data?.analysis;

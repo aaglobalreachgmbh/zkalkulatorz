@@ -69,9 +69,15 @@ export function useDrafts() {
     error: null,
     hasDrafts: localDrafts.length > 0,
     createDraft,
-    updateDraft: async () => { throw new Error("Update not supported in guest mode"); },
+    updateDraft: async () => { 
+      console.warn("[useDrafts] Update not supported in guest mode");
+      return null;
+    },
     deleteDraft,
-    renameDraft: async () => { throw new Error("Rename not supported in guest mode"); },
+    renameDraft: async () => { 
+      console.warn("[useDrafts] Rename not supported in guest mode");
+      return null;
+    },
     isCreating: false,
     isUpdating: false,
     isDeleting: false,

@@ -6,7 +6,7 @@
 export type ProfitabilityStatus = "positive" | "warning" | "critical";
 
 /**
- * Format currency in German locale
+ * Format currency in German locale (e.g., "49,99 €")
  */
 export const formatCurrency = (amount: number): string =>
   new Intl.NumberFormat("de-DE", {
@@ -15,6 +15,27 @@ export const formatCurrency = (amount: number): string =>
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(amount);
+
+/**
+ * Format price with optional decimals (e.g., "49,99 €" or "50 €")
+ */
+export const formatPrice = (
+  amount: number, 
+  options?: { decimals?: number; showCurrency?: boolean }
+): string => {
+  const { decimals = 2, showCurrency = true } = options ?? {};
+  const formatted = amount.toLocaleString("de-DE", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
+  return showCurrency ? `${formatted} €` : formatted;
+};
+
+/**
+ * Format monthly price with /mtl. suffix (e.g., "49,99 €/mtl.")
+ */
+export const formatMonthlyPrice = (amount: number): string => 
+  `${formatPrice(amount)}/mtl.`;
 
 /**
  * Format margin with sign prefix

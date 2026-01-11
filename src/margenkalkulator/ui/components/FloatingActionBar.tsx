@@ -4,15 +4,17 @@
 //
 // Sticky footer bar with:
 // - Live price display (always visible)
-// - "Add to Offer" button (prominent)
+// - "Add to Offer" button (prominent) with disable states
 // - Basket badge (shows item count)
+// - Works on Desktop + Mobile
 //
 // Replaces some sidebar functionality for better UX.
 // ============================================
 
-import { Plus, Check, ShoppingBag, Euro, TrendingUp, TrendingDown, Sparkles } from "lucide-react";
+import { Plus, Check, ShoppingBag, Euro, TrendingUp, TrendingDown, Sparkles, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useOfferBasket } from "../../contexts/OfferBasketContext";
 import type { OfferOptionState, CalculationResult, ViewMode } from "../../engine/types";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
@@ -48,6 +50,12 @@ export function FloatingActionBar({
   const hasTariff = !!option.mobile.tariffId;
   const quantity = option.mobile.quantity;
 
+  // Determine disable reason
+  const disableReason = useMemo(() => {
+    if (!hasTariff) return "Bitte zuerst einen Tarif wählen";
+    return null;
+  }, [hasTariff]);
+
   // Generate a descriptive name for this tariff
   const tariffName = useMemo(() => {
     const tariffBreakdown = result.breakdown.find(b => b.ruleId === "base");
@@ -76,8 +84,8 @@ export function FloatingActionBar({
 
   const handleAdd = () => {
     addItem(tariffName, option, result);
-    toast.success(`"${tariffName}" zum Angebot hinzugefügt`);
-    fireConfetti({ duration: 1500 });
+    toast.success(`"${tariffName}" zum Angebot hinzugefügt`, { duration: 2000 });
+    fireConfetti({ duration: 1000, quick: true });
     
     // Reset for next tariff after adding
     if (onResetForNewTariff) {
@@ -146,8 +154,8 @@ export function FloatingActionBar({
             </div>
           )}
           
-          {/* Add to Offer Button */}
-          {hasTariff && (
+          {/* Add to Offer Button with Disable State */}
+          {hasTariff ? (
             isAlreadyAdded ? (
               <div className="flex items-center gap-2">
                 <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
@@ -176,6 +184,25 @@ export function FloatingActionBar({
                 <Sparkles className="w-3.5 h-3.5 hidden sm:inline animate-pulse" />
               </Button>
             )
+          ) : (
+            /* Disabled state with tooltip explaining why */
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  <Button
+                    size="sm"
+                    disabled
+                    className="opacity-50 cursor-not-allowed gap-1.5"
+                  >
+                    <AlertCircle className="w-4 h-4" />
+                    <span>Zum Angebot</span>
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="bg-slate-800 text-white border-slate-700">
+                <p>{disableReason}</p>
+              </TooltipContent>
+            </Tooltip>
           )}
         </div>
       </div>

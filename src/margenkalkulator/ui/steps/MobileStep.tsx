@@ -249,7 +249,7 @@ export function MobileStep({
                   relative p-5 rounded-xl border-2 bg-card text-left transition-all
                   hover:shadow-md hover:border-primary/50
                   ${isSelected 
-                    ? "border-primary ring-2 ring-primary/20 shadow-lg" 
+                    ? "border-primary ring-1 ring-primary/10 shadow-md bg-primary/5" 
                     : "border-border"
                   }
                 `}

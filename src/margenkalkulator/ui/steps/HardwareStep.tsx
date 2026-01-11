@@ -248,8 +248,8 @@ export function HardwareStep({ value, onChange, onHardwareSelected, datasetVersi
       {!isCollapsed && (
         <>
 
-      {/* Filter Section */}
-      <div className="bg-card rounded-xl border border-border p-4 space-y-4">
+      {/* Filter Section - STICKY for always-visible search */}
+      <div className="bg-card rounded-xl border border-border p-4 space-y-4 sticky top-16 z-10">
         {/* Search and Category Row */}
         <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 sm:gap-4">
           <div className="relative w-full sm:flex-1 sm:min-w-[180px] lg:min-w-[200px]">
@@ -298,11 +298,11 @@ export function HardwareStep({ value, onChange, onHardwareSelected, datasetVersi
           </div>
         </div>
 
-        {/* Brand Tabs */}
-        <div className="flex flex-wrap gap-2 overflow-x-auto pb-1">
+        {/* Brand Tabs - Single-row horizontal scroll */}
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
           <button
             onClick={() => setSelectedBrand("all")}
-            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap flex-shrink-0 ${
               selectedBrand === "all"
                 ? "bg-primary text-primary-foreground"
                 : "bg-muted text-muted-foreground hover:bg-muted/80"
@@ -312,7 +312,7 @@ export function HardwareStep({ value, onChange, onHardwareSelected, datasetVersi
           </button>
           <button
             onClick={() => setSelectedBrand("sim_only")}
-            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap flex-shrink-0 ${
               selectedBrand === "sim_only"
                 ? "bg-primary text-primary-foreground"
                 : "bg-muted text-muted-foreground hover:bg-muted/80"
@@ -324,7 +324,7 @@ export function HardwareStep({ value, onChange, onHardwareSelected, datasetVersi
             <button
               key={brand}
               onClick={() => setSelectedBrand(brand)}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap flex-shrink-0 ${
                 selectedBrand === brand
                   ? "bg-primary text-primary-foreground"
                   : "bg-muted text-muted-foreground hover:bg-muted/80"

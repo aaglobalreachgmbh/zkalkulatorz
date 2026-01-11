@@ -17,9 +17,18 @@ export { PremiumCoverPage } from "./components/PremiumCoverPage";
 export { PremiumSummaryPage } from "./components/PremiumSummaryPage";
 export { PremiumTransitionPage } from "./components/PremiumTransitionPage";
 export { PremiumDetailPage } from "./components/PremiumDetailPage";
+export { PremiumHardwarePage } from "./components/PremiumHardwarePage";
+export { PremiumFixedNetPage } from "./components/PremiumFixedNetPage";
 export { PremiumUspPage } from "./components/PremiumUspPage";
 export { PremiumContactPage } from "./components/PremiumContactPage";
 export { CustomPage } from "./components/CustomPage";
+
+// Shared Components
+export { PdfHeader, PdfFooter, FeatureList, PriceTablePeriod } from "./components/shared";
+export type { PeriodColumn as SharedPeriodColumn, TableRow } from "./components/shared/PriceTablePeriod";
+
+// Design System
+export { PDF_COLORS, PDF_TYPOGRAPHY, PDF_SPACING } from "./designSystem";
 
 // Templates
 export { DEFAULT_TEMPLATE, ALLENETZE_CLEAN_TEMPLATE } from "./templates/allenetzeClean";

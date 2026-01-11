@@ -166,7 +166,6 @@ export function PremiumOfferPdf({
         key="detail"
         template={template}
         items={items}
-        hardwareImages={hardwareImages}
         branding={branding}
         pageNumber={pageNum}
         totalPages={totalPages}

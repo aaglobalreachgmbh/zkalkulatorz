@@ -6,6 +6,7 @@
 import { useMemo } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Period } from "../../engine/types";
+import { formatMonthlyPrice } from "../../lib/formatters";
 import { cn } from "@/lib/utils";
 
 interface PriceTimelineProps {
@@ -76,7 +77,7 @@ export function PriceTimeline({
               <div className="absolute -right-1 -top-2 w-4 h-4 bg-primary rounded-full border-2 border-background cursor-help" />
             </TooltipTrigger>
             <TooltipContent>
-              <p className="text-sm">Durchschnitt: {avgMonthly.toFixed(2)} €/mtl.</p>
+              <p className="text-sm">Durchschnitt: {formatMonthlyPrice(avgMonthly)}</p>
             </TooltipContent>
           </Tooltip>
         </div>
@@ -120,7 +121,7 @@ export function PriceTimeline({
                     <p className={cn(
                       segment.isFree && "text-emerald-500"
                     )}>
-                      {segment.isFree ? "Kostenfrei (BP befreit)" : `${segment.monthly.net.toFixed(2)} €/mtl.`}
+                      {segment.isFree ? "Kostenfrei (BP befreit)" : formatMonthlyPrice(segment.monthly.net)}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {segment.duration} Monate

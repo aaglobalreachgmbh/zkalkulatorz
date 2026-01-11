@@ -17,6 +17,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { useOfferBasket } from "../../contexts/OfferBasketContext";
+import { formatMonthlyPrice } from "../../lib/formatters";
 import { cn } from "@/lib/utils";
 
 export function OfferBasketPanel() {
@@ -88,7 +89,7 @@ export function OfferBasketPanel() {
                     <div className="flex-1 min-w-0">
                       <span className="truncate block font-medium">{item.name}</span>
                       <span className="text-xs text-muted-foreground">
-                        {item.result.totals.avgTermNet.toFixed(2)} €/Monat
+                        {formatMonthlyPrice(item.result.totals.avgTermNet)}
                       </span>
                     </div>
                     <button

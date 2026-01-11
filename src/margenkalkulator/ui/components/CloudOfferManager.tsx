@@ -37,6 +37,7 @@ import type { CloudOffer } from "../../storage/types";
 import { useCloudOffers } from "../../hooks/useCloudOffers";
 import { useCustomers } from "../../hooks/useCustomers";
 import { useDatasetVersions } from "../../hooks/useDatasetVersions";
+import { formatMonthlyPrice } from "../../lib/formatters";
 import { useAuth } from "@/hooks/useAuth";
 import { CustomerSelector } from "./CustomerSelector";
 
@@ -259,7 +260,7 @@ export function CloudOfferManager({
                             </Badge>
                           )}
                           <div className="mt-1 text-sm font-medium text-primary">
-                            {(offer.preview?.avgMonthly || 0).toFixed(2)} € /mtl.
+                            {formatMonthlyPrice(offer.preview?.avgMonthly || 0)}
                             {(offer.preview?.quantity || 1) > 1 && (
                               <span className="text-muted-foreground">
                                 {" "}

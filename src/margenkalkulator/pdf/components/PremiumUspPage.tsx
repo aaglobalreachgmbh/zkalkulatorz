@@ -1,11 +1,16 @@
 // ============================================
 // Premium USP Page - "Warum wir?" Benefits
 // Trust badges, partner seals, value propositions
+// Publisher: allenetze.de
 // ============================================
 
 import { Page, View, Text, Image, StyleSheet } from "@react-pdf/renderer";
 import type { PdfTemplate, PdfCompanySettings } from "../templates/types";
 import type { TenantBranding } from "@/hooks/useTenantBranding";
+import { PDF_COLORS, PDF_TYPOGRAPHY, PDF_SPACING } from "../designSystem";
+import { PUBLISHER } from "../../publisherConfig";
+import { PdfHeader } from "./shared/PdfHeader";
+import { PdfFooter } from "./shared/PdfFooter";
 
 interface PremiumUspPageProps {
   template: PdfTemplate;
@@ -15,209 +20,164 @@ interface PremiumUspPageProps {
   totalPages: number;
 }
 
-function createStyles(primaryColor: string, accentColor: string) {
-  return StyleSheet.create({
-    page: {
-      padding: 40,
-      fontFamily: "Helvetica",
-      fontSize: 9,
-      backgroundColor: "#ffffff",
-    },
-    
-    // Header
-    header: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "flex-start",
-      marginBottom: 30,
-      paddingBottom: 15,
-      borderBottomWidth: 2,
-      borderBottomColor: primaryColor,
-    },
-    
-    logoSection: {
-      flexDirection: "row",
-      alignItems: "center",
-    },
-    
-    logoImage: {
-      width: 50,
-      height: 35,
-      marginRight: 10,
-      objectFit: "contain",
-    },
-    
-    logoText: {
-      fontSize: 14,
-      fontWeight: "bold",
-      color: primaryColor,
-    },
-    
-    logoSubtext: {
-      fontSize: 7,
-      color: "#666666",
-      marginTop: 2,
-    },
-    
-    headerTitle: {
-      fontSize: 16,
-      fontWeight: "bold",
-      color: accentColor,
-    },
-    
-    // Main headline
-    mainHeadline: {
-      fontSize: 24,
-      fontWeight: "bold",
-      color: accentColor,
-      textAlign: "center",
-      marginBottom: 8,
-    },
-    
-    mainSubheadline: {
-      fontSize: 12,
-      color: "#666666",
-      textAlign: "center",
-      marginBottom: 40,
-    },
-    
-    // USP Grid
-    uspGrid: {
-      flexDirection: "row",
-      flexWrap: "wrap",
-      justifyContent: "space-between",
-      marginBottom: 40,
-    },
-    
-    uspCard: {
-      width: "48%",
-      padding: 20,
-      marginBottom: 15,
-      backgroundColor: "#f8f9fa",
-      borderRadius: 6,
-      borderLeftWidth: 4,
-      borderLeftColor: primaryColor,
-    },
-    
-    uspIcon: {
-      fontSize: 24,
-      marginBottom: 10,
-    },
-    
-    uspTitle: {
-      fontSize: 12,
-      fontWeight: "bold",
-      color: accentColor,
-      marginBottom: 6,
-    },
-    
-    uspText: {
-      fontSize: 9,
-      color: "#333333",
-      lineHeight: 1.5,
-    },
-    
-    // Trust badges section
-    badgesSection: {
-      marginTop: 20,
-      padding: 25,
-      backgroundColor: primaryColor + "08",
-      borderRadius: 8,
-    },
-    
-    badgesTitle: {
-      fontSize: 12,
-      fontWeight: "bold",
-      color: accentColor,
-      textAlign: "center",
-      marginBottom: 20,
-    },
-    
-    badgesRow: {
-      flexDirection: "row",
-      justifyContent: "space-around",
-      alignItems: "center",
-    },
-    
-    badge: {
-      alignItems: "center",
-      width: 100,
-    },
-    
-    badgeIcon: {
-      width: 50,
-      height: 50,
-      borderRadius: 25,
-      backgroundColor: primaryColor,
-      justifyContent: "center",
-      alignItems: "center",
-      marginBottom: 8,
-    },
-    
-    badgeIconText: {
-      fontSize: 20,
-      color: "#ffffff",
-    },
-    
-    badgeLabel: {
-      fontSize: 8,
-      color: "#666666",
-      textAlign: "center",
-    },
-    
-    // Partner highlight
-    partnerSection: {
-      marginTop: 30,
-      flexDirection: "row",
-      justifyContent: "center",
-      alignItems: "center",
-      padding: 20,
-      backgroundColor: "#ffffff",
-      borderWidth: 2,
-      borderColor: primaryColor,
-      borderRadius: 8,
-    },
-    
-    partnerText: {
-      fontSize: 11,
-      color: accentColor,
-      fontWeight: "bold",
-      marginLeft: 15,
-    },
-    
-    partnerLogo: {
-      width: 80,
-      height: 40,
-      objectFit: "contain",
-    },
-    
-    // Footer
-    footer: {
-      position: "absolute",
-      bottom: 25,
-      left: 40,
-      right: 40,
-      borderTopWidth: 1,
-      borderTopColor: "#e5e5e5",
-      paddingTop: 10,
-    },
-    
-    footerRow: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-    },
-    
-    footerText: {
-      fontSize: 7,
-      color: "#999999",
-    },
-    
-    pageNumber: {
-      fontSize: 7,
-      color: "#999999",
-    },
-  });
-}
+const styles = StyleSheet.create({
+  page: {
+    padding: PDF_SPACING.pagePadding,
+    fontFamily: "Helvetica",
+    fontSize: PDF_TYPOGRAPHY.body,
+    backgroundColor: "#ffffff",
+    paddingBottom: 60,
+  },
+  
+  // Main headline
+  mainHeadline: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: PDF_COLORS.accent,
+    textAlign: "center",
+    marginTop: 15,
+    marginBottom: 8,
+  },
+  
+  mainSubheadline: {
+    fontSize: 12,
+    color: PDF_COLORS.textLight,
+    textAlign: "center",
+    marginBottom: 35,
+  },
+  
+  // USP Grid
+  uspGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    marginBottom: 30,
+  },
+  
+  uspCard: {
+    width: "48%",
+    padding: 18,
+    marginBottom: 15,
+    backgroundColor: "#f8f9fa",
+    borderRadius: 6,
+    borderLeftWidth: 4,
+    borderLeftColor: PDF_COLORS.primary,
+  },
+  
+  uspIcon: {
+    fontSize: 24,
+    marginBottom: 10,
+  },
+  
+  uspTitle: {
+    fontSize: 12,
+    fontWeight: "bold",
+    color: PDF_COLORS.accent,
+    marginBottom: 6,
+  },
+  
+  uspText: {
+    fontSize: PDF_TYPOGRAPHY.body,
+    color: PDF_COLORS.text,
+    lineHeight: 1.5,
+  },
+  
+  // Trust badges section
+  badgesSection: {
+    marginTop: 10,
+    padding: 20,
+    backgroundColor: PDF_COLORS.primary + "08",
+    borderRadius: 8,
+  },
+  
+  badgesTitle: {
+    fontSize: 12,
+    fontWeight: "bold",
+    color: PDF_COLORS.accent,
+    textAlign: "center",
+    marginBottom: 18,
+  },
+  
+  badgesRow: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+  },
+  
+  badge: {
+    alignItems: "center",
+    width: 100,
+  },
+  
+  badgeIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: PDF_COLORS.primary,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  
+  badgeIconText: {
+    fontSize: 20,
+    color: "#ffffff",
+  },
+  
+  badgeLabel: {
+    fontSize: PDF_TYPOGRAPHY.bodySmall,
+    color: PDF_COLORS.textLight,
+    textAlign: "center",
+  },
+  
+  // Partner highlight
+  partnerSection: {
+    marginTop: 25,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 18,
+    backgroundColor: "#ffffff",
+    borderWidth: 2,
+    borderColor: PDF_COLORS.primary,
+    borderRadius: 8,
+  },
+  
+  partnerText: {
+    fontSize: 11,
+    color: PDF_COLORS.accent,
+    fontWeight: "bold",
+    marginLeft: 15,
+  },
+  
+  partnerLogo: {
+    width: 80,
+    height: 40,
+    objectFit: "contain",
+  },
+  
+  // Publisher info
+  publisherInfo: {
+    marginTop: 25,
+    padding: 15,
+    backgroundColor: "#f0f0f0",
+    borderRadius: 6,
+    alignItems: "center",
+  },
+  
+  publisherName: {
+    fontSize: 10,
+    fontWeight: "bold",
+    color: PDF_COLORS.accent,
+    marginBottom: 4,
+  },
+  
+  publisherAddress: {
+    fontSize: PDF_TYPOGRAPHY.bodySmall,
+    color: PDF_COLORS.textLight,
+    textAlign: "center",
+  },
+});
 
 const USP_ITEMS = [
   {
@@ -256,26 +216,18 @@ export function PremiumUspPage({
   pageNumber,
   totalPages,
 }: PremiumUspPageProps) {
-  const primaryColor = branding?.primaryColor || template.primaryColor;
-  const accentColor = template.accentColor;
-  const styles = createStyles(primaryColor, accentColor);
   const displayName = branding?.companyName || template.publisherInfo.name;
 
+  const primaryColor = branding?.primaryColor || template.primaryColor;
+  
   return (
     <Page size="A4" style={styles.page}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.logoSection}>
-          {branding?.logoUrl && (
-            <Image src={branding.logoUrl} style={styles.logoImage} />
-          )}
-          <View>
-            <Text style={styles.logoText}>{displayName}</Text>
-            <Text style={styles.logoSubtext}>{template.publisherInfo.subline}</Text>
-          </View>
-        </View>
-        <Text style={styles.headerTitle}>Ihre Vorteile</Text>
-      </View>
+      <PdfHeader
+        branding={branding}
+        publisherSubline={PUBLISHER.subline}
+        primaryColor={primaryColor}
+        title="Ihre Vorteile"
+      />
       
       {/* Main headline */}
       <Text style={styles.mainHeadline}>Warum mit uns?</Text>
@@ -319,15 +271,20 @@ export function PremiumUspPage({
         </Text>
       </View>
       
-      {/* Footer */}
-      <View style={styles.footer}>
-        <View style={styles.footerRow}>
-          <Text style={styles.footerText}>
-            {template.publisherInfo.subline}
-          </Text>
-          <Text style={styles.pageNumber}>Seite {pageNumber} von {totalPages}</Text>
-        </View>
+      {/* Publisher info */}
+      <View style={styles.publisherInfo}>
+        <Text style={styles.publisherName}>{PUBLISHER.name}</Text>
+        <Text style={styles.publisherAddress}>
+          {PUBLISHER.address.street} | {PUBLISHER.address.zipCity}
+        </Text>
       </View>
+      
+      <PdfFooter
+        publisherSubline={PUBLISHER.subline}
+        pageNumber={pageNumber}
+        totalPages={totalPages}
+        showVatNotice={false}
+      />
     </Page>
   );
 }

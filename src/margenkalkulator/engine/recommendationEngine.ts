@@ -7,10 +7,11 @@ import type {
   OfferOptionState, 
   CalculationResult, 
   MobileTariff,
-  ContractType 
+  ContractType,
+  Catalog,
 } from "./types";
-import { calculateOffer } from "./calculateOffer";
-import { loadDataset } from "../data/dataManager";
+import { calculateOffer } from "./offer";
+import { getCatalog } from "./catalogResolver";
 
 // ============================================
 // Types
@@ -146,7 +147,7 @@ export function generateRecommendations(
   } = options;
   
   // Lade Dataset
-  const dataset = loadDataset(baseConfig.meta.datasetVersion);
+  const dataset: Catalog = getCatalog(baseConfig.meta.datasetVersion);
   if (!dataset?.mobileTariffs) {
     console.warn("[RecommendationEngine] No dataset available");
     return [];
@@ -204,7 +205,7 @@ export function generateRecommendations(
   // Berechne Scores
   const allResults = candidates.map(c => c.result);
   
-  const scored = candidates.map(({ tariff, config, result }) => {
+  const scored: TariffRecommendation[] = candidates.map(({ tariff, config, result }) => {
     const { marginScore, priceScore } = scoreTariffCandidate(result, baseResult, allResults);
     const balancedScore = calculateBalancedScore(marginScore, priceScore);
     
@@ -219,7 +220,7 @@ export function generateRecommendations(
       priceDelta: result.totals.avgTermNet - baseResult.totals.avgTermNet,
       explanation: "",
       rank: 0,
-    } satisfies Omit<TariffRecommendation, "explanation" | "rank">;
+    };
   });
   
   // Sortiere nach gewähltem Score-Typ

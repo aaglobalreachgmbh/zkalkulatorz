@@ -1,12 +1,14 @@
 // ============================================
 // Premium Summary Page - Vodafone Period Table Style
 // Header, customer info, QR code, period-based pricing
+// Publisher: allenetze.de (NEVER Vodafone/O2)
 // ============================================
 
 import { Page, View, Text, Image, StyleSheet } from "@react-pdf/renderer";
 import type { ProfessionalOfferPdfProps, PeriodColumn, PositionRow, PdfCompanySettings } from "../templates/types";
 import type { TenantBranding } from "@/hooks/useTenantBranding";
-import { formatCurrency as formatCurrencyBase } from "../../lib/formatters";
+import { PDF_COLORS, PDF_TYPOGRAPHY, PDF_SPACING, formatCurrencyPdf, formatDiscountPdf, formatDatePdf, sanitizeTextPdf } from "../designSystem";
+import { PUBLISHER } from "../../publisherConfig";
 
 interface PremiumSummaryPageProps {
   template: ProfessionalOfferPdfProps["template"];
@@ -22,31 +24,12 @@ interface PremiumSummaryPageProps {
   totalPages: number;
 }
 
-// PDF-specific currency formatting
-function formatCurrency(value: number | undefined | null): string {
-  const num = value ?? 0;
-  if (isNaN(num)) return "0,00 €";
-  return formatCurrencyBase(num);
-}
-
-function formatDate(date: Date): string {
-  return date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
-}
-
-function sanitizeText(text: string | undefined | null, maxLength = 200): string {
-  if (!text) return "";
-  return String(text)
-    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "")
-    .replace(/<[^>]*>/g, "")
-    .slice(0, maxLength);
-}
-
 function createStyles(primaryColor: string, accentColor: string) {
   return StyleSheet.create({
     page: {
-      padding: 35,
+      padding: PDF_SPACING.pagePadding,
       fontFamily: "Helvetica",
-      fontSize: 9,
+      fontSize: PDF_TYPOGRAPHY.bodySmall,
       backgroundColor: "#ffffff",
     },
     
@@ -55,123 +38,106 @@ function createStyles(primaryColor: string, accentColor: string) {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "flex-start",
-      marginBottom: 20,
-      paddingBottom: 15,
+      marginBottom: 18,
+      paddingBottom: 12,
       borderBottomWidth: 2,
       borderBottomColor: primaryColor,
     },
-    
     logoSection: {
       flexDirection: "row",
       alignItems: "center",
     },
-    
     logoImage: {
       width: 50,
       height: 35,
       marginRight: 10,
       objectFit: "contain",
     },
-    
     logoText: {
-      fontSize: 14,
+      fontSize: PDF_TYPOGRAPHY.h5,
       fontWeight: "bold",
       color: primaryColor,
     },
-    
     logoSubtext: {
-      fontSize: 7,
-      color: "#666666",
+      fontSize: PDF_TYPOGRAPHY.small,
+      color: PDF_COLORS.textMuted,
       marginTop: 2,
     },
-    
     headerRight: {
       textAlign: "right",
       alignItems: "flex-end",
     },
-    
     headerBrand: {
-      fontSize: 16,
+      fontSize: PDF_TYPOGRAPHY.h4,
       fontWeight: "bold",
       color: accentColor,
     },
-    
     headerSlogan: {
-      fontSize: 9,
-      color: "#666666",
+      fontSize: PDF_TYPOGRAPHY.bodySmall,
+      color: PDF_COLORS.textMuted,
       marginTop: 2,
+      fontStyle: "italic",
     },
     
     // Contact section with QR
     contactSection: {
       flexDirection: "row",
       justifyContent: "space-between",
-      marginBottom: 20,
+      marginBottom: 16,
     },
-    
     recipientBlock: {
       width: "55%",
     },
-    
     recipientName: {
       fontSize: 11,
       fontWeight: "bold",
       marginBottom: 2,
     },
-    
     recipientAddress: {
-      fontSize: 9,
-      color: "#333333",
+      fontSize: PDF_TYPOGRAPHY.bodySmall,
+      color: PDF_COLORS.text,
       lineHeight: 1.4,
     },
-    
     contactBlock: {
       width: "40%",
       textAlign: "right",
       alignItems: "flex-end",
     },
-    
     contactTitle: {
-      fontSize: 8,
+      fontSize: PDF_TYPOGRAPHY.caption,
       fontWeight: "bold",
-      color: "#666666",
+      color: PDF_COLORS.textMuted,
       marginBottom: 4,
     },
-    
     contactName: {
-      fontSize: 10,
+      fontSize: PDF_TYPOGRAPHY.body,
       fontWeight: "bold",
       color: primaryColor,
     },
-    
     contactDetail: {
-      fontSize: 8,
-      color: "#333333",
+      fontSize: PDF_TYPOGRAPHY.caption,
+      color: PDF_COLORS.text,
       marginTop: 2,
     },
-    
     qrCodeContainer: {
       marginTop: 10,
       alignItems: "flex-end",
     },
-    
     qrCode: {
       width: 55,
       height: 55,
     },
-    
     qrLabel: {
       fontSize: 6,
-      color: "#999999",
+      color: PDF_COLORS.textLight,
       marginTop: 3,
       textAlign: "right",
     },
     
     // Offer info
     offerInfo: {
-      marginBottom: 12,
+      marginBottom: 10,
     },
-    
     offerTitle: {
       fontSize: 11,
       fontWeight: "bold",
@@ -180,215 +146,198 @@ function createStyles(primaryColor: string, accentColor: string) {
     
     // Greeting
     greeting: {
-      marginBottom: 12,
+      marginBottom: 10,
       lineHeight: 1.5,
     },
-    
     greetingText: {
-      fontSize: 9,
-      color: "#333333",
+      fontSize: PDF_TYPOGRAPHY.bodySmall,
+      color: PDF_COLORS.text,
     },
     
     // Promo box
     promoBox: {
-      backgroundColor: primaryColor + "15",
-      borderLeftWidth: 3,
+      backgroundColor: primaryColor + "12",
+      borderLeftWidth: 4,
       borderLeftColor: primaryColor,
       padding: 10,
       marginBottom: 15,
     },
-    
     promoText: {
-      fontSize: 9,
+      fontSize: PDF_TYPOGRAPHY.bodySmall,
       color: accentColor,
       lineHeight: 1.4,
     },
-    
     promoHighlight: {
       fontWeight: "bold",
       color: primaryColor,
     },
     
-    // Period table (Vodafone style)
-    table: {
-      marginBottom: 15,
+    // Section headers
+    sectionHeader: {
+      flexDirection: "row",
+      paddingVertical: 6,
+      paddingHorizontal: 8,
+      marginBottom: 2,
+    },
+    sectionHeaderText: {
+      fontSize: PDF_TYPOGRAPHY.body,
+      fontWeight: "bold",
     },
     
+    // Period table
+    table: {
+      marginBottom: 12,
+    },
     tableHeader: {
       flexDirection: "row",
       backgroundColor: accentColor,
-      paddingVertical: 8,
-      paddingHorizontal: 6,
+      paddingVertical: 7,
+      paddingHorizontal: 8,
     },
-    
     tableHeaderCell: {
-      fontSize: 8,
+      fontSize: PDF_TYPOGRAPHY.tableHeader,
       fontWeight: "bold",
       color: "#ffffff",
     },
-    
     tableRow: {
       flexDirection: "row",
-      paddingVertical: 6,
-      paddingHorizontal: 6,
+      paddingVertical: 5,
+      paddingHorizontal: 8,
       borderBottomWidth: 1,
-      borderBottomColor: "#e5e5e5",
+      borderBottomColor: PDF_COLORS.border,
     },
-    
     tableRowAlt: {
-      backgroundColor: "#fafafa",
+      backgroundColor: PDF_COLORS.bgAlt,
     },
-    
     tableRowDiscount: {
-      backgroundColor: "#f0f9ff",
+      backgroundColor: "#fef2f2",
     },
-    
     tableRowSubtotal: {
-      backgroundColor: "#f8f9fa",
+      backgroundColor: PDF_COLORS.bgLight,
       borderTopWidth: 1,
       borderTopColor: "#cccccc",
     },
-    
     tableRowTotal: {
       backgroundColor: primaryColor,
-      marginTop: 8,
+      marginTop: 6,
     },
-    
     tableCell: {
-      fontSize: 9,
-      color: "#333333",
+      fontSize: PDF_TYPOGRAPHY.tableCell,
+      color: PDF_COLORS.text,
     },
-    
     tableCellBold: {
       fontWeight: "bold",
     },
-    
-    tableCellNegative: {
-      color: primaryColor,
+    tableCellDiscount: {
+      color: PDF_COLORS.discount,
+      fontWeight: "bold",
     },
-    
     tableCellTotal: {
       color: "#ffffff",
       fontWeight: "bold",
     },
     
-    // Column widths for period table
+    // Column widths
     colQty: { width: "8%", textAlign: "center" },
-    colPosition: { width: "37%" },
-    colOneTime: { width: "13%", textAlign: "right" },
-    colPeriod1: { width: "14%", textAlign: "right" },
-    colPeriod2: { width: "14%", textAlign: "right" },
-    colAvg: { width: "14%", textAlign: "right" },
+    colPosition: { width: "38%" },
+    colOneTime: { width: "14%", textAlign: "right" },
+    colPeriod: { width: "13%", textAlign: "right" },
     
-    // Average highlight
+    // Average total highlight
     avgRow: {
       flexDirection: "row",
       justifyContent: "flex-end",
       marginTop: 8,
       paddingVertical: 8,
-      paddingHorizontal: 10,
-      backgroundColor: primaryColor + "15",
+      paddingHorizontal: 12,
+      backgroundColor: primaryColor + "12",
       borderRadius: 4,
     },
-    
     avgLabel: {
-      fontSize: 10,
+      fontSize: PDF_TYPOGRAPHY.body,
       color: accentColor,
       marginRight: 20,
     },
-    
     avgValue: {
-      fontSize: 14,
+      fontSize: PDF_TYPOGRAPHY.h5,
       fontWeight: "bold",
       color: primaryColor,
     },
     
     // Validity
     validity: {
-      marginTop: 12,
-      marginBottom: 10,
+      marginTop: 10,
+      marginBottom: 8,
     },
-    
     validityText: {
-      fontSize: 9,
+      fontSize: PDF_TYPOGRAPHY.bodySmall,
       fontWeight: "bold",
       color: accentColor,
     },
     
     // Closing
     closing: {
-      marginTop: 15,
-      marginBottom: 20,
+      marginTop: 12,
+      marginBottom: 15,
     },
-    
     closingText: {
-      fontSize: 9,
-      color: "#333333",
-      marginBottom: 10,
+      fontSize: PDF_TYPOGRAPHY.bodySmall,
+      color: PDF_COLORS.text,
+      marginBottom: 8,
     },
-    
     signature: {
-      fontSize: 9,
-      color: "#333333",
+      fontSize: PDF_TYPOGRAPHY.bodySmall,
+      color: PDF_COLORS.text,
     },
-    
     signatureName: {
       fontWeight: "bold",
+    },
+    
+    // Disclaimer
+    disclaimer: {
+      marginTop: 10,
+      paddingTop: 8,
+      borderTopWidth: 1,
+      borderTopColor: PDF_COLORS.border,
+    },
+    disclaimerText: {
+      fontSize: PDF_TYPOGRAPHY.tiny,
+      color: PDF_COLORS.textLight,
+      lineHeight: 1.4,
     },
     
     // Footer
     footer: {
       position: "absolute",
-      bottom: 25,
-      left: 35,
-      right: 35,
+      bottom: 22,
+      left: PDF_SPACING.pagePadding,
+      right: PDF_SPACING.pagePadding,
       borderTopWidth: 1,
-      borderTopColor: "#e5e5e5",
+      borderTopColor: PDF_COLORS.border,
       paddingTop: 8,
     },
-    
     footerRow: {
       flexDirection: "row",
       justifyContent: "space-between",
     },
-    
     footerText: {
-      fontSize: 7,
-      color: "#999999",
+      fontSize: PDF_TYPOGRAPHY.small,
+      color: PDF_COLORS.textLight,
     },
-    
     pageNumber: {
-      fontSize: 7,
-      color: "#999999",
-    },
-    
-    // Disclaimer
-    disclaimer: {
-      marginTop: 15,
-      paddingTop: 8,
-      borderTopWidth: 1,
-      borderTopColor: "#e5e5e5",
-    },
-    
-    disclaimerText: {
-      fontSize: 6,
-      color: "#999999",
-      lineHeight: 1.4,
+      fontSize: PDF_TYPOGRAPHY.small,
+      color: PDF_COLORS.textLight,
     },
   });
 }
 
 // Generate period columns based on actual data
 function generatePeriodColumns(periods: Array<{ fromMonth: number; toMonth: number }>): PeriodColumn[] {
-  if (!periods || periods.length === 0) {
+  if (!periods || periods.length === 0 || periods.length === 1) {
     return [{ header: "Monatlich", fromMonth: 1, toMonth: 24 }];
   }
   
-  if (periods.length === 1) {
-    return [{ header: "Monatlich", fromMonth: 1, toMonth: 24 }];
-  }
-  
-  return periods.map((p, idx) => ({
+  return periods.map(p => ({
     header: `${p.fromMonth}.-${p.toMonth}. Mon.`,
     fromMonth: p.fromMonth,
     toMonth: p.toMonth,
@@ -421,12 +370,16 @@ export function PremiumSummaryPage({
   const periodColumns = generatePeriodColumns(allPeriods.length > 1 ? allPeriods : []);
   const hasMultiplePeriods = periodColumns.length > 1;
   
-  // Calculate costs with period breakdown
+  // Calculate costs with period breakdown - SEPARATE Mobile and FixedNet
   const calculateCosts = () => {
-    const rows: PositionRow[] = [];
-    let totalMonthlyPeriod1 = 0;
-    let totalMonthlyPeriod2 = 0;
+    const mobileRows: PositionRow[] = [];
+    const fixedNetRows: PositionRow[] = [];
+    
+    let mobileMonthlyP1 = 0;
+    let mobileMonthlyP2 = 0;
+    let fixedNetMonthly = 0;
     let totalOneTime = 0;
+    let totalDiscountOverTerm = 0;
     
     for (const item of items) {
       const { option, result } = item;
@@ -440,83 +393,153 @@ export function PremiumSummaryPage({
       const tariffBase = result.breakdown.find(b => b.ruleId === "base");
       const tariffName = tariffBase?.label?.replace(" Grundpreis", "") || "Mobilfunk-Tarif";
       
-      rows.push({
+      mobileRows.push({
         quantity: qty,
         label: tariffName,
         monthlyByPeriod: hasMultiplePeriods ? [period1Price, period2Price] : [result.totals.avgTermNet],
       });
       
-      // Discounts
-      const discounts = result.breakdown.filter(b => 
+      // Mobile discounts (shown in red with minus)
+      const mobileDiscounts = result.breakdown.filter(b => 
         b.appliesTo === "monthly" && b.net < 0 && !b.ruleId?.includes("fixed")
       );
       
-      for (const discount of discounts) {
-        rows.push({
+      for (const discount of mobileDiscounts) {
+        mobileRows.push({
           label: `    ${discount.label}`,
           monthlyByPeriod: hasMultiplePeriods 
-            ? [discount.net, discount.net] // Both periods get the same discount
+            ? [discount.net, discount.net]
             : [discount.net],
           isDiscount: true,
         });
+        totalDiscountOverTerm += Math.abs(discount.net) * qty * 24;
       }
+      
+      mobileMonthlyP1 += period1Price * qty;
+      mobileMonthlyP2 += period2Price * qty;
       
       // Hardware
-      if (option.hardware.ekNet > 0 && option.hardware.amortize) {
-        const hwMonthly = option.hardware.ekNet / (option.hardware.amortMonths || 24);
-        rows.push({
-          quantity: qty,
-          label: `${option.hardware.name || "Gerät"} (Finanzierung)`,
-          monthlyByPeriod: [hwMonthly * qty],
-        });
-      } else if (option.hardware.ekNet > 0) {
-        totalOneTime += option.hardware.ekNet * qty;
+      if (option.hardware.ekNet > 0) {
+        if (option.hardware.amortize) {
+          const hwMonthly = option.hardware.ekNet / (option.hardware.amortMonths || 24);
+          mobileRows.push({
+            quantity: qty,
+            label: `${option.hardware.name || "Gerät"} (Finanzierung)`,
+            monthlyByPeriod: hasMultiplePeriods 
+              ? [hwMonthly * qty, 0] // Financing ends after amort period
+              : [hwMonthly * qty],
+            footnote: hasMultiplePeriods ? "ᵃ" : undefined,
+          });
+          mobileMonthlyP1 += hwMonthly * qty;
+        } else {
+          totalOneTime += option.hardware.ekNet * qty;
+        }
       }
       
-      totalMonthlyPeriod1 += period1Price * qty;
-      totalMonthlyPeriod2 += period2Price * qty;
-      
-      // Fixed net
+      // Fixed net (separate block)
       if (option.fixedNet.enabled) {
         const fixedBase = result.breakdown.find(b => b.ruleId === "fixed_base");
-        const fixedMonthly = fixedBase?.net || 0;
+        const fixedName = fixedBase?.label || `${option.fixedNet.accessType} Internet`;
+        const fixedMonthlyCost = fixedBase?.net || 0;
         
-        rows.push({
+        fixedNetRows.push({
           quantity: 1,
-          label: fixedBase?.label || "Festnetz/Internet",
-          monthlyByPeriod: [fixedMonthly],
+          label: fixedName,
+          monthlyByPeriod: hasMultiplePeriods ? [fixedMonthlyCost, fixedMonthlyCost] : [fixedMonthlyCost],
         });
         
-        totalMonthlyPeriod1 += fixedMonthly;
-        totalMonthlyPeriod2 += fixedMonthly;
+        // Fixed net discounts
+        const fixedDiscounts = result.breakdown.filter(b => 
+          b.appliesTo === "monthly" && b.net < 0 && b.ruleId?.includes("fixed")
+        );
+        
+        for (const discount of fixedDiscounts) {
+          fixedNetRows.push({
+            label: `    ${discount.label}`,
+            monthlyByPeriod: hasMultiplePeriods 
+              ? [discount.net, discount.net]
+              : [discount.net],
+            isDiscount: true,
+          });
+          totalDiscountOverTerm += Math.abs(discount.net) * 24;
+        }
+        
+        fixedNetMonthly += fixedMonthlyCost;
       }
     }
     
-    // Add subtotal
-    rows.push({
-      label: "Zwischensumme",
-      monthlyByPeriod: hasMultiplePeriods 
-        ? [totalMonthlyPeriod1, totalMonthlyPeriod2]
-        : [(totalMonthlyPeriod1 + totalMonthlyPeriod2) / 2],
-      isSubtotal: true,
-    });
+    // Subtotals
+    if (mobileRows.length > 0) {
+      mobileRows.push({
+        label: "Zwischensumme Mobilfunk",
+        monthlyByPeriod: hasMultiplePeriods ? [mobileMonthlyP1, mobileMonthlyP2] : [(mobileMonthlyP1 + mobileMonthlyP2) / 2],
+        isSubtotal: true,
+      });
+    }
     
-    // Calculate average
-    const avgMonthly = hasMultiplePeriods
-      ? ((totalMonthlyPeriod1 * 12) + (totalMonthlyPeriod2 * 12)) / 24
-      : totalMonthlyPeriod1;
+    if (fixedNetRows.length > 0) {
+      fixedNetRows.push({
+        label: "Zwischensumme Festnetz",
+        monthlyByPeriod: hasMultiplePeriods ? [fixedNetMonthly, fixedNetMonthly] : [fixedNetMonthly],
+        isSubtotal: true,
+      });
+    }
     
     return { 
-      rows, 
-      totalMonthlyPeriod1, 
-      totalMonthlyPeriod2, 
+      mobileRows, 
+      fixedNetRows, 
       totalOneTime,
-      avgMonthly,
+      totalMonthlyP1: mobileMonthlyP1 + fixedNetMonthly,
+      totalMonthlyP2: mobileMonthlyP2 + fixedNetMonthly,
+      totalDiscountOverTerm,
     };
   };
   
-  const { rows, totalMonthlyPeriod1, totalMonthlyPeriod2, totalOneTime, avgMonthly } = calculateCosts();
-  
+  const { mobileRows, fixedNetRows, totalOneTime, totalMonthlyP1, totalMonthlyP2, totalDiscountOverTerm } = calculateCosts();
+  const hasFixedNet = fixedNetRows.length > 1;
+  const avgMonthly = (totalMonthlyP1 + totalMonthlyP2) / 2;
+
+  // Render table rows
+  const renderTableRow = (row: PositionRow, idx: number, isAlt: boolean) => (
+    <View
+      key={idx}
+      style={[
+        styles.tableRow,
+        isAlt && !row.isDiscount && !row.isSubtotal && !row.isTotal && styles.tableRowAlt,
+        row.isDiscount && styles.tableRowDiscount,
+        row.isSubtotal && styles.tableRowSubtotal,
+        row.isTotal && styles.tableRowTotal,
+      ]}
+    >
+      <Text style={[styles.tableCell, styles.colQty, row.isTotal && styles.tableCellTotal]}>
+        {row.quantity ? `${row.quantity}x` : ""}
+      </Text>
+      <Text style={[
+        styles.tableCell, 
+        styles.colPosition,
+        (row.isSubtotal || row.isTotal) && styles.tableCellBold,
+        row.isTotal && styles.tableCellTotal,
+      ]}>
+        {row.label}
+      </Text>
+      <Text style={[styles.tableCell, styles.colOneTime, row.isTotal && styles.tableCellTotal]}>
+        {row.oneTime !== undefined ? formatCurrencyPdf(row.oneTime) : "—"}
+      </Text>
+      {row.monthlyByPeriod.map((amount, pIdx) => (
+        <Text key={pIdx} style={[
+          styles.tableCell,
+          styles.colPeriod,
+          row.isDiscount && styles.tableCellDiscount,
+          (row.isSubtotal || row.isTotal) && styles.tableCellBold,
+          row.isTotal && styles.tableCellTotal,
+        ]}>
+          {row.isDiscount && amount < 0 ? formatDiscountPdf(amount) : formatCurrencyPdf(amount)}
+          {row.footnote && pIdx === row.monthlyByPeriod.length - 1 && row.footnote}
+        </Text>
+      ))}
+    </View>
+  );
+
   return (
     <Page size="A4" style={styles.page}>
       {/* Header */}
@@ -536,16 +559,16 @@ export function PremiumSummaryPage({
         </View>
       </View>
       
-      {/* Contact section with QR */}
+      {/* Contact Section with QR */}
       <View style={styles.contactSection}>
         <View style={styles.recipientBlock}>
           <Text style={styles.recipientName}>
-            {sanitizeText(customer.firma) || "Geschäftskunde"}
+            {sanitizeTextPdf(customer.firma) || "Geschäftskunde"}
           </Text>
           <Text style={styles.recipientAddress}>
-            {customer.anrede} {sanitizeText(customer.vorname)} {sanitizeText(customer.nachname)}{"\n"}
-            {sanitizeText(customer.strasse)}{"\n"}
-            {sanitizeText(customer.plz)} {sanitizeText(customer.ort)}
+            {customer.anrede} {sanitizeTextPdf(customer.nachname)}{"\n"}
+            {sanitizeTextPdf(customer.strasse)}{"\n"}
+            {sanitizeTextPdf(customer.plz)} {sanitizeTextPdf(customer.ort)}
           </Text>
         </View>
         <View style={styles.contactBlock}>
@@ -557,166 +580,122 @@ export function PremiumSummaryPage({
           {qrCodeDataUrl && (
             <View style={styles.qrCodeContainer}>
               <Image src={qrCodeDataUrl} style={styles.qrCode} />
-              <Text style={styles.qrLabel}>Online ansehen</Text>
+              <Text style={styles.qrLabel}>Zum Online-Angebot</Text>
             </View>
           )}
         </View>
       </View>
       
-      {/* Offer info */}
+      {/* Offer Info */}
       <View style={styles.offerInfo}>
         <Text style={styles.offerTitle}>
-          Angebot vom {formatDate(today)} • Angebots-Nr.: {offerId}
+          Ihr Angebot vom {formatDatePdf(today)} – Angebotsnr. {offerId}
         </Text>
       </View>
       
       {/* Greeting */}
       <View style={styles.greeting}>
         <Text style={styles.greetingText}>
-          {customer.anrede === "Herr" ? "Sehr geehrter Herr" : customer.anrede === "Frau" ? "Sehr geehrte Frau" : "Guten Tag"} {sanitizeText(customer.nachname)},
+          {customer.anrede === "Herr" ? "Sehr geehrter Herr" : customer.anrede === "Frau" ? "Sehr geehrte Frau" : "Guten Tag"} {sanitizeTextPdf(customer.nachname)},
         </Text>
         <Text style={[styles.greetingText, { marginTop: 6 }]}>
-          {options.offerText || "vielen Dank für Ihr Interesse. Im Folgenden finden Sie Ihre persönliche Kostenübersicht. Alle Preise verstehen sich zzgl. MwSt."}
+          {options.offerText || "vielen Dank für Ihr Interesse. Im Folgenden finden Sie eine Übersicht Ihres individuellen Angebots. Alle Preise verstehen sich zzgl. MwSt."}
         </Text>
       </View>
       
-      {/* Promo box */}
+      {/* Promo Box */}
       {options.promoHighlight && (
         <View style={styles.promoBox}>
           <Text style={styles.promoText}>
-            💶 <Text style={styles.promoHighlight}>Bei Abschluss bis {formatDate(validUntil)}:</Text> {options.promoHighlight}
+            🎁 <Text style={styles.promoHighlight}>Bei Abschluss bis zum {formatDatePdf(validUntil)}</Text> {options.promoHighlight}
           </Text>
         </View>
       )}
       
-      {/* Period-based table */}
+      {/* MOBILFUNK Section */}
       <View style={styles.table}>
-        {/* Table header */}
+        <View style={[styles.sectionHeader, { backgroundColor: PDF_COLORS.bgMobile }]}>
+          <Text style={[styles.sectionHeaderText, { color: accentColor }]}>MOBILFUNK</Text>
+        </View>
+        
         <View style={styles.tableHeader}>
           <Text style={[styles.tableHeaderCell, styles.colQty]}>Anz.</Text>
           <Text style={[styles.tableHeaderCell, styles.colPosition]}>Position</Text>
           <Text style={[styles.tableHeaderCell, styles.colOneTime]}>Einmalig</Text>
-          {hasMultiplePeriods ? (
-            <>
-              <Text style={[styles.tableHeaderCell, styles.colPeriod1]}>{periodColumns[0]?.header}</Text>
-              <Text style={[styles.tableHeaderCell, styles.colPeriod2]}>{periodColumns[1]?.header}</Text>
-            </>
-          ) : (
-            <Text style={[styles.tableHeaderCell, styles.colPeriod1, { width: "28%" }]}>Monatlich</Text>
-          )}
-          {hasMultiplePeriods && (
-            <Text style={[styles.tableHeaderCell, styles.colAvg]}>Ø Monat</Text>
-          )}
+          {periodColumns.map((col, idx) => (
+            <Text key={idx} style={[styles.tableHeaderCell, styles.colPeriod]}>{col.header}</Text>
+          ))}
         </View>
         
-        {/* Table rows */}
-        {rows.map((row, idx) => (
-          <View 
-            key={idx} 
-            style={[
-              styles.tableRow,
-              idx % 2 === 1 && styles.tableRowAlt,
-              row.isDiscount && styles.tableRowDiscount,
-              row.isSubtotal && styles.tableRowSubtotal,
-            ]}
-          >
-            <Text style={[styles.tableCell, styles.colQty]}>
-              {row.quantity ? `${row.quantity}x` : ""}
-            </Text>
-            <Text style={[
-              styles.tableCell, 
-              styles.colPosition,
-              row.isSubtotal && styles.tableCellBold,
-            ]}>
-              {row.label}
-            </Text>
-            <Text style={[styles.tableCell, styles.colOneTime]}>
-              {row.oneTime ? formatCurrency(row.oneTime) : "–"}
-            </Text>
-            {hasMultiplePeriods ? (
-              <>
-                <Text style={[
-                  styles.tableCell, 
-                  styles.colPeriod1,
-                  row.isDiscount && styles.tableCellNegative,
-                  row.isSubtotal && styles.tableCellBold,
-                ]}>
-                  {formatCurrency(row.monthlyByPeriod[0])}
-                </Text>
-                <Text style={[
-                  styles.tableCell, 
-                  styles.colPeriod2,
-                  row.isDiscount && styles.tableCellNegative,
-                  row.isSubtotal && styles.tableCellBold,
-                ]}>
-                  {formatCurrency(row.monthlyByPeriod[1] ?? row.monthlyByPeriod[0])}
-                </Text>
-              </>
-            ) : (
-              <Text style={[
-                styles.tableCell, 
-                styles.colPeriod1, 
-                { width: "28%" },
-                row.isDiscount && styles.tableCellNegative,
-                row.isSubtotal && styles.tableCellBold,
-              ]}>
-                {formatCurrency(row.monthlyByPeriod[0])}
-              </Text>
-            )}
-            {hasMultiplePeriods && row.isSubtotal && (
-              <Text style={[styles.tableCell, styles.colAvg, styles.tableCellBold]}>
-                {formatCurrency(avgMonthly)}
-              </Text>
-            )}
-          </View>
-        ))}
-        
-        {/* Total row */}
-        <View style={[styles.tableRow, styles.tableRowTotal]}>
-          <Text style={[styles.tableCell, styles.colQty, styles.tableCellTotal]}></Text>
-          <Text style={[styles.tableCell, styles.colPosition, styles.tableCellTotal, styles.tableCellBold]}>
-            GESAMTKOSTEN
-          </Text>
-          <Text style={[styles.tableCell, styles.colOneTime, styles.tableCellTotal]}>
-            {totalOneTime > 0 ? formatCurrency(totalOneTime) : "–"}
-          </Text>
-          {hasMultiplePeriods ? (
-            <>
-              <Text style={[styles.tableCell, styles.colPeriod1, styles.tableCellTotal, styles.tableCellBold]}>
-                {formatCurrency(totalMonthlyPeriod1)}
-              </Text>
-              <Text style={[styles.tableCell, styles.colPeriod2, styles.tableCellTotal, styles.tableCellBold]}>
-                {formatCurrency(totalMonthlyPeriod2)}
-              </Text>
-              <Text style={[styles.tableCell, styles.colAvg, styles.tableCellTotal, styles.tableCellBold]}>
-                {formatCurrency(avgMonthly)}
-              </Text>
-            </>
-          ) : (
-            <Text style={[styles.tableCell, styles.colPeriod1, { width: "28%" }, styles.tableCellTotal, styles.tableCellBold]}>
-              {formatCurrency(avgMonthly)}
-            </Text>
-          )}
-        </View>
+        {mobileRows.map((row, idx) => renderTableRow(row, idx, idx % 2 === 1))}
       </View>
       
-      {/* Average highlight */}
-      <View style={styles.avgRow}>
-        <Text style={styles.avgLabel}>Ø Durchschnittliche Monatskosten (24 Monate):</Text>
-        <Text style={styles.avgValue}>{formatCurrency(avgMonthly)}</Text>
+      {/* FESTNETZ Section (if applicable) */}
+      {hasFixedNet && (
+        <View style={styles.table}>
+          <View style={[styles.sectionHeader, { backgroundColor: PDF_COLORS.bgFixedNet }]}>
+            <Text style={[styles.sectionHeaderText, { color: accentColor }]}>FESTNETZ</Text>
+          </View>
+          
+          <View style={styles.tableHeader}>
+            <Text style={[styles.tableHeaderCell, styles.colQty]}>Anz.</Text>
+            <Text style={[styles.tableHeaderCell, styles.colPosition]}>Position</Text>
+            <Text style={[styles.tableHeaderCell, styles.colOneTime]}>Einmalig</Text>
+            {periodColumns.map((col, idx) => (
+              <Text key={idx} style={[styles.tableHeaderCell, styles.colPeriod]}>{col.header}</Text>
+            ))}
+          </View>
+          
+          {fixedNetRows.map((row, idx) => renderTableRow(row, idx, idx % 2 === 1))}
+        </View>
+      )}
+      
+      {/* GESAMTÜBERSICHT Total Row */}
+      <View style={[styles.tableRow, styles.tableRowTotal]}>
+        <Text style={[styles.tableCell, styles.colQty, styles.tableCellTotal]}></Text>
+        <Text style={[styles.tableCell, styles.colPosition, styles.tableCellTotal, styles.tableCellBold]}>
+          Gesamtkosten monatlich
+        </Text>
+        <Text style={[styles.tableCell, styles.colOneTime, styles.tableCellTotal]}>
+          {totalOneTime > 0 ? formatCurrencyPdf(totalOneTime) : "—"}
+        </Text>
+        {hasMultiplePeriods ? (
+          <>
+            <Text style={[styles.tableCell, styles.colPeriod, styles.tableCellTotal, styles.tableCellBold]}>
+              {formatCurrencyPdf(totalMonthlyP1)}
+            </Text>
+            <Text style={[styles.tableCell, styles.colPeriod, styles.tableCellTotal, styles.tableCellBold]}>
+              {formatCurrencyPdf(totalMonthlyP2)}
+            </Text>
+          </>
+        ) : (
+          <Text style={[styles.tableCell, styles.colPeriod, styles.tableCellTotal, styles.tableCellBold]}>
+            {formatCurrencyPdf(avgMonthly)}
+          </Text>
+        )}
       </View>
+      
+      {/* Discount summary (Vodafone-style) */}
+      {totalDiscountOverTerm > 0 && (
+        <View style={styles.avgRow}>
+          <Text style={styles.avgLabel}>Ersparnis über 24 Monate:</Text>
+          <Text style={[styles.avgValue, { color: PDF_COLORS.discount }]}>
+            −{formatCurrencyPdf(totalDiscountOverTerm)}
+          </Text>
+        </View>
+      )}
       
       {/* Validity */}
       <View style={styles.validity}>
         <Text style={styles.validityText}>
-          ✓ Dieses Angebot ist gültig bis zum {formatDate(validUntil)}
+          Angebot gültig bis {formatDatePdf(validUntil)}. Weitere Details auf den folgenden Seiten.
         </Text>
       </View>
       
       {/* Closing */}
       <View style={styles.closing}>
         <Text style={styles.closingText}>
-          Für Rückfragen stehe ich Ihnen gerne zur Verfügung.
+          Für Fragen stehe ich Ihnen gerne zur Verfügung.
         </Text>
         <Text style={styles.signature}>Mit freundlichen Grüßen</Text>
         <Text style={[styles.signature, styles.signatureName, { marginTop: 4 }]}>
@@ -727,7 +706,9 @@ export function PremiumSummaryPage({
       {/* Disclaimer */}
       <View style={styles.disclaimer}>
         <Text style={styles.disclaimerText}>
-          Alle Preise zzgl. MwSt. Dieses Angebot ist unverbindlich. Die angegebenen Preise können nach Ablauf der Mindestlaufzeit abweichen. 
+          {hasMultiplePeriods && "ᵃ Nach Ende der Hardware-Finanzierung. "}
+          Alle Preise zzgl. MwSt. Bei diesem Angebot handelt es sich um ein unverbindliches Tarifbeispiel. 
+          Die hier angegebenen Preise können nach Ablauf der Mindestlaufzeit abweichen. 
           Zur Bearbeitung Ihrer Bestellung benötigen wir einen Nachweis für Ihren Geschäftskundenstatus.
         </Text>
       </View>

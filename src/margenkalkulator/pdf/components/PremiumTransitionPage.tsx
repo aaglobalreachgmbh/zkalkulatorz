@@ -1,11 +1,13 @@
 // ============================================
 // Premium Transition Page - O2 Business Style
 // Full-page gradient with "Details" headline
+// Publisher: allenetze.de (NEVER Vodafone/O2)
 // ============================================
 
 import { Page, View, Text, StyleSheet } from "@react-pdf/renderer";
 import type { PdfTemplate } from "../templates/types";
 import type { TenantBranding } from "@/hooks/useTenantBranding";
+import { PUBLISHER } from "../../publisherConfig";
 
 interface PremiumTransitionPageProps {
   template: PdfTemplate;
@@ -29,40 +31,45 @@ function createStyles(primaryColor: string, accentColor: string) {
       top: 0,
       left: 0,
       right: 0,
-      height: "60%",
+      height: "55%",
       backgroundColor: primaryColor,
     },
-    
     backgroundBottom: {
       position: "absolute",
       bottom: 0,
       left: 0,
       right: 0,
-      height: "40%",
+      height: "45%",
       backgroundColor: accentColor,
     },
     
     // Decorative circles (O2 bubble style)
     bubbleContainer: {
       position: "absolute",
-      top: 60,
-      right: 60,
+      top: 50,
+      right: 50,
     },
-    
     bubbleLarge: {
-      width: 120,
-      height: 120,
-      borderRadius: 60,
+      width: 150,
+      height: 150,
+      borderRadius: 75,
       backgroundColor: "rgba(255,255,255,0.1)",
     },
-    
-    bubbleSmall: {
-      width: 60,
-      height: 60,
-      borderRadius: 30,
+    bubbleMedium: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
       backgroundColor: "rgba(255,255,255,0.08)",
       marginTop: 20,
-      marginLeft: 40,
+      marginLeft: 60,
+    },
+    bubbleSmall: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: "rgba(255,255,255,0.06)",
+      marginTop: 15,
+      marginLeft: 30,
     },
     
     // Main content
@@ -75,39 +82,44 @@ function createStyles(primaryColor: string, accentColor: string) {
     
     // Arrow icon
     arrowContainer: {
-      marginBottom: 30,
+      marginBottom: 40,
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      backgroundColor: "rgba(255,255,255,0.15)",
+      justifyContent: "center",
+      alignItems: "center",
     },
-    
     arrow: {
-      fontSize: 48,
+      fontSize: 40,
       color: "#ffffff",
-      opacity: 0.9,
     },
     
     // Headline
     headline: {
-      fontSize: 36,
+      fontSize: 38,
       fontWeight: "bold",
       color: "#ffffff",
       textAlign: "center",
-      marginBottom: 15,
+      marginBottom: 20,
     },
     
     subtitle: {
       fontSize: 16,
       color: "rgba(255,255,255,0.85)",
       textAlign: "center",
-      maxWidth: 400,
-      lineHeight: 1.5,
+      maxWidth: 420,
+      lineHeight: 1.6,
     },
     
     // Decorative line
     divider: {
-      width: 80,
-      height: 3,
+      width: 100,
+      height: 4,
       backgroundColor: "#ffffff",
-      opacity: 0.5,
-      marginTop: 30,
+      opacity: 0.4,
+      marginTop: 40,
+      borderRadius: 2,
     },
     
     // Footer
@@ -118,7 +130,11 @@ function createStyles(primaryColor: string, accentColor: string) {
       right: 0,
       alignItems: "center",
     },
-    
+    publisherNote: {
+      fontSize: 8,
+      color: "rgba(255,255,255,0.5)",
+      marginBottom: 8,
+    },
     pageNumber: {
       fontSize: 9,
       color: "rgba(255,255,255,0.6)",
@@ -130,7 +146,7 @@ export function PremiumTransitionPage({
   template,
   branding,
   title = "Hier geht's zu den Details",
-  subtitle = "Auf den folgenden Seiten finden Sie alle Details zu Ihrem Angebot.",
+  subtitle = "Auf den folgenden Seiten finden Sie alle Informationen zu Ihrem individuellen Angebot – von Tarifen über Hardware bis hin zu Zusatzleistungen.",
   pageNumber,
   totalPages,
 }: PremiumTransitionPageProps) {
@@ -147,6 +163,7 @@ export function PremiumTransitionPage({
       {/* Decorative bubbles */}
       <View style={styles.bubbleContainer}>
         <View style={styles.bubbleLarge} />
+        <View style={styles.bubbleMedium} />
         <View style={styles.bubbleSmall} />
       </View>
       
@@ -164,6 +181,7 @@ export function PremiumTransitionPage({
       
       {/* Footer */}
       <View style={styles.footer}>
+        <Text style={styles.publisherNote}>{PUBLISHER.subline}</Text>
         <Text style={styles.pageNumber}>
           Seite {pageNumber} von {totalPages}
         </Text>

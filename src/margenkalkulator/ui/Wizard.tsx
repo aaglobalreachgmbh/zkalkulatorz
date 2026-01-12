@@ -3,8 +3,8 @@ import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { 
-  Smartphone, Signal, Router, LayoutGrid, Lock, AlertTriangle, XCircle, Settings, Zap 
+import {
+  Smartphone, Signal, Router, LayoutGrid, Lock, AlertTriangle, XCircle, Settings, Zap
 } from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -72,7 +72,7 @@ const STEPS: { id: WizardStep; label: string; icon: typeof Smartphone }[] = [
 ];
 
 export function Wizard() {
-  
+
   const location = useLocation();
   const navigate = useNavigate();
   const { identity } = useIdentity();
@@ -80,42 +80,42 @@ export function Wizard() {
   const policy = useEffectivePolicy();
   const isMobile = useIsMobile();
   const { isPOSMode, togglePOSMode } = usePOSMode();
-  
+
   // Employee Settings, Push Provisions & Quantity Bonus Hooks
   const { settings: employeeSettings } = useEmployeeSettings();
   const { getBonusAmount } = usePushProvisions();
   const { addToHistory } = useHistory();
   const { getBonusForQuantity, calculateTotalBonus, tiers: quantityBonusTiers } = useQuantityBonus();
   const { items: basketItems } = useOfferBasket();
-  
+
   // Onboarding Tour Hook
   const tour = useOnboardingTour();
-  
+
   // Auto-Save Hook
   const autoSave = useWizardAutoSave();
   const [showRestoreDialog, setShowRestoreDialog] = useState(false);
   const hasCheckedAutoSave = useRef(false);
-  
+
   // QuickStart Dialog
   const [showQuickStart, setShowQuickStart] = useState(false);
-  
+
   // Dataset Versions - Auto-seed if none exist
   const { versions, isLoading: isLoadingVersions, seedDefaultVersion, isSeeding } = useDatasetVersions();
   const hasSeeded = useRef(false);
   const shownGigaKombiToast = useRef(false);
   const { canAccessAdmin, isSupabaseAuth } = useIdentity();
-  
+
   // Tenant Data Status Check
   const { status: tenantDataStatus, isLoading: isLoadingTenantData } = useTenantDataStatus();
-  
+
   useEffect(() => {
-    const shouldSeed = !isLoadingVersions 
-      && versions.length === 0 
-      && !hasSeeded.current 
+    const shouldSeed = !isLoadingVersions
+      && versions.length === 0
+      && !hasSeeded.current
       && !isSeeding
-      && isSupabaseAuth 
+      && isSupabaseAuth
       && canAccessAdmin;
-      
+
     if (shouldSeed) {
       hasSeeded.current = true;
       seedDefaultVersion().catch(() => {
@@ -123,27 +123,27 @@ export function Wizard() {
       });
     }
   }, [isLoadingVersions, versions.length, seedDefaultVersion, isSeeding, isSupabaseAuth, canAccessAdmin]);
-  
+
   // Accordion open sections (multiple can be open)
   // Initial: Only hardware section open for clearer first-5-seconds focus
   const [openSections, setOpenSections] = useState<string[]>(["hardware"]);
   const [activeOption, setActiveOption] = useState<1 | 2>(1);
   const [viewMode, setViewMode] = useState<ViewMode>(policy.defaultViewMode);
-  
+
   // SECURITY HOTFIX: Compute effective view mode based on customer-safe mode
   // When POS mode or customer session is active, force customer view mode
   const isCustomerSafeMode = isPOSMode || customerSession.isActive;
   const effectiveViewMode: ViewMode = isCustomerSafeMode ? "customer" : viewMode;
-  
+
   // Feature-Gating: Check if Option 2 is enabled
   const { enabled: option2Enabled, reason: option2Reason } = useFeature("compareOption2");
-  
+
   // Feature-Gating: Check if FixedNet module is enabled
   const { enabled: fixedNetModuleEnabled } = useFeature("fixedNetModule");
-  
+
   const [option1, setOption1] = useState<OfferOptionState>(createDefaultOptionState);
   const [option2, setOption2] = useState<OfferOptionState>(createDefaultOptionState);
-  
+
   // Check for auto-saved draft on mount
   useEffect(() => {
     if (!hasCheckedAutoSave.current && autoSave.hasSavedDraft) {
@@ -154,7 +154,7 @@ export function Wizard() {
       setShowQuickStart(true);
     }
   }, [autoSave.hasSavedDraft]);
-  
+
   // Handle draft restore
   const handleRestoreDraft = useCallback(() => {
     const draft = autoSave.restoreDraft();
@@ -171,7 +171,7 @@ export function Wizard() {
     }
     setShowRestoreDialog(false);
   }, [autoSave]);
-  
+
   // Handle draft discard
   const handleDiscardDraft = useCallback(() => {
     autoSave.discardDraft();
@@ -180,7 +180,7 @@ export function Wizard() {
       setShowQuickStart(true);
     }
   }, [autoSave]);
-  
+
   // Handle QuickStart selection
   const handleQuickStartSelect = useCallback((option: string) => {
     switch (option) {
@@ -206,7 +206,7 @@ export function Wizard() {
         break;
     }
   }, []);
-  
+
   // Auto-save on state changes
   useEffect(() => {
     if (option1.mobile.tariffId || option2.mobile.tariffId) {
@@ -218,7 +218,7 @@ export function Wizard() {
       });
     }
   }, [option1, option2, activeOption, autoSave]);
-  
+
   // Force back to Option 1 if Option 2 is disabled
   useEffect(() => {
     if (!option2Enabled && activeOption === 2) {
@@ -228,11 +228,11 @@ export function Wizard() {
 
   // Load bundle or template config from route state
   useEffect(() => {
-    const state = location.state as { 
-      bundleConfig?: Partial<OfferOptionState>; 
+    const state = location.state as {
+      bundleConfig?: Partial<OfferOptionState>;
       templateConfig?: OfferOptionState;
     } | null;
-    
+
     if (state?.bundleConfig) {
       const merged = { ...createDefaultOptionState(), ...state.bundleConfig };
       setOption1(merged);
@@ -270,21 +270,21 @@ export function Wizard() {
   const totalQuantityInBasket = useMemo(() => {
     return basketItems.reduce((sum, item) => sum + (item.option.mobile.quantity || 1), 0);
   }, [basketItems]);
-  
+
   const totalQuantityForBonus = totalQuantityInBasket + option1.mobile.quantity;
-  
+
   // Determine active quantity bonus tier
   const activeQuantityBonusTier = useMemo(() => {
     return getBonusForQuantity(totalQuantityForBonus);
   }, [getBonusForQuantity, totalQuantityForBonus]);
-  
+
   // Find next tier for motivation teaser (position-based)
   const nextQuantityBonusTier = useMemo(() => {
     if (!quantityBonusTiers.length) return null;
     const sorted = [...quantityBonusTiers].sort((a, b) => a.positionNumber - b.positionNumber);
     return sorted.find(t => t.positionNumber > totalQuantityForBonus) ?? null;
   }, [quantityBonusTiers, totalQuantityForBonus]);
-  
+
   // Calculate quantity bonus for current configuration
   const quantityBonusForOption1 = useMemo(() => {
     if (!activeQuantityBonusTier) return 0;
@@ -296,23 +296,23 @@ export function Wizard() {
   const result1 = useMemo(() => {
     const context = buildPushContext(option1);
     const pushBonus = getBonusAmount(option1.mobile.tariffId, option1.mobile.contractType, 0, context);
-    return calculateOffer(option1, { 
-      ...employeeOptions, 
+    return calculateOffer(option1, {
+      ...employeeOptions,
       pushBonus,
       quantityBonus: quantityBonusForOption1,
       quantityBonusTierName: activeQuantityBonusTier?.name,
     });
   }, [option1, employeeOptions, getBonusAmount, buildPushContext, quantityBonusForOption1, activeQuantityBonusTier]);
-  
+
   const result2 = useMemo(() => {
     const context = buildPushContext(option2);
     const pushBonus = getBonusAmount(option2.mobile.tariffId, option2.mobile.contractType, 0, context);
     // Option 2 also gets quantity bonus based on total
-    const quantityBonusForOption2 = activeQuantityBonusTier 
-      ? activeQuantityBonusTier.bonusPerContract * option2.mobile.quantity 
+    const quantityBonusForOption2 = activeQuantityBonusTier
+      ? activeQuantityBonusTier.bonusPerContract * option2.mobile.quantity
       : 0;
-    return calculateOffer(option2, { 
-      ...employeeOptions, 
+    return calculateOffer(option2, {
+      ...employeeOptions,
       pushBonus,
       quantityBonus: quantityBonusForOption2,
       quantityBonusTierName: activeQuantityBonusTier?.name,
@@ -338,12 +338,12 @@ export function Wizard() {
         return;
       }
     }
-    
+
     if (newMode === "customer" && policy.requireCustomerSessionWhenCustomerMode && !customerSession.isActive) {
       toggleSession();
       toast.success("Kundensitzung aktiviert", { description: "Sensible Daten werden ausgeblendet." });
     }
-    
+
     setViewMode(newMode);
   }, [viewMode, policy, customerSession.isActive, toggleSession]);
 
@@ -354,7 +354,7 @@ export function Wizard() {
     setOption2(createDefaultOptionState());
     setActiveOption(1);
     setOpenSections(["hardware", "mobile"]);
-    
+
     toast.success("Bereit für nächsten Tarif", { description: "Konfiguriere jetzt den nächsten Tarif für dieses Angebot." });
   }, []);
 
@@ -380,7 +380,7 @@ export function Wizard() {
   }, [option1.meta.datasetVersion, option1.mobile.tariffId]);
 
   // GigaKombi eligibility check
-  const isGigaKombiEligible = option1.fixedNet.enabled && 
+  const isGigaKombiEligible = option1.fixedNet.enabled &&
     option1.mobile.tariffId.toLowerCase().includes("prime");
 
   // GigaKombi Toast - show once when becoming eligible
@@ -400,23 +400,23 @@ export function Wizard() {
 
   // Super-Admin bypass
   const { isAdmin: isSuperAdmin } = useUserRole();
-  
+
   // ============================================
   // WIZARD BLOCKING LOGIC - FIXED: Never block
   // Static catalog is always available as fallback
   // ============================================
   const staticCatalogAvailable = true;
   const forceDemoMode = localStorage.getItem("force_demo_catalog") === "true";
-  
+
   // CRITICAL FIX: NEVER block the wizard - static catalog always works
   const shouldBlockWizard = false;
-  
+
   // Determine if we're using fallback (for banner display only)
-  const usingFallbackCatalog = isSupabaseAuth 
-    && !isSuperAdmin 
+  const usingFallbackCatalog = isSupabaseAuth
+    && !isSuperAdmin
     && !isLoadingTenantData
     && (!tenantDataStatus || !tenantDataStatus.isComplete);
-  
+
   // DEBUG: Log wizard state for troubleshooting
   useEffect(() => {
     console.log("[Wizard] State:", {
@@ -447,14 +447,14 @@ export function Wizard() {
         onRestore={handleRestoreDraft}
         onDiscard={handleDiscardDraft}
       />
-      
+
       {/* QuickStart Dialog */}
       <QuickStartDialog
         open={showQuickStart}
         onOpenChange={setShowQuickStart}
         onSelect={handleQuickStartSelect}
       />
-      
+
       {/* Onboarding Tour */}
       <OnboardingTour
         isActive={tour.isActive}
@@ -467,14 +467,14 @@ export function Wizard() {
         onSkip={tour.skipTour}
         onEnd={() => tour.endTour(true)}
       />
-      
+
       {tour.shouldShowTour && !tour.isActive && (
         <OnboardingPrompt
           onStart={tour.startTour}
           onDismiss={tour.skipTour}
         />
       )}
-      
+
       {/* Demo Mode Banner - shown when using fallback catalog */}
       {usingFallbackCatalog && (
         <div className="bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200 dark:border-amber-800 px-4 py-2">
@@ -482,12 +482,12 @@ export function Wizard() {
             <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
               <Zap className="w-4 h-4" />
               <span>
-                <strong>Demo-Modus:</strong> Es werden Beispieldaten verwendet.
-                <span className="text-xs ml-2 opacity-50">(v2.1)</span>
+                <strong>Demo-Modus (FIXED):</strong> Es werden Beispieldaten verwendet.
+                <span className="text-xs ml-2 opacity-50">(v2.2-Rescue)</span>
               </span>
             </div>
-            <Link 
-              to="/daten" 
+            <Link
+              to="/daten"
               className="text-amber-700 dark:text-amber-300 underline hover:no-underline text-xs"
             >
               Eigene Daten hinterlegen →
@@ -495,7 +495,7 @@ export function Wizard() {
           </div>
         </div>
       )}
-      
+
       {/* Header - Simplified with Progress Indicator */}
       <header className="border-b border-border bg-card shrink-0 sticky top-0 z-40 bg-card/95 backdrop-blur-sm">
         <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-2 sm:py-3 flex items-center justify-between gap-2">
@@ -503,14 +503,14 @@ export function Wizard() {
           <WizardProgress
             currentStep={
               basketItems.length > 0 ? 3 :
-              option1.mobile.tariffId ? 2 : 1
+                option1.mobile.tariffId ? 2 : 1
             }
             hasHardware={option1.hardware.ekNet > 0 || option1.hardware.name === "KEINE HARDWARE"}
             hasTariff={!!option1.mobile.tariffId}
             hasOffer={basketItems.length > 0}
             onStepClick={(step) => {
               if (step === 1) {
-                setOpenSections(prev => 
+                setOpenSections(prev =>
                   prev.includes("hardware") ? prev : [...prev, "hardware"]
                 );
               } else if (step === 2) {
@@ -520,7 +520,7 @@ export function Wizard() {
               }
             }}
           />
-          
+
           {/* Center: Session Badge */}
           <div className="flex items-center gap-2">
             {customerSession.isActive && (
@@ -530,23 +530,23 @@ export function Wizard() {
               </Badge>
             )}
           </div>
-          
+
           {/* Right: Essential controls only */}
           <div className="flex items-center gap-2">
             {policy.showCustomerSessionToggle && <CustomerSessionToggle />}
-            
-            <ViewModeToggle 
-              value={effectiveViewMode} 
+
+            <ViewModeToggle
+              value={effectiveViewMode}
               onChange={handleViewModeChange}
               allowCustomerMode={policy.allowCustomerMode}
               disabled={isCustomerSafeMode}
             />
-            
+
             {!isPOSMode && (
-              <ActionMenu 
-                config={activeState} 
-                avgMonthly={avgMonthlyNet} 
-                onLoadConfig={handleLoadConfig} 
+              <ActionMenu
+                config={activeState}
+                avgMonthly={avgMonthlyNet}
+                onLoadConfig={handleLoadConfig}
               />
             )}
           </div>
@@ -586,9 +586,9 @@ export function Wizard() {
                   onAddedToOffer={resetForNewTariff}
                 />
               )}
-              
-              <Accordion 
-                type="multiple" 
+
+              <Accordion
+                type="multiple"
                 value={openSections}
                 onValueChange={setOpenSections}
                 className="space-y-3"
@@ -602,14 +602,14 @@ export function Wizard() {
                     <div className="flex items-center gap-3 flex-1">
                       <div className={cn(
                         "w-8 h-8 rounded-lg flex items-center justify-center",
-                        option1.hardware.ekNet > 0 || option1.hardware.name === "KEINE HARDWARE" 
-                          ? "bg-primary/10" 
+                        option1.hardware.ekNet > 0 || option1.hardware.name === "KEINE HARDWARE"
+                          ? "bg-primary/10"
                           : "bg-muted/50"
                       )}>
                         <Smartphone className={cn(
                           "w-4 h-4",
                           option1.hardware.ekNet > 0 || option1.hardware.name === "KEINE HARDWARE"
-                            ? "text-primary" 
+                            ? "text-primary"
                             : "text-muted-foreground/50"
                         )} />
                       </div>
@@ -735,12 +735,12 @@ export function Wizard() {
               {/* Price Period Breakdown - Shows when multiple periods exist */}
               {result1.periods.length > 1 && (
                 <div className="mt-4 space-y-4">
-                  <PricePeriodBreakdown 
-                    result={result1} 
+                  <PricePeriodBreakdown
+                    result={result1}
                     termMonths={option1.meta.termMonths}
                   />
-                  <PriceTimeline 
-                    periods={result1.periods} 
+                  <PriceTimeline
+                    periods={result1.periods}
                     termMonths={option1.meta.termMonths}
                     avgMonthly={result1.totals.avgTermNet}
                   />

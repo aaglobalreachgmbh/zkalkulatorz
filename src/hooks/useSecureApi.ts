@@ -8,17 +8,17 @@
  */
 
 import { useState, useCallback, useRef } from "react";
-import { 
-  secureApiCall, 
-  validateApiUrl, 
+import {
+  secureApiCall,
+  validateApiUrl,
   getRateLimitStatus,
   type ApiCategory,
   type HttpMethod,
   type ApiSecurityResult,
 } from "@/lib/secureApiGateway";
-import { 
-  checkPromptInjection, 
-  checkLlmOutput, 
+import {
+  checkPromptInjection,
+  checkLlmOutput,
   sanitizeLlmInput,
   filterLlmOutput,
 } from "@/lib/llmSecurityLayer";
@@ -66,10 +66,10 @@ export function useSecureApi<T = unknown>(
     isLoading: false,
     securityCheck: null,
   });
-  
+
   const optionsRef = useRef(options);
   optionsRef.current = options;
-  
+
   /**
    * Führt einen sicheren API-Call aus
    */
@@ -79,40 +79,50 @@ export function useSecureApi<T = unknown>(
     body?: unknown
   ): Promise<T | null> => {
     const opts = optionsRef.current;
-    
+
     setState(prev => ({ ...prev, isLoading: true, error: null }));
-    
+
     try {
       // Zero-Day Defense: Analyze action
       const anomalyResult = analyzeAction("api_call", JSON.stringify(body || ""));
       if (anomalyResult.recommendation === "hard_block") {
-        throw new Error("Security: Request blocked by anomaly detection");
+        const error = new Error("Security: Request blocked by anomaly detection");
+        console.error("[useSecureApi] Anomaly blocked:", error);
+        setState(prev => ({ ...prev, isLoading: false, error }));
+        return null;
       }
-      
+
       // Pre-flight security check
       const securityCheck = validateApiUrl(url, opts.category);
       setState(prev => ({ ...prev, securityCheck }));
-      
+
       if (!securityCheck.allowed) {
-        throw new Error(`Security: ${securityCheck.reason}`);
+        const error = new Error(`Security: ${securityCheck.reason}`);
+        console.warn("[useSecureApi] Blocked:", error.message);
+        setState(prev => ({ ...prev, isLoading: false, error }));
+        return null; // SAFE EXIT
       }
-      
+
       // LLM-specific input processing
       let processedBody = body;
       if (opts.isLlmRequest && body && typeof body === "object") {
         const bodyObj = body as Record<string, unknown>;
-        
+
         // Check for prompt injection
         if (bodyObj.messages && Array.isArray(bodyObj.messages)) {
           for (const msg of bodyObj.messages) {
             if (typeof msg === "object" && msg !== null && "content" in msg) {
               const content = (msg as { content: string }).content;
               const injectionCheck = checkPromptInjection(content);
-              
+
+              // Security: Prompt injection detected
               if (!injectionCheck.safe && injectionCheck.riskLevel === "critical") {
-                throw new Error(`Security: Prompt injection detected - ${injectionCheck.threats.join(", ")}`);
+                const error = new Error(`Security: Prompt injection detected - ${injectionCheck.threats.join(", ")}`);
+                console.error("[useSecureApi] Critical injection blocked:", error);
+                setState(prev => ({ ...prev, isLoading: false, error }));
+                return null;
               }
-              
+
               // Warn but allow for lower risk levels
               if (!injectionCheck.safe) {
                 console.warn("[useSecureApi] Potential prompt injection:", injectionCheck.threats);
@@ -120,7 +130,7 @@ export function useSecureApi<T = unknown>(
             }
           }
         }
-        
+
         // Sanitize prompt if enabled
         if (opts.sanitizeLlmPrompt && bodyObj.messages && Array.isArray(bodyObj.messages)) {
           processedBody = {
@@ -130,7 +140,7 @@ export function useSecureApi<T = unknown>(
                 const typedMsg = msg as { role: string; content: string };
                 return {
                   ...typedMsg,
-                  content: typedMsg.role === "user" 
+                  content: typedMsg.role === "user"
                     ? sanitizeLlmInput(typedMsg.content)
                     : typedMsg.content,
                 };
@@ -140,7 +150,7 @@ export function useSecureApi<T = unknown>(
           };
         }
       }
-      
+
       // Execute secure API call
       const response = await secureApiCall<T>({
         url,
@@ -151,20 +161,20 @@ export function useSecureApi<T = unknown>(
         retries: opts.retries,
         validateResponse: opts.validateResponse,
       });
-      
+
       // LLM-specific output processing
       let processedResponse: Awaited<T> = response;
       if (opts.isLlmRequest && opts.filterLlmResponse && response) {
         // Check and filter LLM output
         if (typeof response === "object" && response !== null) {
           const responseObj = response as Record<string, unknown>;
-          
+
           if (responseObj.choices && Array.isArray(responseObj.choices)) {
             const outputCheck = checkLlmOutput(JSON.stringify(responseObj.choices));
-            
+
             if (!outputCheck.safe) {
               console.warn("[useSecureApi] LLM output filtered:", outputCheck.threats);
-              
+
               // Filter the response
               const filteredChoices = responseObj.choices.map((choice: unknown) => {
                 if (typeof choice === "object" && choice !== null) {
@@ -181,7 +191,7 @@ export function useSecureApi<T = unknown>(
                 }
                 return choice;
               });
-              
+
               processedResponse = {
                 ...responseObj,
                 choices: filteredChoices,
@@ -190,35 +200,35 @@ export function useSecureApi<T = unknown>(
           }
         }
       }
-      
+
       setState({
         data: processedResponse,
         error: null,
         isLoading: false,
         securityCheck,
       });
-      
+
       return processedResponse;
-      
+
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
-      
+
       setState(prev => ({
         ...prev,
         data: null,
         error: err,
         isLoading: false,
       }));
-      
+
       // Log security errors
       if (err.message.startsWith("Security:")) {
         console.error("[useSecureApi] Security error:", err.message);
       }
-      
+
       return null;
     }
   }, []);
-  
+
   /**
    * Setzt den State zurück
    */
@@ -230,21 +240,21 @@ export function useSecureApi<T = unknown>(
       securityCheck: null,
     });
   }, []);
-  
+
   /**
    * Validiert eine URL ohne Request
    */
   const validateUrl = useCallback((url: string): ApiSecurityResult => {
     return validateApiUrl(url, optionsRef.current.category);
   }, []);
-  
+
   /**
    * Gibt den Rate Limit Status zurück
    */
   const getRateLimit = useCallback(() => {
     return getRateLimitStatus(optionsRef.current.category);
   }, []);
-  
+
   return [
     state,
     { execute, reset, validateUrl, getRateLimit },

@@ -165,7 +165,7 @@ export function useEmployeeGoals(month?: Date) {
   // My progress
   const myProgress = useMemo(() => {
     if (myGoals.length === 0) return 0;
-    
+
     const totalProgress = myGoals.reduce((sum, goal) => {
       const progress = goal.target_value > 0
         ? (goal.current_value / goal.target_value) * 100
@@ -199,7 +199,8 @@ export function useEmployeeGoals(month?: Date) {
       notes?: string;
     }) => {
       if (!user || !identity.tenantId) {
-        throw new Error("Nicht authentifiziert");
+        console.warn("[useEmployeeGoals] Not authenticated");
+        return null; // Safe exit
       }
 
       const { data, error } = await supabase

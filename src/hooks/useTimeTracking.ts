@@ -186,14 +186,14 @@ export function useTimeTracking(options?: {
   const clockInMutation = useMutation({
     mutationFn: async (input?: { location?: string; notes?: string }) => {
       if (!user || !identity.tenantId) {
-        console.warn("[useTimeTracking] Not authenticated");
         toast.error("Bitte zuerst einloggen");
         return null;
       }
 
       // Check if already clocked in
       if (activeEntry) {
-        throw new Error("Du bist bereits eingestempelt");
+        toast.error("Du bist bereits eingestempelt");
+        return null;
       }
 
       const { data, error } = await supabase
@@ -248,6 +248,7 @@ export function useTimeTracking(options?: {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["time-entries"] });
+      if (!data) return;
       const hours = Math.floor((data.work_minutes || 0) / 60);
       const mins = (data.work_minutes || 0) % 60;
       toast.success(`Ausgestempelt (${hours}h ${mins}m)`);
@@ -304,7 +305,8 @@ export function useTimeTracking(options?: {
 
       const entry = entries.find((e) => e.id === input.timeEntryId);
       if (!entry) {
-        throw new Error("Zeiteintrag nicht gefunden");
+        toast.error("Zeiteintrag nicht gefunden");
+        return null;
       }
 
       const { data, error } = await supabase
@@ -375,19 +377,19 @@ export function useTimeTracking(options?: {
     activeEntry,
     elapsedTime,
     weeklyStats,
-    
+
     // State
     isLoading,
     error,
     refetch,
-    
+
     // Actions
     clockIn: clockInMutation.mutateAsync,
     clockOut: clockOutMutation.mutateAsync,
     addBreak: addBreakMutation.mutateAsync,
     requestCorrection: requestCorrectionMutation.mutateAsync,
     approveEntry: approveEntryMutation.mutateAsync,
-    
+
     // Mutation states
     isClockingIn: clockInMutation.isPending,
     isClockingOut: clockOutMutation.isPending,
@@ -447,7 +449,10 @@ export function useTimeEntryCorrections() {
       }
 
       const correction = corrections.find((c) => c.id === input.correctionId);
-      if (!correction) throw new Error("Korrektur nicht gefunden");
+      if (!correction) {
+        toast.error("Korrektur nicht gefunden");
+        return null;
+      }
 
       // Update correction status
       const { error: corrError } = await supabase

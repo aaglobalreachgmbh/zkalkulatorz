@@ -3,8 +3,8 @@
 // ============================================
 
 import { useState } from "react";
-import { 
-  Building2, User, FileText, Tag, Coins, TrendingUp, 
+import {
+  Building2, User, FileText, Tag, Coins, TrendingUp,
   Sparkles, Mail, Calendar, Download, Save, ChevronDown, ChevronUp
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
+import { DealerOnly } from "@/components/guards/ViewModeGuards";
 import type { OfferOptionState, CalculationResult, ViewMode } from "../../engine/types";
 import type { Customer } from "../../hooks/useCustomers";
 import { MarginBadge } from "../components/MarginBadge";
@@ -42,7 +43,7 @@ export function SummaryStep({
 }: SummaryStepProps) {
   const visibility = useSensitiveFieldsVisible(viewMode);
   const showDealerEconomics = visibility.showDealerEconomics;
-  
+
   const [sectionsOpen, setSectionsOpen] = useState({
     customer: true,
     contracts: true,
@@ -152,12 +153,14 @@ export function SummaryStep({
                   <span>{option.hardware.name}</span>
                 </div>
               )}
-              {showDealerEconomics && option.hardware.ekNet > 0 && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Hardware EK</span>
-                  <span>{formatCurrency(option.hardware.ekNet)}</span>
-                </div>
-              )}
+              <DealerOnly viewMode={visibility.effectiveMode}>
+                {option.hardware.ekNet > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Hardware EK</span>
+                    <span>{formatCurrency(option.hardware.ekNet)}</span>
+                  </div>
+                )}
+              </DealerOnly>
               {option.fixedNet.enabled && (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Festnetz</span>
@@ -213,7 +216,8 @@ export function SummaryStep({
       )}
 
       {/* Dealer-Only Sections */}
-      {showDealerEconomics && (
+      {/* Dealer-Only Sections */}
+      <DealerOnly viewMode={visibility.effectiveMode}>
         <>
           {/* Provisions Section */}
           <Collapsible open={sectionsOpen.provisions} onOpenChange={() => toggleSection("provisions")}>
@@ -230,7 +234,7 @@ export function SummaryStep({
                 </CardHeader>
               </CollapsibleTrigger>
               <CollapsibleContent>
-              <CardContent className="pt-0">
+                <CardContent className="pt-0">
                   <ProvisionBreakdown
                     airtimeProvision={result.dealer.provisionAfter}
                     airtimeMonthly={result.dealer.provisionAfter / option.meta.termMonths}
@@ -267,8 +271,8 @@ export function SummaryStep({
                 <CardContent className="pt-0 space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Netto-Marge</span>
-                    <MarginBadge 
-                      margin={margin} 
+                    <MarginBadge
+                      margin={margin}
                       marginPercentage={marginPercent}
                       size="lg"
                     />
@@ -305,17 +309,17 @@ export function SummaryStep({
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <CardContent className="pt-0">
-                  <AiRecommendationsPanel 
-                    config={option} 
-                    result={result} 
-                    compact 
+                  <AiRecommendationsPanel
+                    config={option}
+                    result={result}
+                    compact
                   />
                 </CardContent>
               </CollapsibleContent>
             </Card>
           </Collapsible>
         </>
-      )}
+      </DealerOnly>
 
       {/* Actions */}
       <Card>
@@ -330,7 +334,7 @@ export function SummaryStep({
               variant="default"
             />
           </div>
-          
+
           <div className="grid grid-cols-2 gap-2">
             <SendOfferEmailModal
               trigger={
@@ -349,26 +353,26 @@ export function SummaryStep({
               }
             />
           </div>
-          
+
           <div className="grid grid-cols-2 gap-2">
-            <PdfDownloadButton 
-              option={option} 
-              result={result} 
+            <PdfDownloadButton
+              option={option}
+              result={result}
               variant="outline"
               size="sm"
               type="customer"
               viewMode={viewMode}
             />
-            {showDealerEconomics && (
-              <PdfDownloadButton 
-                option={option} 
-                result={result} 
+            <DealerOnly viewMode={visibility.effectiveMode}>
+              <PdfDownloadButton
+                option={option}
+                result={result}
                 variant="outline"
                 size="sm"
                 type="dealer"
                 viewMode={viewMode}
               />
-            )}
+            </DealerOnly>
           </div>
         </CardContent>
       </Card>

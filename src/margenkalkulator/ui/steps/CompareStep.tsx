@@ -174,7 +174,11 @@ export function CompareStep({
                   </div>
                   <span className="font-medium">
                     {option1.hardware.ekNet > 0
-                      ? (showDealerEconomics ? `EK: ${option1.hardware.ekNet.toFixed(2)} €` : "inklusive")
+                      ? (
+                        <DealerOnly viewMode={visibility.effectiveMode} fallback="inklusive">
+                          {`EK: ${option1.hardware.ekNet.toFixed(2)} €`}
+                        </DealerOnly>
+                      )
                       : "–"
                     }
                   </span>

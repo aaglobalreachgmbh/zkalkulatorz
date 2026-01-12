@@ -17,9 +17,9 @@ interface GigaKombiBannerProps {
   onDismiss?: () => void;
 }
 
-export function GigaKombiBanner({ 
+export function GigaKombiBanner({
   isEligible,
-  discountAmount = 5, 
+  discountAmount = 5,
   className,
   autoDismissSeconds = 5,
   onDismiss,
@@ -29,7 +29,7 @@ export function GigaKombiBanner({
   // Auto-dismiss after X seconds
   useEffect(() => {
     if (autoDismissSeconds <= 0 || !isEligible) return;
-    
+
     const timer = setTimeout(() => {
       setIsVisible(false);
       onDismiss?.();
@@ -53,18 +53,19 @@ export function GigaKombiBanner({
   if (!isEligible || !isVisible) return null;
 
   return (
-    <div
-      className={cn(
-        "flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg",
+    className = {
+      cn(
+        "flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg",
         "bg-emerald-500/10 border border-emerald-300 dark:border-emerald-700",
-        "animate-fade-in max-h-14",
+        "animate-fade-in max-h-10",
         className
-      )}
+      )
+    }
     >
-      <div className="flex items-center gap-2 text-sm">
-        <Zap className="w-4 h-4 text-emerald-600 fill-emerald-600 flex-shrink-0" />
+      <div className="flex items-center gap-2 text-xs">
+        <Zap className="w-3 h-3 text-emerald-600 fill-emerald-600 flex-shrink-0" />
         <span className="font-medium text-emerald-700 dark:text-emerald-400">
-          GigaKombi aktiv! −{discountAmount}€/mtl. Rabatt
+          GigaKombi aktiv! −{discountAmount}€/mtl.
         </span>
       </div>
       <button
@@ -74,6 +75,6 @@ export function GigaKombiBanner({
       >
         <X className="w-4 h-4" />
       </button>
-    </div>
+    </div >
   );
 }

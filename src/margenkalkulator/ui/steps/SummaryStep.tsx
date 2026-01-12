@@ -194,19 +194,19 @@ export function SummaryStep({
             <CollapsibleContent>
               <CardContent className="pt-0 space-y-2 text-sm">
                 {teamDealActive && (
-                  <div className="flex justify-between items-center">
-                    <span>TeamDeal ({quantity} Verträge)</span>
-                    <Badge variant="outline" className="text-emerald-600 border-emerald-500/30">
+                  <div className="flex justify-between items-center text-emerald-800 dark:text-emerald-300">
+                    <span>TeamDeal {quantity >= 5 ? "(>5 Verträge)" : "(>3 Verträge)"}</span>
+                    <span className="font-medium">
                       -{quantity >= 5 ? "10" : quantity >= 3 ? "5" : "0"}%
-                    </Badge>
+                    </span>
                   </div>
                 )}
                 {gigaKombiActive && (
-                  <div className="flex justify-between items-center">
-                    <span>GigaKombi Business</span>
-                    <Badge variant="outline" className="text-emerald-600 border-emerald-500/30">
-                      -5€/Monat
-                    </Badge>
+                  <div className="flex justify-between items-center text-emerald-800 dark:text-emerald-300">
+                    <span>GigaKombi Setup</span>
+                    <span className="font-medium">
+                      -5,00 € / Monat
+                    </span>
                   </div>
                 )}
               </CardContent>

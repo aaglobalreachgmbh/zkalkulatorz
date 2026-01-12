@@ -21,10 +21,10 @@ import { useSessionSecurity } from "@/hooks/useSessionSecurity";
 import { useLicense } from "@/hooks/useLicense";
 import { useAdminAuditLog } from "@/hooks/useAdminAuditLog";
 import { toast } from "sonner";
-import { 
-  Shield, 
-  ShieldCheck, 
-  ShieldAlert, 
+import {
+  Shield,
+  ShieldCheck,
+  ShieldAlert,
   ShieldX,
   Users,
   Key,
@@ -96,7 +96,7 @@ export default function SecurityStatusDashboard() {
   const { getRemainingTime, getFormattedRemainingTime } = useSessionSecurity();
   const { license } = useLicense();
   const { logAdminAction } = useAdminAuditLog();
-  
+
   const [users, setUsers] = useState<LicensedUser[]>([]);
   const [recentRegistrations, setRecentRegistrations] = useState<RecentRegistration[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -131,7 +131,7 @@ export default function SecurityStatusDashboard() {
 
       // Combine data - all registered users have a license by default
       const rolesMap = new Map(roles?.map(r => [r.user_id, r.role]) || []);
-      
+
       const combinedUsers: LicensedUser[] = (profiles || []).map(p => ({
         id: p.id,
         email: p.email,
@@ -142,7 +142,7 @@ export default function SecurityStatusDashboard() {
       }));
 
       setUsers(combinedUsers);
-      
+
       // Fetch recent registrations from security_events (last 7 days)
       const sevenDaysAgo = subDays(new Date(), 7).toISOString();
       const { data: registrationEvents, error: regError } = await supabase
@@ -181,16 +181,8 @@ export default function SecurityStatusDashboard() {
     }
   }, [isAdmin]);
 
-  // Calculate security score
-  useEffect(() => {
-    const layers = getSecurityLayers();
-    const activeCount = layers.filter(l => l.status === "active").length;
-    const score = Math.round((activeCount / layers.length) * 100);
-    setSecurityScore(score);
-  }, []);
-
   // Define all security layers
-  const getSecurityLayers = (): SecurityLayer[] => [
+  const getSecurityLayers = useCallback((): SecurityLayer[] => [
     // Frontend Layers
     {
       id: "csp",
@@ -259,7 +251,7 @@ export default function SecurityStatusDashboard() {
       category: "frontend",
       icon: <FileKey className="h-4 w-4" />,
     },
-    
+
     // Backend Layers
     {
       id: "api-gateway",
@@ -310,7 +302,7 @@ export default function SecurityStatusDashboard() {
       category: "backend",
       icon: <ShieldCheck className="h-4 w-4" />,
     },
-    
+
     // Database Layers
     {
       id: "rls",
@@ -328,7 +320,15 @@ export default function SecurityStatusDashboard() {
       category: "database",
       icon: <Fingerprint className="h-4 w-4" />,
     },
-  ];
+  ], [getFormattedRemainingTime]);
+
+  // Calculate security score
+  useEffect(() => {
+    const layers = getSecurityLayers();
+    const activeCount = layers.filter(l => l.status === "active").length;
+    const score = Math.round((activeCount / layers.length) * 100);
+    setSecurityScore(score);
+  }, [getSecurityLayers]);
 
   const securityLayers = getSecurityLayers();
   const frontendLayers = securityLayers.filter(l => l.category === "frontend");
@@ -364,7 +364,7 @@ export default function SecurityStatusDashboard() {
     try {
       const currentUser = users.find(u => u.id === userId);
       const oldRole = currentUser?.role || "user";
-      
+
       // Update the role in user_roles table
       const { error } = await supabase
         .from("user_roles")
@@ -408,7 +408,7 @@ export default function SecurityStatusDashboard() {
       toast.success(`Lizenz ${hasLicense ? "aktiviert" : "deaktiviert"}`);
 
       // Update local state
-      setUsers(prev => prev.map(u => 
+      setUsers(prev => prev.map(u =>
         u.id === userId ? { ...u, hasLicense } : u
       ));
     } catch (err) {
@@ -418,7 +418,7 @@ export default function SecurityStatusDashboard() {
   };
 
   // Count new registrations in last 7 days
-  const newRegistrationsCount = users.filter(u => 
+  const newRegistrationsCount = users.filter(u =>
     isAfter(new Date(u.createdAt), subDays(new Date(), 7))
   ).length;
 

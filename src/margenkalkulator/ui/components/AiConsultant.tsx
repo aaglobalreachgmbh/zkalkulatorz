@@ -42,11 +42,8 @@ interface Message {
 export function AiConsultant({ config, result }: AiConsultantProps) {
   const { enabled: aiEnabled } = useFeature("aiConsultant");
   const [isOpen, setIsOpen] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Feature disabled - don't render anything
-  if (!aiEnabled) {
-    return null;
-  }
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
@@ -58,7 +55,6 @@ export function AiConsultant({ config, result }: AiConsultantProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isRateLimited, setIsRateLimited] = useState(false);
   const [securityBlocked, setSecurityBlocked] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Rate limiter: 5 requests per minute (client-side)
   const rateLimiter = useMemo(() => createRateLimiter(5, 60 * 1000), []);
@@ -131,7 +127,7 @@ export function AiConsultant({ config, result }: AiConsultantProps) {
     // SECURITY LAYER 3: Zero Defense Layer - Behavioral anomaly detection
     // =========================================================================
     const anomalyResult = zeroDefenseLayer.analyzeAction("ai_chat", trimmed);
-    
+
     if (anomalyResult.recommendation === "hard_block") {
       setSecurityBlocked(true);
       zeroDefenseLayer.quarantineSession("Critical anomaly detected in AI chat");
@@ -170,7 +166,7 @@ export function AiConsultant({ config, result }: AiConsultantProps) {
     // SECURITY LAYER 4: LLM Security - Prompt Injection Detection
     // =========================================================================
     const injectionCheck = checkPromptInjection(trimmed);
-    
+
     if (!injectionCheck.safe) {
       logLlmSecurityEvent("injection_detected", {
         threats: injectionCheck.threats,
@@ -250,16 +246,16 @@ export function AiConsultant({ config, result }: AiConsultantProps) {
       // SECURITY LAYER 6: Output Security Check & Filtering
       // =========================================================================
       let aiResponse = response.data?.response || "Es ist ein Fehler aufgetreten.";
-      
+
       // Check AI output for security issues
       const outputCheck = checkLlmOutput(aiResponse);
-      
+
       if (!outputCheck.safe) {
         logLlmSecurityEvent("output_filtered", {
           threats: outputCheck.threats,
           riskLevel: outputCheck.riskLevel,
         });
-        
+
         // Filter the response to remove sensitive content
         aiResponse = filterLlmOutput(aiResponse);
       }
@@ -295,6 +291,11 @@ export function AiConsultant({ config, result }: AiConsultantProps) {
 
   // Calculate trust score for UI indicator
   const trustScore = useMemo(() => zeroDefenseLayer.calculateTrustScore(), [messages.length]);
+
+  // Feature disabled - don't render anything
+  if (!aiEnabled) {
+    return null;
+  }
 
   return (
     <>
@@ -341,14 +342,13 @@ export function AiConsultant({ config, result }: AiConsultantProps) {
                   Thinking Mode
                 </span>
                 {/* Security Trust Indicator */}
-                <span 
-                  className={`px-1.5 py-0.5 text-[10px] rounded-full font-medium flex items-center gap-1 ${
-                    trustScore >= 80 
-                      ? "bg-green-500/20 text-green-600 border border-green-500/30" 
-                      : trustScore >= 50 
-                        ? "bg-amber-500/20 text-amber-600 border border-amber-500/30"
-                        : "bg-red-500/20 text-red-600 border border-red-500/30"
-                  }`}
+                <span
+                  className={`px-1.5 py-0.5 text-[10px] rounded-full font-medium flex items-center gap-1 ${trustScore >= 80
+                    ? "bg-green-500/20 text-green-600 border border-green-500/30"
+                    : trustScore >= 50
+                      ? "bg-amber-500/20 text-amber-600 border border-amber-500/30"
+                      : "bg-red-500/20 text-red-600 border border-red-500/30"
+                    }`}
                   title={`Vertrauensscore: ${trustScore}%`}
                 >
                   <Shield className="w-2.5 h-2.5" />
@@ -388,9 +388,8 @@ export function AiConsultant({ config, result }: AiConsultantProps) {
           {messages.map((msg, idx) => (
             <div
               key={idx}
-              className={`flex gap-3 animate-fade-in ${
-                msg.role === "user" ? "flex-row-reverse" : ""
-              }`}
+              className={`flex gap-3 animate-fade-in ${msg.role === "user" ? "flex-row-reverse" : ""
+                }`}
             >
               <div
                 className={`

@@ -54,10 +54,10 @@ const FAMILY_COLORS: Record<TariffFamily, string> = {
   teamdeal: "text-orange-600",
 };
 
-export function MobileStep({ 
-  value, 
-  onChange, 
-  datasetVersion, 
+export function MobileStep({
+  value,
+  onChange,
+  datasetVersion,
   fixedNetEnabled = false,
   hardwareName = "",
   viewMode = "dealer",
@@ -77,7 +77,7 @@ export function MobileStep({
 
   const mobileTariffs = listMobileTariffs(datasetVersion);
   const promos = listPromos(datasetVersion);
-  
+
   const selectedTariff = getMobileTariffFromCatalog(datasetVersion, value.tariffId);
   const isGKEligible = checkGKEligibility(selectedTariff, fixedNetEnabled);
 
@@ -96,14 +96,14 @@ export function MobileStep({
   // Filter tariffs by selected family AND blocked tariffs
   const filteredTariffs = useMemo(() => {
     if (!mobileTariffs || mobileTariffs.length === 0) return [];
-    
+
     let tariffs = selectedFamily === "all" ? mobileTariffs : mobileTariffs.filter(t => t.family === selectedFamily);
-    
+
     // Filter out blocked tariffs for this employee (with null-safe check)
     if (employeeSettings?.blockedTariffs && employeeSettings.blockedTariffs.length > 0) {
       tariffs = tariffs.filter(t => !isTariffBlocked(t.id, employeeSettings));
     }
-    
+
     return tariffs;
   }, [mobileTariffs, selectedFamily, employeeSettings]);
 
@@ -111,7 +111,7 @@ export function MobileStep({
   const blockedCount = useMemo(() => {
     if (!employeeSettings?.blockedTariffs || employeeSettings.blockedTariffs.length === 0) return 0;
     if (!mobileTariffs || mobileTariffs.length === 0) return 0;
-    
+
     const allTariffs = selectedFamily === "all" ? mobileTariffs : mobileTariffs.filter(t => t.family === selectedFamily);
     return allTariffs.filter(t => isTariffBlocked(t.id, employeeSettings)).length;
   }, [mobileTariffs, selectedFamily, employeeSettings]);
@@ -138,21 +138,19 @@ export function MobileStep({
             <div className="flex">
               <button
                 onClick={() => updateField("contractType", "new")}
-                className={`px-6 py-2.5 text-sm font-medium rounded-l-lg transition-colors ${
-                  value.contractType === "new"
+                className={`px-6 py-2.5 text-sm font-medium rounded-l-lg transition-colors ${value.contractType === "new"
                     ? "bg-primary text-primary-foreground"
                     : "bg-muted text-muted-foreground hover:bg-muted/80"
-                }`}
+                  }`}
               >
                 Neuvertrag
               </button>
               <button
                 onClick={() => updateField("contractType", "renewal")}
-                className={`px-6 py-2.5 text-sm font-medium rounded-r-lg transition-colors ${
-                  value.contractType === "renewal"
+                className={`px-6 py-2.5 text-sm font-medium rounded-r-lg transition-colors ${value.contractType === "renewal"
                     ? "bg-primary text-primary-foreground"
                     : "bg-muted text-muted-foreground hover:bg-muted/80"
-                }`}
+                  }`}
               >
                 Verlängerung (VVL)
               </button>
@@ -197,11 +195,10 @@ export function MobileStep({
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setSelectedFamily("all")}
-            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-              selectedFamily === "all"
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${selectedFamily === "all"
                 ? "bg-primary text-primary-foreground"
                 : "bg-muted text-muted-foreground hover:bg-muted/80"
-            }`}
+              }`}
           >
             Alle Tarife
           </button>
@@ -209,11 +206,10 @@ export function MobileStep({
             <button
               key={family}
               onClick={() => setSelectedFamily(family)}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                selectedFamily === family
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${selectedFamily === family
                   ? "bg-primary text-primary-foreground"
                   : "bg-muted text-muted-foreground hover:bg-muted/80"
-              }`}
+                }`}
             >
               {FAMILY_LABELS[family]}
             </button>
@@ -237,7 +233,7 @@ export function MobileStep({
             const familyLabel = FAMILY_LABELS[tariff.family || "prime"];
             const familyColor = FAMILY_COLORS[tariff.family || "prime"];
             const isUnlimited = tariff.dataVolumeGB === "unlimited";
-            
+
             return (
               <button
                 key={tariff.id}
@@ -246,44 +242,44 @@ export function MobileStep({
                   // NO auto-collapse - let user finish selecting promos/options first
                 }}
                 className={`
-                  relative p-5 rounded-xl border-2 bg-card text-left transition-all
+                  relative p-4 rounded-xl border bg-card text-left transition-all
                   hover:shadow-md hover:border-primary/50
-                  ${isSelected 
-                    ? "border-primary ring-1 ring-primary/10 shadow-md bg-primary/5" 
+                  ${isSelected
+                    ? "border-primary ring-1 ring-primary/10 shadow-md bg-primary/5"
                     : "border-border"
                   }
                 `}
               >
                 {/* Family Badge */}
-                <div className="flex items-center justify-between mb-3">
-                  <span className={`text-xs font-bold tracking-wide ${familyColor}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className={`text-[10px] font-bold tracking-wider uppercase ${familyColor}`}>
                     {familyLabel}
                   </span>
                   {isUnlimited && (
-                    <Badge variant="secondary" className="text-xs">
+                    <Badge variant="secondary" className="text-[10px] h-4 px-1">
                       Unlimited
                     </Badge>
                   )}
                 </div>
 
                 {/* Tariff Name */}
-                <h4 className="text-lg font-semibold text-foreground mb-4">
+                <h4 className="text-base font-semibold text-foreground mb-3 leading-tight">
                   {tariff.name}
                 </h4>
 
                 {/* Price & Data */}
                 <div className="flex items-end justify-between">
                   <div>
-                    <span className="text-3xl font-bold text-foreground">
+                    <span className="text-2xl font-bold text-foreground">
                       {tariff.baseNet.toFixed(0)}
                     </span>
-                    <span className="text-sm text-muted-foreground ml-1">€ /mtl.</span>
+                    <span className="text-xs text-muted-foreground ml-0.5">€</span>
                   </div>
                   <div className="text-right">
-                    <span className="text-lg font-semibold text-foreground">
+                    <span className="text-sm font-semibold text-foreground block">
                       {formatDataVolume(tariff.dataVolumeGB)}
                     </span>
-                    <p className="text-xs text-muted-foreground">Datenvolumen</p>
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Daten</span>
                   </div>
                 </div>
               </button>
@@ -317,7 +313,7 @@ export function MobileStep({
             onAddedToOffer={onConfigComplete}
           />
         )}
-        
+
         {/* TeamDeal uses simplified inline config (no SUB variants) */}
         {selectedTariff && fullOption && result && isTeamDeal && (
           <InlineTariffConfig
@@ -369,7 +365,7 @@ export function MobileStep({
                   Statt TeamDeal wird <strong>Smart Business Plus (13€/mtl., 1 GB)</strong> aktiviert.
                 </p>
                 <p className="text-sm mt-1 text-amber-600 dark:text-amber-400">
-                  ⚠️ Die Provision für diesen Fallback-Tarif ist nicht im System hinterlegt. 
+                  ⚠️ Die Provision für diesen Fallback-Tarif ist nicht im System hinterlegt.
                   Bitte manuell bei Vodafone prüfen!
                 </p>
               </AlertDescription>

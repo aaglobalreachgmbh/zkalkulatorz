@@ -73,20 +73,20 @@ const Provisions = lazy(() => import("./pages/Provisions"));
 // Enhanced loading fallback with timeout and retry
 const PageLoader = () => {
   const [showRetry, setShowRetry] = useState(false);
-  
+
   useEffect(() => {
     const timer = setTimeout(() => setShowRetry(true), 8000);
     return () => clearTimeout(timer);
   }, []);
-  
+
   return (
     <div className="flex items-center justify-center min-h-screen">
       <div className="text-center space-y-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
         <p className="text-muted-foreground text-sm">Lade...</p>
         {showRetry && (
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size="sm"
             onClick={() => window.location.reload()}
             className="gap-2"
@@ -123,15 +123,15 @@ class AppErrorBoundary extends Component<{ children: ReactNode }, AppErrorBounda
     // PHASE 5: Enhanced error logging
     console.error("[AppErrorBoundary] FATAL ERROR:", error);
     console.error("[AppErrorBoundary] Component Stack:", errorInfo.componentStack);
-    
-    this.setState({ 
-      errorInfo: `${error.name}: ${error.message}\n\nStack:\n${errorInfo.componentStack?.slice(0, 500)}` 
+
+    this.setState({
+      errorInfo: `${error.name}: ${error.message}\n\nStack:\n${errorInfo.componentStack?.slice(0, 500)}`
     });
-    
+
     // Clear corrupt session data on auth errors
     const errorMessage = error?.message?.toLowerCase() || "";
     if (
-      errorMessage.includes("refresh_token") || 
+      errorMessage.includes("refresh_token") ||
       errorMessage.includes("session") ||
       errorMessage.includes("jwt") ||
       errorMessage.includes("auth")
@@ -161,7 +161,7 @@ class AppErrorBoundary extends Component<{ children: ReactNode }, AppErrorBounda
   render() {
     if (this.state.hasError) {
       const isDev = import.meta.env.DEV;
-      
+
       return (
         <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
           <div className="max-w-md w-full text-center space-y-4">
@@ -174,14 +174,14 @@ class AppErrorBoundary extends Component<{ children: ReactNode }, AppErrorBounda
             <p className="text-gray-600 dark:text-gray-400 text-sm">
               Ein kritischer Fehler ist aufgetreten. Bitte starten Sie die Anwendung neu.
             </p>
-            
+
             {/* PHASE 5: Show error details in dev mode */}
             {isDev && this.state.errorInfo && (
               <pre className="text-left text-xs bg-gray-100 dark:bg-gray-800 p-3 rounded overflow-auto max-h-40 text-red-600 dark:text-red-400">
                 {this.state.errorInfo}
               </pre>
             )}
-            
+
             <div className="flex flex-col gap-2 pt-4">
               <button
                 onClick={this.handleClearAndReload}
@@ -227,10 +227,10 @@ class RouteErrorBoundary extends Component<{ children: ReactNode }, RouteErrorBo
     // PHASE 5: Enhanced logging
     console.error("[RouteErrorBoundary] Caught route error:", error);
     console.error("[RouteErrorBoundary] Component Stack:", errorInfo.componentStack);
-    
+
     const errorMessage = error?.message?.toLowerCase() || "";
     if (
-      errorMessage.includes("refresh_token") || 
+      errorMessage.includes("refresh_token") ||
       errorMessage.includes("session") ||
       errorMessage.includes("token") ||
       errorMessage.includes("auth")
@@ -264,11 +264,11 @@ class RouteErrorBoundary extends Component<{ children: ReactNode }, RouteErrorBo
   render() {
     if (this.state.hasError) {
       const isAuthError = this.state.error?.message?.toLowerCase().includes("auth") ||
-                          this.state.error?.message?.toLowerCase().includes("token") ||
-                          this.state.error?.message?.toLowerCase().includes("session");
-      
+        this.state.error?.message?.toLowerCase().includes("token") ||
+        this.state.error?.message?.toLowerCase().includes("session");
+
       const isDev = import.meta.env.DEV;
-      
+
       return (
         <div className="min-h-screen flex items-center justify-center p-4 bg-background">
           <div className="max-w-md w-full text-center space-y-4">
@@ -277,18 +277,18 @@ class RouteErrorBoundary extends Component<{ children: ReactNode }, RouteErrorBo
             </div>
             <h2 className="text-xl font-semibold">Seite konnte nicht geladen werden</h2>
             <p className="text-muted-foreground text-sm">
-              {isAuthError 
+              {isAuthError
                 ? "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an."
                 : "Ein Fehler ist aufgetreten. Bitte laden Sie die Seite neu."}
             </p>
-            
+
             {/* PHASE 5: Show error in dev mode */}
             {isDev && this.state.error && (
               <pre className="text-left text-xs bg-muted p-3 rounded overflow-auto max-h-32 text-destructive">
                 {this.state.error.message}
               </pre>
             )}
-            
+
             <div className="flex flex-col gap-2">
               {isAuthError ? (
                 <Button onClick={this.handleLogout} className="gap-2">
@@ -328,7 +328,7 @@ const queryClient = new QueryClient({
         // No retry on auth-related errors
         const errorMsg = (error as Error)?.message?.toLowerCase() || "";
         if (
-          errorMsg.includes("refresh_token") || 
+          errorMsg.includes("refresh_token") ||
           errorMsg.includes("jwt") ||
           errorMsg.includes("unauthorized") ||
           errorMsg.includes("session") ||
@@ -394,25 +394,25 @@ const App = () => (
                     <Route path="/auth/reset-password" element={<ResetPassword />} />
                     <Route path="/datenschutz" element={<Privacy />} />
                     <Route path="/pending-approval" element={<PendingApproval />} />
-                    
+
                     {/* ALL other routes require authentication */}
                     <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
                     <Route path="/calculator" element={<ProtectedRoute><Index /></ProtectedRoute>} />
                     <Route path="/bundles" element={<ProtectedRoute><Bundles /></ProtectedRoute>} />
                     <Route path="/daten" element={<ProtectedRoute><DataHub /></ProtectedRoute>} />
                     <Route path="/license" element={<ProtectedRoute><License /></ProtectedRoute>} />
-                    
+
                     {/* Admin routes */}
                     <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
                     <Route path="/admin/employees" element={<AdminRoute><AdminEmployees /></AdminRoute>} />
                     <Route path="/admin/push-provisions" element={<AdminRoute><AdminPushProvisions /></AdminRoute>} />
                     <Route path="/admin/quantity-bonus" element={<AdminRoute><AdminQuantityBonus /></AdminRoute>} />
                     <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
-{/* Redirect old route to new super-admin */}
+                    {/* Redirect old route to new super-admin */}
                     <Route path="/admin/customers" element={<Navigate to="/super-admin" replace />} />
                     <Route path="/super-admin" element={<AdminRoute><SuperAdmin /></AdminRoute>} />
                     <Route path="/admin/permissions" element={<TenantAdminRoute><AdminPermissions /></TenantAdminRoute>} />
-                    
+
                     <Route
                       path="/offers"
                       element={
@@ -634,7 +634,7 @@ const App = () => (
                         </FeatureRoute>
                       }
                     />
-                    
+
                     {/* Inbox - Zentrale Dokumentenablage */}
                     <Route
                       path="/inbox"
@@ -644,7 +644,7 @@ const App = () => (
                         </ProtectedRoute>
                       }
                     />
-                    
+
                     {/* Calendar */}
                     <Route
                       path="/calendar"
@@ -654,7 +654,7 @@ const App = () => (
                         </ProtectedRoute>
                       }
                     />
-                    
+
                     {/* News & Aktionen */}
                     <Route
                       path="/news"
@@ -664,7 +664,7 @@ const App = () => (
                         </ProtectedRoute>
                       }
                     />
-                    
+
                     {/* Admin News */}
                     <Route
                       path="/admin/news"
@@ -674,16 +674,16 @@ const App = () => (
                         </TenantAdminRoute>
                       }
                     />
-                    
+
                     {/* Redirect routes for commonly attempted paths - prevents 404s */}
                     <Route path="/settings" element={<Navigate to="/settings/security" replace />} />
                     <Route path="/profile" element={<Navigate to="/" replace />} />
                     <Route path="/reports" element={<Navigate to="/reporting" replace />} />
                     <Route path="/wizard" element={<Navigate to="/calculator" replace />} />
-                    
+
                     {/* Public shared offer view (no auth required) */}
                     <Route path="/share/offer/:offerId" element={<SharedOfferPage />} />
-                    
+
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>

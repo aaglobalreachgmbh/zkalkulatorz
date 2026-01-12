@@ -167,16 +167,22 @@ export function OfferPdf({ option, result, validDays = 14, branding = DEFAULT_BR
               <Text style={[styles.tableHeaderCell, styles.colPosition]}>Zeitraum</Text>
               <Text style={[styles.tableHeaderCell, styles.colMonthly]}>Betrag (Netto)</Text>
             </View>
-            {result.periods.map((period, idx) => (
-              <View key={idx} style={[styles.tableRow, idx % 2 === 1 ? styles.tableRowAlt : {}]}>
-                <Text style={[styles.tableCell, styles.colPosition]}>
-                  {period.label || `Monat ${period.fromMonth} – ${period.toMonth}`}
-                </Text>
-                <Text style={[styles.tableCell, styles.colMonthly]}>
-                  {formatCurrency(period.monthly.net)}
-                </Text>
-              </View>
-            ))}
+            {/* Payment Plan */}
+            {result.periods.map((period, idx) => {
+              const matchesBase = tariffBreakdown && Math.abs(period.monthly.net - tariffBreakdown.net) < 0.01;
+              const isFree = period.monthly.net < 0.01;
+              return (
+                <View key={idx} style={[styles.tableRow, idx % 2 === 1 ? styles.tableRowAlt : {}]}>
+                  <Text style={[styles.tableCell, styles.colPosition]}>
+                    {period.label || `Monat ${period.fromMonth} – ${period.toMonth}`}
+                    {isFree && " (Basispreisbefreiung)"}
+                  </Text>
+                  <Text style={[styles.tableCell, styles.colMonthly]}>
+                    {formatCurrency(period.monthly.net)}
+                  </Text>
+                </View>
+              );
+            })}
           </View>
         </View>
 
@@ -190,8 +196,19 @@ export function OfferPdf({ option, result, validDays = 14, branding = DEFAULT_BR
             <Text style={styles.summaryLabel}>Gesamtkosten ({option.meta.termMonths} Monate)</Text>
             <Text style={styles.summaryValue}>{formatCurrency(result.totals.sumTermNet)}</Text>
           </View>
+
+          {/* Dual Price Display if Discounted */}
+          {tariffBreakdown && result.totals.avgTermNet < tariffBreakdown.net && (
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Regulärer Basispreis</Text>
+              <Text style={styles.summaryValue} style={{ textDecoration: "line-through", color: "#9ca3af" }}>
+                {formatCurrency(tariffBreakdown.net)}
+              </Text>
+            </View>
+          )}
+
           <View style={styles.summaryTotal}>
-            <Text style={styles.summaryTotalLabel}>Ø Monatlich netto</Text>
+            <Text style={styles.summaryTotalLabel}>Ø Effektiver Monatspreis</Text>
             <Text style={styles.summaryTotalValue}>{formatCurrency(result.totals.avgTermNet)}</Text>
           </View>
         </View>

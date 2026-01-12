@@ -388,7 +388,7 @@ Analysiere dieses Angebot und gib strukturierte, zahlenbasierte Optimierungsvors
     }
 
     const data = await response.json();
-    let aiResponse = data.choices?.[0]?.message?.content || "";
+    const aiResponse = data.choices?.[0]?.message?.content || "";
     
     console.log("AI response received:", aiResponse.slice(0, 300) + "...");
     

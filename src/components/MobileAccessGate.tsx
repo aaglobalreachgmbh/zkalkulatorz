@@ -33,45 +33,41 @@ function useIsTablet(): boolean {
 }
 
 export function MobileAccessGate({ children, allowedPaths = [] }: MobileAccessGateProps) {
-  // Safe hook calls with fallback
-  let isMobile = false;
-  let isTablet = false;
+  // Safe hook calls MUST be top level
+  const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
   let hasMobileAccess = true;
   let reason = "";
 
   try {
-    isMobile = useIsMobile();
-    isTablet = useIsTablet();
     const featureResult = useFeature("mobileAccess");
     hasMobileAccess = featureResult.enabled;
     reason = featureResult.reason || "";
   } catch (error) {
-    // PHASE 4: On any error, allow access
-    console.warn("[MobileAccessGate] Error checking mobile access, allowing access:", error);
-    return <>{children}</>;
+    console.warn("[MobileAccessGate] Error checking feature:", error);
   }
-  
+
   // Prüfe ob aktuelle Seite erlaubt ist
   const currentPath = typeof window !== "undefined" ? window.location.pathname : "/";
-  const isAllowedPath = allowedPaths.some(path => 
+  const isAllowedPath = allowedPaths.some(path =>
     currentPath === path || currentPath.startsWith(path + "/")
   );
-  
+
   // Desktop = immer erlaubt
   if (!isMobile && !isTablet) {
     return <>{children}</>;
   }
-  
+
   // Erlaubte Seiten = immer zeigen
   if (isAllowedPath) {
     return <>{children}</>;
   }
-  
+
   // Mobile/Tablet mit Lizenz = erlaubt
   if (hasMobileAccess) {
     return <>{children}</>;
   }
-  
+
   // Mobile/Tablet ohne Lizenz = Upgrade-Hinweis
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -104,7 +100,7 @@ export function MobileAccessGate({ children, allowedPaths = [] }: MobileAccessGa
               </p>
             </div>
           </div>
-          
+
           {/* Features im höheren Plan */}
           <div className="space-y-3">
             <h4 className="font-medium text-sm">Mit Mobile-Zugang können Sie:</h4>
@@ -123,7 +119,7 @@ export function MobileAccessGate({ children, allowedPaths = [] }: MobileAccessGa
               </li>
             </ul>
           </div>
-          
+
           {/* Upgrade CTA */}
           <div className="space-y-3 pt-4">
             <Button asChild className="w-full">
@@ -136,7 +132,7 @@ export function MobileAccessGate({ children, allowedPaths = [] }: MobileAccessGa
               Enterprise- und Internal-Pläne beinhalten mobilen Zugang.
             </p>
           </div>
-          
+
           {/* Alternative: Desktop nutzen */}
           <div className="pt-4 border-t">
             <p className="text-sm text-center text-muted-foreground">

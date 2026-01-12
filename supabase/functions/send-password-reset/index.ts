@@ -59,7 +59,7 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     // Get user's tenant and branding
-    let branding: TenantBranding = {
+    const branding: TenantBranding = {
       logoUrl: null,
       primaryColor: "#E60000", // Vodafone Red default
       companyName: "MargenKalkulator"

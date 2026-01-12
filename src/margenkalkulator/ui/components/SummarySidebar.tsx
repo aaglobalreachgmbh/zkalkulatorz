@@ -14,6 +14,7 @@ import { Smartphone, Signal, Wifi, Check, Tag, FileText, Calendar } from "lucide
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { OfferOptionState, CalculationResult, ViewMode } from "../../engine/types";
+import { getMobileTariffFromCatalog } from "../../engine/catalogResolver";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
 import { PdfDownloadButton } from "./PdfDownloadButton";
 import { CreateCalendarEventModal } from "./CreateCalendarEventModal";
@@ -30,33 +31,33 @@ interface SummarySidebarProps {
   className?: string;
 }
 
-export function SummarySidebar({ 
-  option, 
-  result, 
+export function SummarySidebar({
+  option,
+  result,
   viewMode,
   quantityBonus = 0,
-  className 
+  className
 }: SummarySidebarProps) {
   const visibility = useSensitiveFieldsVisible(viewMode);
   const showDealerEconomics = visibility.showDealerEconomics;
-  
+
   const margin = result.dealer.margin + quantityBonus;
   const avgMonthly = result.totals.avgTermNet;
   const provision = result.dealer.provisionBase;
-  
+
   const hasHardware = option.hardware.ekNet > 0;
   const hasTariff = !!option.mobile.tariffId;
   const hasFixedNet = option.fixedNet.enabled;
-  
+
   // Check if GigaKombi is eligible
-  const isGigaKombiEligible = hasFixedNet && 
+  const isGigaKombiEligible = hasFixedNet &&
     option.mobile.tariffId.toLowerCase().includes("prime");
-  
+
   // TeamDeal check
   const quantity = option.mobile.quantity;
   const teamDealActive = quantity >= 3;
   const teamDealPercentage = quantity >= 5 ? 10 : quantity >= 3 ? 5 : 0;
-  
+
   // Profitability status
   const marginPerContract = margin / quantity;
   const profitabilityStatus = getProfitabilityStatus(marginPerContract);
@@ -79,13 +80,21 @@ export function SummarySidebar({
         </div>
         {/* Quick KPI */}
         <div className="mt-2 text-right">
+          {hasTariff && result.totals.avgTermNet < (getMobileTariffFromCatalog(option.meta.datasetVersion, option.mobile.tariffId)?.baseNet ?? 0) && (
+            <div className="flex items-center justify-end gap-2 mb-0.5">
+              <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Regulär:</span>
+              <span className="text-xs text-muted-foreground line-through decoration-amber-500/50">
+                <AnimatedCurrency value={getMobileTariffFromCatalog(option.meta.datasetVersion, option.mobile.tariffId)?.baseNet ?? 0} decimals={2} /> €
+              </span>
+            </div>
+          )}
           <p className="text-2xl font-bold">
             <AnimatedCurrency value={avgMonthly} decimals={2} />
           </p>
-          <p className="text-xs text-muted-foreground">Ø Monat</p>
+          <p className="text-xs text-muted-foreground">Ø Monat (Effektiv)</p>
         </div>
       </div>
-      
+
       {/* Content */}
       <div className="p-4 space-y-4">
         {/* Components List */}
@@ -113,7 +122,7 @@ export function SummarySidebar({
               )}
             </div>
           </div>
-          
+
           {/* Mobile Tariff */}
           <div className="flex items-start gap-3">
             <div className={cn(
@@ -141,7 +150,7 @@ export function SummarySidebar({
               )}
             </div>
           </div>
-          
+
           {/* Fixed Net */}
           <div className="flex items-start gap-3">
             <div className={cn(
@@ -166,7 +175,7 @@ export function SummarySidebar({
             </div>
           </div>
         </div>
-        
+
         {/* GigaKombi Status */}
         {isGigaKombiEligible && (
           <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 rounded-lg">
@@ -178,7 +187,7 @@ export function SummarySidebar({
             </div>
           </div>
         )}
-        
+
         {/* Active Discounts Section */}
         {(teamDealActive || isGigaKombiEligible) && (
           <div className="space-y-1.5 pt-2 border-t border-border">
@@ -200,7 +209,7 @@ export function SummarySidebar({
             )}
           </div>
         )}
-        
+
         {/* Dealer Economics */}
         {showDealerEconomics && (
           <div className="space-y-2 pt-3 border-t border-border">
@@ -221,22 +230,22 @@ export function SummarySidebar({
             </p>
           </div>
         )}
-        
+
         {/* Secondary Actions (PDF, Calendar) */}
         <div className="space-y-2 pt-3 border-t border-border">
           <div className="grid grid-cols-2 gap-2">
-            <PdfDownloadButton 
-              option={option} 
-              result={result} 
+            <PdfDownloadButton
+              option={option}
+              result={result}
               variant="outline"
               size="sm"
               type="customer"
               viewMode={viewMode}
             />
             {showDealerEconomics && (
-              <PdfDownloadButton 
-                option={option} 
-                result={result} 
+              <PdfDownloadButton
+                option={option}
+                result={result}
                 variant="outline"
                 size="sm"
                 type="dealer"
@@ -244,7 +253,7 @@ export function SummarySidebar({
               />
             )}
           </div>
-          
+
           <CreateCalendarEventModal
             trigger={
               <Button variant="ghost" size="sm" className="w-full gap-2 text-muted-foreground/70 hover:text-foreground">

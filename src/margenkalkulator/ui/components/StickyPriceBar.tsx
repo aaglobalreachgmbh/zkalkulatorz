@@ -26,10 +26,10 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { toast } from "sonner";
 import { fireConfetti } from "@/lib/confetti";
 import { cn } from "@/lib/utils";
-import type { 
-  MobileTariff, 
-  MobileState, 
-  OfferOptionState, 
+import type {
+  MobileTariff,
+  MobileState,
+  OfferOptionState,
   CalculationResult,
   ViewMode,
   HardwareState
@@ -59,12 +59,12 @@ export function StickyPriceBar({
   const { addItem, items } = useOfferBasket();
   const visibility = useSensitiveFieldsVisible(viewMode);
   const showDealerEconomics = visibility.showDealerEconomics;
-  
+
   // Don't render if no tariff selected
   if (!tariff) {
     return null;
   }
-  
+
   // Calculate values
   const avgMonthly = result.totals.avgTermNet;
   const margin = result.dealer.margin + quantityBonus;
@@ -73,7 +73,7 @@ export function StickyPriceBar({
   const hasMultiplePeriods = result.periods.length > 1;
   const isDgrv = result.meta.isDgrvContract;
   const freeMonths = result.meta.freeMonths;
-  
+
   // Generate tariff name for basket
   const tariffName = useMemo(() => {
     const parts = [tariff.name];
@@ -85,15 +85,15 @@ export function StickyPriceBar({
     }
     return parts.join(" ");
   }, [tariff, mobileState.quantity, hardware]);
-  
+
   // Check if already in basket
   const isAlreadyAdded = items.some(
-    item => 
+    item =>
       item.option.mobile.tariffId === mobileState.tariffId &&
       item.option.hardware.name === hardware.name &&
       item.option.mobile.contractType === mobileState.contractType
   );
-  
+
   const handleAdd = () => {
     addItem(tariffName, fullOption, result);
     toast.success(`"${tariffName}" zum Angebot hinzugefügt`, {
@@ -102,9 +102,9 @@ export function StickyPriceBar({
     fireConfetti({ duration: 1500 });
     onAddedToOffer?.();
   };
-  
+
   const marginColor = margin >= 100 ? "text-emerald-600" : margin >= 0 ? "text-amber-600" : "text-red-600";
-  
+
   return (
     <div className="sticky top-0 z-40 -mx-4 px-4 py-3 bg-card/95 backdrop-blur-sm border-b border-border shadow-sm">
       <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -129,14 +129,26 @@ export function StickyPriceBar({
             )}
           </div>
         </div>
-        
+
         {/* Center: Price */}
         <div className="flex items-center gap-4">
           {/* DGRV Badge */}
           {isDgrv && <DgrvBadge compact freeMonths={freeMonths} />}
-          
+
+          {/* Regular Price (Strikethrough) */}
+          {hasDiscount && (
+            <div className="text-right mr-3 hidden sm:block">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Regulär</p>
+              <p className="text-sm text-muted-foreground line-through decoration-amber-500/50">
+                <AnimatedCurrency value={basePrice} decimals={2} /> €
+              </p>
+            </div>
+          )}
+
           <div className="text-right">
-            <p className="text-xs text-muted-foreground">Ø Monat</p>
+            <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">
+              {hasDiscount ? "Ø Effektiv" : "Monatlich"}
+            </p>
             {hasMultiplePeriods ? (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -183,7 +195,7 @@ export function StickyPriceBar({
               </div>
             )}
           </div>
-          
+
           {/* Margin (Dealer only) */}
           {showDealerEconomics && (
             <div className="text-right border-l border-border pl-4">
@@ -194,7 +206,7 @@ export function StickyPriceBar({
             </div>
           )}
         </div>
-        
+
         {/* Right: Actions */}
         <div className="shrink-0 flex items-center gap-2">
           {/* PDF Export Button */}
@@ -208,7 +220,7 @@ export function StickyPriceBar({
               <span className="hidden md:inline">PDF</span>
             </Button>
           </PdfExportDialog>
-          
+
           {/* Add to Offer Button */}
           {isAlreadyAdded ? (
             <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-200 py-1.5 px-3">

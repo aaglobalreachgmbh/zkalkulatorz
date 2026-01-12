@@ -56,10 +56,10 @@ export function WizardProgress({
               disabled={!isClickable}
               className={cn(
                 "flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all",
-                status === "complete" && "bg-primary/10 text-primary",
-                status === "current" && "bg-primary text-primary-foreground shadow-md shadow-primary/30",
+                status === "complete" && "bg-primary/10 text-primary hover:bg-primary/20",
+                status === "current" && "bg-primary text-primary-foreground shadow-lg shadow-primary/30 ring-2 ring-primary/20 ring-offset-2 scale-105",
                 status === "pending" && "bg-muted text-muted-foreground",
-                isClickable && "cursor-pointer hover:scale-105",
+                isClickable && "cursor-pointer hover:scale-105 active:scale-95",
                 !isClickable && status === "pending" && "cursor-default opacity-60"
               )}
             >

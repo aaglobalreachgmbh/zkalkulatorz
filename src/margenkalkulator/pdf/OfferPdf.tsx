@@ -37,39 +37,39 @@ function sanitizeNumber(value: number | undefined | null): number {
 
 export function OfferPdf({ option, result, validDays = 14, branding = DEFAULT_BRANDING }: OfferPdfProps) {
   const styles = branding ? createPdfStyles(branding) : defaultStyles;
-  
+
   const today = new Date();
   const validUntil = new Date(today.getTime() + validDays * 24 * 60 * 60 * 1000);
-  
-  const formatDate = (date: Date) => 
+
+  const formatDate = (date: Date) =>
     date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
-  
-  const formatCurrency = (value: number) => 
+
+  const formatCurrency = (value: number) =>
     `${sanitizeNumber(value).toFixed(2).replace(".", ",")} €`;
-  
+
   // Calculate one-time total
   const oneTimeTotal = result.oneTime.reduce((sum, item) => sum + sanitizeNumber(item.net), 0);
-  
+
   // Get hardware display info (SANITIZED)
   // WICHTIG: EK-Preis wird NIE im Kunden-PDF angezeigt!
   const hasHardware = sanitizeNumber(option.hardware.ekNet) > 0;
   const hardwareName = sanitizePdfText(option.hardware.name) || "Keine Hardware";
-  
+
   // Get tariff info from breakdown (SANITIZED)
   const tariffBreakdown = result.breakdown.find(b => b.ruleId === "base");
   const tariffName = sanitizePdfText(tariffBreakdown?.label?.replace(" Grundpreis", "")) || "Mobilfunk-Tarif";
-  
+
   // Get fixed net info (SANITIZED)
   const fixedNetBreakdown = result.breakdown.find(b => b.ruleId === "fixed_base");
   const fixedNetName = sanitizePdfText(fixedNetBreakdown?.label?.replace(" monatlich", "")) || "Festnetz";
   const fixedNetMonthly = sanitizeNumber(fixedNetBreakdown?.net);
-  
+
   // Calculate mobile-only monthly (without fixed net)
   const mobileMonthly = sanitizeNumber(result.totals.avgTermNet) - (option.fixedNet.enabled ? fixedNetMonthly : 0);
-  
+
   // Display name for header
   const displayName = branding.companyName || "MargenKalkulator";
-  
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -94,7 +94,7 @@ export function OfferPdf({ option, result, validDays = 14, branding = DEFAULT_BR
             </Text>
           </View>
         </View>
-        
+
         {/* Offer Details */}
         <View style={styles.infoSection}>
           <Text style={styles.infoTitle}>Angebotsdetails</Text>
@@ -119,60 +119,67 @@ export function OfferPdf({ option, result, validDays = 14, branding = DEFAULT_BR
             </View>
           )}
         </View>
-        
-        {/* Positions Table */}
-        <View style={styles.table}>
-          <View style={styles.tableHeader}>
-            <Text style={[styles.tableHeaderCell, styles.colPosition]}>Position</Text>
-            <Text style={[styles.tableHeaderCell, styles.colMonthly]}>Monatlich</Text>
-            <Text style={[styles.tableHeaderCell, styles.colOneTime]}>Einmalig</Text>
-          </View>
-          
-          {/* Hardware - KEIN EK-PREIS im Kunden-PDF! */}
-          <View style={styles.tableRow}>
-            <Text style={[styles.tableCell, styles.colPosition]}>{hardwareName}</Text>
-            <Text style={[styles.tableCell, styles.colMonthly]}>–</Text>
-            <Text style={[styles.tableCell, styles.colOneTime]}>
-              {hasHardware ? "inklusive" : "–"}
-            </Text>
-          </View>
-          
-          {/* Mobile Tariff */}
-          <View style={[styles.tableRow, styles.tableRowAlt]}>
-            <Text style={[styles.tableCell, styles.colPosition]}>
-              {tariffName} {option.mobile.quantity > 1 ? `(×${option.mobile.quantity})` : ""}
-            </Text>
-            <Text style={[styles.tableCell, styles.colMonthly]}>
-              {formatCurrency(mobileMonthly)}
-            </Text>
-            <Text style={[styles.tableCell, styles.colOneTime]}>–</Text>
-          </View>
-          
-          {/* Fixed Net (if enabled) */}
-          {option.fixedNet.enabled && (
+
+        {/* 1. Positionen (Items) */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Enthaltene Positionen</Text>
+          <View style={styles.table}>
+            <View style={styles.tableHeader}>
+              <Text style={[styles.tableHeaderCell, styles.colPosition]}>Position</Text>
+              <Text style={[styles.tableHeaderCell, styles.colOneTime]}>Einmalig</Text>
+            </View>
+
+            {/* Hardware */}
             <View style={styles.tableRow}>
-              <Text style={[styles.tableCell, styles.colPosition]}>{fixedNetName}</Text>
-              <Text style={[styles.tableCell, styles.colMonthly]}>
-                {formatCurrency(fixedNetMonthly)}
+              <Text style={[styles.tableCell, styles.colPosition]}>{hardwareName}</Text>
+              <Text style={[styles.tableCell, styles.colOneTime]}>
+                {hasHardware ? "inklusive" : "–"}
+              </Text>
+            </View>
+
+            {/* Mobile */}
+            <View style={[styles.tableRow, styles.tableRowAlt]}>
+              <Text style={[styles.tableCell, styles.colPosition]}>
+                {tariffName} {option.mobile.quantity > 1 ? `(×${option.mobile.quantity})` : ""}
               </Text>
               <Text style={[styles.tableCell, styles.colOneTime]}>
-                {oneTimeTotal > 0 ? formatCurrency(oneTimeTotal) : "–"}
+                {option.mobile.contractType === "new" ? formatCurrency(0) : "–"}
               </Text>
             </View>
-          )}
-          
-          {/* Fixed IP (if enabled) */}
-          {option.fixedNet.fixedIpEnabled && (
-            <View style={[styles.tableRow, styles.tableRowAlt]}>
-              <Text style={[styles.tableCell, styles.colPosition]}>Feste IP-Adresse</Text>
-              <Text style={[styles.tableCell, styles.colMonthly]}>
-                {formatCurrency(5.00)}
-              </Text>
-              <Text style={[styles.tableCell, styles.colOneTime]}>–</Text>
-            </View>
-          )}
+
+            {/* Fixed Net */}
+            {option.fixedNet.enabled && (
+              <View style={styles.tableRow}>
+                <Text style={[styles.tableCell, styles.colPosition]}>{fixedNetName}</Text>
+                <Text style={[styles.tableCell, styles.colOneTime]}>
+                  {oneTimeTotal > 0 ? formatCurrency(oneTimeTotal) : "–"}
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
-        
+
+        {/* 2. Zahlungsplan (Payment Schedule) */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Zahlungsplan (Monatliche Kosten)</Text>
+          <View style={styles.table}>
+            <View style={styles.tableHeader}>
+              <Text style={[styles.tableHeaderCell, styles.colPosition]}>Zeitraum</Text>
+              <Text style={[styles.tableHeaderCell, styles.colMonthly]}>Betrag (Netto)</Text>
+            </View>
+            {result.periods.map((period, idx) => (
+              <View key={idx} style={[styles.tableRow, idx % 2 === 1 ? styles.tableRowAlt : {}]}>
+                <Text style={[styles.tableCell, styles.colPosition]}>
+                  {period.label || `Monat ${period.fromMonth} – ${period.toMonth}`}
+                </Text>
+                <Text style={[styles.tableCell, styles.colMonthly]}>
+                  {formatCurrency(period.monthly.net)}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
         {/* Summary */}
         <View style={styles.summarySection}>
           <View style={styles.summaryRow}>
@@ -188,17 +195,17 @@ export function OfferPdf({ option, result, validDays = 14, branding = DEFAULT_BR
             <Text style={styles.summaryTotalValue}>{formatCurrency(result.totals.avgTermNet)}</Text>
           </View>
         </View>
-        
+
         {/* Legal */}
         <View style={styles.legalSection}>
           <Text style={styles.legalText}>
-            Alle Preise verstehen sich zzgl. 19% MwSt. sofern nicht anders angegeben. 
+            Alle Preise verstehen sich zzgl. 19% MwSt. sofern nicht anders angegeben.
             Dieses Angebot ist unverbindlich und gilt vorbehaltlich Verfügbarkeit und Bonitätsprüfung.
             Es gelten die Allgemeinen Geschäftsbedingungen der Vodafone GmbH.
             Mindestvertragslaufzeit: {option.meta.termMonths} Monate.
           </Text>
         </View>
-        
+
         {/* Footer */}
         <View style={styles.footer}>
           <Text style={styles.footerLeft}>

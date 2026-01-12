@@ -124,9 +124,9 @@ export function Wizard() {
     }
   }, [isLoadingVersions, versions.length, seedDefaultVersion, isSeeding, isSupabaseAuth, canAccessAdmin]);
 
-  // Accordion open sections (multiple can be open)
-  // Initial: Only hardware section open for clearer first-5-seconds focus
-  const [openSections, setOpenSections] = useState<string[]>(["hardware"]);
+  // Accordion active section (Single Focus Mode)
+  // Initial: Only hardware section open
+  const [activeSection, setActiveSection] = useState<string>("hardware");
   const [activeOption, setActiveOption] = useState<1 | 2>(1);
   const [viewMode, setViewMode] = useState<ViewMode>(policy.defaultViewMode);
 
@@ -162,11 +162,14 @@ export function Wizard() {
       setOption1(draft.option1);
       setOption2(draft.option2);
       setActiveOption(draft.activeOption);
-      // Open relevant sections based on config
-      const sections = ["mobile"];
-      if (draft.option1.hardware.ekNet > 0) sections.unshift("hardware");
-      if (draft.option1.fixedNet.enabled) sections.push("fixedNet");
-      setOpenSections(sections);
+      // Open relevant section based on config
+      if (draft.option1.hardware.ekNet > 0) {
+        setActiveSection("hardware");
+      } else {
+        setActiveSection("mobile");
+      }
+      // If fixed net was last edited, maybe go there? simplified to logic above.
+
       toast.success("Entwurf wiederhergestellt", { description: "Deine letzte Konfiguration wurde geladen." });
     }
     setShowRestoreDialog(false);
@@ -185,20 +188,20 @@ export function Wizard() {
   const handleQuickStartSelect = useCallback((option: string) => {
     switch (option) {
       case "sim_only":
-        setOpenSections(["mobile"]);
+        setActiveSection("mobile");
         break;
       case "with_hardware":
-        setOpenSections(["hardware", "mobile"]);
+        setActiveSection("hardware");
         break;
       case "with_fixednet":
-        setOpenSections(["hardware", "mobile", "fixedNet"]);
+        setActiveSection("hardware"); // Start with hardware then flow
         setOption1(prev => ({
           ...prev,
           fixedNet: { ...prev.fixedNet, enabled: true }
         }));
         break;
       case "team_deal":
-        setOpenSections(["hardware", "mobile"]);
+        setActiveSection("mobile");
         setOption1(prev => ({
           ...prev,
           mobile: { ...prev.mobile, quantity: 3 }
@@ -214,7 +217,7 @@ export function Wizard() {
         option1,
         option2,
         activeOption,
-        currentStep: "hardware", // Accordion mode - no single step
+        currentStep: activeSection as WizardStep,
       });
     }
   }, [option1, option2, activeOption, autoSave]);
@@ -353,7 +356,8 @@ export function Wizard() {
     setOption1(freshState);
     setOption2(createDefaultOptionState());
     setActiveOption(1);
-    setOpenSections(["hardware", "mobile"]);
+    setActiveOption(1);
+    setActiveSection("hardware");
 
     toast.success("Bereit für nächsten Tarif", { description: "Konfiguriere jetzt den nächsten Tarif für dieses Angebot." });
   }, []);
@@ -477,9 +481,9 @@ export function Wizard() {
 
       {/* Demo Mode Banner - shown when using fallback catalog */}
       {usingFallbackCatalog && (
-        <div className="bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200 dark:border-amber-800 px-4 py-2">
+        <div className="bg-muted/50 border-b border-border px-4 py-1">
           <div className="container mx-auto flex items-center justify-between gap-2 text-sm">
-            <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
+            <div className="flex items-center gap-2 text-muted-foreground scale-90 origin-left">
               <Zap className="w-4 h-4" />
               <span>
                 <strong>Demo-Modus (FIXED):</strong> Es werden Beispieldaten verwendet.
@@ -502,21 +506,16 @@ export function Wizard() {
           {/* Left: Progress Indicator */}
           <WizardProgress
             currentStep={
-              basketItems.length > 0 ? 3 :
-                option1.mobile.tariffId ? 2 : 1
+              activeSection === "hardware" ? 1 : 2
             }
             hasHardware={option1.hardware.ekNet > 0 || option1.hardware.name === "KEINE HARDWARE"}
             hasTariff={!!option1.mobile.tariffId}
             hasOffer={basketItems.length > 0}
             onStepClick={(step) => {
               if (step === 1) {
-                setOpenSections(prev =>
-                  prev.includes("hardware") ? prev : [...prev, "hardware"]
-                );
+                setActiveSection("hardware");
               } else if (step === 2) {
-                setOpenSections(prev =>
-                  prev.includes("mobile") ? prev : [...prev, "mobile"]
-                );
+                setActiveSection("mobile");
               }
             }}
           />
@@ -588,15 +587,16 @@ export function Wizard() {
               )}
 
               <Accordion
-                type="multiple"
-                value={openSections}
-                onValueChange={setOpenSections}
+                type="single"
+                collapsible
+                value={activeSection}
+                onValueChange={setActiveSection}
                 className="space-y-3"
               >
                 {/* Hardware Section */}
                 <AccordionItem value="hardware" className={cn(
                   "border rounded-xl overflow-hidden transition-opacity",
-                  !openSections.includes("hardware") && "opacity-60 hover:opacity-100"
+                  activeSection !== "hardware" && "opacity-60 hover:opacity-100"
                 )}>
                   <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50 [&[data-state=open]]:bg-muted/30">
                     <div className="flex items-center gap-3 flex-1">
@@ -626,10 +626,8 @@ export function Wizard() {
                       value={activeState.hardware}
                       onChange={(hardware) => setActiveState({ ...activeState, hardware })}
                       onHardwareSelected={() => {
-                        // Open mobile section if not already open - NO auto-collapse
-                        if (!openSections.includes("mobile")) {
-                          setOpenSections(prev => [...prev, "mobile"]);
-                        }
+                        // Focus mobile section
+                        setActiveSection("mobile");
                       }}
                       viewMode={effectiveViewMode}
                     />
@@ -639,7 +637,7 @@ export function Wizard() {
                 {/* Mobile Section */}
                 <AccordionItem value="mobile" className={cn(
                   "border rounded-xl overflow-hidden transition-opacity",
-                  !openSections.includes("mobile") && "opacity-60 hover:opacity-100"
+                  activeSection !== "mobile" && "opacity-60 hover:opacity-100"
                 )}>
                   <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50 [&[data-state=open]]:bg-muted/30">
                     <div className="flex items-center gap-3 flex-1">
@@ -690,7 +688,7 @@ export function Wizard() {
                 {fixedNetModuleEnabled && (
                   <AccordionItem value="fixedNet" className={cn(
                     "border rounded-xl overflow-hidden transition-opacity",
-                    !openSections.includes("fixedNet") && "opacity-60 hover:opacity-100"
+                    activeSection !== "fixedNet" && "opacity-60 hover:opacity-100"
                   )}>
                     <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50 [&[data-state=open]]:bg-muted/30">
                       <div className="flex items-center gap-3 flex-1">

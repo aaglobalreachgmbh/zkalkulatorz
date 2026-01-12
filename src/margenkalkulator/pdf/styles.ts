@@ -12,7 +12,7 @@ import { DEFAULT_BRANDING } from "@/hooks/useTenantBranding";
 export function createPdfStyles(branding: TenantBranding = DEFAULT_BRANDING) {
   const primaryColor = branding.primaryColor || DEFAULT_BRANDING.primaryColor;
   const secondaryColor = branding.secondaryColor || DEFAULT_BRANDING.secondaryColor;
-  
+
   return StyleSheet.create({
     page: {
       padding: 40,
@@ -20,7 +20,7 @@ export function createPdfStyles(branding: TenantBranding = DEFAULT_BRANDING) {
       fontSize: 10,
       backgroundColor: "#ffffff",
     },
-    
+
     // Header
     header: {
       flexDirection: "row",
@@ -31,48 +31,48 @@ export function createPdfStyles(branding: TenantBranding = DEFAULT_BRANDING) {
       borderBottomColor: primaryColor,
       paddingBottom: 20,
     },
-    
+
     logo: {
       fontSize: 18,
       fontWeight: "bold",
       color: primaryColor,
     },
-    
+
     logoSubtext: {
       fontSize: 8,
       color: "#666666",
       marginTop: 2,
     },
-    
+
     headerRight: {
       textAlign: "right",
     },
-    
+
     headerTitle: {
       fontSize: 20,
       fontWeight: "bold",
       color: secondaryColor,
     },
-    
+
     headerDate: {
       fontSize: 9,
       color: "#666666",
       marginTop: 4,
     },
-    
+
     // Logo Image Container
     logoContainer: {
       width: 60,
       height: 40,
       marginRight: 10,
     },
-    
+
     logoImage: {
       width: "100%",
       height: "100%",
       objectFit: "contain",
     },
-    
+
     // Info Section
     infoSection: {
       marginBottom: 25,
@@ -80,36 +80,51 @@ export function createPdfStyles(branding: TenantBranding = DEFAULT_BRANDING) {
       backgroundColor: "#f8f9fa",
       borderRadius: 4,
     },
-    
+
+    // Generic Section (New)
+    section: {
+      marginBottom: 20,
+    },
+
+    sectionTitle: {
+      fontSize: 12,
+      fontWeight: "bold",
+      marginBottom: 10,
+      color: secondaryColor,
+      borderBottomWidth: 1,
+      borderBottomColor: "#e5e5e5",
+      paddingBottom: 5,
+    },
+
     infoTitle: {
       fontSize: 12,
       fontWeight: "bold",
       marginBottom: 8,
       color: secondaryColor,
     },
-    
+
     infoRow: {
       flexDirection: "row",
       marginBottom: 4,
     },
-    
+
     infoLabel: {
       width: 100,
       fontSize: 9,
       color: "#666666",
     },
-    
+
     infoValue: {
       fontSize: 9,
       color: secondaryColor,
       fontWeight: "bold",
     },
-    
+
     // Table
     table: {
       marginBottom: 25,
     },
-    
+
     tableHeader: {
       flexDirection: "row",
       backgroundColor: secondaryColor,
@@ -117,37 +132,37 @@ export function createPdfStyles(branding: TenantBranding = DEFAULT_BRANDING) {
       borderTopLeftRadius: 4,
       borderTopRightRadius: 4,
     },
-    
+
     tableHeaderCell: {
       color: "#ffffff",
       fontSize: 9,
       fontWeight: "bold",
     },
-    
+
     tableRow: {
       flexDirection: "row",
       padding: 12,
       borderBottomWidth: 1,
       borderBottomColor: "#e5e5e5",
     },
-    
+
     tableRowAlt: {
       backgroundColor: "#fafafa",
     },
-    
+
     tableCell: {
       fontSize: 9,
       color: secondaryColor,
     },
-    
+
     tableCellRight: {
       textAlign: "right",
     },
-    
+
     colPosition: { width: "50%" },
     colMonthly: { width: "25%", textAlign: "right" },
     colOneTime: { width: "25%", textAlign: "right" },
-    
+
     // Summary
     summarySection: {
       marginTop: 20,
@@ -155,24 +170,24 @@ export function createPdfStyles(branding: TenantBranding = DEFAULT_BRANDING) {
       backgroundColor: secondaryColor,
       borderRadius: 4,
     },
-    
+
     summaryRow: {
       flexDirection: "row",
       justifyContent: "space-between",
       marginBottom: 8,
     },
-    
+
     summaryLabel: {
       fontSize: 10,
       color: "#cccccc",
     },
-    
+
     summaryValue: {
       fontSize: 10,
       color: "#ffffff",
       fontWeight: "bold",
     },
-    
+
     summaryTotal: {
       flexDirection: "row",
       justifyContent: "space-between",
@@ -181,19 +196,19 @@ export function createPdfStyles(branding: TenantBranding = DEFAULT_BRANDING) {
       borderTopWidth: 1,
       borderTopColor: "#444444",
     },
-    
+
     summaryTotalLabel: {
       fontSize: 14,
       color: "#ffffff",
       fontWeight: "bold",
     },
-    
+
     summaryTotalValue: {
       fontSize: 22,
       color: primaryColor,
       fontWeight: "bold",
     },
-    
+
     // Footer
     footer: {
       position: "absolute",
@@ -207,18 +222,18 @@ export function createPdfStyles(branding: TenantBranding = DEFAULT_BRANDING) {
       borderTopWidth: 1,
       borderTopColor: "#e5e5e5",
     },
-    
+
     footerLeft: {
       fontSize: 8,
       color: "#999999",
     },
-    
+
     footerRight: {
       fontSize: 8,
       color: "#999999",
       textAlign: "right",
     },
-    
+
     // Legal Text
     legalSection: {
       marginTop: 30,
@@ -226,7 +241,7 @@ export function createPdfStyles(branding: TenantBranding = DEFAULT_BRANDING) {
       borderTopWidth: 1,
       borderTopColor: "#e5e5e5",
     },
-    
+
     legalText: {
       fontSize: 7,
       color: "#999999",
@@ -243,7 +258,7 @@ export const styles = createPdfStyles(DEFAULT_BRANDING);
  */
 export function createDealerStyles(branding: TenantBranding = DEFAULT_BRANDING) {
   const primaryColor = branding.primaryColor || DEFAULT_BRANDING.primaryColor;
-  
+
   return StyleSheet.create({
     dealerSection: {
       marginTop: 20,
@@ -317,7 +332,7 @@ export function createDealerStyles(branding: TenantBranding = DEFAULT_BRANDING) 
 export function createReportStyles(branding: TenantBranding = DEFAULT_BRANDING) {
   const primaryColor = branding.primaryColor || DEFAULT_BRANDING.primaryColor;
   const secondaryColor = branding.secondaryColor || DEFAULT_BRANDING.secondaryColor;
-  
+
   return StyleSheet.create({
     page: {
       padding: 40,

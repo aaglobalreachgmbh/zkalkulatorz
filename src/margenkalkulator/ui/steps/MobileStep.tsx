@@ -18,7 +18,7 @@ import {
   getMobileTariffFromCatalog,
   checkGKEligibility,
 } from "@/margenkalkulator";
-import { Signal, AlertTriangle, Minus, Plus, Ban } from "lucide-react";
+import { Signal, AlertTriangle, Minus, Plus, Ban, Check } from "lucide-react";
 import { InlineTariffConfig } from "../components/InlineTariffConfig";
 import { useEmployeeSettings, isTariffBlocked } from "@/margenkalkulator/hooks/useEmployeeSettings";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
@@ -139,8 +139,8 @@ export function MobileStep({
               <button
                 onClick={() => updateField("contractType", "new")}
                 className={`px-6 py-2.5 text-sm font-medium rounded-l-lg transition-colors ${value.contractType === "new"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
                   }`}
               >
                 Neuvertrag
@@ -148,8 +148,8 @@ export function MobileStep({
               <button
                 onClick={() => updateField("contractType", "renewal")}
                 className={`px-6 py-2.5 text-sm font-medium rounded-r-lg transition-colors ${value.contractType === "renewal"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
                   }`}
               >
                 Verlängerung (VVL)
@@ -196,8 +196,8 @@ export function MobileStep({
           <button
             onClick={() => setSelectedFamily("all")}
             className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${selectedFamily === "all"
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:bg-muted/80"
+              ? "bg-primary text-primary-foreground"
+              : "bg-muted text-muted-foreground hover:bg-muted/80"
               }`}
           >
             Alle Tarife
@@ -207,8 +207,8 @@ export function MobileStep({
               key={family}
               onClick={() => setSelectedFamily(family)}
               className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${selectedFamily === family
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground hover:bg-muted/80"
                 }`}
             >
               {FAMILY_LABELS[family]}
@@ -253,7 +253,12 @@ export function MobileStep({
                 {/* Family Badge */}
                 <div className="flex items-center justify-between mb-2">
                   <span className={`text-[10px] font-bold tracking-wider uppercase ${familyColor}`}>
-                    {familyLabel}
+                    {isSelected ? (
+                      <span className="flex items-center gap-1 text-primary">
+                        <Check className="w-3 h-3" />
+                        Ausgewählt
+                      </span>
+                    ) : familyLabel}
                   </span>
                   {isUnlimited && (
                     <Badge variant="secondary" className="text-[10px] h-4 px-1">

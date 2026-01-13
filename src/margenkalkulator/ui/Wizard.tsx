@@ -792,8 +792,8 @@ export function Wizard() {
         </div>
       </main>
 
-      {/* Footer with Floating Action Bar - Desktop + Mobile */}
-      <footer className="sticky bottom-0 z-40 shrink-0 pb-safe">
+      {/* Footer with Floating Action Bar - Mobile Only */}
+      <footer className="sticky bottom-0 z-40 shrink-0 pb-safe lg:hidden">
         <FloatingActionBar
           option={option1}
           result={activeResult}

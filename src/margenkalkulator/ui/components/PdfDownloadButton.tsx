@@ -23,6 +23,7 @@ interface PdfDownloadButtonProps {
   type?: "customer" | "dealer";
   /** Current view mode - required for dealer PDF security check */
   viewMode?: ViewMode;
+  className?: string;
 }
 
 // SECURITY: Maximum PDF generation time (prevents DoS via complex documents)
@@ -44,6 +45,7 @@ export function PdfDownloadButton({
   size = "sm",
   type = "customer",
   viewMode = "customer",
+  className,
 }: PdfDownloadButtonProps) {
   const [loading, setLoading] = useState(false);
   const { trackPdfExported } = useActivityTracker();
@@ -56,7 +58,7 @@ export function PdfDownloadButton({
   // 2. User has permission to view margins
   // 3. User has permission to export PDF
   // 4. No active customer session
-  const canGenerateDealerPdf = 
+  const canGenerateDealerPdf =
     type === "dealer" &&
     visibility.effectiveMode !== "customer" &&
     canViewMargins &&
@@ -84,13 +86,13 @@ export function PdfDownloadButton({
       // Dynamically import PDF dependencies based on type
       const [{ pdf }, pdfComponent] = await Promise.all([
         import("@react-pdf/renderer"),
-        type === "dealer" 
+        type === "dealer"
           ? import("../../pdf/DealerPdf")
           : import("../../pdf/OfferPdf"),
       ]);
 
       // Generate PDF blob with timeout protection
-      const PdfComponent = type === "dealer" 
+      const PdfComponent = type === "dealer"
         ? (pdfComponent as { DealerPdf: typeof import("../../pdf/DealerPdf").DealerPdf }).DealerPdf
         : (pdfComponent as { OfferPdf: typeof import("../../pdf/OfferPdf").OfferPdf }).OfferPdf;
 
@@ -128,7 +130,7 @@ export function PdfDownloadButton({
       URL.revokeObjectURL(url);
 
       toast.success(type === "dealer" ? "Händler-PDF wurde heruntergeladen" : "Kunden-PDF wurde heruntergeladen");
-      
+
       // Track PDF export
       trackPdfExported(undefined, `${tariffName}_${type}`);
     } catch (e) {
@@ -154,7 +156,8 @@ export function PdfDownloadButton({
       size={size}
       onClick={handleDownload}
       disabled={loading}
-      className="gap-2"
+      disabled={loading}
+      className={cn("gap-2", className)}
     >
       {loading ? (
         <Loader2 className="w-4 h-4 animate-spin" />

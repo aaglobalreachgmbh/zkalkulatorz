@@ -10,9 +10,17 @@
 // Actions moved to FloatingActionBar for better UX.
 // ============================================
 
-import { Smartphone, Signal, Wifi, Check, Tag, FileText, Calendar } from "lucide-react";
+import { Smartphone, Signal, Wifi, Check, Tag, FileText, Calendar, LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { OfferOptionState, CalculationResult, ViewMode } from "../../engine/types";
 import { getMobileTariffFromCatalog } from "../../engine/catalogResolver";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
@@ -231,37 +239,67 @@ export function SummarySidebar({
           </div>
         )}
 
-        {/* Secondary Actions (PDF, Calendar) */}
+        {/* Secondary Actions (Actions Dropdown) */}
         <div className="space-y-2 pt-3 border-t border-border">
-          <div className="grid grid-cols-2 gap-2">
-            <PdfDownloadButton
-              option={option}
-              result={result}
-              variant="outline"
-              size="sm"
-              type="customer"
-              viewMode={viewMode}
-            />
-            {showDealerEconomics && (
-              <PdfDownloadButton
-                option={option}
-                result={result}
-                variant="outline"
-                size="sm"
-                type="dealer"
-                viewMode={viewMode}
-              />
-            )}
-          </div>
-
-          <CreateCalendarEventModal
-            trigger={
-              <Button variant="ghost" size="sm" className="w-full gap-2 text-muted-foreground/70 hover:text-foreground">
-                <Calendar className="w-4 h-4" />
-                Termin erstellen
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="w-full gap-2 text-muted-foreground/70 hover:text-foreground">
+                <LayoutGrid className="w-4 h-4" />
+                Export & Aktionen
               </Button>
-            }
-          />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Dokumente</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem asChild>
+                <div className="w-full cursor-pointer focus:bg-accent focus:text-accent-foreground p-0">
+                  <PdfDownloadButton
+                    option={option}
+                    result={result}
+                    variant="ghost"
+                    size="sm"
+                    type="customer"
+                    viewMode={viewMode}
+                    className="w-full justify-start px-2 py-1.5 h-auto font-normal"
+                  />
+                </div>
+              </DropdownMenuItem>
+
+              {showDealerEconomics && (
+                <DropdownMenuItem asChild>
+                  <div className="w-full cursor-pointer focus:bg-accent focus:text-accent-foreground p-0">
+                    <PdfDownloadButton
+                      option={option}
+                      result={result}
+                      variant="ghost"
+                      size="sm"
+                      type="dealer"
+                      viewMode={viewMode}
+                      className="w-full justify-start px-2 py-1.5 h-auto font-normal"
+                    />
+                  </div>
+                </DropdownMenuItem>
+              )}
+
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Tools</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem asChild onSelect={(e) => e.preventDefault()}>
+                <div className="w-full p-0">
+                  <CreateCalendarEventModal
+                    trigger={
+                      <button className="w-full flex items-center justify-start gap-2 px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground rounded-sm transition-colors text-left">
+                        <Calendar className="w-4 h-4" />
+                        Termin erstellen
+                      </button>
+                    }
+                  />
+                </div>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </div>

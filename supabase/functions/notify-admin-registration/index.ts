@@ -18,7 +18,7 @@ function getCorsHeaders(origin: string | null): Record<string, string> {
   const headers: Record<string, string> = {
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   };
-  
+
   if (origin) {
     const isAllowed = ALLOWED_ORIGINS.some((allowed) =>
       typeof allowed === "string" ? allowed === origin : allowed.test(origin)
@@ -27,7 +27,7 @@ function getCorsHeaders(origin: string | null): Record<string, string> {
       headers["Access-Control-Allow-Origin"] = origin;
     }
   }
-  
+
   return headers;
 }
 
@@ -37,9 +37,11 @@ interface RegistrationNotification {
   displayName?: string;
 }
 
+const ADMIN_EMAILS = ["akar@allenetze.de", "info@aandaglobal.de"];
+
 const handler = async (req: Request): Promise<Response> => {
   console.log("[notify-admin-registration] Request received");
-  
+
   const origin = req.headers.get("origin");
   const corsHeaders = getCorsHeaders(origin);
 
@@ -68,14 +70,6 @@ const handler = async (req: Request): Promise<Response> => {
     const { userId, email, displayName }: RegistrationNotification = await req.json();
     console.log(`[notify-admin-registration] New user: ${email}`);
 
-    if (!adminEmail) {
-      console.error("[notify-admin-registration] SECURITY_ALERT_EMAIL not configured");
-      return new Response(JSON.stringify({ error: "Admin email not configured" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     // Get current user count for context
     const { count: userCount } = await supabase
       .from("profiles")
@@ -87,33 +81,96 @@ const handler = async (req: Request): Promise<Response> => {
       timeStyle: "medium",
     });
 
-    // Send email notification using fetch
-    const emailRes = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: `MargenKalkulator <${senderEmailAddress}>`,
-        to: [adminEmail],
-        subject: `Neue Registrierung: ${displayName || email}`,
-        html: `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6;color:#333}.container{max-width:600px;margin:0 auto;padding:20px}.header{background:linear-gradient(135deg,#e60000 0%,#990000 100%);color:white;padding:30px;border-radius:10px 10px 0 0;text-align:center}.content{background:#f9f9f9;padding:30px;border-radius:0 0 10px 10px}.info-box{background:white;border-left:4px solid #e60000;padding:15px;margin:15px 0;border-radius:0 5px 5px 0}.label{color:#666;font-size:12px;text-transform:uppercase;letter-spacing:1px}.value{font-size:16px;font-weight:600;color:#333;margin-top:5px}.stats{display:flex;justify-content:space-around;margin-top:20px;text-align:center}.stat{padding:15px}.stat-number{font-size:24px;font-weight:bold;color:#e60000}.footer{text-align:center;margin-top:20px;color:#666;font-size:12px}</style></head><body><div class="container"><div class="header"><h1 style="margin:0">Neue Registrierung</h1><p style="margin:10px 0 0 0;opacity:0.9">MargenKalkulator</p></div><div class="content"><p>Ein neuer Benutzer hat sich erfolgreich registriert:</p><div class="info-box"><div class="label">Anzeigename</div><div class="value">${displayName || "Nicht angegeben"}</div></div><div class="info-box"><div class="label">E-Mail-Adresse</div><div class="value">${email}</div></div><div class="info-box"><div class="label">Benutzer-ID</div><div class="value" style="font-family:monospace;font-size:14px">${userId}</div></div><div class="info-box"><div class="label">Registrierungszeitpunkt</div><div class="value">${registrationTime}</div></div><div class="stats"><div class="stat"><div class="stat-number">${(userCount || 0) + 1}</div><div class="label">Gesamt Benutzer</div></div></div><div class="footer"><p>Diese E-Mail wurde automatisch vom MargenKalkulator Security System gesendet.</p><p>Um dem neuen Benutzer eine Lizenz zuzuweisen, besuchen Sie das Security Status Dashboard.</p></div></div></div></body></html>`,
-      }),
+    // Generate Approval Link (Direct to Admin Users Page)
+    // Assuming the app is hosted at the origin or we can use a known base URL
+    // For now, we'll try to use the request origin or fallback to lovable URL
+    const appUrl = origin || "https://margenkalkulator.lovable.app";
+    const approvalLink = `${appUrl}/admin/users?highlight=${userId}`;
+
+    // Send email notification to ALL admins
+    const emailPromises = ADMIN_EMAILS.map(adminEmail => {
+      return fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${RESEND_API_KEY}`,
+        },
+        body: JSON.stringify({
+          from: `MargenKalkulator Security <${senderEmailAddress}>`,
+          to: [adminEmail],
+          subject: `🔴 APPROVAL NEEDED: ${displayName || email}`,
+          html: `
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: #032362; color: white; padding: 30px; border-radius: 10px 10px 0 0; text-align: center; }
+                .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e5e5e5; }
+                .alert-box { background: #fffbe6; border: 1px solid #ffe58f; padding: 15px; border-radius: 5px; margin-bottom: 20px; text-align: center; }
+                .info-row { margin-bottom: 12px; border-bottom: 1px solid #eee; padding-bottom: 12px; }
+                .label { font-size: 11px; text-transform: uppercase; color: #666; letter-spacing: 1px; }
+                .value { font-size: 16px; font-weight: 600; color: #333; }
+                .btn { display: inline-block; background: #FEA928; color: #032362; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }
+                .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #999; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <h1 style="margin:0">Neue Registrierung</h1>
+                  <p style="margin:5px 0 0 0; opacity:0.8">Gatekeeper Security System</p>
+                </div>
+                <div class="content">
+                  <div class="alert-box">
+                    <strong>⚠️ Zugriff gesperrt</strong>
+                    <br/>
+                    Dieser Benutzer wartet auf Ihre Freigabe.
+                  </div>
+                  
+                  <div class="info-row">
+                    <div class="label">Name</div>
+                    <div class="value">${displayName || "Nicht angegeben"}</div>
+                  </div>
+                  <div class="info-row">
+                    <div class="label">E-Mail</div>
+                    <div class="value">${email}</div>
+                  </div>
+                  <div class="info-row">
+                    <div class="label">Zeitpunkt</div>
+                    <div class="value">${registrationTime}</div>
+                  </div>
+                  
+                  <div style="text-align: center;">
+                    <a href="${approvalLink}" class="btn">Benutzer jetzt prüfen & freigeben</a>
+                  </div>
+                </div>
+                <div class="footer">
+                  <p>Diese Nachricht wurde an Sie als Super-Admin gesendet.</p>
+                </div>
+              </div>
+            </body>
+            </html>
+          `,
+        }),
+      });
     });
 
-    const emailData = await emailRes.json();
-    console.log("[notify-admin-registration] Email sent:", emailData);
+    await Promise.all(emailPromises);
+    console.log(`[notify-admin-registration] Emails sent to ${ADMIN_EMAILS.length} admins`);
 
     // Log the registration event
     await supabase.from("security_events").insert({
-      event_type: "user_registration",
+      event_type: "user_registration_pending",
       risk_level: "info",
       user_id: userId,
       details: {
         email,
         displayName,
         notificationSent: true,
+        adminsNotified: ADMIN_EMAILS
       },
     });
 

@@ -43,12 +43,11 @@ export function useApprovalStatus(): UseApprovalStatusResult {
         return;
       }
 
-      // If no profile found, user might be new - check if trigger created one
+      // If no profile found, user is NEW and NOT yet approved
       if (!data) {
-        console.log("[useApprovalStatus] No profile found for user:", user.id);
-        // For existing users without profile (edge case), default to approved
-        // New users will have profile created by trigger with is_approved=true
-        setIsApproved(true);
+        console.log("[useApprovalStatus] No profile found for user:", user.id, "Defaulting to PENDING");
+        // STRICT SECURITY: No profile = Not Approved (Pending)
+        setIsApproved(false);
         return;
       }
 
@@ -57,10 +56,10 @@ export function useApprovalStatus(): UseApprovalStatusResult {
       // true = explicitly approved
       // false = explicitly pending
       const approved = data.is_approved !== false;
-      console.log("[useApprovalStatus] User approval status:", { 
-        userId: user.id, 
-        dbValue: data.is_approved, 
-        approved 
+      console.log("[useApprovalStatus] User approval status:", {
+        userId: user.id,
+        dbValue: data.is_approved,
+        approved
       });
       setIsApproved(approved);
     } catch (err) {

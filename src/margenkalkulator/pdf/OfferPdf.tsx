@@ -201,7 +201,7 @@ export function OfferPdf({ option, result, validDays = 14, branding = DEFAULT_BR
           {tariffBreakdown && result.totals.avgTermNet < tariffBreakdown.net && (
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Regulärer Basispreis</Text>
-              <Text style={styles.summaryValue} style={{ textDecoration: "line-through", color: "#9ca3af" }}>
+              <Text style={[styles.summaryValue, { textDecoration: "line-through", color: "#9ca3af" }]}>
                 {formatCurrency(tariffBreakdown.net)}
               </Text>
             </View>

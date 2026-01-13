@@ -282,4 +282,4 @@ export function SecurityProvider({ children }: { children: React.ReactNode }) {
 export default SecurityProvider;
 
 // eslint-disable-next-line react-refresh/only-export-components
-export { useSecurity } from "@/contexts/SecurityContext";
+export { useSecurity, useSecurityOptional } from "@/contexts/SecurityContext";

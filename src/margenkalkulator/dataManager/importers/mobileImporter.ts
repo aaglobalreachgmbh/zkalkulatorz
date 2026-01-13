@@ -3,7 +3,7 @@
 // Supports XLSX and CSV for mobile_tariffs
 // ============================================
 
-import * as XLSX from "xlsx";
+import { parseXLSX } from "./xlsxImporter";
 import type { MobileTariffRow, OMOMatrixRow, ProvisionRow } from "../types";
 
 export type MobileImportResult = {
@@ -23,60 +23,31 @@ export type MobileValidationResult = {
 // ============================================
 
 export async function parseMobileXLSX(file: File): Promise<MobileImportResult> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    
-    reader.onload = (e) => {
-      try {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: "array" });
-        
-        const result: MobileImportResult = {
-          tariffs: [],
-          omoMatrix: [],
-          provisions: [],
-        };
-        
-        // Parse tariffs sheet
-        const tariffSheetNames = ["mobile_tariffs", "Mobilfunk", "Tarife", "tariffs"];
-        for (const name of tariffSheetNames) {
-          if (workbook.Sheets[name]) {
-            const rows = XLSX.utils.sheet_to_json(workbook.Sheets[name], { defval: null, raw: false });
-            result.tariffs = normalizeMobileTariffRows(rows as Record<string, unknown>[]);
-            break;
-          }
-        }
-        
-        // Parse OMO matrix sheet
-        const omoSheetNames = ["omo_matrix", "OMO-Matrix", "OMO Matrix", "omo"];
-        for (const name of omoSheetNames) {
-          if (workbook.Sheets[name]) {
-            const rows = XLSX.utils.sheet_to_json(workbook.Sheets[name], { defval: null, raw: false });
-            result.omoMatrix = normalizeOMOMatrixRows(rows as Record<string, unknown>[]);
-            break;
-          }
-        }
-        
-        // Parse provisions sheet
-        const provSheetNames = ["provisions", "Provisionen", "Provision"];
-        for (const name of provSheetNames) {
-          if (workbook.Sheets[name]) {
-            const rows = XLSX.utils.sheet_to_json(workbook.Sheets[name], { defval: null, raw: false });
-            result.provisions = normalizeProvisionRows(rows as Record<string, unknown>[]);
-            break;
-          }
-        }
-        
-        resolve(result);
-        
-      } catch (err) {
-        reject(new Error(`XLSX parsing failed: ${err instanceof Error ? err.message : "Unknown error"}`));
-      }
-    };
-    
-    reader.onerror = () => reject(new Error("File read failed"));
-    reader.readAsArrayBuffer(file);
-  });
+  // Use the central safe parser (ExcelJS based)
+  const parsedData = await parseXLSX(file);
+
+  const result: MobileImportResult = {
+    tariffs: [],
+    omoMatrix: [],
+    provisions: [],
+  };
+
+  // Extract and normalize data from parsed sheets
+  // The central parser uses canonical keys from TEMPLATE_SCHEMA
+
+  if (parsedData.mobile_tariffs) {
+    result.tariffs = normalizeMobileTariffRows(parsedData.mobile_tariffs);
+  }
+
+  if (parsedData.omo_matrix) {
+    result.omoMatrix = normalizeOMOMatrixRows(parsedData.omo_matrix);
+  }
+
+  if (parsedData.provisions) {
+    result.provisions = normalizeProvisionRows(parsedData.provisions);
+  }
+
+  return result;
 }
 
 // ============================================
@@ -97,8 +68,8 @@ function normalizeMobileTariffRows(rows: Record<string, unknown>[]): MobileTarif
       const minTermMonths = parseGermanNumber(row.minTermMonths || row.min_term_months || row.Laufzeit || 24) ?? 24;
       const baseSim = parseGermanNumber(row.base_sim_only_net || row.baseSim || row.BasisPreis || 0) ?? 0;
       const dataDe = row.data_de || row.Datenvolumen || row.data || "unlimited";
-      const dataDeValue: string | number = typeof dataDe === "string" && dataDe.toLowerCase() === "unlimited" 
-        ? "unlimited" 
+      const dataDeValue: string | number = typeof dataDe === "string" && dataDe.toLowerCase() === "unlimited"
+        ? "unlimited"
         : (parseGermanNumber(dataDe) ?? String(dataDe));
       return {
         id,
@@ -136,7 +107,7 @@ function normalizeOMOMatrixRows(rows: Record<string, unknown>[]): OMOMatrixRow[]
     })
     .map(row => {
       const tariffId = String(row.tariff_id || row.tariffId || row.TarifID || "").trim();
-      
+
       return {
         tariff_id: tariffId,
         omo_0: parseGermanNumber(row.omo_0 || row.OMO0) ?? 0,
@@ -160,7 +131,7 @@ function normalizeProvisionRows(rows: Record<string, unknown>[]): ProvisionRow[]
     .map(row => {
       const tariffId = String(row.tariff_id || row.tariffId || row.TarifID || "").trim();
       const tariffType = String(row.tariff_type || row.TarifTyp || "mobile").toLowerCase();
-      
+
       return {
         tariff_id: tariffId,
         tariff_type: tariffType as "mobile" | "fixednet" | "iot" | "voip",
@@ -182,11 +153,11 @@ export function validateMobileImport(result: MobileImportResult): MobileValidati
   const errors: MobileValidationResult["errors"] = [];
   const warnings: string[] = [];
   const seenTariffIds = new Set<string>();
-  
+
   // Validate tariffs
   result.tariffs.forEach((row, idx) => {
     const rowNum = idx + 2;
-    
+
     if (!row.id) {
       errors.push({ row: rowNum, field: "id", message: "Tarif-ID fehlt", sheet: "mobile_tariffs" });
     } else if (seenTariffIds.has(row.id)) {
@@ -194,38 +165,38 @@ export function validateMobileImport(result: MobileImportResult): MobileValidati
     } else {
       seenTariffIds.add(row.id);
     }
-    
+
     if (!row.name) {
       errors.push({ row: rowNum, field: "name", message: "Tarifname fehlt", sheet: "mobile_tariffs" });
     }
-    
+
     if (row.base_sim_only_net < 0) {
       errors.push({ row: rowNum, field: "base_sim_only_net", message: "Negativer Basispreis", sheet: "mobile_tariffs" });
     }
   });
-  
+
   // Validate OMO matrix references
   result.omoMatrix.forEach((row, idx) => {
     const rowNum = idx + 2;
-    
+
     if (!seenTariffIds.has(row.tariff_id)) {
       warnings.push(`OMO-Matrix Zeile ${rowNum}: Tarif "${row.tariff_id}" nicht gefunden`);
     }
   });
-  
+
   // Validate provisions references
   result.provisions.forEach((row, idx) => {
     const rowNum = idx + 2;
-    
+
     if (!seenTariffIds.has(row.tariff_id)) {
       warnings.push(`Provisionen Zeile ${rowNum}: Tarif "${row.tariff_id}" nicht gefunden`);
     }
-    
+
     if (row.provision_new_net < 0) {
       errors.push({ row: rowNum, field: "provision_new_net", message: "Negative Provision", sheet: "provisions" });
     }
   });
-  
+
   return {
     isValid: errors.length === 0,
     errors,
@@ -256,21 +227,21 @@ export function diffMobileTariffs(
   const currentMap = new Map(current.map(t => [t.id, t]));
   const nextMap = new Map(next.map(t => [t.id, t]));
   const items: MobileDiffItem[] = [];
-  
+
   // Added
   for (const [id, tariff] of nextMap) {
     if (!currentMap.has(id)) {
       items.push({ id, type: "added", name: tariff.name });
     }
   }
-  
+
   // Removed
   for (const [id, tariff] of currentMap) {
     if (!nextMap.has(id)) {
       items.push({ id, type: "removed", name: tariff.name });
     }
   }
-  
+
   // Changed
   for (const [id, nextTariff] of nextMap) {
     const current = currentMap.get(id);
@@ -287,7 +258,7 @@ export function diffMobileTariffs(
       }
     }
   }
-  
+
   return {
     items,
     summary: {

@@ -8,12 +8,12 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Upload, 
-  Download, 
-  RotateCcw, 
-  Check, 
-  AlertTriangle, 
+import {
+  Upload,
+  Download,
+  RotateCcw,
+  Check,
+  AlertTriangle,
   ArrowLeft,
   Plus,
   Minus,
@@ -22,7 +22,7 @@ import {
   Package,
   Image as ImageIcon,
 } from "lucide-react";
-import { 
+import {
   parseHardwareXLSX,
   parseHardwareCSV,
   validateHardwareRows,
@@ -64,7 +64,7 @@ export default function HardwareManager() {
       sort_order: h.sortOrder ?? 999,
       active: true,
     }));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshKey]);
 
   const isCustomActive = hasCustomHardware();
@@ -88,33 +88,33 @@ export default function HardwareManager() {
   const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
-    
+
     // Validate file extension
     const validExtensions = /\.(xlsx|xls|csv)$/i;
     if (!selectedFile.name.match(validExtensions)) {
       toast.error("Bitte laden Sie eine XLSX-, XLS- oder CSV-Datei hoch");
       return;
     }
-    
+
     setFile(selectedFile);
     setIsLoading(true);
     setParsedData(null);
     setValidation(null);
     setDiff(null);
-    
+
     try {
       // Parse file based on extension
       const isCSV = selectedFile.name.toLowerCase().endsWith(".csv");
-      const rows = isCSV 
+      const rows = isCSV
         ? await parseHardwareCSV(selectedFile)
         : await parseHardwareXLSX(selectedFile);
-      
+
       // Validate
       const validationResult = validateHardwareRows(rows);
       setValidation(validationResult);
-      
+
       if (!validationResult.isValid) {
-        const missingColumnsErrors = validationResult.errors.filter(e => 
+        const missingColumnsErrors = validationResult.errors.filter(e =>
           e.message.includes("Spalte") || e.message.includes("fehlt")
         );
         if (missingColumnsErrors.length > 0) {
@@ -122,13 +122,13 @@ export default function HardwareManager() {
         }
         return;
       }
-      
+
       setParsedData(rows);
-      
+
       // Calculate diff
       const diffResult = diffHardware(currentHardware, rows);
       setDiff(diffResult);
-      
+
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Datei konnte nicht gelesen werden");
     } finally {
@@ -138,18 +138,18 @@ export default function HardwareManager() {
 
   const handleApply = useCallback(() => {
     if (!parsedData || !validation?.isValid) return;
-    
+
     try {
       updateHardwareCatalog(parsedData);
       setRefreshKey(k => k + 1);
       toast.success(`${parsedData.length} Geräte wurden gespeichert`);
-      
+
       // Reset form
       setFile(null);
       setParsedData(null);
       setValidation(null);
       setDiff(null);
-      
+
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Fehler beim Speichern");
     }
@@ -165,8 +165,8 @@ export default function HardwareManager() {
     toast.success("Standard-Hardware ist wieder aktiv");
   }, []);
 
-  const handleDownloadTemplate = useCallback(() => {
-    const blob = generateHardwareTemplate();
+  const handleDownloadTemplate = useCallback(async () => {
+    const blob = await generateHardwareTemplate();
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -219,216 +219,215 @@ export default function HardwareManager() {
             </Button>
           </div>
 
-      {/* Current Hardware Overview */}
-      <Card className="mb-6">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              Aktuelle Geräte ({currentHardware.filter(h => h.id !== "no_hardware").length})
-            </span>
-            {isCustomActive && (
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary">Benutzerdefiniert</Badge>
-                <Button variant="outline" size="sm" onClick={handleReset}>
-                  <RotateCcw className="h-4 w-4 mr-2" />
-                  Reset
-                </Button>
-              </div>
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ScrollArea className="h-48">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {Array.from(hardwareByBrand.entries()).map(([brand, items]) => (
-                <div key={brand} className="space-y-1">
-                  <h4 className="font-semibold text-sm text-foreground">{brand}</h4>
-                  <ul className="text-xs text-muted-foreground space-y-0.5">
-                    {items.slice(0, 5).map(item => (
-                      <li key={item.id} className="truncate" title={`${item.model} - ${item.ek_net}€`}>
-                        • {item.model.replace(brand, "").trim() || item.model}
-                        <span className="ml-1 text-foreground/60">{item.ek_net}€</span>
-                      </li>
-                    ))}
-                    {items.length > 5 && (
-                      <li className="text-muted-foreground/60">... +{items.length - 5} weitere</li>
-                    )}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </ScrollArea>
-        </CardContent>
-      </Card>
-
-      {/* Upload Section */}
-      <Card className="mb-6">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Upload className="h-5 w-5" />
-            Hardware importieren
-          </CardTitle>
-          <CardDescription>
-            XLSX oder CSV mit Hardware-Daten hochladen
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Input
-            type="file"
-            accept=".xlsx,.xls,.csv"
-            onChange={handleFileSelect}
-            className="mb-4"
-            disabled={isLoading}
-          />
-          {file && (
-            <p className="text-sm text-muted-foreground">
-              Datei: <span className="font-medium">{file.name}</span>{" "}
-              ({(file.size / 1024).toFixed(1)} KB)
-            </p>
-          )}
-          {isLoading && (
-            <p className="text-sm text-muted-foreground animate-pulse mt-2">
-              Wird verarbeitet...
-            </p>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Validation Result */}
-      {validation && (
-        <Card className="mb-6">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              {validation.isValid ? (
-                <>
-                  <Check className="h-5 w-5 text-green-600" />
-                  Validierung erfolgreich
-                </>
-              ) : (
-                <>
-                  <AlertTriangle className="h-5 w-5 text-destructive" />
-                  Validierungsfehler
-                </>
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {validation.errors.length > 0 && (
-              <div className="space-y-2 max-h-40 overflow-y-auto">
-                {validation.errors.map((err, i) => (
-                  <Alert key={i} variant="destructive" className="py-2">
-                    <AlertDescription className="text-sm">
-                      {err.row && <span className="font-medium">Zeile {err.row}: </span>}
-                      {err.message}
-                    </AlertDescription>
-                  </Alert>
-                ))}
-              </div>
-            )}
-            {validation.warnings.length > 0 && (
-              <div className="space-y-2 mt-4">
-                <p className="text-sm font-medium text-muted-foreground">Hinweise:</p>
-                {validation.warnings.map((warn, i) => (
-                  <Alert key={i} className="py-2">
-                    <AlertDescription className="text-sm">{warn}</AlertDescription>
-                  </Alert>
-                ))}
-              </div>
-            )}
-            {validation.isValid && parsedData && (
-              <p className="text-sm text-muted-foreground">
-                {parsedData.length} Geräte erkannt, alle Felder valide.
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Diff Preview */}
-      {diff && validation?.isValid && (
-        <Card className="mb-6">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Änderungsvorschau</CardTitle>
-            <CardDescription>
-              {diff.summary.added} hinzugefügt, {diff.summary.changed} geändert, {diff.summary.removed} entfernt
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-3 gap-4 text-sm mb-4">
-              <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950/20">
-                <p className="font-semibold text-green-700 dark:text-green-400 flex items-center gap-1">
-                  <Plus className="h-4 w-4" /> Hinzugefügt
-                </p>
-                <p className="text-2xl font-bold">{diff.summary.added}</p>
-              </div>
-              <div className="p-3 rounded-lg bg-yellow-50 dark:bg-yellow-950/20">
-                <p className="font-semibold text-yellow-700 dark:text-yellow-400 flex items-center gap-1">
-                  <RefreshCw className="h-4 w-4" /> Geändert
-                </p>
-                <p className="text-2xl font-bold">{diff.summary.changed}</p>
-              </div>
-              <div className="p-3 rounded-lg bg-red-50 dark:bg-red-950/20">
-                <p className="font-semibold text-red-700 dark:text-red-400 flex items-center gap-1">
-                  <Minus className="h-4 w-4" /> Entfernt
-                </p>
-                <p className="text-2xl font-bold">{diff.summary.removed}</p>
-              </div>
-            </div>
-            
-            {/* Detailed changes */}
-            {diff.items.length > 0 && (
-              <>
-                <Separator className="my-4" />
-                <ScrollArea className="h-40">
-                  <div className="space-y-1 text-xs">
-                    {diff.items.slice(0, 20).map((item, i) => (
-                      <div key={i} className={`flex items-center gap-2 py-1 px-2 rounded ${
-                        item.type === "added" ? "bg-green-50 dark:bg-green-950/20 text-green-700 dark:text-green-400" :
-                        item.type === "removed" ? "bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-400" :
-                        "bg-yellow-50 dark:bg-yellow-950/20 text-yellow-700 dark:text-yellow-400"
-                      }`}>
-                        <span className="font-mono w-6">
-                          {item.type === "added" ? "+" : item.type === "removed" ? "−" : "~"}
-                        </span>
-                        <span className="font-medium">{item.brand} {item.model}</span>
-                        {item.type === "changed" && item.changes && (
-                          <span className="text-muted-foreground ml-2">
-                            → {item.changes.join(", ")}
-                          </span>
+          {/* Current Hardware Overview */}
+          <Card className="mb-6">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <Package className="h-5 w-5" />
+                  Aktuelle Geräte ({currentHardware.filter(h => h.id !== "no_hardware").length})
+                </span>
+                {isCustomActive && (
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary">Benutzerdefiniert</Badge>
+                    <Button variant="outline" size="sm" onClick={handleReset}>
+                      <RotateCcw className="h-4 w-4 mr-2" />
+                      Reset
+                    </Button>
+                  </div>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-48">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {Array.from(hardwareByBrand.entries()).map(([brand, items]) => (
+                    <div key={brand} className="space-y-1">
+                      <h4 className="font-semibold text-sm text-foreground">{brand}</h4>
+                      <ul className="text-xs text-muted-foreground space-y-0.5">
+                        {items.slice(0, 5).map(item => (
+                          <li key={item.id} className="truncate" title={`${item.model} - ${item.ek_net}€`}>
+                            • {item.model.replace(brand, "").trim() || item.model}
+                            <span className="ml-1 text-foreground/60">{item.ek_net}€</span>
+                          </li>
+                        ))}
+                        {items.length > 5 && (
+                          <li className="text-muted-foreground/60">... +{items.length - 5} weitere</li>
                         )}
-                        {item.type === "added" && item.newEkNet !== undefined && (
-                          <span className="ml-auto">{item.newEkNet}€</span>
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+
+          {/* Upload Section */}
+          <Card className="mb-6">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Upload className="h-5 w-5" />
+                Hardware importieren
+              </CardTitle>
+              <CardDescription>
+                XLSX oder CSV mit Hardware-Daten hochladen
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Input
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                onChange={handleFileSelect}
+                className="mb-4"
+                disabled={isLoading}
+              />
+              {file && (
+                <p className="text-sm text-muted-foreground">
+                  Datei: <span className="font-medium">{file.name}</span>{" "}
+                  ({(file.size / 1024).toFixed(1)} KB)
+                </p>
+              )}
+              {isLoading && (
+                <p className="text-sm text-muted-foreground animate-pulse mt-2">
+                  Wird verarbeitet...
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Validation Result */}
+          {validation && (
+            <Card className="mb-6">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  {validation.isValid ? (
+                    <>
+                      <Check className="h-5 w-5 text-green-600" />
+                      Validierung erfolgreich
+                    </>
+                  ) : (
+                    <>
+                      <AlertTriangle className="h-5 w-5 text-destructive" />
+                      Validierungsfehler
+                    </>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {validation.errors.length > 0 && (
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {validation.errors.map((err, i) => (
+                      <Alert key={i} variant="destructive" className="py-2">
+                        <AlertDescription className="text-sm">
+                          {err.row && <span className="font-medium">Zeile {err.row}: </span>}
+                          {err.message}
+                        </AlertDescription>
+                      </Alert>
+                    ))}
+                  </div>
+                )}
+                {validation.warnings.length > 0 && (
+                  <div className="space-y-2 mt-4">
+                    <p className="text-sm font-medium text-muted-foreground">Hinweise:</p>
+                    {validation.warnings.map((warn, i) => (
+                      <Alert key={i} className="py-2">
+                        <AlertDescription className="text-sm">{warn}</AlertDescription>
+                      </Alert>
+                    ))}
+                  </div>
+                )}
+                {validation.isValid && parsedData && (
+                  <p className="text-sm text-muted-foreground">
+                    {parsedData.length} Geräte erkannt, alle Felder valide.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Diff Preview */}
+          {diff && validation?.isValid && (
+            <Card className="mb-6">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Änderungsvorschau</CardTitle>
+                <CardDescription>
+                  {diff.summary.added} hinzugefügt, {diff.summary.changed} geändert, {diff.summary.removed} entfernt
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-3 gap-4 text-sm mb-4">
+                  <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950/20">
+                    <p className="font-semibold text-green-700 dark:text-green-400 flex items-center gap-1">
+                      <Plus className="h-4 w-4" /> Hinzugefügt
+                    </p>
+                    <p className="text-2xl font-bold">{diff.summary.added}</p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-yellow-50 dark:bg-yellow-950/20">
+                    <p className="font-semibold text-yellow-700 dark:text-yellow-400 flex items-center gap-1">
+                      <RefreshCw className="h-4 w-4" /> Geändert
+                    </p>
+                    <p className="text-2xl font-bold">{diff.summary.changed}</p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-red-50 dark:bg-red-950/20">
+                    <p className="font-semibold text-red-700 dark:text-red-400 flex items-center gap-1">
+                      <Minus className="h-4 w-4" /> Entfernt
+                    </p>
+                    <p className="text-2xl font-bold">{diff.summary.removed}</p>
+                  </div>
+                </div>
+
+                {/* Detailed changes */}
+                {diff.items.length > 0 && (
+                  <>
+                    <Separator className="my-4" />
+                    <ScrollArea className="h-40">
+                      <div className="space-y-1 text-xs">
+                        {diff.items.slice(0, 20).map((item, i) => (
+                          <div key={i} className={`flex items-center gap-2 py-1 px-2 rounded ${item.type === "added" ? "bg-green-50 dark:bg-green-950/20 text-green-700 dark:text-green-400" :
+                              item.type === "removed" ? "bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-400" :
+                                "bg-yellow-50 dark:bg-yellow-950/20 text-yellow-700 dark:text-yellow-400"
+                            }`}>
+                            <span className="font-mono w-6">
+                              {item.type === "added" ? "+" : item.type === "removed" ? "−" : "~"}
+                            </span>
+                            <span className="font-medium">{item.brand} {item.model}</span>
+                            {item.type === "changed" && item.changes && (
+                              <span className="text-muted-foreground ml-2">
+                                → {item.changes.join(", ")}
+                              </span>
+                            )}
+                            {item.type === "added" && item.newEkNet !== undefined && (
+                              <span className="ml-auto">{item.newEkNet}€</span>
+                            )}
+                          </div>
+                        ))}
+                        {diff.items.length > 20 && (
+                          <p className="text-muted-foreground py-2">
+                            ... und {diff.items.length - 20} weitere Änderungen
+                          </p>
                         )}
                       </div>
-                    ))}
-                    {diff.items.length > 20 && (
-                      <p className="text-muted-foreground py-2">
-                        ... und {diff.items.length - 20} weitere Änderungen
-                      </p>
-                    )}
-                  </div>
-                </ScrollArea>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      )}
+                    </ScrollArea>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
-      {/* Apply Button */}
-      {parsedData && validation?.isValid && (
-        <Button 
-          onClick={handleApply} 
-          className="w-full" 
-          size="lg"
-        >
-          <Upload className="h-4 w-4 mr-2" />
-          Änderungen übernehmen
-          <Badge variant="secondary" className="ml-2">
-            {parsedData.length} Geräte
-          </Badge>
-        </Button>
-      )}
+          {/* Apply Button */}
+          {parsedData && validation?.isValid && (
+            <Button
+              onClick={handleApply}
+              className="w-full"
+              size="lg"
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              Änderungen übernehmen
+              <Badge variant="secondary" className="ml-2">
+                {parsedData.length} Geräte
+              </Badge>
+            </Button>
+          )}
 
           {/* Help Section */}
           <Card>

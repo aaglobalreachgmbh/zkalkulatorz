@@ -3,7 +3,7 @@
 // Supports XLSX/CSV for Cable, DSL, Fiber, Komfort
 // ============================================
 
-import * as XLSX from "xlsx";
+import { parseXLSX } from "./xlsxImporter";
 import type { FixedNetProductRow } from "../types";
 
 export type FixedNetValidationResult = {
@@ -17,48 +17,14 @@ export type FixedNetValidationResult = {
 // ============================================
 
 export async function parseFixedNetXLSX(file: File): Promise<FixedNetProductRow[]> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    
-    reader.onload = (e) => {
-      try {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: "array" });
-        
-        const sheetNames = [
-          "fixednet_products", "Festnetz", "fixednet", "Fixed Net",
-          "Cable", "DSL", "Fiber", "Internet"
-        ];
-        let sheet: XLSX.WorkSheet | undefined;
-        
-        for (const name of sheetNames) {
-          if (workbook.Sheets[name]) {
-            sheet = workbook.Sheets[name];
-            break;
-          }
-        }
-        
-        if (!sheet && workbook.SheetNames.length > 0) {
-          sheet = workbook.Sheets[workbook.SheetNames[0]];
-        }
-        
-        if (!sheet) {
-          reject(new Error("Kein Festnetz-Sheet gefunden"));
-          return;
-        }
-        
-        const rows = XLSX.utils.sheet_to_json(sheet, { defval: null, raw: false });
-        const normalized = normalizeFixedNetRows(rows as Record<string, unknown>[]);
-        resolve(normalized);
-        
-      } catch (err) {
-        reject(new Error(`XLSX parsing failed: ${err instanceof Error ? err.message : "Unknown error"}`));
-      }
-    };
-    
-    reader.onerror = () => reject(new Error("File read failed"));
-    reader.readAsArrayBuffer(file);
-  });
+  // Use central safe parser
+  const parsedData = await parseXLSX(file);
+
+  if (parsedData.fixednet_products) {
+    return normalizeFixedNetRows(parsedData.fixednet_products);
+  }
+
+  return [];
 }
 
 // ============================================
@@ -80,7 +46,7 @@ export function normalizeFixedNetRows(rows: Record<string, unknown>[]): FixedNet
       const speed = parseGermanNumber(row.speed || row.Speed || row.Geschwindigkeit);
       const speedLabel = row.speed_label || row.speedLabel || (speed ? `${speed} Mbit/s` : undefined);
       const monthlyNet = parseGermanNumber(row.monthly_net || row.monthlyNet || row.Preis || row.mtl_netto) ?? 0;
-      
+
       return {
         id,
         access_type: accessType,
@@ -112,10 +78,10 @@ export function validateFixedNetRows(rows: FixedNetProductRow[]): FixedNetValida
   const warnings: string[] = [];
   const seenIds = new Set<string>();
   const validAccessTypes = ["CABLE", "DSL", "FIBER", "KOMFORT_REGIO", "KOMFORT_FTTH"];
-  
+
   rows.forEach((row, idx) => {
     const rowNum = idx + 2;
-    
+
     if (!row.id) {
       errors.push({ row: rowNum, field: "id", message: "Produkt-ID fehlt" });
     } else if (seenIds.has(row.id)) {
@@ -123,33 +89,33 @@ export function validateFixedNetRows(rows: FixedNetProductRow[]): FixedNetValida
     } else {
       seenIds.add(row.id);
     }
-    
+
     if (!row.name) {
       errors.push({ row: rowNum, field: "name", message: "Produktname fehlt" });
     }
-    
+
     if (!validAccessTypes.includes(row.access_type)) {
-      errors.push({ 
-        row: rowNum, 
-        field: "access_type", 
-        message: `Ungültige Zugangsart: ${row.access_type}. Erlaubt: ${validAccessTypes.join(", ")}` 
+      errors.push({
+        row: rowNum,
+        field: "access_type",
+        message: `Ungültige Zugangsart: ${row.access_type}. Erlaubt: ${validAccessTypes.join(", ")}`
       });
     }
-    
+
     if (row.monthly_net < 0) {
       errors.push({ row: rowNum, field: "monthly_net", message: "Negativer Monatspreis" });
     }
-    
+
     // Warnings
     if (row.monthly_net > 200) {
       warnings.push(`Zeile ${rowNum}: Hoher Monatspreis (${row.monthly_net}€) für ${row.name}`);
     }
-    
+
     if (row.speed && row.speed > 2000) {
       warnings.push(`Zeile ${rowNum}: Sehr hohe Geschwindigkeit (${row.speed} Mbit/s)`);
     }
   });
-  
+
   return {
     isValid: errors.length === 0,
     errors,
@@ -181,19 +147,19 @@ export function diffFixedNet(
   const currentMap = new Map(current.map(p => [p.id, p]));
   const nextMap = new Map(next.map(p => [p.id, p]));
   const items: FixedNetDiffItem[] = [];
-  
+
   for (const [id, product] of nextMap) {
     if (!currentMap.has(id)) {
       items.push({ id, type: "added", name: product.name, accessType: product.access_type });
     }
   }
-  
+
   for (const [id, product] of currentMap) {
     if (!nextMap.has(id)) {
       items.push({ id, type: "removed", name: product.name, accessType: product.access_type });
     }
   }
-  
+
   for (const [id, nextProduct] of nextMap) {
     const curr = currentMap.get(id);
     if (curr) {
@@ -212,7 +178,7 @@ export function diffFixedNet(
       }
     }
   }
-  
+
   return {
     items,
     summary: {

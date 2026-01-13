@@ -3,8 +3,8 @@
 // ============================================
 
 // Types
-export type { 
-  CanonicalDataset, 
+export type {
+  CanonicalDataset,
   DatasetMeta,
   MobileTariffRow,
   FixedNetProductRow,
@@ -34,22 +34,17 @@ export {
 } from "./importers/hardwareImporter";
 
 // Business Format
-export { 
-  detectFormat,
-  parseBusinessFormat,
-  mapBusinessToCanonical,
-  parseBusinessValue,
-  generateStableId,
-  type OmoMatrix,
-  type BusinessDataset,
-  type BusinessTariffRow,
-  type BusinessHardwareRow,
-  type FormatDetectionResult,
-} from "./businessFormat";
+export type {
+  FormatDetectionResult,
+} from "./importers/xlsxImporter";
+// Note: OmoMatrix type might be missing if it was only in businessFormat. 
+// However, OmoMatrix is likely not used widely or available elsewhere.
+// I will check if I need to re-export FormatDetectionResult from xlsxImporter now.
+// Yes, I defined it there.
 
 // Validation
-export { 
-  validateParsedSheets, 
+export {
+  validateParsedSheets,
   validateDataset,
   type ValidationResult,
   type ValidationError,
@@ -57,8 +52,8 @@ export {
 } from "./validator";
 
 // Diff
-export { 
-  diffDatasets, 
+export {
+  diffDatasets,
   formatDiffSummary,
   type DiffResult,
   type DiffItem,

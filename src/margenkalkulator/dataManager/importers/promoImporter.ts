@@ -3,7 +3,7 @@
 // Supports XLSX/CSV for promos_possible
 // ============================================
 
-import * as XLSX from "xlsx";
+import { parseXLSX } from "./xlsxImporter";
 import type { PromoDefinitionRow } from "../types";
 
 export type PromoValidationResult = {
@@ -17,44 +17,14 @@ export type PromoValidationResult = {
 // ============================================
 
 export async function parsePromoXLSX(file: File): Promise<PromoDefinitionRow[]> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    
-    reader.onload = (e) => {
-      try {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: "array" });
-        
-        const sheetNames = [
-          "promos_possible", "Aktionen", "Promos", "promos", "Rabatte"
-        ];
-        let sheet: XLSX.WorkSheet | undefined;
-        
-        for (const name of sheetNames) {
-          if (workbook.Sheets[name]) {
-            sheet = workbook.Sheets[name];
-            break;
-          }
-        }
-        
-        if (!sheet) {
-          // Return empty array if no promo sheet found
-          resolve([]);
-          return;
-        }
-        
-        const rows = XLSX.utils.sheet_to_json(sheet, { defval: null, raw: false });
-        const normalized = normalizePromoRows(rows as Record<string, unknown>[]);
-        resolve(normalized);
-        
-      } catch (err) {
-        reject(new Error(`XLSX parsing failed: ${err instanceof Error ? err.message : "Unknown error"}`));
-      }
-    };
-    
-    reader.onerror = () => reject(new Error("File read failed"));
-    reader.readAsArrayBuffer(file);
-  });
+  // Use central safe parser
+  const parsedData = await parseXLSX(file);
+
+  if (parsedData.promos_possible) {
+    return normalizePromoRows(parsedData.promos_possible);
+  }
+
+  return [];
 }
 
 // ============================================
@@ -73,21 +43,21 @@ function normalizePromoRows(rows: Record<string, unknown>[]): PromoDefinitionRow
       const appliesTo = String(row.applies_to || row.appliesTo || row.gilt_für || "mobile").toLowerCase();
       const typeRaw = String(row.type || row.Type || row.Typ || "INTRO_PRICE").toUpperCase();
       const durationMonths = parseGermanNumber(row.duration_months || row.durationMonths || row.Dauer) ?? 24;
-      
+
       // Type-specific values
       const pct = parseGermanNumber(row.pct || row.prozent || row.Prozent);
       const amountNet = parseGermanNumber(row.amount_net || row.betrag || row.Betrag);
       const introNet = parseGermanNumber(row.intro_net || row.introPreis || row.IntroPreis);
-      
+
       // Validity dates
       const validFrom = row.valid_from || row.validFrom || row.gültig_ab || row.von;
       const validUntil = row.valid_until || row.validUntil || row.gültig_bis || row.bis;
-      
+
       return {
         id,
         label: label ? String(label) : undefined,
-        applies_to: (appliesTo === "fixed" || appliesTo === "festnetz") 
-          ? "fixed" 
+        applies_to: (appliesTo === "fixed" || appliesTo === "festnetz")
+          ? "fixed"
           : appliesTo === "both" ? "both" : "mobile",
         type: typeRaw as "PCT_OFF_BASE" | "ABS_OFF_BASE" | "INTRO_PRICE",
         duration_months: durationMonths,
@@ -110,10 +80,10 @@ export function validatePromoRows(rows: PromoDefinitionRow[]): PromoValidationRe
   const warnings: string[] = [];
   const seenIds = new Set<string>();
   const validTypes = ["PCT_OFF_BASE", "ABS_OFF_BASE", "INTRO_PRICE"];
-  
+
   rows.forEach((row, idx) => {
     const rowNum = idx + 2;
-    
+
     if (!row.id) {
       errors.push({ row: rowNum, field: "id", message: "Promo-ID fehlt" });
     } else if (seenIds.has(row.id)) {
@@ -121,41 +91,41 @@ export function validatePromoRows(rows: PromoDefinitionRow[]): PromoValidationRe
     } else {
       seenIds.add(row.id);
     }
-    
+
     if (!validTypes.includes(row.type)) {
-      errors.push({ 
-        row: rowNum, 
-        field: "type", 
-        message: `Ungültiger Typ: ${row.type}. Erlaubt: ${validTypes.join(", ")}` 
+      errors.push({
+        row: rowNum,
+        field: "type",
+        message: `Ungültiger Typ: ${row.type}. Erlaubt: ${validTypes.join(", ")}`
       });
     }
-    
+
     // Type-specific validation
     if (row.type === "PCT_OFF_BASE" && (row.pct === undefined || row.pct <= 0 || row.pct > 1)) {
       errors.push({ row: rowNum, field: "pct", message: "PCT_OFF_BASE erfordert pct (0-1)" });
     }
-    
+
     if (row.type === "ABS_OFF_BASE" && (row.amount_net === undefined || row.amount_net <= 0)) {
       errors.push({ row: rowNum, field: "amount_net", message: "ABS_OFF_BASE erfordert amount_net > 0" });
     }
-    
+
     if (row.type === "INTRO_PRICE" && row.intro_net === undefined) {
       warnings.push(`Zeile ${rowNum}: INTRO_PRICE ohne intro_net (wird 0 angenommen)`);
     }
-    
+
     // Date validation
     if (row.valid_from && row.valid_until) {
       if (row.valid_from > row.valid_until) {
         errors.push({ row: rowNum, field: "valid_from", message: "Startdatum nach Enddatum" });
       }
     }
-    
+
     // Duration validation
     if (row.duration_months < 0 || row.duration_months > 120) {
       warnings.push(`Zeile ${rowNum}: Ungewöhnliche Dauer: ${row.duration_months} Monate`);
     }
   });
-  
+
   return {
     isValid: errors.length === 0,
     errors,
@@ -186,19 +156,19 @@ export function diffPromos(
   const currentMap = new Map(current.map(p => [p.id, p]));
   const nextMap = new Map(next.map(p => [p.id, p]));
   const items: PromoDiffItem[] = [];
-  
+
   for (const [id, promo] of nextMap) {
     if (!currentMap.has(id)) {
       items.push({ id, type: "added", label: promo.label });
     }
   }
-  
+
   for (const [id, promo] of currentMap) {
     if (!nextMap.has(id)) {
       items.push({ id, type: "removed", label: promo.label });
     }
   }
-  
+
   for (const [id, nextPromo] of nextMap) {
     const curr = currentMap.get(id);
     if (curr) {
@@ -220,7 +190,7 @@ export function diffPromos(
       }
     }
   }
-  
+
   return {
     items,
     summary: {

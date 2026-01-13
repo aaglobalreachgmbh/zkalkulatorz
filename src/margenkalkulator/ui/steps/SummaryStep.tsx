@@ -25,6 +25,7 @@ import { CreateCalendarEventModal } from "../components/CreateCalendarEventModal
 import { SendOfferEmailModal } from "../components/SendOfferEmailModal";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
 import { formatCurrency, getProfitabilityStatus, calculateMarginPercent } from "../../lib/formatters";
+import { HelpLabel } from "@/components/ui/help-tooltip";
 
 interface SummaryStepProps {
   option: OfferOptionState;
@@ -156,7 +157,7 @@ export function SummaryStep({
               <DealerOnly viewMode={visibility.effectiveMode}>
                 {option.hardware.ekNet > 0 && (
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Hardware EK</span>
+                    <span className="text-muted-foreground">Einkaufspreis (Netto)</span>
                     <span>{formatCurrency(option.hardware.ekNet)}</span>
                   </div>
                 )}
@@ -168,7 +169,10 @@ export function SummaryStep({
                 </div>
               )}
               <div className="border-t border-border pt-2 flex justify-between font-medium">
-                <span>Ø Monatlich</span>
+                <span className="flex items-center gap-1">
+                  Ø Monatlich
+                  <HelpLabel term="avgPrice">Eff.</HelpLabel>
+                </span>
                 <span>{formatCurrency(result.totals.avgTermNet)}</span>
               </div>
             </CardContent>
@@ -270,7 +274,10 @@ export function SummaryStep({
               <CollapsibleContent>
                 <CardContent className="pt-0 space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Netto-Marge</span>
+                    <span className="text-sm text-muted-foreground flex items-center gap-1">
+                      Netto-Marge
+                      <HelpLabel term="margin">Infos</HelpLabel>
+                    </span>
                     <MarginBadge
                       margin={margin}
                       marginPercentage={marginPercent}

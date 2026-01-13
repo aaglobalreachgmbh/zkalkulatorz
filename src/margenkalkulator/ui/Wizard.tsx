@@ -247,6 +247,18 @@ export function Wizard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Demo Mode - Load via URL
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    if (searchParams.get("demo") === "true") {
+      // Small delay to ensure everything is ready
+      setTimeout(() => {
+        handleQuickStartSelect("team_deal");
+        toast.success("Demo-Modus geladen", { description: "Beispiel-Konfiguration (TeamDeal) wurde aktiviert." });
+      }, 500);
+    }
+  }, [location.search, handleQuickStartSelect]);
+
   const activeState = activeOption === 1 ? option1 : option2;
   const setActiveState = activeOption === 1 ? setOption1 : setOption2;
 

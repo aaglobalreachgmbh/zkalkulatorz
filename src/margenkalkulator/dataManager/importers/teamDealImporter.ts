@@ -3,7 +3,7 @@
 // Specialized importer for TeamDeal with SUB-Variant provisions
 // ============================================
 
-import * as XLSX from "xlsx";
+import { parseRawSheetSafe } from "./xlsxImporter";
 
 export type TeamDealRow = {
   id: string;
@@ -32,45 +32,12 @@ export type TeamDealValidationResult = {
 // ============================================
 
 export async function parseTeamDealXLSX(file: File): Promise<TeamDealRow[]> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    
-    reader.onload = (e) => {
-      try {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: "array" });
-        
-        const sheetNames = ["teamdeal", "TeamDeal", "Team Deal", "team_deal"];
-        let sheet: XLSX.WorkSheet | undefined;
-        
-        for (const name of sheetNames) {
-          if (workbook.Sheets[name]) {
-            sheet = workbook.Sheets[name];
-            break;
-          }
-        }
-        
-        if (!sheet && workbook.SheetNames.length > 0) {
-          sheet = workbook.Sheets[workbook.SheetNames[0]];
-        }
-        
-        if (!sheet) {
-          reject(new Error("Kein TeamDeal-Sheet gefunden"));
-          return;
-        }
-        
-        const rows = XLSX.utils.sheet_to_json(sheet, { defval: null, raw: false });
-        const normalized = normalizeTeamDealRows(rows as Record<string, unknown>[]);
-        resolve(normalized);
-        
-      } catch (err) {
-        reject(new Error(`XLSX parsing failed: ${err instanceof Error ? err.message : "Unknown error"}`));
-      }
-    };
-    
-    reader.onerror = () => reject(new Error("File read failed"));
-    reader.readAsArrayBuffer(file);
-  });
+  const sheetNames = ["teamdeal", "TeamDeal", "Team Deal", "team_deal"];
+  // Use generic safe parser from xlsxImporter
+  const rows = await parseRawSheetSafe(file, sheetNames);
+
+  // Normalize safely parsed rows
+  return normalizeTeamDealRows(rows);
 }
 
 // ============================================
@@ -87,13 +54,13 @@ export function normalizeTeamDealRows(rows: Record<string, unknown>[]): TeamDeal
       // Support flexible column names
       const id = String(row.id || row.ID || `TEAMDEAL_${row.Tier || row.tier}`).trim().toUpperCase();
       const tier = String(row.tier || row.Tier || "").trim().toUpperCase();
-      
+
       // Data volume
       const dataRaw = row.data || row.Daten || row.dataVolumeGB || row.data_gb;
-      const dataVolumeGB = String(dataRaw).toLowerCase() === "unlimited" 
+      const dataVolumeGB = String(dataRaw).toLowerCase() === "unlimited"
         ? "unlimited" as const
         : parseGermanNumber(dataRaw) ?? 0;
-      
+
       // Prices by variant (flexible column names)
       const priceSIMOnly = parseGermanNumber(
         row.priceSIMOnly || row.preis_sim || row["SIM Only Preis"] || row.sim_only_net || row.preis_sim_only
@@ -104,7 +71,7 @@ export function normalizeTeamDealRows(rows: Record<string, unknown>[]): TeamDeal
       const priceSUB10 = parseGermanNumber(
         row.priceSUB10 || row.preis_sub10 || row["SUB10 Preis"] || row.sub10_net
       ) ?? priceSIMOnly + 10;
-      
+
       // Provisions by variant
       const provisionSIMOnly = parseGermanNumber(
         row.provisionSIMOnly || row.provision_sim || row["Provision SIM"] || row.prov_sim || row.Provi || row.provision
@@ -115,7 +82,7 @@ export function normalizeTeamDealRows(rows: Record<string, unknown>[]): TeamDeal
       const provisionSUB10 = parseGermanNumber(
         row.provisionSUB10 || row.provision_sub10 || row["Provision SUB10"] || row.prov_sub10
       ) ?? 0;
-      
+
       return {
         id,
         tier,
@@ -139,10 +106,10 @@ export function validateTeamDealRows(rows: TeamDealRow[]): TeamDealValidationRes
   const errors: TeamDealValidationResult["errors"] = [];
   const warnings: string[] = [];
   const seenIds = new Set<string>();
-  
+
   rows.forEach((row, idx) => {
     const rowNum = idx + 2;
-    
+
     if (!row.id) {
       errors.push({ row: rowNum, field: "id", message: "TeamDeal-ID fehlt" });
     } else if (seenIds.has(row.id)) {
@@ -150,31 +117,31 @@ export function validateTeamDealRows(rows: TeamDealRow[]): TeamDealValidationRes
     } else {
       seenIds.add(row.id);
     }
-    
+
     if (!row.tier) {
       errors.push({ row: rowNum, field: "tier", message: "Tier fehlt (XS/S/M/XL)" });
     }
-    
+
     // Validate prices
     if (row.priceSIMOnly < 0) {
       errors.push({ row: rowNum, field: "priceSIMOnly", message: "Negativer SIM-Only Preis" });
     }
-    
+
     // Validate provisions
     if (row.provisionSIMOnly < 0) {
       errors.push({ row: rowNum, field: "provisionSIMOnly", message: "Negative Provision" });
     }
-    
+
     // Warnings for unusual values
     if (row.provisionSIMOnly > 500) {
       warnings.push(`Zeile ${rowNum}: Sehr hohe Provision (${row.provisionSIMOnly}€) für ${row.id}`);
     }
-    
+
     if (row.provisionSUB5 <= row.provisionSIMOnly && row.provisionSUB5 > 0) {
       warnings.push(`Zeile ${rowNum}: SUB5 Provision ≤ SIM-Only Provision`);
     }
   });
-  
+
   return {
     isValid: errors.length === 0,
     errors,
@@ -205,19 +172,19 @@ export function diffTeamDeal(
   const currentMap = new Map(current.map(t => [t.id, t]));
   const nextMap = new Map(next.map(t => [t.id, t]));
   const items: TeamDealDiffItem[] = [];
-  
+
   for (const [id, tariff] of nextMap) {
     if (!currentMap.has(id)) {
       items.push({ id, type: "added", tier: tariff.tier });
     }
   }
-  
+
   for (const [id, tariff] of currentMap) {
     if (!nextMap.has(id)) {
       items.push({ id, type: "removed", tier: tariff.tier });
     }
   }
-  
+
   for (const [id, nextTariff] of nextMap) {
     const curr = currentMap.get(id);
     if (curr) {
@@ -239,7 +206,7 @@ export function diffTeamDeal(
       }
     }
   }
-  
+
   return {
     items,
     summary: {

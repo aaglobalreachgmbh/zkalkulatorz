@@ -53,14 +53,13 @@ export function GigaKombiBanner({
   if (!isEligible || !isVisible) return null;
 
   return (
-    className = {
-      cn(
+    <div
+      className={cn(
         "flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg",
         "bg-emerald-500/10 border border-emerald-300 dark:border-emerald-700",
         "animate-fade-in max-h-10",
         className
-      )
-    }
+      )}
     >
       <div className="flex items-center gap-2 text-xs">
         <Zap className="w-3 h-3 text-emerald-600 fill-emerald-600 flex-shrink-0" />

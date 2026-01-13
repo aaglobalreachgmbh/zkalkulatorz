@@ -77,6 +77,20 @@ export function SummaryStep({
 
   return (
     <div className={cn("space-y-4", className)}>
+      {/* Negative Margin Warning */}
+      {margin < 0 && (
+        <div className="bg-destructive/10 border-l-4 border-destructive p-4 rounded-r-lg flex items-start gap-3">
+          <TrendingDown className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+          <div>
+            <h4 className="font-semibold text-destructive">Achtung: Negative Marge</h4>
+            <p className="text-sm text-destructive/80">
+              Dieses Angebot verursacht einen Verlust von {formatCurrency(Math.abs(margin))}.
+              Bitte Hardware-Preis anpassen oder Provision prüfen.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Customer Section */}
       {customer && (
         <Collapsible open={sectionsOpen.customer} onOpenChange={() => toggleSection("customer")}>

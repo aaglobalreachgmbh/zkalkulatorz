@@ -159,7 +159,10 @@ export function MobileStep({
 
           {/* Quantity Counter */}
           <div className="space-y-2">
-            <Label className="text-sm text-muted-foreground">Anzahl Karten</Label>
+            <Label className="text-sm text-muted-foreground flex items-center gap-1.5">
+              Anzahl Karten
+              <HelpTooltip term="quantity" />
+            </Label>
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"

@@ -33,18 +33,18 @@ interface FloatingActionBarProps {
   className?: string;
 }
 
-export function FloatingActionBar({ 
-  option, 
-  result, 
+export function FloatingActionBar({
+  option,
+  result,
   viewMode,
   quantityBonus = 0,
   onResetForNewTariff,
-  className 
+  className
 }: FloatingActionBarProps) {
   const { addItem, items } = useOfferBasket();
   const visibility = useSensitiveFieldsVisible(viewMode);
   const showDealerEconomics = visibility.showDealerEconomics;
-  
+
   const avgMonthly = result.totals.avgTermNet;
   const margin = result.dealer.margin + quantityBonus;
   const hasTariff = !!option.mobile.tariffId;
@@ -60,23 +60,23 @@ export function FloatingActionBar({
   const tariffName = useMemo(() => {
     const tariffBreakdown = result.breakdown.find(b => b.ruleId === "base");
     const baseName = tariffBreakdown?.label?.replace(" Grundpreis", "") || option.mobile.tariffId;
-    
+
     const parts = [baseName];
-    
+
     if (option.mobile.quantity > 1) {
       parts.push(`(×${option.mobile.quantity})`);
     }
-    
+
     if (option.hardware.ekNet > 0) {
       parts.push(`+ ${option.hardware.name}`);
     }
-    
+
     return parts.join(" ");
   }, [option, result]);
 
   // Check if already added
   const isAlreadyAdded = items.some(
-    item => 
+    item =>
       item.option.mobile.tariffId === option.mobile.tariffId &&
       item.option.hardware.name === option.hardware.name &&
       item.option.mobile.contractType === option.mobile.contractType
@@ -86,7 +86,7 @@ export function FloatingActionBar({
     addItem(tariffName, option, result);
     toast.success(`"${tariffName}" zum Angebot hinzugefügt`, { duration: 2000 });
     fireConfetti({ duration: 1000, quick: true });
-    
+
     // Reset for next tariff after adding
     if (onResetForNewTariff) {
       setTimeout(() => onResetForNewTariff(), 500);
@@ -117,7 +117,7 @@ export function FloatingActionBar({
               </p>
             </div>
           </div>
-          
+
           {/* Quantity Badge */}
           {quantity > 1 && (
             <div className="text-center">
@@ -125,7 +125,7 @@ export function FloatingActionBar({
               <p className="text-lg font-bold tabular-nums">{quantity}x</p>
             </div>
           )}
-          
+
           {/* Dealer: Margin */}
           {showDealerEconomics && (
             <div className="text-center hidden sm:block">
@@ -143,7 +143,7 @@ export function FloatingActionBar({
             </div>
           )}
         </div>
-        
+
         {/* Center/Right: Action Button + Basket */}
         <div className="flex items-center gap-3">
           {/* Basket Badge */}
@@ -153,7 +153,7 @@ export function FloatingActionBar({
               <span className="text-sm font-medium">{items.length}</span>
             </div>
           )}
-          
+
           {/* Add to Offer Button with Disable State */}
           {hasTariff ? (
             isAlreadyAdded ? (
@@ -165,7 +165,11 @@ export function FloatingActionBar({
                 {onResetForNewTariff && (
                   <Button
                     size="sm"
-                    onClick={onResetForNewTariff}
+                    onClick={() => {
+                      if (window.confirm("Möchtest du wirklich einen weiteren Tarif konfigurieren? Deine aktuelle Auswahl im Editor wird zurückgesetzt (bereits hinzugefügte Tarife bleiben im Warenkorb).")) {
+                        onResetForNewTariff();
+                      }
+                    }}
                     className="bg-amber-500 hover:bg-amber-600 text-white gap-1.5"
                   >
                     <Plus className="w-4 h-4" />

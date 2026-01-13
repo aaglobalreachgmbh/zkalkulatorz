@@ -26,6 +26,7 @@ import { SendOfferEmailModal } from "../components/SendOfferEmailModal";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
 import { formatCurrency, getProfitabilityStatus, calculateMarginPercent } from "../../lib/formatters";
 import { HelpLabel } from "@/components/ui/help-tooltip";
+import { CalculationExplainer } from "../components/CalculationExplainer";
 
 interface SummaryStepProps {
   option: OfferOptionState;
@@ -174,6 +175,14 @@ export function SummaryStep({
                   <HelpLabel term="avgPrice">Eff.</HelpLabel>
                 </span>
                 <span>{formatCurrency(result.totals.avgTermNet)}</span>
+              </div>
+
+              {/* Calculation Explainer Waterfall */}
+              <div className="pt-2">
+                <CalculationExplainer
+                  result={result}
+                  option={option}
+                />
               </div>
             </CardContent>
           </CollapsibleContent>

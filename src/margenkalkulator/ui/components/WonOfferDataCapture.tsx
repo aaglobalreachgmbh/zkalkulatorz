@@ -142,7 +142,7 @@ export function WonOfferDataCapture({
   const [activeTab, setActiveTab] = useState("company");
   const [isSaving, setIsSaving] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const form = useForm<WonDataFormValues>({
     resolver: zodResolver(wonDataSchema),
     defaultValues: {
@@ -155,12 +155,13 @@ export function WonOfferDataCapture({
       internalNotes: initialData?.internalNotes,
     },
   });
-  
+
   const { control, handleSubmit, watch, formState: { errors, isDirty } } = form;
-  
+
   const watchedData = watch();
-  const validation = validateWonOfferData(watchedData as Partial<WonOfferData>);
-  
+  // Safe validation without "as any" - type intersection handled by helper
+  const validation = validateWonOfferData(watchedData);
+
   // Tab completion status
   const tabStatus = {
     company: !errors.company,
@@ -169,13 +170,13 @@ export function WonOfferDataCapture({
     payment: true, // Optional
     sim: !errors.simOptions,
   };
-  
+
   const handleSaveDraft = useCallback(async () => {
     if (!onSave) return;
-    
+
     setIsSaving(true);
     try {
-      await onSave(watchedData as Partial<WonOfferData>);
+      await onSave(watchedData);
       toast.success("Entwurf gespeichert");
     } catch (e) {
       toast.error("Fehler beim Speichern");
@@ -184,20 +185,22 @@ export function WonOfferDataCapture({
       setIsSaving(false);
     }
   }, [onSave, watchedData]);
-  
+
   const handleFormSubmit = useCallback(async (data: WonDataFormValues) => {
     if (!onSubmit) return;
-    
+
     setIsSubmitting(true);
     try {
-      await onSubmit({
+      const completeData: WonOfferData = {
         ...data,
         offerId,
         tenantId: "", // Will be set by backend
         capturedAt: new Date().toISOString(),
         capturedBy: "", // Will be set by backend
         status: "complete",
-      } as WonOfferData);
+        // Ensure all required fields from schema match WonOfferData structure
+      };
+      await onSubmit(completeData);
       toast.success("Daten erfolgreich übermittelt");
       onOpenChange(false);
     } catch (e) {
@@ -207,7 +210,7 @@ export function WonOfferDataCapture({
       setIsSubmitting(false);
     }
   }, [onSubmit, offerId, onOpenChange]);
-  
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
@@ -220,7 +223,7 @@ export function WonOfferDataCapture({
             Erfassen Sie die Kundendaten für die Vertragsabwicklung
           </DialogDescription>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit(handleFormSubmit)} className="flex-1 overflow-hidden flex flex-col">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
             <TabsList className="grid grid-cols-5 w-full">
@@ -246,7 +249,7 @@ export function WonOfferDataCapture({
                 <span className="hidden sm:inline">SIM</span>
               </TabsTrigger>
             </TabsList>
-            
+
             <ScrollArea className="flex-1 mt-4">
               {/* Company Tab */}
               <TabsContent value="company" className="space-y-4 m-0">
@@ -264,7 +267,7 @@ export function WonOfferDataCapture({
                       <p className="text-xs text-destructive">{errors.company.name.message}</p>
                     )}
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Rechtsform</Label>
@@ -287,7 +290,7 @@ export function WonOfferDataCapture({
                         )}
                       />
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label>Registerart</Label>
                       <Controller
@@ -310,7 +313,7 @@ export function WonOfferDataCapture({
                       />
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Registernummer</Label>
@@ -333,7 +336,7 @@ export function WonOfferDataCapture({
                       />
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Steuernummer</Label>
@@ -358,7 +361,7 @@ export function WonOfferDataCapture({
                   </div>
                 </div>
               </TabsContent>
-              
+
               {/* Contact Tab */}
               <TabsContent value="contact" className="space-y-4 m-0">
                 <div className="grid gap-4">
@@ -403,7 +406,7 @@ export function WonOfferDataCapture({
                       />
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label>E-Mail *</Label>
                     <Controller
@@ -417,7 +420,7 @@ export function WonOfferDataCapture({
                       <p className="text-xs text-destructive">{errors.contact.email.message}</p>
                     )}
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Telefon</Label>
@@ -440,7 +443,7 @@ export function WonOfferDataCapture({
                       />
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label>Position</Label>
                     <Controller
@@ -453,7 +456,7 @@ export function WonOfferDataCapture({
                   </div>
                 </div>
               </TabsContent>
-              
+
               {/* Address Tab */}
               <TabsContent value="address" className="space-y-4 m-0">
                 <div className="grid gap-4">
@@ -479,7 +482,7 @@ export function WonOfferDataCapture({
                       />
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label>Adresszusatz</Label>
                     <Controller
@@ -490,7 +493,7 @@ export function WonOfferDataCapture({
                       )}
                     />
                   </div>
-                  
+
                   <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label>PLZ *</Label>
@@ -516,7 +519,7 @@ export function WonOfferDataCapture({
                       />
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label>Land</Label>
                     <Controller
@@ -529,7 +532,7 @@ export function WonOfferDataCapture({
                   </div>
                 </div>
               </TabsContent>
-              
+
               {/* Payment Tab */}
               <TabsContent value="payment" className="space-y-4 m-0">
                 <Alert>
@@ -538,7 +541,7 @@ export function WonOfferDataCapture({
                     Zahlungsdaten sind optional und können später ergänzt werden.
                   </AlertDescription>
                 </Alert>
-                
+
                 <div className="grid gap-4">
                   <div className="space-y-2">
                     <Label>IBAN</Label>
@@ -546,15 +549,15 @@ export function WonOfferDataCapture({
                       control={control}
                       name="payment.iban"
                       render={({ field }) => (
-                        <Input 
-                          {...field} 
+                        <Input
+                          {...field}
                           placeholder="DE89 3704 0044 0532 0130 00"
                           onChange={e => field.onChange(formatIBAN(e.target.value))}
                         />
                       )}
                     />
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>BIC</Label>
@@ -577,7 +580,7 @@ export function WonOfferDataCapture({
                       />
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label>Kontoinhaber</Label>
                     <Controller
@@ -588,7 +591,7 @@ export function WonOfferDataCapture({
                       )}
                     />
                   </div>
-                  
+
                   <div className="flex items-center gap-2 pt-2">
                     <Controller
                       control={control}
@@ -606,7 +609,7 @@ export function WonOfferDataCapture({
                   </div>
                 </div>
               </TabsContent>
-              
+
               {/* SIM Tab */}
               <TabsContent value="sim" className="space-y-4 m-0">
                 <div className="grid gap-4">
@@ -641,9 +644,9 @@ export function WonOfferDataCapture({
                         control={control}
                         name="simOptions.quantity"
                         render={({ field }) => (
-                          <Input 
-                            type="number" 
-                            min={1} 
+                          <Input
+                            type="number"
+                            min={1}
                             {...field}
                             onChange={e => field.onChange(parseInt(e.target.value) || 1)}
                           />
@@ -651,7 +654,7 @@ export function WonOfferDataCapture({
                       />
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label>Wunschrufnummer</Label>
                     <Controller
@@ -665,7 +668,7 @@ export function WonOfferDataCapture({
                       Hinweis: Wunschrufnummern sind nicht garantiert verfügbar
                     </p>
                   </div>
-                  
+
                   <div className="flex items-center gap-2">
                     <Controller
                       control={control}
@@ -681,7 +684,7 @@ export function WonOfferDataCapture({
                       Kunde wurde informiert, dass Wunschrufnummer nicht garantiert ist
                     </Label>
                   </div>
-                  
+
                   <div className="flex items-center gap-2 pt-2">
                     <Controller
                       control={control}
@@ -697,7 +700,7 @@ export function WonOfferDataCapture({
                       Rufnummernmitnahme (Portierung)
                     </Label>
                   </div>
-                  
+
                   {watchedData.simOptions?.portNumber && (
                     <div className="grid grid-cols-2 gap-4 pl-6">
                       <div className="space-y-2">
@@ -722,7 +725,7 @@ export function WonOfferDataCapture({
                       </div>
                     </div>
                   )}
-                  
+
                   <div className="space-y-2 pt-4">
                     <Label>Kundenpasswort (für Vodafone Portal)</Label>
                     <Controller
@@ -736,15 +739,15 @@ export function WonOfferDataCapture({
                       Optionales Passwort für den Vodafone Kundenportal-Zugang
                     </p>
                   </div>
-                  
+
                   <div className="space-y-2 pt-2">
                     <Label>Interne Notizen</Label>
                     <Controller
                       control={control}
                       name="internalNotes"
                       render={({ field }) => (
-                        <Textarea 
-                          {...field} 
+                        <Textarea
+                          {...field}
                           placeholder="Notizen für die interne Bearbeitung..."
                           rows={3}
                         />
@@ -755,7 +758,7 @@ export function WonOfferDataCapture({
               </TabsContent>
             </ScrollArea>
           </Tabs>
-          
+
           <DialogFooter className="mt-4 pt-4 border-t flex-col sm:flex-row gap-2">
             {/* Validation Status */}
             <div className="flex-1 flex items-center gap-2">
@@ -771,7 +774,7 @@ export function WonOfferDataCapture({
                 </Badge>
               )}
             </div>
-            
+
             <div className="flex gap-2">
               <Button
                 type="button"
@@ -786,7 +789,7 @@ export function WonOfferDataCapture({
                 )}
                 Entwurf speichern
               </Button>
-              
+
               <Button
                 type="submit"
                 disabled={isSubmitting || !validation.isValid}

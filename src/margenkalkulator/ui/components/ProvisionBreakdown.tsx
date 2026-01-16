@@ -17,6 +17,8 @@ interface ProvisionBreakdownProps {
   contractCount: number;
   compact?: boolean;
   className?: string;
+  /** SECURITY: If false, component renders NOTHING. Default: true (for backward compat, but should be explicit) */
+  visible?: boolean;
 }
 
 export function ProvisionBreakdown({
@@ -28,7 +30,11 @@ export function ProvisionBreakdown({
   contractCount,
   compact = false,
   className,
+  visible = true,
 }: ProvisionBreakdownProps) {
+  // SECURITY GATE: Explicitly prevent rendering if visible is false
+  if (!visible) return null;
+
   const totalProvision = airtimeProvision + oneTimeProvision + hardwareProvision;
   const monthlyTotal = airtimeMonthly * contractCount;
 

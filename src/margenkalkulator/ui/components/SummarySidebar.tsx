@@ -218,8 +218,8 @@ export function SummarySidebar({
           </div>
         )}
 
-        {/* Dealer Economics */}
-        {showDealerEconomics && (
+        {/* Dealer Economics - STRICT SECURITY GATE */}
+        {showDealerEconomics ? (
           <div className="space-y-2 pt-3 border-t border-border">
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground/70">Provision</span>
@@ -237,7 +237,7 @@ export function SummarySidebar({
               {profitabilityStatus === "positive" && "✅ Gute Marge"}
             </p>
           </div>
-        )}
+        ) : null}
 
         {/* Secondary Actions (Actions Dropdown) */}
         <div className="space-y-2 pt-3 border-t border-border">
@@ -266,7 +266,8 @@ export function SummarySidebar({
                 </div>
               </DropdownMenuItem>
 
-              {showDealerEconomics && (
+              {/* Dealer PDF - Strictly Guarded */}
+              {showDealerEconomics ? (
                 <DropdownMenuItem asChild>
                   <div className="w-full cursor-pointer focus:bg-accent focus:text-accent-foreground p-0">
                     <PdfDownloadButton
@@ -280,7 +281,7 @@ export function SummarySidebar({
                     />
                   </div>
                 </DropdownMenuItem>
-              )}
+              ) : null}
 
               <DropdownMenuSeparator />
               <DropdownMenuLabel>Tools</DropdownMenuLabel>

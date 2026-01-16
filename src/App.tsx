@@ -70,6 +70,8 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const TimeTracking = lazy(() => import("./pages/TimeTracking"));
 const Provisions = lazy(() => import("./pages/Provisions"));
 
+import { EnterpriseErrorBoundary } from "@/components/EnterpriseErrorBoundary";
+
 // Enhanced loading fallback with timeout and retry
 const PageLoader = () => {
   const [showRetry, setShowRetry] = useState(false);
@@ -397,7 +399,16 @@ const App = () => (
 
                     {/* ALL other routes require authentication */}
                     <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-                    <Route path="/calculator" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+                    <Route
+                      path="/calculator"
+                      element={
+                        <ProtectedRoute>
+                          <EnterpriseErrorBoundary moduleName="Calculator Engine">
+                            <Index />
+                          </EnterpriseErrorBoundary>
+                        </ProtectedRoute>
+                      }
+                    />
                     <Route path="/bundles" element={<ProtectedRoute><Bundles /></ProtectedRoute>} />
                     <Route path="/daten" element={<ProtectedRoute><DataHub /></ProtectedRoute>} />
                     <Route path="/license" element={<ProtectedRoute><License /></ProtectedRoute>} />
@@ -425,7 +436,9 @@ const App = () => (
                       path="/offers/:id"
                       element={
                         <ProtectedRoute>
-                          <OfferDetail />
+                          <EnterpriseErrorBoundary moduleName="Offer Detail">
+                            <OfferDetail />
+                          </EnterpriseErrorBoundary>
                         </ProtectedRoute>
                       }
                     />

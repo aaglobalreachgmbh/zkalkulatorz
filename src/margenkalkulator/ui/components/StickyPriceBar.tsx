@@ -196,15 +196,15 @@ export function StickyPriceBar({
             )}
           </div>
 
-          {/* Margin (Dealer only) */}
-          {showDealerEconomics && (
+          {/* Margin (Dealer only - Strict Guard) */}
+          {showDealerEconomics ? (
             <div className="text-right border-l border-border pl-4">
               <p className="text-xs text-muted-foreground">Marge</p>
               <span className={cn("text-xl font-bold", marginColor)}>
                 <AnimatedCurrency value={margin} variant="margin" decimals={0} />
               </span>
             </div>
-          )}
+          ) : null}
         </div>
 
         {/* Right: Actions */}

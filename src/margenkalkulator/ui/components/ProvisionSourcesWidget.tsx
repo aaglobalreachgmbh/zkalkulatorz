@@ -8,11 +8,32 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCloudOffers } from "../../hooks/useCloudOffers";
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
+import { usePOSMode } from "@/contexts/POSModeContext";
 
 const COLORS = ["hsl(221, 83%, 53%)", "hsl(142, 76%, 36%)", "hsl(280, 65%, 60%)"];
 
 export function ProvisionSourcesWidget() {
   const navigate = useNavigate();
+  const { isPOSMode } = usePOSMode();
+  // In a widget context, we might not have explicit viewMode prop, so we default to "dealer" 
+  // but strictly check visibility rules.
+  // Actually, better to check if we are in a context that allows seeing this.
+  // If we assume this widget is on a Dashboard, we need to know the context.
+  // SAFE DEFAULT: If generic component, use hook with default 'dealer' but check if POS/Customer Session active.
+
+  // However, simpler: This widget shows PROVISION. It should ONLY be visible if showDealerEconomics is true.
+  // We can derive "effective view mode" from global context checks.
+  // Let's rely on the hook which checks POS Mode and Customer Session internally if we pass the current mode.
+  // Since we don't have "viewMode" prop here, we assume standard view (likely Dealer) but subject to overrides.
+
+  // FIX: derive mode from POS/Session contexts directly or pass it.
+  // For now, let's just use useSensitiveFieldsVisible with "dealer" as base, 
+  // relying on the hook's internal overrides (if any) or just force check global states.
+
+  // BETTER: Just hide it if isPOSMode is true (Customer facing in shop).
+  if (isPOSMode) return null;
+
   const { offers, isLoading } = useCloudOffers();
 
   const data = useMemo(() => {
@@ -27,7 +48,7 @@ export function ProvisionSourcesWidget() {
       const quantity = offer.config?.mobile?.quantity ?? 1;
       const estimatedMargin = avgMonthly * 0.1 * quantity * 24;
       const hasHardware = (offer.config?.hardware?.ekNet ?? 0) > 0;
-      
+
       if (hasHardware) {
         hardware += estimatedMargin * 0.35;
         airtime += estimatedMargin * 0.45;
@@ -77,7 +98,7 @@ export function ProvisionSourcesWidget() {
   }
 
   return (
-    <Card 
+    <Card
       className="cursor-pointer hover:shadow-md transition-shadow"
       onClick={() => navigate("/reporting")}
     >
@@ -104,7 +125,7 @@ export function ProvisionSourcesWidget() {
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip 
+                <Tooltip
                   formatter={(value) => [`${value}%`]}
                   contentStyle={{ fontSize: 12 }}
                 />
@@ -115,9 +136,9 @@ export function ProvisionSourcesWidget() {
             {data.map((item, i) => (
               <div key={item.name} className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2">
-                  <div 
-                    className="w-2 h-2 rounded-full" 
-                    style={{ backgroundColor: item.color }} 
+                  <div
+                    className="w-2 h-2 rounded-full"
+                    style={{ backgroundColor: item.color }}
                   />
                   <span className="text-muted-foreground">{item.name}</span>
                 </div>

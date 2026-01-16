@@ -41,7 +41,7 @@ interface MobileStepProps {
 }
 
 const FAMILY_LABELS: Record<TariffFamily, string> = {
-  prime: "BUSINESS PRIME",
+  prime: "BUSINESS TARIF",
   business_smart: "BUSINESS SMART",
   smart_business: "SMART BUSINESS",
   teamdeal: "TEAMDEAL",
@@ -152,7 +152,7 @@ export function MobileStep({
                   : "bg-muted text-muted-foreground hover:bg-muted/80"
                   }`}
               >
-                Verlängerung (VVL)
+                Verlängerung
               </button>
             </div>
           </div>

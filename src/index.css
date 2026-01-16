@@ -149,6 +149,31 @@
     gap: 0.5rem;
     flex-wrap: wrap;
   }
+
+  /* Enterprise Aesthetic Utilities */
+  .glass-card {
+    @apply bg-white/80 backdrop-blur-xl border border-white/20 shadow-sm transition-all duration-300;
+  }
+  .glass-card:hover {
+    @apply shadow-md border-white/40;
+  }
+
+  .glass-panel {
+    @apply bg-white/50 backdrop-blur-md border border-gray-100/50 shadow-sm;
+  }
+
+  .premium-shadow {
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(0, 0, 0, 0.02);
+  }
+
+  .enterprise-input {
+    @apply h-12 rounded-lg border-gray-200 bg-white/50 backdrop-blur-sm focus:ring-gk-red/20 focus:border-gk-red transition-all duration-200;
+  }
+
+  .enterprise-bg {
+    @apply bg-slate-50;
+    background-image: radial-gradient(at 0% 0%, hsla(253,16%,7%,0) 0, transparent 50%), radial-gradient(at 50% 0%, hsla(225,39%,30%,0) 0, transparent 50%), radial-gradient(at 100% 0%, hsla(339,49%,30%,0) 0, transparent 50%);
+  }
 }
 
 /* Touch-Feedback for Mobile Buttons */

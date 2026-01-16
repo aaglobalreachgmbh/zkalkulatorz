@@ -55,18 +55,23 @@ export function isCryptoAvailable(): boolean {
  */
 async function getOrCreateSessionKey(): Promise<CryptoKey> {
   // Check sessionStorage for existing key material
-  let keyMaterial = sessionStorage.getItem(KEY_STORAGE);
-  
+  let keyMaterial: string | null = null;
+  if (typeof window !== "undefined") {
+    keyMaterial = sessionStorage.getItem(KEY_STORAGE);
+  }
+
   if (!keyMaterial) {
     // Generate new random key material (32 bytes for AES-256)
     const randomBytes = crypto.getRandomValues(new Uint8Array(32));
     keyMaterial = arrayBufferToBase64(randomBytes.buffer);
-    sessionStorage.setItem(KEY_STORAGE, keyMaterial);
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem(KEY_STORAGE, keyMaterial);
+    }
   }
-  
+
   // Import the raw key material
   const rawKey = base64ToArrayBuffer(keyMaterial);
-  
+
   return crypto.subtle.importKey(
     "raw",
     rawKey,
@@ -109,25 +114,25 @@ export async function encryptValue(plaintext: string): Promise<string> {
   if (!isCryptoAvailable()) {
     throw new Error("Web Crypto API not available");
   }
-  
+
   const key = await getOrCreateSessionKey();
   const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH));
   const encoder = new TextEncoder();
   const data = encoder.encode(plaintext);
-  
+
   const encrypted = await crypto.subtle.encrypt(
     { name: ALGORITHM, iv },
     key,
     data
   );
-  
+
   const payload: EncryptedPayload = {
     v: 1,
     iv: arrayBufferToBase64(iv.buffer),
     data: arrayBufferToBase64(encrypted),
     tag: "", // Tag is included in encrypted data for GCM
   };
-  
+
   return JSON.stringify(payload);
 }
 
@@ -138,23 +143,23 @@ export async function decryptValue(encryptedString: string): Promise<string> {
   if (!isCryptoAvailable()) {
     throw new Error("Web Crypto API not available");
   }
-  
+
   const payload: EncryptedPayload = JSON.parse(encryptedString);
-  
+
   if (payload.v !== 1) {
     throw new Error(`Unsupported encryption version: ${payload.v}`);
   }
-  
+
   const key = await getOrCreateSessionKey();
   const iv = new Uint8Array(base64ToArrayBuffer(payload.iv));
   const encryptedData = base64ToArrayBuffer(payload.data);
-  
+
   const decrypted = await crypto.subtle.decrypt(
     { name: ALGORITHM, iv },
     key,
     encryptedData
   );
-  
+
   const decoder = new TextDecoder();
   return decoder.decode(decrypted);
 }
@@ -173,16 +178,20 @@ export async function setSecureItem<T>(
 ): Promise<void> {
   const { prefix = STORAGE_PREFIX, fallbackToPlain = false } = options;
   const storageKey = `${prefix}${key}`;
-  
+
   try {
     if (isCryptoAvailable()) {
       const jsonString = JSON.stringify(value);
       const encrypted = await encryptValue(jsonString);
-      localStorage.setItem(storageKey, encrypted);
+      if (typeof window !== "undefined") {
+        localStorage.setItem(storageKey, encrypted);
+      }
     } else if (fallbackToPlain) {
       // Fallback: Store with warning marker
       console.warn(`[SecureStorage] Crypto unavailable, storing ${key} unencrypted`);
-      localStorage.setItem(storageKey, JSON.stringify({ _unencrypted: true, data: value }));
+      if (typeof window !== "undefined") {
+        localStorage.setItem(storageKey, JSON.stringify({ _unencrypted: true, data: value }));
+      }
     } else {
       throw new Error("Crypto unavailable and fallback disabled");
     }
@@ -201,11 +210,11 @@ export async function getSecureItem<T>(
 ): Promise<T | null> {
   const { prefix = STORAGE_PREFIX, fallbackToPlain = false } = options;
   const storageKey = `${prefix}${key}`;
-  
+
   try {
-    const stored = localStorage.getItem(storageKey);
+    const stored = typeof window !== "undefined" ? localStorage.getItem(storageKey) : null;
     if (!stored) return null;
-    
+
     // Check for unencrypted fallback format
     try {
       const parsed = JSON.parse(stored);
@@ -219,7 +228,7 @@ export async function getSecureItem<T>(
     } catch {
       // Not JSON or not fallback format, proceed with decryption
     }
-    
+
     if (isCryptoAvailable()) {
       const decrypted = await decryptValue(stored);
       return JSON.parse(decrypted) as T;
@@ -243,7 +252,9 @@ export function removeSecureItem(
   options: SecureStorageOptions = {}
 ): void {
   const { prefix = STORAGE_PREFIX } = options;
-  localStorage.removeItem(`${prefix}${key}`);
+  if (typeof window !== "undefined") {
+    localStorage.removeItem(`${prefix}${key}`);
+  }
 }
 
 /**
@@ -254,6 +265,7 @@ export function hasSecureItem(
   options: SecureStorageOptions = {}
 ): boolean {
   const { prefix = STORAGE_PREFIX } = options;
+  if (typeof window === "undefined") return false;
   return localStorage.getItem(`${prefix}${key}`) !== null;
 }
 
@@ -263,14 +275,16 @@ export function hasSecureItem(
 export function listSecureKeys(options: SecureStorageOptions = {}): string[] {
   const { prefix = STORAGE_PREFIX } = options;
   const keys: string[] = [];
-  
+
+  if (typeof window === "undefined") return [];
+
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (key?.startsWith(prefix)) {
       keys.push(key.slice(prefix.length));
     }
   }
-  
+
   return keys;
 }
 
@@ -280,11 +294,13 @@ export function listSecureKeys(options: SecureStorageOptions = {}): string[] {
 export function clearSecureStorage(options: SecureStorageOptions = {}): number {
   const { prefix = STORAGE_PREFIX } = options;
   const keys = listSecureKeys(options);
-  
+
   keys.forEach((key) => {
-    localStorage.removeItem(`${prefix}${key}`);
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(`${prefix}${key}`);
+    }
   });
-  
+
   return keys.length;
 }
 
@@ -303,13 +319,15 @@ export async function migrateToSecure<T>(
   try {
     const oldValue = localStorage.getItem(oldKey);
     if (!oldValue) return false;
-    
+
     const parsed = JSON.parse(oldValue) as T;
     await setSecureItem(newKey, parsed, options);
-    
+
     // Remove old unencrypted value
-    localStorage.removeItem(oldKey);
-    
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(oldKey);
+    }
+
     console.log(`[SecureStorage] Migrated ${oldKey} → ${newKey}`);
     return true;
   } catch (error) {
@@ -326,6 +344,7 @@ export function needsMigration(
   newKey: string,
   options: SecureStorageOptions = {}
 ): boolean {
+  if (typeof window === "undefined") return false;
   const hasOld = localStorage.getItem(oldKey) !== null;
   const hasNew = hasSecureItem(newKey, options);
   return hasOld && !hasNew;
@@ -340,7 +359,9 @@ export function needsMigration(
  * All encrypted data will become inaccessible after rotation
  */
 export function rotateSessionKey(): void {
-  sessionStorage.removeItem(KEY_STORAGE);
+  if (typeof window !== "undefined") {
+    sessionStorage.removeItem(KEY_STORAGE);
+  }
   console.log("[SecureStorage] Session key rotated, old data is now inaccessible");
 }
 
@@ -348,12 +369,15 @@ export function rotateSessionKey(): void {
  * Clear session key on logout
  */
 export function clearSessionKey(): void {
-  sessionStorage.removeItem(KEY_STORAGE);
+  if (typeof window !== "undefined") {
+    sessionStorage.removeItem(KEY_STORAGE);
+  }
 }
 
 /**
  * Check if session has an active encryption key
  */
 export function hasSessionKey(): boolean {
+  if (typeof window === "undefined") return false;
   return sessionStorage.getItem(KEY_STORAGE) !== null;
 }

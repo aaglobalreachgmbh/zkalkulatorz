@@ -42,48 +42,53 @@ export function WizardProgress({
   };
 
   return (
-    <div className={cn("flex items-center justify-center gap-1 sm:gap-2", className)}>
-      {STEPS.map((s, idx) => {
-        const status = getStepStatus(s.step);
-        const isClickable = onStepClick && status !== "pending";
-        const Icon = s.icon;
+    <div className={cn("flex flex-col items-center gap-1", className)}>
+      <div className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/80 mb-1">
+        Schritt {currentStep} von {STEPS.length}
+      </div>
+      <div className="flex items-center justify-center gap-1 sm:gap-2">
+        {STEPS.map((s, idx) => {
+          const status = getStepStatus(s.step);
+          const isClickable = onStepClick && status !== "pending";
+          const Icon = s.icon;
 
-        return (
-          <div key={s.step} className="flex items-center">
-            {/* Step Circle */}
-            <button
-              onClick={() => isClickable && onStepClick?.(s.step)}
-              disabled={!isClickable}
-              className={cn(
-                "flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all",
-                status === "complete" && "bg-primary/10 text-primary hover:bg-primary/20",
-                status === "current" && "bg-primary text-primary-foreground shadow-lg shadow-primary/30 ring-2 ring-primary/20 ring-offset-2 scale-105",
-                status === "pending" && "bg-muted text-muted-foreground",
-                isClickable && "cursor-pointer hover:scale-105 active:scale-95",
-                !isClickable && status === "pending" && "cursor-default opacity-60"
-              )}
-            >
-              {status === "complete" ? (
-                <Check className="w-3.5 h-3.5" />
-              ) : (
-                <Icon className="w-3.5 h-3.5" />
-              )}
-              <span className="hidden sm:inline">{s.label}</span>
-              <span className="sm:hidden">{s.shortLabel}</span>
-            </button>
-
-            {/* Connector Line */}
-            {idx < STEPS.length - 1 && (
-              <div
+          return (
+            <div key={s.step} className="flex items-center">
+              {/* Step Circle */}
+              <button
+                onClick={() => isClickable && onStepClick?.(s.step)}
+                disabled={!isClickable}
                 className={cn(
-                  "w-4 sm:w-8 h-0.5 mx-1",
-                  status === "complete" ? "bg-primary" : "bg-border"
+                  "flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all",
+                  status === "complete" && "bg-primary/10 text-primary hover:bg-primary/20",
+                  status === "current" && "bg-primary text-primary-foreground shadow-lg shadow-primary/30 ring-2 ring-primary/20 ring-offset-2 scale-105",
+                  status === "pending" && "bg-muted text-muted-foreground",
+                  isClickable && "cursor-pointer hover:scale-105 active:scale-95",
+                  !isClickable && status === "pending" && "cursor-default opacity-60"
                 )}
-              />
-            )}
-          </div>
-        );
-      })}
+              >
+                {status === "complete" ? (
+                  <Check className="w-3.5 h-3.5" />
+                ) : (
+                  <Icon className="w-3.5 h-3.5" />
+                )}
+                <span className="hidden sm:inline">{s.label}</span>
+                <span className="sm:hidden">{s.shortLabel}</span>
+              </button>
+
+              {/* Connector Line */}
+              {idx < STEPS.length - 1 && (
+                <div
+                  className={cn(
+                    "w-4 sm:w-8 h-0.5 mx-1",
+                    status === "complete" ? "bg-primary" : "bg-border"
+                  )}
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

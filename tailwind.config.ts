@@ -65,6 +65,9 @@ export default {
         success: "hsl(var(--success))",
         warning: "hsl(var(--warning))",
         info: "hsl(var(--info))",
+        "gk-red": "#e4002b",
+        "gk-dark-grey": "#4a4a4a",
+        "gk-light-grey": "#f4f4f4",
       },
       borderRadius: {
         lg: "var(--radius)",

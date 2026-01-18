@@ -1,0 +1,48 @@
+{
+  "project_meta": {
+    "name": "MargenKalkulator",
+    "description": "Enterprise-Finanzplattform",
+    "tech_stack": [
+      "Next.js 14",
+      "Tailwind CSS",
+      "Supabase",
+      "Deno (Edge Functions)",
+      "Zod",
+      "PostgreSQL"
+    ],
+    "vibe": "Evidence-Based Engineering, No Vibe Coding",
+    "design_system": {
+      "name": "Vodafone Enterprise Aesthetic",
+      "colors": {
+        "primary": "#E60000 (Vodafone Red)",
+        "base": "#0F172A (Serious Blue)"
+      },
+      "typography": {
+        "ui": "Inter",
+        "data": "Geist Sans (tabular-nums)"
+      },
+      "ui_library": "Shadcn UI + Bento Grids"
+    }
+  },
+  "architecture_decisions": {
+    "Architecture Type": "Event-Driven Serverless Architecture [Doc 3]",
+    "Black Box Logic": "Calculations ONLY on Edge Functions. Client is dumb. [Doc 2]",
+    "Database Strategy": "Split-Table: public_products vs commercial_costs. [Doc 2 & 3]",
+    "Security": "Default Deny RLS & Active Defense (Honeytokens). [Doc 4]",
+    "Contracts": "Contract-First with Zod. [Doc 5]",
+    "Orchestration": "DOE Framework & Self-Annealing. [Doc 8]",
+    "QA": "Property-Based Testing (pgTAP). [Doc 6 & 9]"
+  },
+  "active_phase": "Phase 6: THE GOLDEN SEAL",
+  "knowledge_base": {
+    "doc1": "Systemarchitektur: Evidence-Based Engineering",
+    "doc2": "Backend: Logic Black Box (Edge Functions)",
+    "doc3": "Implementierung: Monorepo & Parität",
+    "doc4": "SecOps: Active Runtime Defense",
+    "doc5": "Workflow: Contract-First (Zod)",
+    "doc6": "QA: Property-Based Testing",
+    "doc7": "Design: Vodafone Enterprise + Shadcn",
+    "doc8": "Orchestrierung: DOE Framework & Self-Annealing",
+    "doc9": "QA: Property-Based Testing (Additional)"
+  }
+}

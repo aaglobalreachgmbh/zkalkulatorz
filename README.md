@@ -24,3 +24,19 @@ Ensure these keys are present in your `.env` (local) or Vercel Environment (Prod
 1. `npm install` (in `/src`)
 2. `npm run dev`
 3. Local URL: `http://localhost:3000`
+
+## 6. Data Ingestion (Phase 8)
+To import Vodafone tariffs securely into the live environment:
+
+1.  **Prepare your CSV**: See `data/sample_tariffs.csv` for the format.
+2.  **Set Admin Token**: Ensure `ADMIN_IMPORT_TOKEN` is set in your environment (and in Lovable Secrets).
+3.  **Run the Script**:
+    ```bash
+    npx tsx scripts/upload_tariffs.ts --file data/sample_tariffs.csv
+    ```
+
+## 7. Compliance & Standards
+This project adheres to the **"9 Directives"**:
+- Active Runtime Defense (Honeytokens).
+- Contract-First (Zod Schemas).
+- Self-Annealing Protocols.

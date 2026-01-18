@@ -41,3 +41,34 @@ verify_jwt = true
 
 [functions.create-calendar-event]
 verify_jwt = true
+
+# ========================================
+# PHASE 8 & ANTIGRAVITY ADDITIONS
+# ========================================
+
+[functions.import-tariffs]
+verify_jwt = false
+
+[functions.calculate-margin]
+verify_jwt = true
+
+[functions.generate-pdf]
+verify_jwt = true
+
+[functions.gmail-oauth]
+verify_jwt = true
+
+[functions.ionos-connect]
+verify_jwt = true
+
+[functions.send-admin-invite]
+verify_jwt = true
+
+[functions.send-notification-email]
+verify_jwt = true
+
+[functions.send-password-reset]
+verify_jwt = true
+
+[functions.sync-emails]
+verify_jwt = true

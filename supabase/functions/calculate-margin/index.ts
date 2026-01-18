@@ -79,8 +79,9 @@ serve(async (req) => {
         })
 
     } catch (error) {
-        console.error("Calculation Error:", error.message)
-        return new Response(JSON.stringify({ error: error.message }), {
+        const message = error instanceof Error ? error.message : "Unknown error"
+        console.error("Calculation Error:", message)
+        return new Response(JSON.stringify({ error: message }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 400,
         })

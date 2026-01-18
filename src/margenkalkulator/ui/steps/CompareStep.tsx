@@ -333,44 +333,43 @@ export function CompareStep({
                 </div>
               )}
             </div>
+          </DealerOnly>
         </div>
-      </DealerOnly>
-    </div>
-      </div >
+      </div>
 
-    {/* Smart-Advisor Badge - nur im Dealer-Modus */ }
-  {
-    showDealerEconomics && smartAdvisor.hasBetterOptions && (
-      <SmartAdvisorBadge
-        bestRecommendation={smartAdvisor.bestRecommendation}
-        totalRecommendations={smartAdvisor.recommendations.length}
-        quickHint={smartAdvisor.quickHint}
-        onShowDetails={() => setShowAdvisorModal(true)}
+      {/* Smart-Advisor Badge - nur im Dealer-Modus */}
+      {
+        showDealerEconomics && smartAdvisor.hasBetterOptions && (
+          <SmartAdvisorBadge
+            bestRecommendation={smartAdvisor.bestRecommendation}
+            totalRecommendations={smartAdvisor.recommendations.length}
+            quickHint={smartAdvisor.quickHint}
+            onShowDetails={() => setShowAdvisorModal(true)}
+          />
+        )
+      }
+
+      {/* KI-Angebots-Check - prominente Integration */}
+      <div className="mt-6">
+        <AiOfferCheck
+          config={option1}
+          result={result1}
+          compact={false}
+        />
+      </div>
+
+      {/* Smart-Advisor Modal */}
+      <SmartAdvisor
+        recommendations={smartAdvisor.recommendations}
+        currentBaseline={smartAdvisor.currentBaseline}
+        open={showAdvisorModal}
+        onOpenChange={setShowAdvisorModal}
+        onApplyRecommendation={(rec) => {
+          // TODO: Empfehlung auf option1 anwenden
+          console.log("Apply recommendation:", rec);
+          setShowAdvisorModal(false);
+        }}
       />
-    )
-  }
-
-  {/* KI-Angebots-Check - prominente Integration */ }
-  <div className="mt-6">
-    <AiOfferCheck
-      config={option1}
-      result={result1}
-      compact={false}
-    />
-  </div>
-
-  {/* Smart-Advisor Modal */ }
-  <SmartAdvisor
-    recommendations={smartAdvisor.recommendations}
-    currentBaseline={smartAdvisor.currentBaseline}
-    open={showAdvisorModal}
-    onOpenChange={setShowAdvisorModal}
-    onApplyRecommendation={(rec) => {
-      // TODO: Empfehlung auf option1 anwenden
-      console.log("Apply recommendation:", rec);
-      setShowAdvisorModal(false);
-    }}
-  />
     </div >
   );
 }

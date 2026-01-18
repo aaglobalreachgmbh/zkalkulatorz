@@ -1,0 +1,6 @@
+tariff_id,name,category,list_price_netto,cost_price_netto,duration_months,promo_id,sub_level
+a1b2c3d4-e5f6-7890-abcd-ef1234567890,Red Business Pro,MOBILE,49.99,25.00,24,,GOLD
+b2c3d4e5-f6a7-8901-bcde-f12345678901,Red Business Basic,MOBILE,29.99,15.50,24,,SILVER
+c3d4e5f6-a7b8-9012-cdef-123456789012,GigaKombi Home,DSL,69.99,35.00,24,PROMO2024,PLATINUM
+d4e5f6a7-b8c9-0123-defa-234567890123,IoT Connect M,IOT,9.99,4.00,12,,BRONZE
+e5f6a7b8-c9d0-1234-efab-345678901234,Cable Max 1000,CABLE,59.99,28.00,24,,GOLD

@@ -1,0 +1,269 @@
+// ============================================
+// Unified AppIdentity Context
+// Phase 3A: Supabase-first with localStorage fallback
+// ============================================
+
+import { createContext, useContext, useState, useEffect, useMemo, type ReactNode } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { useUserRole } from "@/hooks/useUserRole";
+
+/**
+ * App-level roles (mapped from Supabase roles)
+ * - admin: Full access, can manage everything
+ * - manager: Can access admin panel, manage team
+ * - sales: Standard employee role
+ */
+export type AppRole = "admin" | "tenant_admin" | "manager" | "sales";
+
+/**
+ * Supabase DB roles → App roles mapping
+ */
+const SUPABASE_TO_APP_ROLE: Record<string, AppRole> = {
+  admin: "admin",
+  tenant_admin: "tenant_admin",
+  moderator: "manager",
+  user: "sales",
+};
+
+export interface IdentityState {
+  userId: string;
+  displayName: string;
+  role: AppRole;
+  departmentId: string;
+  tenantId: string;
+}
+
+/** JWT Claims from server (Phase C2) */
+export interface JwtClaims {
+  tenantId?: string;
+  departmentId?: string;
+  verified: boolean;
+}
+
+interface IdentityContextType {
+  identity: IdentityState;
+  isAuthenticated: boolean;
+  isSupabaseAuth: boolean;
+  setMockIdentity: (identity: IdentityState) => void;
+  clearMockIdentity: () => void;
+  canAccessAdmin: boolean;
+  /** Server-verified claims from JWT (Phase C2) */
+  jwtClaims: JwtClaims;
+}
+
+const MOCK_STORAGE_KEY = "margenkalkulator_mock_identity";
+
+/**
+ * Default identity for unauthenticated/offline users
+ */
+const DEFAULT_IDENTITY: IdentityState = {
+  userId: "user_local",
+  displayName: "Gast",
+  role: "sales",
+  departmentId: "dept_default",
+  tenantId: "tenant_default",
+};
+
+/**
+ * Default mock identities for development/testing
+ */
+export const MOCK_IDENTITIES: IdentityState[] = [
+  {
+    userId: "admin_001",
+    displayName: "Max Admin",
+    role: "admin",
+    departmentId: "hq",
+    tenantId: "demo_tenant",
+  },
+  {
+    userId: "tenant_admin_001",
+    displayName: "Sarah Tenant-Admin",
+    role: "tenant_admin",
+    departmentId: "hq",
+    tenantId: "allenetze_de",
+  },
+  {
+    userId: "manager_001",
+    displayName: "Lisa Manager",
+    role: "manager",
+    departmentId: "store_berlin",
+    tenantId: "demo_tenant",
+  },
+  {
+    userId: "sales_001",
+    displayName: "Tom Verkäufer",
+    role: "sales",
+    departmentId: "store_berlin",
+    tenantId: "demo_tenant",
+  },
+  {
+    userId: "sales_002",
+    displayName: "Anna Beraterin",
+    role: "sales",
+    departmentId: "store_munich",
+    tenantId: "demo_tenant",
+  },
+];
+
+const IdentityContext = createContext<IdentityContextType | null>(null);
+
+function loadMockIdentity(): IdentityState | null {
+  try {
+    const json = localStorage.getItem(MOCK_STORAGE_KEY);
+    if (!json) return null;
+    return JSON.parse(json) as IdentityState;
+  } catch {
+    return null;
+  }
+}
+
+function saveMockIdentity(identity: IdentityState | null): void {
+  if (identity) {
+    localStorage.setItem(MOCK_STORAGE_KEY, JSON.stringify(identity));
+  } else {
+    localStorage.removeItem(MOCK_STORAGE_KEY);
+  }
+}
+
+/**
+ * Maps Supabase role to App role
+ */
+export function mapSupabaseToAppRole(supabaseRole: string | null): AppRole {
+  if (!supabaseRole) return "sales";
+  return SUPABASE_TO_APP_ROLE[supabaseRole] || "sales";
+}
+
+export function IdentityProvider({ children }: { children: ReactNode }) {
+  const { user, isLoading: authLoading } = useAuth();
+  const { role: supabaseRole, isLoading: roleLoading } = useUserRole();
+  const [mockIdentity, setMockIdentityState] = useState<IdentityState | null>(() => loadMockIdentity());
+
+  // Persist mock identity to localStorage
+  useEffect(() => {
+    saveMockIdentity(mockIdentity);
+  }, [mockIdentity]);
+
+  /**
+   * JWT Claims from server (Phase C2)
+   * These are set by the server and verified, providing trusted tenant/department info
+   */
+  const jwtClaims = useMemo((): JwtClaims => {
+    if (!user) {
+      return { verified: false };
+    }
+    
+    // Try to extract claims from JWT token
+    // In Supabase, custom claims can be added via hooks or directly
+    const appMetadata = user.app_metadata || {};
+    
+    return {
+      tenantId: appMetadata.tenant_id || user.user_metadata?.tenant_id,
+      departmentId: appMetadata.department_id || user.user_metadata?.department_id,
+      verified: !!appMetadata.tenant_id, // Only verified if set in app_metadata
+    };
+  }, [user]);
+
+  /**
+   * Computed identity with priority:
+   * 1. Supabase authenticated user → use Supabase data
+   * 2. Mock identity from localStorage → use mock
+   * 3. Default identity → guest
+   */
+  const identity = useMemo((): IdentityState => {
+    // Priority 1: Supabase authenticated user
+    if (user && !authLoading && !roleLoading) {
+      try {
+        const appRole = mapSupabaseToAppRole(supabaseRole);
+        return {
+          userId: user.id,
+          displayName: user.user_metadata?.display_name || user.email?.split("@")[0] || "User",
+          role: appRole,
+          // Prefer JWT claims over user_metadata for tenant/department
+          departmentId: jwtClaims.departmentId || user.user_metadata?.department_id || "dept_default",
+          tenantId: jwtClaims.tenantId || user.user_metadata?.tenant_id || "tenant_default",
+        };
+      } catch (err) {
+        console.error("[IdentityContext] Error computing identity:", err);
+        // Fallback to default on any error to prevent crashes
+        return DEFAULT_IDENTITY;
+      }
+    }
+
+    // Priority 2: Mock identity (for development/offline)
+    if (mockIdentity) {
+      return mockIdentity;
+    }
+
+    // Priority 3: Default identity
+    return DEFAULT_IDENTITY;
+  }, [user, authLoading, roleLoading, supabaseRole, mockIdentity, jwtClaims]);
+
+  const isSupabaseAuth = !!user && !authLoading;
+  const isAuthenticated = isSupabaseAuth || !!mockIdentity;
+  const canAccessAdmin = identity.role === "admin" || identity.role === "manager";
+
+  const setMockIdentity = (newIdentity: IdentityState) => {
+    // Only allow mock identity when not authenticated via Supabase
+    if (!isSupabaseAuth) {
+      setMockIdentityState(newIdentity);
+    }
+  };
+
+  const clearMockIdentity = () => {
+    setMockIdentityState(null);
+  };
+
+  return (
+    <IdentityContext.Provider
+      value={{
+        identity,
+        isAuthenticated,
+        isSupabaseAuth,
+        setMockIdentity,
+        clearMockIdentity,
+        canAccessAdmin,
+        jwtClaims,
+      }}
+    >
+      {children}
+    </IdentityContext.Provider>
+  );
+}
+
+/**
+ * Safe default context for use outside IdentityProvider
+ * Allows graceful degradation instead of crash
+ */
+const SAFE_DEFAULT_CONTEXT: IdentityContextType = {
+  identity: DEFAULT_IDENTITY,
+  isAuthenticated: false,
+  isSupabaseAuth: false,
+  setMockIdentity: () => {
+    console.warn("[useIdentity] setMockIdentity called outside IdentityProvider");
+  },
+  clearMockIdentity: () => {
+    console.warn("[useIdentity] clearMockIdentity called outside IdentityProvider");
+  },
+  canAccessAdmin: false,
+  jwtClaims: { verified: false },
+};
+
+export function useIdentity(): IdentityContextType {
+  const context = useContext(IdentityContext);
+  
+  // GRACEFUL DEGRADATION statt Exception
+  if (!context) {
+    console.warn("[useIdentity] Used outside IdentityProvider, returning safe default");
+    return SAFE_DEFAULT_CONTEXT;
+  }
+  
+  return context;
+}
+
+/**
+ * Helper to get scoped storage key based on identity
+ * Format: baseKey_tenantId_departmentId_userId
+ */
+export function getScopedStorageKey(baseKey: string, identity: IdentityState): string {
+  return `${baseKey}_${identity.tenantId}_${identity.departmentId}_${identity.userId}`;
+}

@@ -1,0 +1,232 @@
+// ============================================
+// Cloud Offers Hook - React Query Integration
+// ============================================
+
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useActivityTracker } from "@/hooks/useActivityTracker";
+import { useIdentity } from "@/contexts/IdentityContext";
+import type { OfferOptionState } from "../engine/types";
+import type { CloudOffer, OfferPreview } from "../storage/types";
+import { toast } from "sonner";
+
+// Re-export CloudOffer type
+export type { CloudOffer };
+
+const QUERY_KEY = ["cloudOffers"];
+
+/**
+ * Create preview from config
+ */
+function createPreview(config: OfferOptionState, avgMonthly: number): OfferPreview {
+  return {
+    hardware: config.hardware.name || "SIM Only",
+    tariff: config.mobile.tariffId || "Kein Tarif",
+    avgMonthly,
+    quantity: config.mobile.quantity,
+  };
+}
+
+/**
+ * Hook for cloud offer management
+ */
+export function useCloudOffers() {
+  const { user } = useAuth();
+  const { identity } = useIdentity();
+  const queryClient = useQueryClient();
+  const { trackOfferCreated, trackOfferDeleted, trackOfferRenamed } = useActivityTracker();
+
+  // Load offers query
+  const {
+    data: offers = [],
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: QUERY_KEY,
+    queryFn: async (): Promise<CloudOffer[]> => {
+      const { data, error } = await supabase
+        .from("saved_offers")
+        .select("*")
+        .order("updated_at", { ascending: false });
+
+      if (error) {
+        console.warn("[useCloudOffers] Query error:", error.message);
+        return [];
+      }
+
+      return (data || []).map((row) => ({
+        id: row.id,
+        user_id: row.user_id,
+        name: row.name,
+        config: row.config as unknown as OfferOptionState,
+        preview: row.preview as unknown as OfferPreview | null,
+        is_draft: row.is_draft ?? true,
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+        customer_id: row.customer_id ?? null,
+        team_id: row.team_id ?? null,
+        visibility: (row.visibility as "private" | "team") ?? "private",
+        dataset_version_id: row.dataset_version_id ?? null,
+        status: ((row as any).status as "offen" | "gesendet" | "angenommen" | "abgelehnt") ?? "offen",
+      }));
+    },
+    enabled: !!user,
+    staleTime: 1000 * 60,
+  });
+
+  // Create mutation
+  const createMutation = useMutation({
+    mutationFn: async ({
+      name,
+      config,
+      avgMonthly,
+      customerId,
+      datasetVersionId,
+    }: {
+      name: string;
+      config: OfferOptionState;
+      avgMonthly: number;
+      customerId?: string | null;
+      datasetVersionId?: string | null;
+    }): Promise<CloudOffer> => {
+      if (!user) {
+        console.warn("[useCloudOffers] Not authenticated");
+        toast.error("Bitte zuerst einloggen");
+        return null as unknown as CloudOffer;
+      }
+
+      const preview = createPreview(config, avgMonthly);
+
+      const { data, error } = await supabase
+        .from("saved_offers")
+        .insert({
+          user_id: user.id,
+          tenant_id: identity.tenantId,
+          name,
+          config: JSON.parse(JSON.stringify(config)),
+          preview: JSON.parse(JSON.stringify(preview)),
+          is_draft: false,
+          customer_id: customerId || null,
+          dataset_version_id: datasetVersionId || null,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.warn("[useCloudOffers] Create error:", error.message);
+        toast.error("Speichern fehlgeschlagen");
+        return null as unknown as CloudOffer;
+      }
+
+      return {
+        id: data.id,
+        user_id: data.user_id,
+        name: data.name,
+        config: data.config as unknown as OfferOptionState,
+        preview: data.preview as unknown as OfferPreview | null,
+        is_draft: data.is_draft ?? true,
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+        customer_id: data.customer_id ?? null,
+        team_id: data.team_id ?? null,
+        visibility: (data.visibility as "private" | "team") ?? "private",
+        dataset_version_id: data.dataset_version_id ?? null,
+        status: ((data as any).status as "offen" | "gesendet" | "angenommen" | "abgelehnt") ?? "offen",
+      };
+    },
+    onSuccess: (newOffer) => {
+      queryClient.setQueryData<CloudOffer[]>(QUERY_KEY, (old) => [
+        newOffer,
+        ...(old || []),
+      ]);
+      toast.success("Gespeichert", {
+        description: `"${newOffer.name}" wurde gespeichert.`,
+      });
+      trackOfferCreated(newOffer.id, newOffer.name);
+    },
+    onError: (error: Error) => {
+      toast.error("Fehler", {
+        description: error.message,
+      });
+    },
+  });
+
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string): Promise<void> => {
+      const { error } = await supabase
+        .from("saved_offers")
+        .delete()
+        .eq("id", id);
+
+      if (error) {
+        console.warn("[useCloudOffers] Delete error:", error.message);
+        toast.error("Löschen fehlgeschlagen");
+        return;
+      }
+    },
+    onSuccess: (_, id) => {
+      queryClient.setQueryData<CloudOffer[]>(QUERY_KEY, (old) =>
+        (old || []).filter((o) => o.id !== id)
+      );
+      toast.success("Gelöscht", {
+        description: "Angebot wurde entfernt.",
+      });
+      trackOfferDeleted(id, "Gelöscht");
+    },
+    onError: (error: Error) => {
+      toast.error("Fehler", {
+        description: error.message,
+      });
+    },
+  });
+
+  // Rename mutation
+  const renameMutation = useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }): Promise<void> => {
+      const { error } = await supabase
+        .from("saved_offers")
+        .update({ name })
+        .eq("id", id);
+
+      if (error) {
+        console.warn("[useCloudOffers] Rename error:", error.message);
+        toast.error("Umbenennen fehlgeschlagen");
+        return;
+      }
+    },
+    onSuccess: (_, { id, name }) => {
+      queryClient.setQueryData<CloudOffer[]>(QUERY_KEY, (old) =>
+        (old || []).map((o) => (o.id === id ? { ...o, name } : o))
+      );
+      toast.success("Umbenannt", {
+        description: `Angebot wurde in "${name}" umbenannt.`,
+      });
+      trackOfferRenamed(id, "", name);
+    },
+    onError: (error: Error) => {
+      toast.error("Fehler", {
+        description: error.message,
+      });
+    },
+  });
+
+  // Helper: Get offers for specific customer
+  const getOffersForCustomer = (customerId: string) => {
+    return offers.filter((o) => o.customer_id === customerId);
+  };
+
+  return {
+    offers,
+    isLoading,
+    error,
+    refetch,
+    isAuthenticated: !!user,
+    createOffer: createMutation,
+    deleteOffer: deleteMutation,
+    renameOffer: renameMutation,
+    getOffersForCustomer,
+  };
+}

@@ -1,0 +1,173 @@
+// ============================================
+// History Storage - Auto-Save Last 10 (Scoped)
+// Phase 3A: Storage scoped by identity
+// ============================================
+
+import type { OfferOptionState } from "../engine/types";
+import type { HistoryEntry } from "./types";
+import { STORAGE_KEYS, STORAGE_LIMITS } from "./types";
+
+// Current scope (set by identity context)
+let currentScope: string = "guest";
+
+/**
+ * Set the current storage scope based on identity
+ */
+export function setHistoryScope(tenantId: string, departmentId: string, userId: string): void {
+  currentScope = `${tenantId}_${departmentId}_${userId}`;
+}
+
+/**
+ * Reset to guest scope
+ */
+export function resetHistoryScope(): void {
+  currentScope = "guest";
+}
+
+/**
+ * Get scoped storage key
+ */
+function getScopedKey(): string {
+  return `${STORAGE_KEYS.HISTORY}_${currentScope}`;
+}
+
+/**
+ * Generiert eine eindeutige ID
+ */
+function generateId(): string {
+  return `h-${Date.now().toString(36)}`;
+}
+
+/**
+ * Erstellt Kurzbeschreibung aus Config
+ */
+function createSummary(config: OfferOptionState): string {
+  const parts: string[] = [];
+  
+  if (config.hardware.name && config.hardware.ekNet > 0) {
+    parts.push(config.hardware.name);
+  } else {
+    parts.push("SIM Only");
+  }
+  
+  if (config.mobile.tariffId) {
+    parts.push(config.mobile.tariffId.replace(/_/g, " "));
+  }
+  
+  if (config.fixedNet.enabled) {
+    parts.push("+ Festnetz");
+  }
+  
+  return parts.join(" • ");
+}
+
+/**
+ * Migrate legacy unscoped history to current scope
+ */
+export function migrateLegacyHistory(): void {
+  try {
+    const legacyKey = STORAGE_KEYS.HISTORY;
+    const legacyJson = localStorage.getItem(legacyKey);
+    if (!legacyJson) return;
+
+    const legacyHistory = JSON.parse(legacyJson) as HistoryEntry[];
+    if (legacyHistory.length === 0) return;
+
+    // Load current scoped history
+    const currentHistory = loadHistory();
+    
+    // Merge legacy into current (avoiding duplicates by id)
+    const existingIds = new Set(currentHistory.map(h => h.id));
+    const newHistory = legacyHistory.filter(h => !existingIds.has(h.id));
+    
+    if (newHistory.length > 0) {
+      const merged = [...currentHistory, ...newHistory].slice(0, STORAGE_LIMITS.MAX_HISTORY);
+      saveHistory(merged);
+    }
+
+    // Remove legacy key to prevent re-migration
+    localStorage.removeItem(legacyKey);
+  } catch (e) {
+    console.warn("Failed to migrate legacy history:", e);
+  }
+}
+
+/**
+ * Lädt History aus localStorage (scoped)
+ */
+export function loadHistory(): HistoryEntry[] {
+  try {
+    const json = localStorage.getItem(getScopedKey());
+    if (!json) return [];
+    return JSON.parse(json) as HistoryEntry[];
+  } catch (e) {
+    console.warn("Failed to load history:", e);
+    return [];
+  }
+}
+
+/**
+ * Speichert History-Array (scoped)
+ */
+function saveHistory(history: HistoryEntry[]): void {
+  try {
+    localStorage.setItem(getScopedKey(), JSON.stringify(history));
+  } catch (e) {
+    console.error("Failed to save history:", e);
+  }
+}
+
+/**
+ * Fügt Eintrag zum Verlauf hinzu
+ * Nur wenn sich die Konfiguration geändert hat
+ */
+export function addToHistory(config: OfferOptionState): void {
+  const history = loadHistory();
+  
+  // Prüfe ob identisch zum letzten Eintrag
+  if (history.length > 0) {
+    const last = history[0];
+    if (JSON.stringify(last.config) === JSON.stringify(config)) {
+      return; // Keine Änderung
+    }
+  }
+  
+  const entry: HistoryEntry = {
+    id: generateId(),
+    timestamp: new Date().toISOString(),
+    summary: createSummary(config),
+    config,
+  };
+  
+  // Add at start
+  history.unshift(entry);
+  
+  // Limit
+  if (history.length > STORAGE_LIMITS.MAX_HISTORY) {
+    history.splice(STORAGE_LIMITS.MAX_HISTORY);
+  }
+  
+  saveHistory(history);
+}
+
+/**
+ * Lädt letzten Verlaufs-Eintrag
+ */
+export function getLastHistoryEntry(): HistoryEntry | null {
+  const history = loadHistory();
+  return history[0] ?? null;
+}
+
+/**
+ * Löscht Verlauf (scoped)
+ */
+export function clearHistory(): void {
+  localStorage.removeItem(getScopedKey());
+}
+
+/**
+ * Prüft ob Verlauf existiert
+ */
+export function hasHistory(): boolean {
+  return loadHistory().length > 0;
+}

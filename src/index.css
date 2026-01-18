@@ -1,0 +1,251 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light gray background like screenshot */
+    --background: 220 14% 96%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    /* Vodafone Red - deeper, more saturated */
+    --primary: 0 85% 47%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 13% 91%;
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 220 13% 91%;
+    --muted-foreground: 220 9% 46%;
+
+    --accent: 220 13% 91%;
+    --accent-foreground: 222 47% 11%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 0 85% 47%;
+
+    --radius: 0.75rem;
+
+    /* Dark panel for contrast cards */
+    --panel-dark: 222 47% 11%;
+    --panel-dark-foreground: 0 0% 98%;
+    --panel-dark-muted: 220 9% 60%;
+
+    /* Status colors */
+    --success: 142 71% 45%;
+    --warning: 38 92% 50%;
+    --info: 217 91% 60%;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 0 85% 47%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 13% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 0 85% 47%;
+  }
+
+  .dark {
+    --background: 222 47% 8%;
+    --foreground: 0 0% 98%;
+
+    --card: 222 47% 11%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 222 47% 11%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 0 85% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 222 30% 18%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 222 30% 18%;
+    --muted-foreground: 220 9% 60%;
+
+    --accent: 222 30% 18%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 222 30% 20%;
+    --input: 222 30% 20%;
+    --ring: 0 85% 55%;
+
+    --panel-dark: 222 47% 6%;
+    --panel-dark-foreground: 0 0% 98%;
+    --panel-dark-muted: 220 9% 50%;
+
+    --sidebar-background: 222 47% 11%;
+    --sidebar-foreground: 0 0% 96%;
+    --sidebar-primary: 0 85% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 222 30% 18%;
+    --sidebar-accent-foreground: 0 0% 96%;
+    --sidebar-border: 222 30% 20%;
+    --sidebar-ring: 0 85% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+  
+  /* Tenant Branding: CSS variable for dynamic primary color */
+  :root[style*="--tenant-primary"] {
+    --primary: var(--tenant-primary-hsl, 0 85% 47%);
+  }
+}
+
+/* ============================================================================
+   GLOBALE UI-REGEL: Container-Overflow-Schutz
+   Verhindert, dass Elemente (Buttons, etc.) ihre Container überlaufen.
+   ============================================================================ */
+@layer components {
+  /* Cards, Dialogs, Popovers: Overflow hidden + proper containment */
+  .card,
+  [role="dialog"],
+  [data-radix-popper-content-wrapper] > *,
+  .popover-content,
+  .dialog-content {
+    overflow: hidden;
+  }
+  
+  /* Button-Container: Flex-wrap und gap für sichere Abstände */
+  .button-group,
+  .flex:has(> button + button) {
+    gap: 0.5rem;
+  }
+  
+  /* Buttons: Niemals schrumpfen unter Mindestgröße */
+  button {
+    flex-shrink: 0;
+    max-width: 100%;
+  }
+  
+  /* Action-Footer in Dialogen/Cards: Sichere Abstände */
+  .card-footer,
+  .dialog-footer,
+  [class*="flex"][class*="justify-between"]:has(button) {
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  /* Enterprise Aesthetic Utilities */
+  .glass-card {
+    @apply bg-white/80 backdrop-blur-xl border border-white/20 shadow-sm transition-all duration-300;
+  }
+  .glass-card:hover {
+    @apply shadow-md border-white/40;
+  }
+
+  .glass-panel {
+    @apply bg-white/50 backdrop-blur-md border border-gray-100/50 shadow-sm;
+  }
+
+  .premium-shadow {
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(0, 0, 0, 0.02);
+  }
+
+  .enterprise-input {
+    @apply h-12 rounded-lg border-gray-200 bg-white/50 backdrop-blur-sm focus:ring-gk-red/20 focus:border-gk-red transition-all duration-200;
+  }
+
+  .enterprise-bg {
+    @apply bg-slate-50;
+    background-image: radial-gradient(at 0% 0%, hsla(253,16%,7%,0) 0, transparent 50%), radial-gradient(at 50% 0%, hsla(225,39%,30%,0) 0, transparent 50%), radial-gradient(at 100% 0%, hsla(339,49%,30%,0) 0, transparent 50%);
+  }
+}
+
+/* Touch-Feedback for Mobile Buttons */
+.touch-feedback {
+  transition: transform 0.1s ease, opacity 0.1s ease;
+  touch-action: manipulation;
+}
+.touch-feedback:active {
+  transform: scale(0.97);
+  opacity: 0.9;
+}
+
+/* Animations */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* AI Consultant FAB pulse animation */
+.animate-pulse-soft {
+  animation: pulseSoft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulseSoft {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.05);
+  }
+}
+
+/* Status dot animation */
+@keyframes pulse-dot {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+/* Ticker animation optimization */
+.animate-marquee {
+  will-change: transform;
+}

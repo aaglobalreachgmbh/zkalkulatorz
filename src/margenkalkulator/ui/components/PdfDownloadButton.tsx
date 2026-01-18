@@ -24,6 +24,7 @@ interface PdfDownloadButtonProps {
   /** Current view mode - required for dealer PDF security check */
   viewMode?: ViewMode;
   className?: string;
+  onDownload?: () => void;
 }
 
 // SECURITY: Maximum PDF generation time (prevents DoS via complex documents)
@@ -46,6 +47,7 @@ export function PdfDownloadButton({
   type = "customer",
   viewMode = "customer",
   className,
+  onDownload,
 }: PdfDownloadButtonProps) {
   const [loading, setLoading] = useState(false);
   const { trackPdfExported } = useActivityTracker();
@@ -131,8 +133,12 @@ export function PdfDownloadButton({
 
       toast.success(type === "dealer" ? "Händler-PDF wurde heruntergeladen" : "Kunden-PDF wurde heruntergeladen");
 
-      // Track PDF export
+      // Track PDF export (Legacy)
       trackPdfExported(undefined, `${tariffName}_${type}`);
+
+      // Phase 9 Telemetry
+      onDownload?.();
+
     } catch (e) {
       console.error("PDF generation failed:", e);
       const errorMessage =

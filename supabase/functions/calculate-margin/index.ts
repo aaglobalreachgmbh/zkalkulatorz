@@ -73,6 +73,14 @@ serve(async (req) => {
             }
         }
 
+        // TELEMETRY: Log Success
+        await supabase.from('api_logs').insert({
+            function_name: 'calculate-margin',
+            status_code: 200,
+            duration_ms: 0, // In a real scenario, use performance.now() differential
+            request_id: crypto.randomUUID(),
+        });
+
         return new Response(JSON.stringify(result), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 200,
@@ -81,6 +89,26 @@ serve(async (req) => {
     } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error"
         console.error("Calculation Error:", message)
+
+        // TELEMETRY: Log Error
+        // Re-init client to ensure we can log even if previous auth failed (using service role)
+        // Note: In this block scope, 'supabase' might be valid, but to be safe we use a try-catch for logging itself
+        try {
+            const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
+            const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+            const loggingClient = createClient(supabaseUrl, supabaseServiceKey)
+
+            await loggingClient.from('api_logs').insert({
+                function_name: 'calculate-margin',
+                status_code: 400,
+                duration_ms: 0,
+                request_id: crypto.randomUUID(),
+                error_message: message
+            });
+        } catch (logError) {
+            console.error("Logging Failed:", logError)
+        }
+
         return new Response(JSON.stringify({ error: message }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 400,

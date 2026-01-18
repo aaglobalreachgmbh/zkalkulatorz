@@ -14,6 +14,7 @@ import { SmartAdvisorBadge } from "../components/SmartAdvisorBadge";
 import { SmartAdvisor } from "../components/SmartAdvisor";
 import { useSmartAdvisor } from "../../hooks/useSmartAdvisor";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
+import { trackPdfExport } from "@/lib/telemetry";
 import { useFeature } from "@/hooks/useFeature";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -110,6 +111,7 @@ export function CompareStep({
             variant="secondary"
             type="customer"
             viewMode={viewMode}
+            onDownload={() => trackPdfExport('customer')}
           />
           <PdfDownloadButton
             option={option1}
@@ -117,6 +119,7 @@ export function CompareStep({
             variant="secondary"
             type="dealer"
             viewMode={viewMode}
+            onDownload={() => trackPdfExport('dealer')}
           />
           <Button
             variant="outline"

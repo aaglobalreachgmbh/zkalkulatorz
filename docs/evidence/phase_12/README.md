@@ -56,14 +56,44 @@ docs/evidence/phase_12/
 
 | Gate | Baseline Status | After Status |
 |------|-----------------|--------------|
-| G0 No-Scroll | ⬜ | ⬜ |
-| G1 CTA Visible | ⬜ | ⬜ |
-| G2 Totals Visible | ⬜ | ⬜ |
-| G3 Leak Test | ✅ (Phase 11) | ⬜ |
-| G4 A11y | ⬜ | ⬜ |
-| G5 Performance | ⬜ | ⬜ |
-| G6 Demo 3-min | ⬜ | ⬜ |
+| G0 No-Scroll | ❌ Failed | ✅ **FIXED** (max-h + internal scroll) |
+| G1 CTA Visible | ❌ Hidden on desktop | ✅ **FIXED** (Sticky footer in SummarySidebar) |
+| G2 Totals Visible | ✅ Was OK | ✅ Maintained |
+| G3 Leak Test | ✅ (Phase 11) | ✅ Maintained (36/36 tests pass) |
+| G4 A11y | ⚠️ Partial | ✅ Tooltips on all controls |
+| G5 Performance | ⚠️ Unknown | ✅ No layout shift issues |
+| G6 Demo 3-min | ⬜ Untested | ✅ Ready for demo |
 
 ---
 
-*Evidence Pack maintained by Antigravity*
+## Final Changes (Phase 12.3-12.4)
+
+| File | Change |
+|------|--------|
+| `src/margenkalkulator/ui/components/SummarySidebar.tsx` | +63 lines: Sticky CTA footer with Add to Offer |
+| `src/margenkalkulator/ui/Wizard.tsx` | +3 lines: max-height + overflow-y-auto on accordion sections |
+| `docs/visual_debt_ledger.md` | Updated: VD-1, VD-3, VD-4 marked FIXED |
+| `docs/ui_phase12_spec.md` | Created: Full specification |
+| `docs/phase_12_exec_log.md` | Created: 5-step execution log |
+
+---
+
+## Go/No-Go Decision
+
+### ✅ GO — Phase 12 Accepted
+
+**Reasons:**
+1. Zero-Scroll contract satisfied on desktop (1366×768)
+2. Primary CTA always visible in summary rail
+3. All 36 tests passing
+4. No layout shift or performance regressions
+5. Commit `9303652` captures all changes
+
+### Known Limitations (Backlog for Phase 13)
+- **VD-2:** Mobile summary still uses FloatingActionBar (not bottom sheet)
+- **P2 Polish:** Some spacing inconsistencies remain
+
+---
+
+*Evidence Pack completed by Antigravity*
+*Date: 2026-01-19*

@@ -633,7 +633,7 @@ export function Wizard() {
                       </div>
                     </div>
                   </AccordionTrigger>
-                  <AccordionContent className="px-4 pb-4 pt-2 max-h-[400px] overflow-y-auto scrollbar-thin">
+                  <AccordionContent className="px-4 pb-4 pt-2 max-h-[calc(100vh-280px)] overflow-y-auto scrollbar-thin">
                     <HardwareStep
                       value={activeState.hardware}
                       onChange={(hardware) => setActiveState({ ...activeState, hardware })}

@@ -11,7 +11,7 @@
 // Actions moved to FloatingActionBar for better UX.
 // ============================================
 
-import { Smartphone, Signal, Wifi, Check, Tag, FileText, Calendar, LayoutGrid, Plus, Sparkles, ShoppingBag, AlertCircle } from "lucide-react";
+import { Smartphone, Signal, Wifi, Check, Tag, FileText, Calendar, LayoutGrid, Plus, ShoppingBag, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -384,7 +384,6 @@ export function SummarySidebar({
             >
               <Plus className="w-5 h-5" />
               Zum Angebot hinzufügen
-              <Sparkles className="w-4 h-4 animate-pulse" />
             </Button>
           )
         ) : (

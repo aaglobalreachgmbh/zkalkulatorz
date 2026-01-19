@@ -17,7 +17,7 @@ Security scan findings have been triaged. This document tracks each vulnerabilit
 
 | ID | Severity | Finding | Status |
 |----|----------|---------|--------|
-| P0-A | 🔴 HIGH | `shared_offers` token enumeration risk | OPEN |
+| P0-A | 🔴 HIGH | `shared_offers` token enumeration risk | ✅ FIXED |
 | P0-B | 🔴 HIGH | `email_accounts` lateral access risk | NEEDS VERIFICATION |
 | P0-C | 🟠 MEDIUM | `onboarding_templates` public exposure | NEEDS INVESTIGATION |
 | P1-D | 🟡 LOW | RLS linter warnings (USING(true)) | NEEDS VERIFICATION |

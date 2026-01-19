@@ -6,6 +6,7 @@ import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { generateOfferId, generateAccessToken, generateOfferQrCode } from "../utils/qrCodeGenerator";
+import { hashToken, sharedOfferRateLimiter } from "@/lib/tokenSecurity";
 import { toast } from "sonner";
 
 export interface SharedOfferData {
@@ -82,12 +83,15 @@ export function useSharedOffers() {
       // Build share URL
       const shareUrl = `${window.location.origin}/share/offer/${encodeURIComponent(offerId)}?token=${encodeURIComponent(accessToken)}`;
 
+      // SECURITY: Hash token before storage (never store raw tokens!)
+      const tokenHash = await hashToken(accessToken);
+
       // Save to database (only customer-visible data!)
       const { error } = await supabase
         .from("shared_offers")
         .insert([{
           offer_id: offerId,
-          access_token: accessToken,
+          access_token: tokenHash, // Store HASH, not raw token
           customer_name: customerName || null,
           customer_email: customerEmail || null,
           offer_data: JSON.parse(JSON.stringify(offerData)),
@@ -127,13 +131,25 @@ export function useSharedOffers() {
     offerId: string,
     accessToken: string
   ): Promise<SharedOffer | null> => {
+    // SECURITY: Rate limiting to prevent enumeration attacks
+    const rateStatus = sharedOfferRateLimiter.check();
+    if (!rateStatus.allowed) {
+      console.warn("[useSharedOffers] Rate limit exceeded");
+      toast.error(`Zu viele Anfragen. Bitte warten Sie ${Math.ceil(rateStatus.resetIn / 1000)} Sekunden.`);
+      return null;
+    }
+    sharedOfferRateLimiter.hit();
+
     setIsLoading(true);
 
     try {
+      // SECURITY: Hash incoming token for comparison with stored hash
+      const tokenHash = await hashToken(accessToken);
+
       const { data, error } = await supabase
         .rpc("get_shared_offer_public", {
           p_offer_id: offerId,
-          p_access_token: accessToken,
+          p_access_token: tokenHash, // Send HASH for comparison
         });
 
       if (error) {

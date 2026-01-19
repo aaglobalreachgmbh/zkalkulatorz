@@ -34,6 +34,12 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
 import { markHydrationComplete } from "./lib/performance";
+import { logEnvironmentStatus } from "./lib/envGuard";
+
+// ============================================
+// ENVIRONMENT VALIDATION (runs first)
+// ============================================
+logEnvironmentStatus();
 
 const root = createRoot(document.getElementById("root")!);
 

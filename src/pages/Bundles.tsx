@@ -29,19 +29,19 @@ import {
   Plus,
 } from "lucide-react";
 
-import { 
-  DEMO_BUNDLES, 
-  type Sector, 
+import {
+  DEMO_BUNDLES,
+  type Sector,
   type CorporateBundle as LocalCorporateBundle,
 } from "@/margenkalkulator/storage/bundles";
-import { 
-  useCorporateBundles, 
-  SECTOR_LABELS, 
+import {
+  useCorporateBundles,
+  SECTOR_LABELS,
   type CorporateBundle as CloudCorporateBundle,
   type Sector as CloudSector,
 } from "@/margenkalkulator/hooks/useCorporateBundles";
-import { 
-  TICKER_ITEMS, 
+import {
+  TICKER_ITEMS,
   STRATEGIC_FOCUS,
 } from "@/margenkalkulator/data/news";
 import { BundleContentIcons } from "@/margenkalkulator/ui/components/BundleContentIcons";
@@ -101,8 +101,8 @@ function PageHeader() {
   return (
     <div className="flex items-center justify-between py-4">
       <div>
-        <Link 
-          to="/" 
+        <Link
+          to="/"
           className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 mb-1"
         >
           <ArrowLeft className="h-3 w-3" />
@@ -117,12 +117,12 @@ function PageHeader() {
           </Badge>
         </div>
       </div>
-      
+
       <div className="flex items-center gap-3">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input 
-            placeholder="Suche..." 
+          <Input
+            placeholder="Suche..."
             className="pl-9 w-48 bg-background"
           />
         </div>
@@ -148,33 +148,30 @@ function Tabs({ activeTab, onTabChange }: TabsProps) {
     <div className="flex items-center gap-6 border-b border-border">
       <button
         onClick={() => onTabChange("campaigns")}
-        className={`flex items-center gap-2 pb-3 px-1 border-b-2 transition-colors ${
-          activeTab === "campaigns"
+        className={`flex items-center gap-2 pb-3 px-1 border-b-2 transition-colors ${activeTab === "campaigns"
             ? "border-primary text-primary"
             : "border-transparent text-muted-foreground hover:text-foreground"
-        }`}
+          }`}
       >
         <Package className="h-4 w-4" />
         <span className="font-medium">Zentrale Kampagnen</span>
       </button>
       <button
         onClick={() => onTabChange("myBundles")}
-        className={`flex items-center gap-2 pb-3 px-1 border-b-2 transition-colors ${
-          activeTab === "myBundles"
+        className={`flex items-center gap-2 pb-3 px-1 border-b-2 transition-colors ${activeTab === "myBundles"
             ? "border-primary text-primary"
             : "border-transparent text-muted-foreground hover:text-foreground"
-        }`}
+          }`}
       >
         <Plus className="h-4 w-4" />
         <span className="font-medium">Meine Pakete</span>
       </button>
       <button
         onClick={() => onTabChange("templates")}
-        className={`flex items-center gap-2 pb-3 px-1 border-b-2 transition-colors ${
-          activeTab === "templates"
+        className={`flex items-center gap-2 pb-3 px-1 border-b-2 transition-colors ${activeTab === "templates"
             ? "border-primary text-primary"
             : "border-transparent text-muted-foreground hover:text-foreground"
-        }`}
+          }`}
       >
         <Star className="h-4 w-4" />
         <span className="font-medium">Meine Vorlagen</span>
@@ -190,22 +187,21 @@ interface SectorSwitcherProps {
 
 function SectorSwitcher({ activeSector, onSectorChange }: SectorSwitcherProps) {
   const sectors: Sector[] = ["private", "business", "enterprise"];
-  
+
   return (
     <div className="flex rounded-lg border border-border bg-muted/30 p-1">
       {sectors.map((sector) => {
         const { label, icon: Icon } = SECTOR_DISPLAY[sector];
         const isActive = activeSector === sector;
-        
+
         return (
           <button
             key={sector}
             onClick={() => onSectorChange(sector)}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-md text-sm font-medium transition-all ${
-              isActive
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-md text-sm font-medium transition-all ${isActive
                 ? "bg-background text-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
-            }`}
+              }`}
           >
             <Icon className="h-4 w-4" />
             {label}
@@ -249,10 +245,9 @@ interface BundleCardProps {
 
 function BundleCard({ bundle, badgeInfo, onClick, onDelete, showDelete }: BundleCardProps) {
   return (
-    <div 
-      className={`bg-background border rounded-xl overflow-hidden hover:shadow-md transition-shadow ${
-        badgeInfo ? `border-t-4 ${badgeInfo.color}` : "border-border"
-      }`}
+    <div
+      className={`bg-background border rounded-xl overflow-hidden hover:shadow-md transition-shadow ${badgeInfo ? `border-t-4 ${badgeInfo.color}` : "border-border"
+        }`}
     >
       <div className="p-5">
         {/* Header */}
@@ -279,25 +274,25 @@ function BundleCard({ bundle, badgeInfo, onClick, onDelete, showDelete }: Bundle
             )}
           </div>
         </div>
-        
+
         {/* Description */}
         <p className="text-sm text-muted-foreground mb-4">
           {bundle.description}
         </p>
-        
+
         {/* Dynamic Content Icons */}
         <div className="mb-2">
           <p className="text-xs text-muted-foreground mb-1.5">Enthält:</p>
-          <BundleContentIcons 
-            config={bundle.config as any} 
-            size="md" 
-            showLabels 
+          <BundleContentIcons
+            config={bundle.config as any}
+            size="md"
+            showLabels
           />
         </div>
       </div>
-      
+
       {/* Footer */}
-      <button 
+      <button
         onClick={onClick}
         className="w-full px-5 py-3 border-t border-border text-sm text-muted-foreground hover:text-primary hover:bg-muted/20 transition-colors flex items-center justify-between group"
       >
@@ -320,24 +315,13 @@ export default function Bundles() {
   const [activeSector, setActiveSector] = useState<Sector>("business");
   const { canUseBundles, hasFullAccess, isLoading: permissionsLoading } = usePermissions();
 
-  // Berechtigungsprüfung
-  if (!permissionsLoading && !hasFullAccess && !canUseBundles) {
-    return (
-      <MainLayout>
-        <AccessDeniedCard 
-          title="Kein Zugriff auf Bundles"
-          description="Sie haben keine Berechtigung, den Bundle-Konfigurator zu nutzen. Kontaktieren Sie Ihren Shop-Administrator."
-        />
-      </MainLayout>
-    );
-  }
-
+  // All hooks must be called unconditionally before any early returns
   // Cloud bundles (user-created)
-  const { 
-    bundles: cloudBundles, 
-    isLoading: isLoadingCloudBundles, 
+  const {
+    bundles: cloudBundles,
+    isLoading: isLoadingCloudBundles,
     deleteBundle,
-    isDeleting 
+    isDeleting
   } = useCorporateBundles({ includeInactive: true });
 
   // Filter demo bundles by sector
@@ -355,6 +339,18 @@ export default function Bundles() {
     const featured = filteredBundles.filter((b) => b.featured);
     return featured.length > 0 ? featured.slice(0, 2) : filteredBundles.slice(0, 2);
   }, [filteredBundles]);
+
+  // Berechtigungsprüfung (after all hooks)
+  if (!permissionsLoading && !hasFullAccess && !canUseBundles) {
+    return (
+      <MainLayout>
+        <AccessDeniedCard
+          title="Kein Zugriff auf Bundles"
+          description="Sie haben keine Berechtigung, den Bundle-Konfigurator zu nutzen. Kontaktieren Sie Ihren Shop-Administrator."
+        />
+      </MainLayout>
+    );
+  }
 
   const handleBundleClick = (bundle: LocalCorporateBundle | CloudCorporateBundle) => {
     // Navigate to calculator with bundle config
@@ -391,9 +387,9 @@ export default function Bundles() {
               {activeTab === "campaigns" && (
                 <>
                   {/* Sector Switcher */}
-                  <SectorSwitcher 
-                    activeSector={activeSector} 
-                    onSectorChange={setActiveSector} 
+                  <SectorSwitcher
+                    activeSector={activeSector}
+                    onSectorChange={setActiveSector}
                   />
 
                   {/* Strategic Focus */}
@@ -432,9 +428,9 @@ export default function Bundles() {
               {activeTab === "myBundles" && (
                 <>
                   {/* Sector Switcher */}
-                  <SectorSwitcher 
-                    activeSector={activeSector} 
-                    onSectorChange={setActiveSector} 
+                  <SectorSwitcher
+                    activeSector={activeSector}
+                    onSectorChange={setActiveSector}
                   />
 
                   {/* My Bundles Section */}

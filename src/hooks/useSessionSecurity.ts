@@ -18,7 +18,7 @@ interface SessionSecurityState {
 
 export function useSessionSecurity() {
   const { user, signOut } = useAuth();
-  const [lastActivity, setLastActivity] = useState(Date.now());
+  const [lastActivity, setLastActivity] = useState(() => Date.now());
   const warningShownRef = useRef(false);
   const timeoutIdRef = useRef<number | null>(null);
 
@@ -34,7 +34,7 @@ export function useSessionSecurity() {
       toast.warning("Session abgelaufen. Du wirst abgemeldet.", {
         duration: 5000,
       });
-      
+
       // Small delay to show toast
       setTimeout(() => {
         signOut();
@@ -151,9 +151,9 @@ export function useSessionSecurity() {
 // =============================================================================
 export function useSessionSecurityCheck(): boolean {
   const { user } = useAuth();
-  
+
   // Only run session security for authenticated users
   useSessionSecurity();
-  
+
   return user !== null;
 }

@@ -1,161 +1,117 @@
-# 🔍 Visual Debt & Risk Ledger (Wolkenkratzer-Standard)
-**Version:** 1.0
-**Phase:** 11.2 ANALYSE
+# 🔍 Visual Debt Ledger (Phase 12)
+
+**Version:** 2.1
 **Date:** 2026-01-19
+**Status:** INVENTORY COMPLETE
 
 ---
 
-## 1. Fatal Pattern Analysis
+## Verified Component Structure
 
-### 1.1 `throw new Error` Locations (Non-Node Modules)
+### Calculator Entry Point
+| Path | Lines | Purpose |
+|------|-------|---------|
+| `src/pages/Index.tsx` | 13 | Route wrapper |
+| `src/margenkalkulator/ui/Wizard.tsx` | 813 | **Main Cockpit** — manages all state |
+| `src/components/MainLayout.tsx` | 130 | Shell (Sidebar + Header + Content) |
 
-| Priority | File | Line | Risk |
-|----------|------|------|------|
-| **P0** | `src/services/calculationService.ts` | 17, 27, 37, 44 | Calculation fails → user sees error page |
-| **P0** | `src/actions/admin-users.ts` | 36, 58, 68 | Admin action fails → unauthorized access risk |
-| **P0** | `src/actions/invites.ts` | 36, 53 | Invite fails → license limit bypass risk |
-| **P1** | `src/lib/secureApiGateway.ts` | 337–409 | Security throw → good (intentional) |
-| **P1** | `src/lib/secureStorage.ts` | 115–196 | Crypto unavailable → fallback needed |
-| **P2** | `src/components/ui/form.tsx` | 41 | Hook context error → developer error |
-| **P2** | `src/components/ui/carousel.tsx` | 35 | Hook context error → developer error |
+### Wizard Steps (Accordion Content)
+| Path | Lines | Purpose |
+|------|-------|---------|
+| `src/margenkalkulator/ui/steps/HardwareStep.tsx` | 27KB | Hardware selection |
+| `src/margenkalkulator/ui/steps/MobileStep.tsx` | 15KB | Tariff selection |
+| `src/margenkalkulator/ui/steps/FixedNetStep.tsx` | 8KB | Fixed-net add-ons |
+| `src/margenkalkulator/ui/steps/CompareStep.tsx` | 16KB | Final comparison view |
+| `src/margenkalkulator/ui/steps/SummaryStep.tsx` | 17KB | Summary (unused?) |
 
-**Total:** 29 throw statements in src (excluding node_modules)
+### Critical Layout Components
+| Path | Lines | Purpose |
+|------|-------|---------|
+| `src/margenkalkulator/ui/components/SummarySidebar.tsx` | 12KB | Right rail summary |
+| `src/margenkalkulator/ui/components/FloatingActionBar.tsx` | 7KB | Mobile bottom bar |
+| `src/margenkalkulator/ui/components/StickyPriceBar.tsx` | 9KB | Mini-summary when scrolling |
+| `src/margenkalkulator/ui/components/WizardProgress.tsx` | 3KB | Step indicator |
+| `src/margenkalkulator/ui/components/LiveCalculationBar.tsx` | 12KB | Live totals |
 
-### 1.2 Suspense Boundaries
-
-| File | Line | Fallback | Risk |
-|------|------|----------|------|
-| `src/App.tsx` | 392–703 | `<PageLoader />` | ✅ Good - has fallback |
-
-**Assessment:** Single Suspense boundary with proper fallback. No infinite spinner risk.
-
-### 1.3 Unguarded `window` Usage
-
-| File | Usage | Risk |
-|------|-------|------|
-| `src/hooks/use-mobile.tsx` | `window.innerWidth`, `window.matchMedia` | SSR crash risk |
-| `src/hooks/useAuth.tsx` | `window.location.href` | SSR safe (in effect) |
-| `src/hooks/useNetworkStatus.ts` | `window.addEventListener` | SSR safe (in effect) |
-| `src/lib/telemetry.ts` | `typeof window !== 'undefined'` | ✅ Guarded |
-| `src/pages/*.tsx` | `window.confirm`, `window.location` | SSR safe (user action) |
-
-**Assessment:** Most are guarded or in useEffect. `use-mobile.tsx` may need SSR guard.
-
-### 1.4 localStorage Usage
-
-| File | Pattern | Risk |
-|------|---------|------|
-| `src/lib/license.ts` | Load/Save license | Data loss if cleared |
-| `src/lib/seatManagement.ts` | Seat assignments | Data loss if cleared |
-| `src/lib/localStoragePolicy.ts` | Audit + cleanup | ✅ Governance layer |
-| `src/lib/secureStorage.ts` | Encrypted wrapper | ✅ Security layer |
-
-**Assessment:** Centralized governance exists. Cloud sync mitigates data loss.
+### View Mode Guards
+| Path | Lines | Purpose |
+|------|-------|---------|
+| `src/components/guards/ViewModeGuards.tsx` | 35 | DealerOnly/CustomerOnly filters |
+| `src/hooks/useSensitiveFieldsVisible.ts` | — | Visibility logic |
 
 ---
 
-## 2. Top 5 Critical Domains
+## Visual Debt Inventory
 
-### Domain 1: Margin Calculation Entry (Black Box Wrapper)
-**Path:** `src/services/calculationService.ts`
-**Risk Level:** P0
+### P0 — Blocking (Must Fix for Zero-Scroll)
 
-**Symptoms:**
-- 4 throw statements in calculation flow
-- No error boundary for calculation failures
-- No retry logic
+| ID | Issue | Location | Root Cause | Status |
+|----|-------|----------|------------|--------|
+| **VD-1** | ~~Page scrolls on 1366×768~~ | `Wizard.tsx:636,680,729` | Accordion expands → pushes content | ✅ **FIXED** (max-h + overflow-y-auto) |
+| **VD-2** | Summary hidden on mobile | `Wizard.tsx:779-790` | `hidden lg:block` class | ⚠️ Open (FloatingActionBar used) |
+| **VD-3** | ~~CTA not always visible~~ | `SummarySidebar.tsx:347-410` | Only on mobile, not in rail | ✅ **FIXED** (Sticky footer added) |
+| **VD-4** | ~~Accordion sections too tall~~ | `Wizard.tsx:636,680,729` | Full content expanded | ✅ **FIXED** (max-height applied) |
 
-**Test Claims:**
-- IF input fails Zod validation, THEN must return 400-style error, NEVER corrupt data
-- IF engine returns malformed data, THEN must throw identifiable error, NEVER display wrong margin
-- IF network fails, THEN must show retry option, NEVER hang
+### P1 — Important (UX Degradation)
 
----
+| ID | Issue | Location | Root Cause | Fix Strategy |
+|----|-------|----------|------------|--------------|
+| **VD-5** | Weak visual hierarchy | Multiple | Inconsistent font sizes | Apply typography scale |
+| **VD-6** | Too many controls in header | `Wizard.tsx:515-565` | All modes shown | Group into dropdown |
+| **VD-7** | Tariff list causes scroll | `MobileStep.tsx` | Vertical card stack | Grid or compact list |
+| **VD-8** | No sticky totals during scroll | — | StickyPriceBar only on tariff select | Always show in rail |
 
-### Domain 2: Customer Mode Gating (der Tresor)
-**Path:** `src/margenkalkulator/ui/steps/CompareStep.tsx`
-**Risk Level:** P0 (CRITICAL)
+### P2 — Polish (Nice to Have)
 
-**Symptoms:**
-- `isCustomerMode` checked 6 times in render
-- Conditional rendering based on `visibility.effectiveMode`
-- Some dealer fields may leak via CSS (not checked)
-
-**Test Claims:**
-- IF `isCustomerMode === true`, THEN rendered HTML MUST NOT contain: `cost_price`, `ek`, `margin`, `provision`, `einkaufspreis`
-- IF `isCustomerMode === true`, THEN confidential components MUST NOT mount (not just hidden)
-- NEVER rely on CSS `display: none` for security
+| ID | Issue | Location | Root Cause | Fix Strategy |
+|----|-------|----------|------------|--------------|
+| **VD-9** | Inconsistent padding | Global | Per-component values | Use spacing tokens |
+| **VD-10** | Button styles mixed | Various | No hierarchy defined | Primary/Secondary/Ghost |
+| **VD-11** | Icons without labels | Header controls | Space constraints | Add aria-labels |
 
 ---
 
-### Domain 3: Admin Guard & RBAC
-**Path:** `src/components/guards/AdminGuard.tsx`
-**Risk Level:** P0
+## Baseline Scroll Analysis (Manual)
 
-**Symptoms:**
-- Client-side redirect (bypassable if server not protected)
-- Marked `@deprecated` - server protection recommended
-- Uses `useUserRole()` hook (async)
+Based on `Wizard.tsx` structure at 1366×768:
 
-**Test Claims:**
-- IF user is not admin, THEN must redirect to "/", NEVER render children
-- IF role loading fails, THEN must show error, NEVER grant access
-- Server-side `requireAdmin()` MUST be primary protection
+| Area | Height Used | Budget | Status |
+|------|-------------|--------|--------|
+| Header | 64px | 64px | ✅ |
+| Sub-header | 48px | 48px | ✅ |
+| Wizard Progress | 40px | — | ⚠️ Extra |
+| StickyPriceBar | 80px | — | ⚠️ Extra |
+| Accordion (expanded) | **600px+** | 500px | ❌ OVERFLOW |
+| Summary Sidebar | 400px | 500px | ✅ |
 
----
-
-### Domain 4: PDF Generation Boundary
-**Path:** `src/margenkalkulator/ui/components/PdfExportDialog.tsx`
-**Risk Level:** P1
-
-**Symptoms:**
-- PDF created client-side (can be inspected)
-- Must use "customer-safe" ViewModel (no raw data)
-
-**Test Claims:**
-- IF generating PDF for customer, THEN PDF content MUST NOT contain: `ek`, `margin`, `provision`, `costPrice`
-- PDF input must be sanitized ViewModel, NEVER raw calculation result
+**Root Cause of Scroll:** Accordion content (HardwareStep + MobileStep) exceeds available height when expanded.
 
 ---
 
-### Domain 5: localStorage Security
-**Path:** `src/lib/localStoragePolicy.ts`, `src/lib/secureStorage.ts`
-**Risk Level:** P1
+## Recommended Layout Changes
 
-**Symptoms:**
-- 50+ localStorage accesses across lib/
-- Governance layer exists but not enforced at compile time
+### 1. Structural Fix
+```diff
+- Accordion type="single" collapsible
++ Internal scroll zones within each accordion panel
++ max-height: 400px on AccordionContent
++ overflow-y: auto
+```
 
-**Test Claims:**
-- IF key not in whitelist, THEN must be flagged in audit
-- NEVER store raw secrets (API keys, passwords)
-- Encrypted storage MUST use AES-GCM with proper key derivation
+### 2. Summary Rail Fix
+```diff
++ SummarySidebar gets sticky footer with primary CTA
++ Always-visible totals at top of rail
++ Compact mode for 768px height
+```
 
----
-
-## 3. "Risse" (Cracks) Summary
-
-| ID | Crack | Domain | Fix Strategy |
-|----|-------|--------|--------------|
-| **R1** | Customer Mode may leak via CSS | Customer Mode | Test: rendered HTML contains no secrets |
-| **R2** | AdminGuard is client-side only | Admin Guard | Verify server-side protection exists |
-| **R3** | Calculation throws → white screen | Margin Calc | Add error boundary + retry |
-| **R4** | PDF may contain raw data | PDF Gen | Test: PDF content is ViewModel only |
-| **R5** | use-mobile.tsx may crash SSR | Hooks | Add `typeof window` guard |
-
----
-
-## 4. Next Step: Prompt 11.3 IMPLEMENT
-
-**Objective:** Build tests that prove the cracks are sealed.
-
-**Priority Order:**
-1. No-Leak Test for Customer Mode (P0)
-2. AdminGuard integration test (P0)
-3. Calculation error boundary test (P0)
-4. PDF content validation test (P1)
-5. SSR safety tests (P2)
+### 3. Mobile Adaptation
+```diff
+- FloatingActionBar only
++ Bottom sheet with expandable summary
++ Sticky CTA bar (60px)
+```
 
 ---
 
-*Document Created By:* Antigravity (Staff Engineer + SRE)
+*Ledger created by Antigravity (Phase 12.2 INVENTORY)*

@@ -17,10 +17,10 @@ export function AdminSetupGate({ children }: AdminSetupGateProps) {
   const [showWizard, setShowWizard] = useState(false);
 
   useEffect(() => {
-    if (needsSetup) {
+    if (needsSetup && !showWizard) {
       setShowWizard(true);
     }
-  }, [needsSetup]);
+  }, [needsSetup, showWizard]);
 
   // Während Laden: Kinder normal anzeigen (kein Flackern)
   if (isLoading) {

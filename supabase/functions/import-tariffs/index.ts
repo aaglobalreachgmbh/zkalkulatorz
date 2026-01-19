@@ -56,7 +56,7 @@ serve(async (req) => {
 
         // 4. Process Each Tariff (Upsert Logic)
         let inserted = 0;
-        let updated = 0;
+        const updated = 0;
         const errors: { row: number; message: string }[] = [];
 
         for (let i = 0; i < tariffs.length; i++) {

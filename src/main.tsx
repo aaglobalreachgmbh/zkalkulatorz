@@ -33,9 +33,20 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
+import { markHydrationComplete } from "./lib/performance";
 
-createRoot(document.getElementById("root")!).render(
+const root = createRoot(document.getElementById("root")!);
+
+root.render(
   <React.StrictMode>
     <App />
   </React.StrictMode>
 );
+
+// Mark hydration complete after initial render
+// Use requestIdleCallback with fallback for Safari
+const scheduleHydrationMark = typeof requestIdleCallback !== 'undefined'
+  ? requestIdleCallback
+  : (cb: () => void) => setTimeout(cb, 50);
+
+scheduleHydrationMark(() => markHydrationComplete());

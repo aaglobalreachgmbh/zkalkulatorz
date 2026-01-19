@@ -16,11 +16,11 @@ import type { OfferOptionState } from "../engine/types";
 export function useDrafts() {
   const { user } = useAuth();
   const cloudDrafts = useCloudDrafts();
-  
+
   // Local state for guest mode
   const [localDrafts, setLocalDrafts] = useState<OfferDraft[]>([]);
   const [localLoading, setLocalLoading] = useState(true);
-  
+
   // Load local drafts on mount (for guests)
   useEffect(() => {
     if (!user) {
@@ -28,7 +28,23 @@ export function useDrafts() {
       setLocalLoading(false);
     }
   }, [user]);
-  
+
+  // Define callbacks at top level (not conditionally)
+  const createLocalDraftFn = useCallback(async (
+    name: string,
+    config: OfferOptionState,
+    avgMonthly: number
+  ) => {
+    const draft = createLocalDraft(name, config, avgMonthly);
+    setLocalDrafts(loadDrafts());
+    return draft;
+  }, []);
+
+  const deleteLocalDraftFn = useCallback(async (id: string) => {
+    deleteLocalDraft(id);
+    setLocalDrafts(loadDrafts());
+  }, []);
+
   // If authenticated, use cloud drafts
   if (user) {
     return {
@@ -46,35 +62,20 @@ export function useDrafts() {
       isCloud: true,
     };
   }
-  
+
   // Guest mode: localStorage fallback
-  const createDraft = useCallback(async (
-    name: string,
-    config: OfferOptionState,
-    avgMonthly: number
-  ) => {
-    const draft = createLocalDraft(name, config, avgMonthly);
-    setLocalDrafts(loadDrafts());
-    return draft;
-  }, []);
-  
-  const deleteDraft = useCallback(async (id: string) => {
-    deleteLocalDraft(id);
-    setLocalDrafts(loadDrafts());
-  }, []);
-  
   return {
     drafts: localDrafts,
     isLoading: localLoading,
     error: null,
     hasDrafts: localDrafts.length > 0,
-    createDraft,
-    updateDraft: async () => { 
+    createDraft: createLocalDraftFn,
+    updateDraft: async () => {
       console.warn("[useDrafts] Update not supported in guest mode");
       return null;
     },
-    deleteDraft,
-    renameDraft: async () => { 
+    deleteDraft: deleteLocalDraftFn,
+    renameDraft: async () => {
       console.warn("[useDrafts] Rename not supported in guest mode");
       return null;
     },

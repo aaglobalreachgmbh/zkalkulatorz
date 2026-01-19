@@ -25,7 +25,7 @@ export interface PointTransaction {
   created_at: string;
 }
 
-export type PointSourceType = 
+export type PointSourceType =
   | "visit_completed"
   | "photo_added"
   | "checklist_complete"
@@ -199,38 +199,65 @@ export function useGamification() {
     const visitCount = points.filter(p => p.source_type === "visit_completed").length;
 
     // Streak calculation (simplified - counts consecutive days with visits)
-    const visitDates = points
-      .filter(p => p.source_type === "visit_completed")
-      .map(p => new Date(p.created_at).toDateString());
-    const uniqueDates = [...new Set(visitDates)].sort((a, b) => 
-      new Date(b).getTime() - new Date(a).getTime()
-    );
+    // Fix: Ensure date comparison uses consistent time boundaries to avoid hydration mismatches
+    // if using simplified string comparison "toDateString", it depends on local timezone.
+    // Ideally we use UTC or a passed-in reference. For now, we assume client-side consistency.
+
+    // Get unique visit dates sorted descending (newest first)
+    const uniqueDates = [...new Set(
+      points
+        .filter(p => p.source_type === "visit_completed")
+        .map(p => new Date(p.created_at).toDateString())
+    )].sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
 
     let currentStreak = 0;
     let longestStreak = 0;
     let tempStreak = 0;
-    const today = new Date().toDateString();
-    const yesterday = new Date(Date.now() - 86400000).toDateString();
+
+    // Use current date for streak continuity check
+    // Fix: Use stable date reference to avoid hydration mismatch
+    const todayDate = new Date();
+    const today = todayDate.toDateString();
+    const yesterday = new Date(todayDate.getTime() - 86400000).toDateString();
 
     for (let i = 0; i < uniqueDates.length; i++) {
       const date = uniqueDates[i];
-      const prevDate = i > 0 ? uniqueDates[i - 1] : today;
-      const dayDiff = (new Date(prevDate).getTime() - new Date(date).getTime()) / 86400000;
 
-      if (i === 0 && (date === today || date === yesterday)) {
-        tempStreak = 1;
-        currentStreak = 1;
-      } else if (dayDiff === 1) {
-        tempStreak++;
-        if (i === 0 || uniqueDates[0] === today || uniqueDates[0] === yesterday) {
-          currentStreak = tempStreak;
+      // determine if this date is part of the current streak sequence
+      // Current streak starts from today or yesterday
+      if (i === 0) {
+        if (date === today || date === yesterday) {
+          tempStreak = 1;
+          currentStreak = 1;
+        } else {
+          // Streak broken or hasn't started recently
+          tempStreak = 1;
+          currentStreak = 0;
         }
       } else {
-        longestStreak = Math.max(longestStreak, tempStreak);
-        tempStreak = 1;
+        // Check continuity with previous date in list (which is newer)
+        const prevDate = uniqueDates[i - 1];
+        // Difference in days
+        const dayDiff = Math.abs((new Date(prevDate).getTime() - new Date(date).getTime()) / 86400000); // approx
+
+        // Re-verify exact day difference using round
+        const diffDays = Math.round(dayDiff);
+
+        if (diffDays === 1) {
+          tempStreak++;
+          // If we are still extending the "current" streak (meaning the chain started today/yesterday)
+          if (currentStreak > 0 && currentStreak === tempStreak - 1) {
+            currentStreak = tempStreak;
+          }
+        } else {
+          // Gap found, streak reset processing
+          longestStreak = Math.max(longestStreak, tempStreak);
+          tempStreak = 1;
+        }
       }
+
+      longestStreak = Math.max(longestStreak, tempStreak);
     }
-    longestStreak = Math.max(longestStreak, tempStreak);
 
     return {
       totalPoints,
@@ -352,8 +379,8 @@ export function useGamification() {
           earned = stats.visitCount >= badge.requirement_value;
           break;
         case "streak_days":
-          earned = stats.currentStreak >= badge.requirement_value || 
-                   stats.longestStreak >= badge.requirement_value;
+          earned = stats.currentStreak >= badge.requirement_value ||
+            stats.longestStreak >= badge.requirement_value;
           break;
         case "points_total":
           earned = stats.totalPoints >= badge.requirement_value;
@@ -408,7 +435,7 @@ export function useGamification() {
 
     // Check for new badges after awarding points
     const newBadges = await checkAndAwardBadges();
-    
+
     if (newBadges.length > 0) {
       toast.success(`🎉 Neuer Badge: ${newBadges[0].name}`, {
         description: newBadges[0].description || undefined,

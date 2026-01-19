@@ -6,8 +6,8 @@ import { useState, useCallback, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCloudTemplates, type CloudTemplate, type CloudFolder } from "./useCloudTemplates";
 import { toast } from "sonner";
-import { 
-  loadTemplates, 
+import {
+  loadTemplates,
   saveTemplate as saveLocalTemplate,
   loadFolders,
   type PersonalTemplate,
@@ -22,12 +22,12 @@ import type { OfferOptionState } from "../engine/types";
 export function useTemplates() {
   const { user } = useAuth();
   const cloudTemplates = useCloudTemplates();
-  
+
   // Local state for guest mode
   const [localTemplates, setLocalTemplates] = useState<PersonalTemplate[]>([]);
   const [localFolders, setLocalFolders] = useState<TemplateFolder[]>([]);
   const [localLoading, setLocalLoading] = useState(true);
-  
+
   // Load local templates on mount (for guests)
   useEffect(() => {
     if (!user) {
@@ -36,7 +36,30 @@ export function useTemplates() {
       setLocalLoading(false);
     }
   }, [user]);
-  
+
+  // Define callbacks at top level (not conditionally) to comply with Rules of Hooks
+  const createLocalTemplate = useCallback(async (
+    name: string,
+    config: OfferOptionState,
+    folderId?: string
+  ) => {
+    const template: PersonalTemplate = {
+      id: crypto.randomUUID(),
+      name,
+      config,
+      folderId,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    saveLocalTemplate(template);
+    setLocalTemplates(loadTemplates());
+    return template as unknown as CloudTemplate;
+  }, []);
+
+  const getLocalTemplatesInFolder = useCallback((folderId: string | null) => {
+    return localTemplates.filter(t => (t.folderId || null) === folderId) as unknown as CloudTemplate[];
+  }, [localTemplates]);
+
   // If authenticated, use cloud templates
   if (user) {
     // Map CloudFolder to TemplateFolder format for compatibility
@@ -46,7 +69,7 @@ export function useTemplates() {
       parentId: f.parentId || undefined,
       createdAt: f.createdAt,
     }));
-    
+
     return {
       templates: cloudTemplates.templates,
       folders: mappedFolders,
@@ -67,26 +90,8 @@ export function useTemplates() {
       isCloud: true,
     };
   }
-  
+
   // Guest mode: localStorage fallback
-  const createTemplate = useCallback(async (
-    name: string,
-    config: OfferOptionState,
-    folderId?: string
-  ) => {
-    const template: PersonalTemplate = {
-      id: crypto.randomUUID(),
-      name,
-      config,
-      folderId,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    saveLocalTemplate(template);
-    setLocalTemplates(loadTemplates());
-    return template as unknown as CloudTemplate;
-  }, []);
-  
   return {
     templates: localTemplates.map(t => ({
       id: t.id,
@@ -101,35 +106,35 @@ export function useTemplates() {
     isLoading: localLoading,
     error: null,
     hasTemplates: localTemplates.length > 0,
-    createTemplate,
-    updateTemplate: async () => { 
+    createTemplate: createLocalTemplate,
+    updateTemplate: async () => {
       toast.error("Funktion im Gastmodus nicht verfügbar");
-      return null as unknown as ReturnType<typeof cloudTemplates.updateTemplate>; 
+      return null as unknown as ReturnType<typeof cloudTemplates.updateTemplate>;
     },
-    deleteTemplate: async () => { 
-      toast.error("Funktion im Gastmodus nicht verfügbar");
-    },
-    duplicateTemplate: async () => { 
-      toast.error("Funktion im Gastmodus nicht verfügbar");
-      return null as unknown as ReturnType<typeof cloudTemplates.duplicateTemplate>; 
-    },
-    moveTemplate: async () => { 
+    deleteTemplate: async () => {
       toast.error("Funktion im Gastmodus nicht verfügbar");
     },
-    createFolder: async () => { 
+    duplicateTemplate: async () => {
       toast.error("Funktion im Gastmodus nicht verfügbar");
-      return null as unknown as ReturnType<typeof cloudTemplates.createFolder>; 
+      return null as unknown as ReturnType<typeof cloudTemplates.duplicateTemplate>;
     },
-    renameFolder: async () => { 
-      toast.error("Funktion im Gastmodus nicht verfügbar");
-    },
-    deleteFolder: async () => { 
+    moveTemplate: async () => {
       toast.error("Funktion im Gastmodus nicht verfügbar");
     },
-    getTemplatesInFolder: (folderId: string | null) => 
-      localTemplates.filter(t => (t.folderId || null) === folderId) as unknown as CloudTemplate[],
+    createFolder: async () => {
+      toast.error("Funktion im Gastmodus nicht verfügbar");
+      return null as unknown as ReturnType<typeof cloudTemplates.createFolder>;
+    },
+    renameFolder: async () => {
+      toast.error("Funktion im Gastmodus nicht verfügbar");
+    },
+    deleteFolder: async () => {
+      toast.error("Funktion im Gastmodus nicht verfügbar");
+    },
+    getTemplatesInFolder: getLocalTemplatesInFolder,
     isCreatingTemplate: false,
     isDeletingTemplate: false,
     isCloud: false,
   };
 }
+

@@ -5,9 +5,9 @@
 import { useState, useCallback, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCloudHistory } from "./useCloudHistory";
-import { 
-  loadHistory, 
-  addToHistory as addToLocalHistory, 
+import {
+  loadHistory,
+  addToHistory as addToLocalHistory,
   clearHistory as clearLocalHistory,
 } from "../storage/history";
 import type { HistoryEntry } from "../storage/types";
@@ -20,11 +20,11 @@ import type { OfferOptionState } from "../engine/types";
 export function useHistory() {
   const { user } = useAuth();
   const cloudHistory = useCloudHistory();
-  
+
   // Local state for guest mode
   const [localHistory, setLocalHistory] = useState<HistoryEntry[]>([]);
   const [localLoading, setLocalLoading] = useState(true);
-  
+
   // Load local history on mount (for guests)
   useEffect(() => {
     if (!user) {
@@ -32,7 +32,26 @@ export function useHistory() {
       setLocalLoading(false);
     }
   }, [user]);
-  
+
+  // Define callbacks at top level (not conditionally) to comply with Rules of Hooks
+  const addToLocalHistoryFn = useCallback((
+    config: OfferOptionState,
+    avgMonthly: number,
+    margin?: number
+  ) => {
+    addToLocalHistory(config);
+    setLocalHistory(loadHistory());
+  }, []);
+
+  const clearLocalHistoryFn = useCallback(async () => {
+    clearLocalHistory();
+    setLocalHistory([]);
+  }, []);
+
+  const getLastLocalEntry = useCallback(() => {
+    return localHistory.length > 0 ? localHistory[0] : null;
+  }, [localHistory]);
+
   // If authenticated, use cloud history
   if (user) {
     return {
@@ -48,36 +67,19 @@ export function useHistory() {
       isCloud: true,
     };
   }
-  
+
   // Guest mode: localStorage fallback
-  const addToHistory = useCallback((
-    config: OfferOptionState,
-    avgMonthly: number,
-    margin?: number
-  ) => {
-    addToLocalHistory(config);
-    setLocalHistory(loadHistory());
-  }, []);
-  
-  const clearHistory = useCallback(async () => {
-    clearLocalHistory();
-    setLocalHistory([]);
-  }, []);
-  
-  const getLastEntry = useCallback(() => {
-    return localHistory.length > 0 ? localHistory[0] : null;
-  }, [localHistory]);
-  
   return {
     history: localHistory,
     isLoading: localLoading,
     error: null,
     hasHistory: localHistory.length > 0,
-    addToHistory,
-    clearHistory,
-    getLastEntry,
+    addToHistory: addToLocalHistoryFn,
+    clearHistory: clearLocalHistoryFn,
+    getLastEntry: getLastLocalEntry,
     isAdding: false,
     isClearing: false,
     isCloud: false,
   };
 }
+

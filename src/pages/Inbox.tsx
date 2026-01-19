@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -20,8 +20,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { 
-  Inbox as InboxIcon, 
+import {
+  Inbox as InboxIcon,
   Mail,
   Plus,
   RefreshCw,
@@ -69,18 +69,7 @@ export default function InboxPage() {
   const { supervisedEmployeeIds } = useEmployeeAssignments();
   const { canUseInbox, hasFullAccess, isLoading: permissionsLoading } = usePermissions();
 
-  // Berechtigungsprüfung
-  if (!permissionsLoading && !hasFullAccess && !canUseInbox) {
-    return (
-      <MainLayout>
-        <AccessDeniedCard 
-          title="Kein Zugriff auf Posteingang"
-          description="Sie haben keine Berechtigung, den Posteingang zu nutzen. Kontaktieren Sie Ihren Shop-Administrator."
-        />
-      </MainLayout>
-    );
-  }
-  
+  // All hooks must be called unconditionally before any early returns
   const [activeTab, setActiveTab] = useState("inbox");
   const [searchQuery, setSearchQuery] = useState("");
   const [showConnectDialog, setShowConnectDialog] = useState(false);
@@ -93,18 +82,30 @@ export default function InboxPage() {
   const isAdmin = identity?.role === "admin" || identity?.role === "tenant_admin";
   const isTeamLead = identity?.role === "manager" || supervisedEmployeeIds.length > 0;
 
+  // Berechtigungsprüfung (after all hooks)
+  if (!permissionsLoading && !hasFullAccess && !canUseInbox) {
+    return (
+      <MainLayout>
+        <AccessDeniedCard
+          title="Kein Zugriff auf Posteingang"
+          description="Sie haben keine Berechtigung, den Posteingang zu nutzen. Kontaktieren Sie Ihren Shop-Administrator."
+        />
+      </MainLayout>
+    );
+  }
+
   // Filter emails based on active tab and search
   const filteredEmails = emails.filter(email => {
-    const matchesSearch = !searchQuery || 
+    const matchesSearch = !searchQuery ||
       email.subject?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       email.sender_email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       email.sender_name?.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesTab = activeTab === "inbox" || 
+
+    const matchesTab = activeTab === "inbox" ||
       (activeTab === "unread" && !email.is_read) ||
       (activeTab === "starred" && email.is_starred) ||
       (activeTab === "linked" && email.customer_id);
-    
+
     return matchesSearch && matchesTab;
   });
 
@@ -118,7 +119,7 @@ export default function InboxPage() {
       if (!session) throw new Error("Nicht authentifiziert");
 
       const response = await supabase.functions.invoke("gmail-oauth", {
-        body: { 
+        body: {
           action: "get_auth_url",
           redirectUri: `${window.location.origin}/inbox`,
         },
@@ -148,7 +149,7 @@ export default function InboxPage() {
     setIsConnecting(true);
     try {
       const response = await supabase.functions.invoke("ionos-connect", {
-        body: { 
+        body: {
           action: "save_credentials",
           email: ionosCredentials.email,
           password: ionosCredentials.password,
@@ -181,16 +182,16 @@ export default function InboxPage() {
       });
 
       if (response.error) throw response.error;
-      
+
       const results = response.data?.results || [];
       const synced = results.reduce((sum: number, r: any) => sum + (r.synced || 0), 0);
-      
+
       if (synced > 0) {
         toast.success(`${synced} neue E-Mails synchronisiert`);
       } else {
         toast.info("Keine neuen E-Mails");
       }
-      
+
       refetchEmails();
     } catch (error) {
       console.error("Sync error:", error);
@@ -226,9 +227,9 @@ export default function InboxPage() {
           </div>
           <div className="flex items-center gap-2">
             {accounts.length > 0 && (
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={handleSync}
                 disabled={isSyncing}
               >
@@ -236,8 +237,8 @@ export default function InboxPage() {
                 Synchronisieren
               </Button>
             )}
-            <Button 
-              size="sm" 
+            <Button
+              size="sm"
               onClick={() => setShowConnectDialog(true)}
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -278,8 +279,8 @@ export default function InboxPage() {
                     )}
                   </p>
                 </div>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   size="icon"
                   className="text-muted-foreground hover:text-destructive"
                   onClick={() => handleDisconnect(account.id)}
@@ -335,8 +336,8 @@ export default function InboxPage() {
                     Verbunden
                   </p>
                 </div>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   size="icon"
                   className="text-muted-foreground hover:text-destructive"
                   onClick={() => handleDisconnect(account.id)}
@@ -345,13 +346,13 @@ export default function InboxPage() {
                 </Button>
               </Card>
             ))}
-            
+
             {/* Suggest adding another integration */}
             <IntegrationPromptCard
               type={accounts[0].provider === "gmail" ? "ionos" : "gmail"}
-              onConnect={() => { 
-                setConnectProvider(accounts[0].provider === "gmail" ? "ionos" : "gmail"); 
-                setShowConnectDialog(true); 
+              onConnect={() => {
+                setConnectProvider(accounts[0].provider === "gmail" ? "ionos" : "gmail");
+                setShowConnectDialog(true);
               }}
               variant="dashed"
             />
@@ -374,7 +375,7 @@ export default function InboxPage() {
                 <div className="flex items-center gap-2">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input 
+                    <Input
                       placeholder="Suchen..."
                       className="pl-9 w-64"
                       value={searchQuery}
@@ -408,7 +409,7 @@ export default function InboxPage() {
                   ) : (
                     <div className="space-y-1">
                       {filteredEmails.map((email) => (
-                        <div 
+                        <div
                           key={email.id}
                           className={cn(
                             "flex items-start gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer border border-transparent",
@@ -417,9 +418,9 @@ export default function InboxPage() {
                           )}
                           onClick={() => setSelectedEmail(email.id)}
                         >
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             className="shrink-0 h-8 w-8"
                             onClick={(e) => { e.stopPropagation(); }}
                           >
@@ -429,7 +430,7 @@ export default function InboxPage() {
                               <StarOff className="w-4 h-4 text-muted-foreground" />
                             )}
                           </Button>
-                          
+
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between gap-2">
                               <p className={cn(
@@ -480,7 +481,7 @@ export default function InboxPage() {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground text-sm">
-                {isAdmin 
+                {isAdmin
                   ? "Als Administrator können Sie alle E-Mails im Tenant einsehen."
                   : `Sie betreuen ${supervisedEmployeeIds.length} Mitarbeiter.`
                 }
@@ -503,16 +504,16 @@ export default function InboxPage() {
 
           {!connectProvider ? (
             <div className="grid grid-cols-2 gap-4 py-4">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="h-24 flex-col gap-2"
                 onClick={() => setConnectProvider("gmail")}
               >
                 <GmailIcon className="w-10 h-10" />
                 <span>Gmail</span>
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="h-24 flex-col gap-2"
                 onClick={() => setConnectProvider("ionos")}
               >
@@ -556,11 +557,11 @@ export default function InboxPage() {
                   </p>
                 </div>
               </div>
-              
+
               <div className="space-y-3">
                 <div>
                   <Label htmlFor="ionos-email">E-Mail-Adresse</Label>
-                  <Input 
+                  <Input
                     id="ionos-email"
                     type="email"
                     placeholder="ihre@email.de"
@@ -570,7 +571,7 @@ export default function InboxPage() {
                 </div>
                 <div>
                   <Label htmlFor="ionos-password">Passwort / App-Passwort</Label>
-                  <Input 
+                  <Input
                     id="ionos-password"
                     type="password"
                     placeholder="••••••••"

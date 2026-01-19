@@ -82,17 +82,7 @@ export default function Customers() {
   const { isPOSMode } = usePOSMode();
   const { canManageCustomers, hasFullAccess, isLoading: permissionsLoading } = usePermissions();
 
-  // Berechtigungsprüfung
-  if (!permissionsLoading && !hasFullAccess && !canManageCustomers) {
-    return (
-      <MainLayout>
-        <AccessDeniedCard 
-          title="Kein Zugriff auf Kunden"
-          description="Sie haben keine Berechtigung, die Kundenverwaltung zu nutzen. Kontaktieren Sie Ihren Shop-Administrator."
-        />
-      </MainLayout>
-    );
-  }
+  // All hooks must be called unconditionally before any early returns
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [formData, setFormData] = useState<CustomerInput>(initialFormData);
@@ -108,6 +98,18 @@ export default function Customers() {
       setSearchParams(searchParams, { replace: true });
     }
   }, [searchParams, setSearchParams]);
+
+  // Berechtigungsprüfung (after all hooks)
+  if (!permissionsLoading && !hasFullAccess && !canManageCustomers) {
+    return (
+      <MainLayout>
+        <AccessDeniedCard
+          title="Kein Zugriff auf Kunden"
+          description="Sie haben keine Berechtigung, die Kundenverwaltung zu nutzen. Kontaktieren Sie Ihren Shop-Administrator."
+        />
+      </MainLayout>
+    );
+  }
 
   const resetForm = () => {
     setFormData(initialFormData);
@@ -196,7 +198,7 @@ export default function Customers() {
   const filteredCustomers = customers.filter((customer) => {
     // VIP filter
     if (showVipOnly && !customer.vip_kunde) return false;
-    
+
     // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -231,7 +233,7 @@ export default function Customers() {
       vip_kunde: customer.vip_kunde ? "Ja" : "Nein",
       created_at: format(new Date(customer.created_at), "dd.MM.yyyy", { locale: de }),
     }));
-    
+
     exportToCSV(exportData, CUSTOMER_COLUMNS as unknown as { key: keyof typeof exportData[0]; label: string }[], `kunden_${format(new Date(), "yyyy-MM-dd")}`);
     toast.success(`${exportData.length} Kunden exportiert`);
   };
@@ -274,7 +276,7 @@ export default function Customers() {
                       Füllen Sie die Kundendaten aus. Nur der Firmenname ist erforderlich.
                     </DialogDescription>
                   </DialogHeader>
-                  
+
                   <Tabs defaultValue="firma" className="mt-4">
                     <TabsList className="grid w-full grid-cols-4">
                       <TabsTrigger value="firma" className="text-xs">
@@ -633,7 +635,7 @@ export default function Customers() {
                 </TableHeader>
                 <TableBody>
                   {filteredCustomers.map((customer) => (
-                    <TableRow 
+                    <TableRow
                       key={customer.id}
                       className="cursor-pointer hover:bg-accent/50"
                       onClick={() => navigate(`/customers/${customer.id}`)}
@@ -651,15 +653,15 @@ export default function Customers() {
                       <TableCell className={cn(isPOSMode && "hidden lg:table-cell")}>{customer.email || "-"}</TableCell>
                       <TableCell className={cn(isPOSMode && "hidden lg:table-cell")}>{customer.handy_nr || customer.phone || customer.festnetz || "-"}</TableCell>
                       <TableCell className={cn(isPOSMode && "hidden xl:table-cell")}>
-                        {customer.plz && customer.ort 
-                          ? `${customer.plz} ${customer.ort}` 
+                        {customer.plz && customer.ort
+                          ? `${customer.plz} ${customer.ort}`
                           : customer.ort || "-"}
                       </TableCell>
                       <TableCell>{getStatusBadge(customer.customer_status)}</TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-1">
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size={isPOSMode ? "default" : "sm"}
                             className={cn(
                               "gap-1",
@@ -670,8 +672,8 @@ export default function Customers() {
                             <Calculator className="h-4 w-4" />
                             {!isPOSMode && <span className="hidden sm:inline">Angebot</span>}
                           </Button>
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size={isPOSMode ? "default" : "sm"}
                             className={cn(
                               "gap-1",

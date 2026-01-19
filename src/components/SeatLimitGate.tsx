@@ -22,9 +22,14 @@ interface SeatLimitGateProps {
  * PHASE 4: On any error, always render children to prevent blocking
  */
 export function SeatLimitGate({ children }: SeatLimitGateProps) {
+  // Hooks must be called at top level, not inside try/catch
+  const identityResult = useIdentity();
+  const licenseResult = useLicense();
+
+  // Now do the try/catch for error handling logic
   try {
-    const { canAccessAdmin } = useIdentity();
-    const { seatLimitExceeded, currentUserHasSeat, seatUsage, license } = useLicense();
+    const { canAccessAdmin } = identityResult;
+    const { seatLimitExceeded, currentUserHasSeat, seatUsage, license } = licenseResult;
 
     // Admins always have access (to resolve issues)
     if (canAccessAdmin) {

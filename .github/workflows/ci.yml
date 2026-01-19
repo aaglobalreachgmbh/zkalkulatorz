@@ -1,0 +1,41 @@
+name: CI Quality Gate
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+  workflow_dispatch:
+
+jobs:
+  quality-check:
+    name: 🛡️ Quality Gate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 📦 Install Dependencies
+        run: npm ci
+
+      - name: 🧹 Lint Check
+        run: npm run lint
+
+      - name: 📐 Type Check
+        run: npx tsc --noEmit
+
+      - name: 🧪 Unit Tests
+        run: npm run test
+
+      # Playwright testing is heavier, so we might want to split it or cache browsers
+      # For now, let's keep it simple and ensure at least unit tests pass
+      
+      - name: 🏗️ Build Verification
+        run: npm run build

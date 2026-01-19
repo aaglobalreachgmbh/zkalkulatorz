@@ -6,13 +6,15 @@
 // - Configuration overview (Hardware, Tarif, Festnetz)
 // - Active discounts
 // - Dealer economics (when in dealer mode)
+// - PRIMARY CTA (Add to Offer) - ALWAYS VISIBLE
 //
 // Actions moved to FloatingActionBar for better UX.
 // ============================================
 
-import { Smartphone, Signal, Wifi, Check, Tag, FileText, Calendar, LayoutGrid } from "lucide-react";
+import { Smartphone, Signal, Wifi, Check, Tag, FileText, Calendar, LayoutGrid, Plus, Sparkles, ShoppingBag, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,18 +26,23 @@ import {
 import type { OfferOptionState, CalculationResult, ViewMode } from "../../engine/types";
 import { getMobileTariffFromCatalog } from "../../engine/catalogResolver";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
+import { useOfferBasket } from "../../contexts/OfferBasketContext";
 import { PdfDownloadButton } from "./PdfDownloadButton";
 import { CreateCalendarEventModal } from "./CreateCalendarEventModal";
 import { MarginBadge } from "./MarginBadge";
 import { AnimatedCurrency } from "./AnimatedCurrency";
 import { cn } from "@/lib/utils";
 import { getProfitabilityStatus, calculateMarginPercent } from "../../lib/formatters";
+import { toast } from "sonner";
+import { fireConfetti } from "@/lib/confetti";
+import { useMemo } from "react";
 
 interface SummarySidebarProps {
   option: OfferOptionState;
   result: CalculationResult;
   viewMode: ViewMode;
   quantityBonus?: number;
+  onResetForNewTariff?: () => void;
   className?: string;
 }
 
@@ -44,6 +51,7 @@ export function SummarySidebar({
   result,
   viewMode,
   quantityBonus = 0,
+  onResetForNewTariff,
   className
 }: SummarySidebarProps) {
   const visibility = useSensitiveFieldsVisible(viewMode);
@@ -70,6 +78,39 @@ export function SummarySidebar({
   const marginPerContract = margin / quantity;
   const profitabilityStatus = getProfitabilityStatus(marginPerContract);
   const marginPercent = calculateMarginPercent(margin, result.totals.sumTermNet);
+
+  // === PRIMARY CTA LOGIC (Add to Offer) ===
+  const { addItem, items } = useOfferBasket();
+
+  // Generate a descriptive name for this tariff
+  const tariffName = useMemo(() => {
+    const tariffBreakdown = result.breakdown.find(b => b.ruleId === "base");
+    const baseName = tariffBreakdown?.label?.replace(" Grundpreis", "") || option.mobile.tariffId;
+
+    const parts = [baseName];
+    if (option.mobile.quantity > 1) parts.push(`(×${option.mobile.quantity})`);
+    if (option.hardware.ekNet > 0) parts.push(`+ ${option.hardware.name}`);
+
+    return parts.join(" ");
+  }, [option, result]);
+
+  // Check if already added
+  const isAlreadyAdded = items.some(
+    item =>
+      item.option.mobile.tariffId === option.mobile.tariffId &&
+      item.option.hardware.name === option.hardware.name &&
+      item.option.mobile.contractType === option.mobile.contractType
+  );
+
+  const handleAddToOffer = () => {
+    addItem(tariffName, option, result);
+    toast.success(`"${tariffName}" zum Angebot hinzugefügt`, { duration: 2000 });
+    fireConfetti({ duration: 1000, quick: true });
+
+    if (onResetForNewTariff) {
+      setTimeout(() => onResetForNewTariff(), 500);
+    }
+  };
 
   return (
     <div className={cn(
@@ -302,6 +343,69 @@ export function SummarySidebar({
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+      </div>
+
+      {/* === PRIMARY CTA FOOTER (Always Visible) === */}
+      <div className="p-4 border-t border-border bg-muted/30 sticky bottom-0">
+        {hasTariff ? (
+          isAlreadyAdded ? (
+            <div className="space-y-2">
+              <div className="flex items-center justify-center gap-2 py-2 px-3 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+                <Check className="w-4 h-4 text-emerald-600" />
+                <span className="text-sm font-medium text-emerald-700 dark:text-emerald-400">Im Angebot</span>
+                {items.length > 0 && (
+                  <Badge variant="secondary" className="ml-auto text-xs">
+                    <ShoppingBag className="w-3 h-3 mr-1" />
+                    {items.length}
+                  </Badge>
+                )}
+              </div>
+              {onResetForNewTariff && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    if (window.confirm("Möchtest du wirklich einen weiteren Tarif konfigurieren?")) {
+                      onResetForNewTariff();
+                    }
+                  }}
+                  className="w-full gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Weiteren Tarif hinzufügen
+                </Button>
+              )}
+            </div>
+          ) : (
+            <Button
+              size="lg"
+              onClick={handleAddToOffer}
+              className="w-full bg-amber-500 hover:bg-amber-600 text-white gap-2 font-semibold shadow-lg shadow-amber-500/20"
+            >
+              <Plus className="w-5 h-5" />
+              Zum Angebot hinzufügen
+              <Sparkles className="w-4 h-4 animate-pulse" />
+            </Button>
+          )
+        ) : (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="block">
+                <Button
+                  size="lg"
+                  disabled
+                  className="w-full opacity-50 cursor-not-allowed gap-2"
+                >
+                  <AlertCircle className="w-5 h-5" />
+                  Zum Angebot hinzufügen
+                </Button>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Bitte zuerst einen Tarif wählen</p>
+            </TooltipContent>
+          </Tooltip>
+        )}
       </div>
     </div>
   );

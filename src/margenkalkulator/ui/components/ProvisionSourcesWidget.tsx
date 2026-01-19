@@ -16,24 +16,7 @@ const COLORS = ["hsl(221, 83%, 53%)", "hsl(142, 76%, 36%)", "hsl(280, 65%, 60%)"
 export function ProvisionSourcesWidget() {
   const navigate = useNavigate();
   const { isPOSMode } = usePOSMode();
-  // In a widget context, we might not have explicit viewMode prop, so we default to "dealer" 
-  // but strictly check visibility rules.
-  // Actually, better to check if we are in a context that allows seeing this.
-  // If we assume this widget is on a Dashboard, we need to know the context.
-  // SAFE DEFAULT: If generic component, use hook with default 'dealer' but check if POS/Customer Session active.
-
-  // However, simpler: This widget shows PROVISION. It should ONLY be visible if showDealerEconomics is true.
-  // We can derive "effective view mode" from global context checks.
-  // Let's rely on the hook which checks POS Mode and Customer Session internally if we pass the current mode.
-  // Since we don't have "viewMode" prop here, we assume standard view (likely Dealer) but subject to overrides.
-
-  // FIX: derive mode from POS/Session contexts directly or pass it.
-  // For now, let's just use useSensitiveFieldsVisible with "dealer" as base, 
-  // relying on the hook's internal overrides (if any) or just force check global states.
-
-  // BETTER: Just hide it if isPOSMode is true (Customer facing in shop).
-  if (isPOSMode) return null;
-
+  // All hooks must be called unconditionally before any early returns
   const { offers, isLoading } = useCloudOffers();
 
   const data = useMemo(() => {
@@ -68,6 +51,9 @@ export function ProvisionSourcesWidget() {
       { name: "Einmal", value: Math.round((onetime / total) * 100), color: COLORS[2] },
     ].filter(d => d.value > 0);
   }, [offers]);
+
+  // Now we can do early returns after all hooks have been called
+  if (isPOSMode) return null;
 
   if (isLoading) {
     return (

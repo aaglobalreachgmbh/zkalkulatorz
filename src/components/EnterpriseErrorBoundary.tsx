@@ -35,7 +35,7 @@ export class EnterpriseErrorBoundary extends Component<Props, State> {
       time: new Date().toISOString(),
       url: window.location.href
     };
-    
+
     // Copy to clipboard
     navigator.clipboard.writeText(JSON.stringify(report, null, 2));
     alert("Fehlerbericht in die Zwischenablage kopiert.");
@@ -48,28 +48,28 @@ export class EnterpriseErrorBoundary extends Component<Props, State> {
           <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mb-4">
             <AlertTriangle className="w-8 h-8 text-amber-500" />
           </div>
-          
+
           <h2 className="text-xl font-semibold text-gray-900 mb-2">
             {this.props.fallbackTitle || "Ein Modul-Fehler ist aufgetreten"}
           </h2>
-          
+
           <p className="text-gray-500 max-w-md mb-6">
-            Das Modul "{this.props.moduleName || 'Unbekannt'}" konnte nicht geladen werden. 
+            Das Modul "{this.props.moduleName || 'Unbekannt'}" konnte nicht geladen werden.
             Ihre anderen Daten sind sicher.
           </p>
 
           <div className="flex gap-3">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => this.setState({ hasError: false })}
               className="gap-2"
             >
               <RefreshCw className="w-4 h-4" />
               Erneut versuchen
             </Button>
-            
-            <Button 
-              variant="ghost" 
+
+            <Button
+              variant="ghost"
               onClick={this.handleMakeReport}
               className="text-xs text-gray-400 hover:text-gray-600"
             >

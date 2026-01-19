@@ -60,7 +60,21 @@ export function StickyPriceBar({
   const visibility = useSensitiveFieldsVisible(viewMode);
   const showDealerEconomics = visibility.showDealerEconomics;
 
-  // Don't render if no tariff selected
+  // All hooks must be called unconditionally before any early returns
+  // Generate tariff name for basket
+  const tariffName = useMemo(() => {
+    if (!tariff) return "";
+    const parts = [tariff.name];
+    if (mobileState.quantity > 1) {
+      parts.push(`(×${mobileState.quantity})`);
+    }
+    if (hardware.ekNet > 0) {
+      parts.push(`+ ${hardware.name}`);
+    }
+    return parts.join(" ");
+  }, [tariff, mobileState.quantity, hardware]);
+
+  // Don't render if no tariff selected (after all hooks)
   if (!tariff) {
     return null;
   }
@@ -73,18 +87,6 @@ export function StickyPriceBar({
   const hasMultiplePeriods = result.periods.length > 1;
   const isDgrv = result.meta.isDgrvContract;
   const freeMonths = result.meta.freeMonths;
-
-  // Generate tariff name for basket
-  const tariffName = useMemo(() => {
-    const parts = [tariff.name];
-    if (mobileState.quantity > 1) {
-      parts.push(`(×${mobileState.quantity})`);
-    }
-    if (hardware.ekNet > 0) {
-      parts.push(`+ ${hardware.name}`);
-    }
-    return parts.join(" ");
-  }, [tariff, mobileState.quantity, hardware]);
 
   // Check if already in basket
   const isAlreadyAdded = items.some(

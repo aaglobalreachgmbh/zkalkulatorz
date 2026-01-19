@@ -1,26 +1,16 @@
-# Test Matrix (Enterprise Quality)
+# Test Matrix
 
-**Scope:** Critical User Flows & Device targets.
+| Domain | Criticality | Unit Tests (Logic) | Integration (Component/API) | E2E (Flow) | Risk |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Pricing Engine** | **CRITICAL (Black Box)** | Wrapper Inputs/Outputs | - | Calculator Flow | Incorrect Margins = Financial Loss |
+| **Offer Forms** | High | Zod Validation | Form Submission State | Create Offer | Invalid Data, UX Dead Ends |
+| **Customer Mode** | **CRITICAL** | - | Render Guard / CSS Hidden check | **No-Leak Check** | **Data Leak (EK/Margin exposed)** |
+| **PDF Generation** | High | ViewModel Transformation | Rendering Stability | Download PDF | Broken Layout, Missing Data |
+| **Admin/Tenants** | High | - | RLS Policies / Guard Components | Admin Access Denied | Unauthorized Access |
+| **Auth/Session** | Medium | - | Session Provider / Hooks | Login/Logout | Locked out users |
+| **Offline Mode** | Medium | Sync Queue Logic | OfflineBoundary Component | - | Data Loss on Reconnect |
 
-## A. Device & Browser Support
-| Device | Browser | Priority | Status |
-|--------|---------|----------|--------|
-| **iPad Pro 12.9"** | Safari | **P0** (Main POS Device) | ⬜️ |
-| **Desktop (Win/Mac)** | Chrome/Edge | P0 (Backoffice) | ⬜️ |
-| iPad Mini / Air | Safari | P1 | ⬜️ |
-| iPhone 14/15 | Safari/Chrome | P2 (Emergency Only) | ⬜️ |
-
-## B. Core User Roles
-1.  **Sales Rep (POS):** Fast, Touch-friendly, Customer-facing mode.
-2.  **Backoffice (Admin):** Data heavy, Mouse/Keyboard, Analytics.
-3.  **Tenant Admin:** Settings, Branding, User Management.
-
-## C. Critical Flow Verification (The "Golden Paths")
-1.  **The "5-Minute Offer":** Login -> Select Customer -> Config Hardware -> Add Tariff -> Optimise -> **PRINT PDF**.
-2.  **The "Offline Save":** Disconnect Wifi -> Edit Offer -> Reconnect -> Check Sync.
-3.  **The "Privacy Toggle":** Open Tariff -> Activate "Customer Mode" -> Verify Margins Hidden.
-
-## D. Edge Cases
-- [ ] Session expiry while typing (Auto-save + Soft Lock).
-- [ ] Zero Hardware stock (Fallback display).
-- [ ] Max items (500+ SIMs) performance.
+## Priorities for Phase 11
+1.  **Customer Mode Leak Proofing**: Must be verified by automated test.
+2.  **Calculator Stability**: Ensure inputs reach the engine correctly and results display.
+3.  **Admin Security**: Ensure RLS and Route Guards actually work.

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
@@ -90,17 +90,22 @@ export function ContractCard({
     const statusConfig = STATUS_CONFIG[contract.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.aktiv;
 
     // Calculate progress for visual bars (24 months = 100%)
-    const calculateProgress = (startDate: string | null, endDate: string | null): number => {
-        if (!startDate || !endDate) return 0;
+    const [contractProgress, setContractProgress] = useState(0);
+
+    useEffect(() => {
+        const startDate = contract.vertragsbeginn;
+        const endDate = contract.vertragsende;
+        if (!startDate || !endDate) {
+            setContractProgress(0);
+            return;
+        }
         const start = new Date(startDate).getTime();
         const end = new Date(endDate).getTime();
         const now = Date.now();
         const total = end - start;
         const elapsed = now - start;
-        return Math.max(0, Math.min(100, (elapsed / total) * 100));
-    };
-
-    const contractProgress = calculateProgress(contract.vertragsbeginn, contract.vertragsende);
+        setContractProgress(Math.max(0, Math.min(100, (elapsed / total) * 100)));
+    }, [contract.vertragsbeginn, contract.vertragsende]);
 
     const handleSaveEdit = () => {
         onUpdate(contract.id, {

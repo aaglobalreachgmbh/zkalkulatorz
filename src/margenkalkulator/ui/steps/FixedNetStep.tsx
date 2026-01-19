@@ -33,7 +33,18 @@ export function FixedNetStep({ value, onChange, datasetVersion, onFixedNetEnable
     value.accessType || "CABLE"
   );
 
-  // Feature disabled - show locked state
+  // All hooks must be called unconditionally before any early returns
+  // Get products for selected access type
+  const productsForAccessType = useMemo(() =>
+    listFixedNetByAccessType(datasetVersion, selectedAccessType),
+    [datasetVersion, selectedAccessType]
+  );
+
+  const selectedProduct = value.enabled && value.productId
+    ? getFixedNetProductFromCatalog(datasetVersion, value.productId)
+    : undefined;
+
+  // Feature disabled - show locked state (after all hooks)
   if (!fixedNetEnabled) {
     return (
       <div className="space-y-6">
@@ -65,16 +76,6 @@ export function FixedNetStep({ value, onChange, datasetVersion, onFixedNetEnable
   ) => {
     onChange({ ...value, [field]: fieldValue });
   };
-
-  // Get products for selected access type
-  const productsForAccessType = useMemo(() =>
-    listFixedNetByAccessType(datasetVersion, selectedAccessType),
-    [datasetVersion, selectedAccessType]
-  );
-
-  const selectedProduct = value.enabled && value.productId
-    ? getFixedNetProductFromCatalog(datasetVersion, value.productId)
-    : undefined;
 
   // Handle access type change
   const handleAccessTypeChange = (accessType: FixedNetAccessType) => {

@@ -633,7 +633,7 @@ export function Wizard() {
                       </div>
                     </div>
                   </AccordionTrigger>
-                  <AccordionContent className="px-4 pb-4 pt-2">
+                  <AccordionContent className="px-4 pb-4 pt-2 max-h-[400px] overflow-y-auto scrollbar-thin">
                     <HardwareStep
                       value={activeState.hardware}
                       onChange={(hardware) => setActiveState({ ...activeState, hardware })}
@@ -677,7 +677,7 @@ export function Wizard() {
                       </div>
                     </div>
                   </AccordionTrigger>
-                  <AccordionContent className="px-4 pb-4 pt-2">
+                  <AccordionContent className="px-4 pb-4 pt-2 max-h-[450px] overflow-y-auto scrollbar-thin">
                     <MobileStep
                       value={activeState.mobile}
                       onChange={(mobile) => setActiveState({ ...activeState, mobile })}
@@ -726,7 +726,7 @@ export function Wizard() {
                         )}
                       </div>
                     </AccordionTrigger>
-                    <AccordionContent className="px-4 pb-4 pt-2">
+                    <AccordionContent className="px-4 pb-4 pt-2 max-h-[350px] overflow-y-auto scrollbar-thin">
                       <FixedNetStep
                         value={activeState.fixedNet}
                         onChange={(fixedNet) => setActiveState({ ...activeState, fixedNet })}
@@ -784,6 +784,7 @@ export function Wizard() {
                   result={result1}
                   viewMode={effectiveViewMode}
                   quantityBonus={quantityBonusForOption1}
+                  onResetForNewTariff={resetForNewTariff}
                 />
                 <OfferBasketPanel />
               </div>

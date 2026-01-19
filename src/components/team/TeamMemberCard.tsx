@@ -3,7 +3,7 @@
 // Displays individual team member with actions
 // ============================================
 
-import { useState } from "react";
+import React, { useMemo } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -82,13 +82,18 @@ export function TeamMemberCard({
     .toUpperCase()
     .substring(0, 2);
 
-  const isExpiringSoon = member.type === "invitation" && member.expiresAt
-    ? new Date(member.expiresAt) < new Date(Date.now() + 2 * 24 * 60 * 60 * 1000) // 2 days
-    : false;
+  // Fix: Avoid impure Date.now() during render - use useMemo with empty deps for initial calc
+  const [now] = React.useState(() => Date.now());
 
-  const isExpired = member.type === "invitation" && member.expiresAt
-    ? new Date(member.expiresAt) < new Date()
-    : false;
+  const isExpiringSoon = useMemo(() => {
+    if (member.type !== "invitation" || !member.expiresAt) return false;
+    return new Date(member.expiresAt) < new Date(now + 2 * 24 * 60 * 60 * 1000);
+  }, [member.type, member.expiresAt, now]);
+
+  const isExpired = useMemo(() => {
+    if (member.type !== "invitation" || !member.expiresAt) return false;
+    return new Date(member.expiresAt) < new Date();
+  }, [member.type, member.expiresAt]);
 
   const handleCardClick = (e: React.MouseEvent) => {
     // Don't trigger onClick if clicking on buttons or dropdown
@@ -98,20 +103,18 @@ export function TeamMemberCard({
 
   return (
     <div
-      className={`group flex items-center justify-between p-3 rounded-lg bg-card border hover:shadow-md transition-all duration-200 ${
-        onClick ? "cursor-pointer" : ""
-      } ${isDragging ? "shadow-lg ring-2 ring-primary/20" : ""}`}
+      className={`group flex items-center justify-between p-3 rounded-lg bg-card border hover:shadow-md transition-all duration-200 ${onClick ? "cursor-pointer" : ""
+        } ${isDragging ? "shadow-lg ring-2 ring-primary/20" : ""}`}
       onClick={handleCardClick}
     >
       <div className="flex items-center gap-3 min-w-0 flex-1">
         {/* Avatar */}
         <Avatar className="h-10 w-10 shrink-0">
-          <AvatarFallback 
-            className={`text-sm font-medium ${
-              member.type === "invitation" 
-                ? "bg-amber-100 text-amber-700" 
-                : "bg-primary/10 text-primary"
-            }`}
+          <AvatarFallback
+            className={`text-sm font-medium ${member.type === "invitation"
+              ? "bg-amber-100 text-amber-700"
+              : "bg-primary/10 text-primary"
+              }`}
           >
             {member.type === "invitation" ? <Mail className="h-4 w-4" /> : initials}
           </AvatarFallback>

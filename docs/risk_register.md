@@ -1,23 +1,40 @@
-# Risk Register (ZKalkulatorz)
+# Risk Register (Test-Relevant)
 
-**Priority Levels:**
-- **P0:** Critical Blocker / Data Leak / Legal Risk
-- **P1:** Major Functionality Broken / Business Impact
-- **P2:** UX Friction / Minor Bug
+## The "Earthquake" Scenarios (Top 20)
 
-## Active Risks
+These are specific error conditions that must be simulated in our test suite.
 
-| ID | Risk | Severity | Mitigation Strategy | Owner | Status |
-|----|------|----------|---------------------|-------|--------|
-| R-1 | **Client-Side Pricing Logic** (Manipulation) | P0 | Logic is currently in JS bundle. Mitigation: Validation on Save (Backend) + Obfuscation (partial). **Long-term:** Move engine to Edge Functions. | Lead Dev | 🟡 |
-| R-2 | **Local Storage Data Loss** | P1 | Browser might clear storage. Mitigation: `useWizardAutoSave` pushes to Supabase immediately. `OfflineBoundary` handles sync. | Frontend | 🟢 |
-| R-3 | **PDF Client Generation Freeze** | P2 | Large PDFs freeze UI. Mitigation: Hybrid Architecture (Client Preview + Edge Final). **Status:** Stub Created (`/generate-pdf`). | Frontend | 🟢 |
-| R-4 | **Customer Mode Data Leak** | P0 | Showing margin/commission to customer. Mitigation: Strict Check `isCustomerMode` in React Render Tree (not just CSS). | Lead Dev | 🟢 |
-| R-5 | **Build Bloom** (Large Chunks) | P2 | Bundle size > 1.5MB. Mitigation: Code Splitting (Lazy) implemented in `App.tsx`. | Infra | 🟢 |
-| R-6 | **Test Flakiness** | P1 | Unstable tests erode trust. Mitigation: Mock time/network, deterministic fixtures. **Phase 11 Focus.** | QA | 🔴 |
-| R-7 | **No Integration Tests** | P1 | Component interactions untested. Mitigation: Add MarginForm + Admin guard tests. **Phase 11 Focus.** | QA | 🔴 |
-| R-8 | **No E2E Smokes** | P1 | Critical flows unverified end-to-end. Mitigation: Playwright setup. **Phase 11 Focus.** | QA | 🔴 |
-| R-9 | **SSR/Client Mismatch** | P2 | Hydration errors cause flicker. Mitigation: Test with jsdom, avoid `window` in render. | Frontend | 🟡 |
+### Data & State
+1.  **Empty Tenant Data**: New user logs in, 0 products, 0 customers. Does it crash?
+2.  **Null/Undefined in Math**: Price is `null` or `undefined`. Does `NaN` appear in UI?
+3.  **Large Numbers**: Price > 1 Million. Does layout break?
+4.  **Special Characters**: Customer Name = `Robert'); DROP TABLE Students;`. (SQLi/XSS check).
+5.  **Race Conditions**: Clicking "Calculated" 5 times rapidly.
+6.  **Stale Data**: Tab open for 24h, then click "Save".
 
-## Resolved Risks
-- *None documented yet.*
+### Network & Environment
+7.  **Offline**: Network disconnects while submitting offer.
+8.  **Flaky Network**: Request follows 5s timeout or returns 500 once, then 200.
+9.  **LocalStorage Full**: Quota exceeded (rare but fatal for offline-first).
+10. **Session Expiry**: Token expires while user is typing.
+
+### Security & Privacy (The Walls)
+11. **Customer Mode Leak**: Dealer views source code in Customer Mode → finds `ek_price`.
+12. **URL Hacking**: User changes `/offer/123/edit` to `/offer/456/edit` (Other tenant).
+13. **Role Escalation**: User forces navigation to `/admin`.
+
+### UI/UX
+14. **Viewport Crush**: Mobile device (320px). Is "Buy" button visible?
+15. **Zoom 200%**: Is critical info readable?
+16. **Dark Mode**: Are inputs readable? (Contrast).
+17. **Fast Navigation**: Back/Forward browser buttons during wizard.
+
+### Integration
+18. **PDF Failure**: PDF Gen Service returns 500 or timeout.
+19. **Import Corrupt**: Importing CSV with wrong delimiter or missing columns.
+20. **Engine Update**: Pricing Engine Library updates but API changes slightly.
+
+## Mitigation Strategy
+- **Unit/Integration**: Cover #2, #4, #5, #17, #19.
+- **E2E**: Cover #1, #7, #10, #11 #11, #13, #14.
+- **Manual/Exploratory**: Cover #3, #9, #15, #16.

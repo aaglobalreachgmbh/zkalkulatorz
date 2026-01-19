@@ -6,29 +6,18 @@ import { useIdentity } from "@/contexts/IdentityContext";
 import { toast } from "sonner";
 import { startOfMonth, endOfMonth, format, subMonths } from "date-fns";
 import type { Json } from "@/integrations/supabase/types";
+import {
+  calculateMonthlyProvision,
+  calculateOfferProvision as calculateOfferProvisionLogic,
+  type OfferInput,
+  type ProvisionDetail,
+  type ProvisionSummary,
+  type ProvisionRate,
+  type EmployeeGoal,
+  type EmployeeSettings
+} from "@/lib/provisionLogic";
 
-export interface ProvisionDetail {
-  offerId: string;
-  offerName: string;
-  customerName?: string;
-  tariffName?: string;
-  contractType: string; // 'neu' | 'vvl' | 'hw_only'
-  baseProvision: number;
-  bonusProvision: number;
-  totalProvision: number;
-  createdAt: string;
-}
-
-export interface ProvisionSummary {
-  baseProvision: number;
-  bonusAmount: number;
-  goalBonus: number;
-  deductions: number;
-  netProvision: number;
-  contractCount: number;
-  details: ProvisionDetail[];
-  status: "draft" | "calculated" | "approved" | "paid";
-}
+export type { ProvisionDetail, ProvisionSummary };
 
 export interface ProvisionCalculation {
   id: string;
@@ -107,7 +96,8 @@ export function useProvisionCalculator(options?: {
           return [];
         }
 
-        return data || [];
+        // Cast to OfferInput
+        return (data || []) as unknown as OfferInput[];
       } catch (err) {
         console.warn("[useProvisionCalculator] Exception:", err);
         return [];
@@ -133,7 +123,7 @@ export function useProvisionCalculator(options?: {
           return [];
         }
 
-        return data || [];
+        return (data || []) as unknown as ProvisionRate[];
       } catch (err) {
         console.warn("[useProvisionCalculator] Exception:", err);
         return [];
@@ -160,7 +150,7 @@ export function useProvisionCalculator(options?: {
           return null;
         }
 
-        return data;
+        return data as unknown as EmployeeSettings;
       } catch (err) {
         console.warn("[useProvisionCalculator] Exception:", err);
         return null;
@@ -187,7 +177,7 @@ export function useProvisionCalculator(options?: {
           return [];
         }
 
-        return data || [];
+        return (data || []) as unknown as EmployeeGoal[];
       } catch (err) {
         console.warn("[useProvisionCalculator] Exception:", err);
         return [];
@@ -232,54 +222,16 @@ export function useProvisionCalculator(options?: {
     enabled: !!targetUserId,
   });
 
-  // Calculate provision for a single offer
-  const calculateOfferProvision = (offer: typeof offers[0]): ProvisionDetail => {
-    const config = offer.config as Record<string, unknown> || {};
-    const preview = offer.preview as Record<string, unknown> || {};
-    
-    // Extract tariff info
-    const tariffName = (config.tariffName as string) || (preview.tariff as string) || "Unbekannt";
-    const contractType = (config.contractType as string) || (config.vertragsart as string) || "neu";
-    const customerName = (offer.customer as { company_name: string } | null)?.company_name || "Unbekannt";
-
-    // Find matching provision rate
-    const matchingRate = provisionRates.find((rate) => {
-      const rateTariff = (rate as { tariff_id?: string }).tariff_id || "";
-      const rateType = (rate as { contract_type?: string }).contract_type || "";
-      return tariffName.toLowerCase().includes(rateTariff.toLowerCase()) &&
-             (rateType === contractType || rateType === "all");
-    });
-
-    // Calculate base provision
-    let baseProvision = 0;
-    if (matchingRate) {
-      baseProvision = (matchingRate as { provision_amount?: number }).provision_amount || 0;
-    } else {
-      // Default provision based on contract type
-      baseProvision = contractType === "neu" ? 100 : contractType === "vvl" ? 50 : 30;
-    }
-
-    // Extract any bonus from the offer config
-    const bonusProvision = (config.bonusProvision as number) || 0;
-
-    return {
-      offerId: offer.id,
-      offerName: offer.name,
-      customerName,
-      tariffName,
-      contractType,
-      baseProvision,
-      bonusProvision,
-      totalProvision: baseProvision + bonusProvision,
-      createdAt: offer.created_at,
-    };
+  // Calculate provision for a single offer (wrapped for component use)
+  const calculateOfferProvision = (offer: OfferInput): ProvisionDetail => {
+    return calculateOfferProvisionLogic(offer, provisionRates);
   };
 
   // Calculate monthly summary
   const monthlySummary = useMemo((): ProvisionSummary => {
     // If we have an existing approved calculation, use that
     if (existingCalculation && existingCalculation.status !== "draft") {
-      const details = Array.isArray(existingCalculation.calculation_details) 
+      const details = Array.isArray(existingCalculation.calculation_details)
         ? existingCalculation.calculation_details as unknown as ProvisionDetail[]
         : [];
       return {
@@ -294,48 +246,14 @@ export function useProvisionCalculator(options?: {
       };
     }
 
-    // Calculate from offers
-    const details = offers.map(calculateOfferProvision);
-    const baseProvision = details.reduce((sum, d) => sum + d.baseProvision, 0);
-    const bonusAmount = details.reduce((sum, d) => sum + d.bonusProvision, 0);
-
-    // Goal bonus calculation
-    let goalBonus = 0;
-    goals.forEach((goal) => {
-      const targetValue = (goal as { target_value?: number }).target_value || 0;
-      const currentValue = (goal as { current_value?: number }).current_value || 0;
-      const bonusAmt = (goal as { bonus_amount?: number }).bonus_amount || 0;
-      
-      if (targetValue > 0 && currentValue >= targetValue && bonusAmt > 0) {
-        goalBonus += bonusAmt;
-      }
-    });
-
-    // Calculate deductions
-    let deductions = 0;
-    if (employeeSettings) {
-      const deductionValue = employeeSettings.provision_deduction || 0;
-      const deductionType = employeeSettings.provision_deduction_type || "fixed";
-      
-      if (deductionType === "percent") {
-        deductions = (baseProvision + bonusAmount + goalBonus) * (deductionValue / 100);
-      } else {
-        deductions = deductionValue;
-      }
-    }
-
-    const netProvision = baseProvision + bonusAmount + goalBonus - deductions;
-
-    return {
-      baseProvision,
-      bonusAmount,
-      goalBonus,
-      deductions,
-      netProvision,
-      contractCount: details.length,
-      details,
-      status: existingCalculation?.status || "draft",
-    };
+    // Use pure logic function for calculation
+    return calculateMonthlyProvision(
+      offers,
+      provisionRates,
+      goals,
+      employeeSettings || null,
+      existingCalculation?.status || "draft"
+    );
   }, [offers, provisionRates, goals, employeeSettings, existingCalculation]);
 
   // Save calculation mutation
@@ -443,16 +361,16 @@ export function useProvisionCalculator(options?: {
     offers,
     goals,
     monthKey,
-    
+
     // State
     isLoading: offersLoading || calculationLoading,
-    
+
     // Actions
     saveCalculation: saveCalculationMutation.mutateAsync,
     approveCalculation: approveCalculationMutation.mutateAsync,
     markAsPaid: markAsPaidMutation.mutateAsync,
     calculateOfferProvision,
-    
+
     // Mutation states
     isSaving: saveCalculationMutation.isPending,
     isApproving: approveCalculationMutation.isPending,

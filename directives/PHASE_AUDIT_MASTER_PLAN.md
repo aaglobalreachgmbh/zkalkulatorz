@@ -275,6 +275,9 @@ npm run test
 ### Phase 12: Hook Testing (11.3)
 - Write tests for `useLicense`, `useMarginCalculation`
 - Mock Supabase client
+**Status:** ✅ VERIFIED (Commit `Pending`)
+- `useLicense.test.ts` passes (mocked)
+- `provisionLogic.test.ts` passes (refactored)
 
 ### Phase 13: Component Testing (11.4)
 - Test `MarginForm` with React Testing Library

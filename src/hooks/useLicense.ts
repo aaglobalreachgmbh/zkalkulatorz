@@ -4,10 +4,10 @@
 // ============================================
 
 import { useState, useEffect, useCallback } from "react";
-import { useAuth } from "@/hooks/useAuth";
-import { useIdentity } from "@/contexts/IdentityContext";
-import { useCloudLicense } from "@/hooks/useCloudLicense";
-import { useCloudSeats } from "@/hooks/useCloudSeats";
+import { useAuth } from "./useAuth";
+import { useIdentity } from "../contexts/IdentityContext";
+import { useCloudLicense } from "./useCloudLicense";
+import { useCloudSeats } from "./useCloudSeats";
 import {
   loadLicense,
   updateFeatureFlag,
@@ -18,14 +18,14 @@ import {
   type LicenseState,
   type LicenseFeatures,
   type LicensePlan,
-} from "@/lib/license";
+} from "../lib/license";
 import {
   getSeatUsageInfo,
   assignSeat as assignSeatLocal,
   revokeSeat as revokeSeatLocal,
   isUserSeated as isUserSeatedLocal,
   getSeatedUsers,
-} from "@/lib/seatManagement";
+} from "../lib/seatManagement";
 
 export interface UseLicenseReturn {
   license: LicenseState;

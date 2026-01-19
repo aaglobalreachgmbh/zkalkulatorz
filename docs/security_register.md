@@ -20,8 +20,9 @@ Security scan findings have been triaged. This document tracks each vulnerabilit
 | P0-A | 🔴 HIGH | `shared_offers` token enumeration risk | ✅ FIXED |
 | P0-B | 🔴 HIGH | `email_accounts` lateral access risk | ✅ MITIGATED |
 | P0-C | 🟠 MEDIUM | `onboarding_templates` public exposure | ✅ FIXED |
-| P1-D | 🟡 LOW | RLS linter warnings (USING(true)) | NEEDS VERIFICATION |
+| P1-D | 🟡 LOW | RLS linter warnings (USING(true)) | ⚠️ Documented |
 | P1-E | 🟡 LOW | xlsx dependency vulnerability | ✅ FIXED (0.20.3) |
+| HOTFIX | 🔴 HIGH | Auth placeholder.supabase.co error | ✅ FIXED |
 
 ---
 

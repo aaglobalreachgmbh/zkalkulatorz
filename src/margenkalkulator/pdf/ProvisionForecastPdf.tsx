@@ -46,18 +46,18 @@ function formatCurrency(value: number) {
   return formatCurrencyBase(value);
 }
 
-export function ProvisionForecastPdf({ 
-  rows, 
-  totals, 
-  generatedAt, 
+export function ProvisionForecastPdf({
+  rows,
+  totals,
+  generatedAt,
   timeRange,
-  branding = DEFAULT_BRANDING 
+  branding = DEFAULT_BRANDING
 }: ProvisionForecastPdfProps) {
   const styles = createReportStyles(branding);
-  
+
   // Display name for header
   const displayName = branding.companyName || "MargenKalkulator";
-  
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -117,7 +117,7 @@ export function ProvisionForecastPdf({
               <Text style={[styles.tableHeaderCell, styles.colMargin]}>Marge</Text>
             </View>
             {rows.map((row, idx) => (
-              <View key={idx} style={[styles.tableRow, idx % 2 === 1 && styles.tableRowAlt]}>
+              <View key={idx} style={[styles.tableRow, idx % 2 === 1 ? styles.tableRowAlt : {}]}>
                 <Text style={[styles.tableCell, styles.colCustomer]}>{row.customerName}</Text>
                 <Text style={[styles.tableCell, styles.colOffer]}>{row.offerName}</Text>
                 <Text style={[styles.tableCell, styles.colTariff]}>{row.tariff}</Text>
@@ -129,8 +129,8 @@ export function ProvisionForecastPdf({
                   {formatCurrency(row.ekPrice)}
                 </Text>
                 <Text style={[
-                  styles.tableCell, 
-                  styles.colMargin, 
+                  styles.tableCell,
+                  styles.colMargin,
                   row.expectedMargin >= 0 ? styles.tableCellPositive : styles.tableCellNegative
                 ]}>
                   {row.expectedMargin >= 0 ? "+" : ""}{formatCurrency(row.expectedMargin)}
@@ -147,7 +147,7 @@ export function ProvisionForecastPdf({
         {/* Disclaimer */}
         <View style={styles.disclaimer}>
           <Text style={styles.disclaimerText}>
-            ⚠️ PROGNOSE: Diese Werte basieren auf Angeboten mit Status "abgeschlossen". 
+            ⚠️ PROGNOSE: Diese Werte basieren auf Angeboten mit Status "abgeschlossen".
             Die tatsächliche Provision kann je nach Vertragsbedingungen und Aktivierungszeitpunkt abweichen.
             Hardware-EK-Preise entsprechen den zum Angebotszeitpunkt hinterlegten Werten.
           </Text>

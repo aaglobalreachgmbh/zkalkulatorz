@@ -138,7 +138,7 @@ function evaluateConditions(conditions: PushProvisionConditions, context?: PushP
   // Check bundle requirements
   if (conditions.bundleRequirements) {
     const bundle = conditions.bundleRequirements;
-    
+
     // All enabled bundle requirements must be met
     if (bundle.requireMobile !== false) {
       // Mobile is always assumed to be present in calculator context
@@ -163,24 +163,24 @@ function evaluateConditions(conditions: PushProvisionConditions, context?: PushP
  * Check if a provision matches a tariff based on target type
  */
 function matchesTariff(
-  provision: PushProvision, 
+  provision: PushProvision,
   tariffId: string,
   tariffGroups?: PushTariffGroup[]
 ): boolean {
   switch (provision.targetType) {
     case "all":
       return true;
-    
+
     case "tariff":
       return provision.tariffId === tariffId;
-    
+
     case "family":
       // Match tariff family (e.g., "prime" matches PRIME_S, PRIME_M, etc.)
       if (provision.tariffFamily) {
         return tariffId.toLowerCase().includes(provision.tariffFamily.toLowerCase());
       }
       return false;
-    
+
     case "pattern":
       // Match regex pattern
       if (provision.tariffId) {
@@ -192,7 +192,7 @@ function matchesTariff(
         }
       }
       return false;
-    
+
     case "group":
       // Match tariff group
       if (tariffGroups && provision.tariffId) {
@@ -214,11 +214,11 @@ function matchesTariff(
         }
       }
       return false;
-    
+
     default:
       // Legacy fallback: exact match or family match
-      return provision.tariffId === tariffId || 
-        (provision.tariffFamily && tariffId.toLowerCase().includes(provision.tariffFamily.toLowerCase()));
+      return !!(provision.tariffId === tariffId ||
+        (provision.tariffFamily && tariffId.toLowerCase().includes(provision.tariffFamily.toLowerCase())));
   }
 }
 
@@ -364,7 +364,7 @@ export function usePushProvisions(): UsePushProvisionsReturn {
   const getBonusAmount = useCallback(
     (tariffId: string, contractType?: ContractType, baseProvision: number = 0, context?: PushProvisionContext): number => {
       const activeProvisions = getActiveForTariff(tariffId, contractType, context);
-      
+
       return activeProvisions.reduce((total, p) => {
         if (p.bonusType === "percent") {
           return total + baseProvision * (p.bonusAmount / 100);

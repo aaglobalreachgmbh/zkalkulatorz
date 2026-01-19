@@ -133,7 +133,7 @@ export function MobileStep({
           <div className="space-y-2">
             <Label className="text-sm text-muted-foreground flex items-center gap-1.5">
               Vertragsart
-              <HelpTooltip term="vvl" />
+              <HelpTooltip content="Neuvertrag oder Vertragsverlängerung (VVL)" />
             </Label>
             <div className="flex">
               <button
@@ -161,7 +161,7 @@ export function MobileStep({
           <div className="space-y-2">
             <Label className="text-sm text-muted-foreground flex items-center gap-1.5">
               Anzahl Karten
-              <HelpTooltip term="quantity" />
+              <HelpTooltip content="Anzahl der SIM-Karten für diesen Vertrag" />
             </Label>
             <div className="flex items-center gap-2">
               <Button
@@ -362,7 +362,7 @@ export function MobileStep({
                 Business Prime aktiv auf gleichem Kundenkonto
               </Label>
             </div>
-            <HelpTooltip term="teamDeal" />
+            <HelpTooltip content="TeamDeal" />
           </div>
           {showTeamDealWarning && (
             <Alert variant="destructive" className="border-amber-500 bg-amber-50 dark:bg-amber-950/30">

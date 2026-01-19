@@ -117,7 +117,7 @@ export default function MoccaImport() {
         // Use first sheet
         const firstSheetName = Object.keys(sheets)[0];
         if (firstSheetName) {
-          rows = sheets[firstSheetName] as Record<string, unknown>[];
+          rows = (sheets as Record<string, unknown[]>)[firstSheetName] as Record<string, unknown>[];
         }
       }
 
@@ -128,14 +128,14 @@ export default function MoccaImport() {
 
       // Extract column names from first row
       const columns = Object.keys(rows[0]);
-      
+
       setFileName(file.name);
       setRawRows(rows);
       setSourceColumns(columns);
-      
+
       // Auto-detect mapping
       const autoMapping = autoDetectColumnMapping(columns);
-      
+
       // Check for saved default mapping
       const defaultMapping = savedMappings.find((m) => m.is_default);
       if (defaultMapping) {
@@ -285,13 +285,12 @@ export default function MoccaImport() {
           {STEPS.map((step, index) => (
             <div key={step.id} className="flex items-center">
               <div
-                className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium transition-colors ${
-                  index < currentStepIndex
+                className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium transition-colors ${index < currentStepIndex
                     ? "bg-primary text-primary-foreground"
                     : index === currentStepIndex
-                    ? "bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2"
-                    : "bg-muted text-muted-foreground"
-                }`}
+                      ? "bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2"
+                      : "bg-muted text-muted-foreground"
+                  }`}
               >
                 {index < currentStepIndex ? (
                   <CheckCircle2 className="h-4 w-4" />
@@ -300,9 +299,8 @@ export default function MoccaImport() {
                 )}
               </div>
               <span
-                className={`ml-2 text-sm ${
-                  index === currentStepIndex ? "font-medium" : "text-muted-foreground"
-                }`}
+                className={`ml-2 text-sm ${index === currentStepIndex ? "font-medium" : "text-muted-foreground"
+                  }`}
               >
                 {step.label}
               </span>

@@ -114,7 +114,7 @@ export function CreateTenantModal({ trigger }: CreateTenantModalProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {trigger || (
+        {trigger ? (trigger as any) : (
           <Button className="gap-2">
             <Plus className="h-4 w-4" />
             Neuen Kunden anlegen
@@ -136,7 +136,7 @@ export function CreateTenantModal({ trigger }: CreateTenantModalProps) {
           {/* Company Info */}
           <div className="space-y-4">
             <h3 className="text-sm font-medium text-muted-foreground">Firmendaten</h3>
-            
+
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="company_name">Firmenname *</Label>
@@ -185,7 +185,7 @@ export function CreateTenantModal({ trigger }: CreateTenantModalProps) {
           {/* Admin Info */}
           <div className="space-y-4">
             <h3 className="text-sm font-medium text-muted-foreground">Haupt-Administrator</h3>
-            
+
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="admin_email">Admin E-Mail *</Label>
@@ -222,7 +222,7 @@ export function CreateTenantModal({ trigger }: CreateTenantModalProps) {
               <Key className="h-4 w-4" />
               Lizenz
             </h3>
-            
+
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="space-y-2">
                 <Label>Plan *</Label>
@@ -280,7 +280,7 @@ export function CreateTenantModal({ trigger }: CreateTenantModalProps) {
             <p className="text-xs text-muted-foreground">
               Mitarbeiter mit diesen E-Mail-Domains können sich registrieren.
             </p>
-            
+
             <div className="flex gap-2">
               <Input
                 placeholder="firma.de"

@@ -47,7 +47,7 @@ export function TenantProvisionManager() {
       provision_amount: entry.amount,
       sub_variant_id: entry.sub,
     }));
-    
+
     bulkImport(items);
     setShowTkWorldPreview(false);
   };
@@ -65,13 +65,13 @@ export function TenantProvisionManager() {
       const tariffId = String(row.tariff_id || row.tarif_id || row.id || "").trim().toUpperCase();
       const tariffName = String(row.tariff_name || row.tarif_name || row.name || row.bezeichnung || "").trim();
       const tariffFamily = String(row.tariff_family || row.tarif_family || row.familie || "").trim();
-      
+
       // Contract type
       const contractRaw = String(row.contract_type || row.vertragsart || row.type || "new").trim().toLowerCase();
-      const contractType = contractRaw === "extension" || contractRaw === "verlängerung" || contractRaw === "vvl" 
-        ? "extension" 
+      const contractType = contractRaw === "extension" || contractRaw === "verlängerung" || contractRaw === "vvl"
+        ? "extension"
         : "new";
-      
+
       // Sub-variant
       const subVariantId = String(row.sub_variant_id || row.sub_variant || row.variante || "").trim().toUpperCase();
 
@@ -127,7 +127,7 @@ export function TenantProvisionManager() {
 
   const handleFile = useCallback(async (file: File) => {
     const text = await file.text();
-    
+
     Papa.parse(text, {
       header: true,
       skipEmptyLines: true,
@@ -136,7 +136,7 @@ export function TenantProvisionManager() {
         const validation = validateRows(results.data as Record<string, unknown>[]);
         setParseResult(validation);
       },
-      error: (error) => {
+      error: (error: any) => {
         setParseResult({
           valid: [],
           errors: [`CSV-Parsing-Fehler: ${error.message}`],
@@ -149,7 +149,7 @@ export function TenantProvisionManager() {
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    
+
     const file = e.dataTransfer.files[0];
     if (file && file.name.endsWith(".csv")) {
       handleFile(file);
@@ -165,7 +165,7 @@ export function TenantProvisionManager() {
 
   const handleImport = () => {
     if (!parseResult?.valid.length) return;
-    
+
     const items: TenantProvisionInput[] = parseResult.valid.map((row) => ({
       tariff_id: row.tariff_id,
       tariff_name: row.tariff_name,
@@ -190,7 +190,7 @@ PRIME_M,Business Prime M,Prime,new,400,SMARTPHONE
 PRIME_L,Business Prime L,Prime,new,550,
 SMART_S,Smart Business S,Smart,new,200,
 SMART_M,Smart Business M,Smart,new,280,`;
-    
+
     const blob = new Blob([template], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -309,9 +309,8 @@ SMART_M,Smart Business M,Smart,new,280,`;
         </CardHeader>
         <CardContent>
           <div
-            className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-              isDragging ? "border-primary bg-primary/5" : "border-muted-foreground/25"
-            }`}
+            className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${isDragging ? "border-primary bg-primary/5" : "border-muted-foreground/25"
+              }`}
             onDragOver={(e) => {
               e.preventDefault();
               setIsDragging(true);
@@ -391,8 +390,8 @@ SMART_M,Smart Business M,Smart,new,280,`;
                 </Alert>
 
                 <div className="flex gap-2">
-                  <Button 
-                    onClick={handleImport} 
+                  <Button
+                    onClick={handleImport}
                     disabled={isUploading}
                     className="flex-1"
                   >
@@ -403,8 +402,8 @@ SMART_M,Smart Business M,Smart,new,280,`;
                     )}
                     {parseResult.valid.length} Einträge importieren
                   </Button>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={() => setParseResult(null)}
                   >
                     Abbrechen
@@ -423,8 +422,8 @@ SMART_M,Smart Business M,Smart,new,280,`;
             <CardTitle className="text-destructive">Gefahrenbereich</CardTitle>
           </CardHeader>
           <CardContent>
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={() => {
                 if (confirm("Wirklich alle Provisions-Daten löschen?")) {
                   clearAll();

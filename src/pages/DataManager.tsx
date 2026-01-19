@@ -7,12 +7,12 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Upload, 
-  Download, 
-  RotateCcw, 
-  Check, 
-  AlertTriangle, 
+import {
+  Upload,
+  Download,
+  RotateCcw,
+  Check,
+  AlertTriangle,
   FileSpreadsheet,
   FileText,
   ArrowLeft,
@@ -21,7 +21,7 @@ import {
   Package,
   Euro,
 } from "lucide-react";
-import { 
+import {
   validateDataset,
   diffDatasets,
   formatDiffSummary,
@@ -46,10 +46,10 @@ import type { HardwareItemRow, ProvisionRow, OMOMatrixRow } from "@/margenkalkul
 import { toast } from "sonner";
 import { useIdentity } from "@/contexts/IdentityContext";
 import { useFeature } from "@/hooks/useFeature";
-import { 
-  StatusBadge, 
-  DatasetCard, 
-  WorkflowLegend 
+import {
+  StatusBadge,
+  DatasetCard,
+  WorkflowLegend
 } from "@/components/DatasetWorkflow";
 import {
   loadDatasetRegistry,
@@ -87,13 +87,13 @@ export default function DataManager() {
   const [detection, setDetection] = useState<FormatDetectionResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [previewDatasetId, setPreviewDatasetId] = useState<string | null>(null);
-  
+
   // PDF Import State
   const [pdfDetection, setPdfDetection] = useState<PdfDetectionResult | null>(null);
   const [pdfResult, setPdfResult] = useState<PdfImportResult | null>(null);
-  
+
   // Load datasets from governance storage
-  const [datasets, setDatasets] = useState<ManagedDataset[]>(() => 
+  const [datasets, setDatasets] = useState<ManagedDataset[]>(() =>
     loadDatasetRegistry(identity.tenantId, identity.departmentId)
   );
   const activeDatasetId = getActiveDatasetId(identity.tenantId, identity.departmentId);
@@ -106,7 +106,7 @@ export default function DataManager() {
   const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
-    
+
     setFile(selectedFile);
     setIsLoading(true);
     setParsedData(null);
@@ -115,9 +115,9 @@ export default function DataManager() {
     setDetection(null);
     setPdfDetection(null);
     setPdfResult(null);
-    
+
     const isPdf = selectedFile.type.includes("pdf") || selectedFile.name.toLowerCase().endsWith(".pdf");
-    
+
     try {
       if (isPdf) {
         // PDF Import Flow
@@ -126,11 +126,11 @@ export default function DataManager() {
           toast.error(pdfValidation.error || "Ungültige PDF");
           return;
         }
-        
+
         // Extract text and detect format
         const { detection: pdfDet, pages } = await parsePdf(selectedFile);
         setPdfDetection(pdfDet);
-        
+
         // Parse based on detected format
         if (pdfDet.format === "provision_tkworld") {
           const result = parseProvisionPdf(pages);
@@ -157,18 +157,18 @@ export default function DataManager() {
       } else {
         // XLSX Import Flow (existing)
         const result: UnifiedParseResult = await parseXLSXUnified(selectedFile);
-        
+
         setDetection(result.detection);
-        
+
         const datasetValidation = validateDataset(result.canonical);
         setValidation(datasetValidation);
-        
+
         if (!datasetValidation.isValid) {
           return;
         }
-        
+
         setParsedData(result.canonical);
-        
+
         const currentCanonical = activeDataset?.payload ?? convertCatalogToCanonical(businessCatalog2025_09);
         const diffResult = diffDatasets(
           currentCanonical as unknown as Record<string, { id: string }[]>,
@@ -176,7 +176,7 @@ export default function DataManager() {
         );
         setDiff(diffResult);
       }
-      
+
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Fehler beim Parsen");
     } finally {
@@ -191,7 +191,7 @@ export default function DataManager() {
       toast.error("Keine Berechtigung");
       return;
     }
-    
+
     try {
       const newDataset = createDraftDataset(
         identity.tenantId,
@@ -200,7 +200,7 @@ export default function DataManager() {
         identity.userId,
         identity.displayName
       );
-      
+
       // Audit log
       logDatasetImport(
         identity.tenantId,
@@ -211,7 +211,7 @@ export default function DataManager() {
         newDataset.datasetId,
         newDataset.datasetVersion
       );
-      
+
       // If bypass enabled and requested, immediately publish
       if (publishImmediately && canBypassApproval) {
         // Skip draft → review → published, go directly to published
@@ -223,7 +223,7 @@ export default function DataManager() {
           identity.userId,
           identity.displayName
         );
-        
+
         logDatasetStatusChange(
           identity.tenantId,
           identity.departmentId,
@@ -234,21 +234,21 @@ export default function DataManager() {
           "draft",
           "published"
         );
-        
+
         toast.success(`Version "${newDataset.datasetVersion}" direkt veröffentlicht`);
       } else {
         toast.success(`Version "${newDataset.datasetVersion}" als Entwurf gespeichert`);
       }
-      
+
       refreshDatasets();
-      
+
       // Reset form
       setFile(null);
       setParsedData(null);
       setValidation(null);
       setDiff(null);
       setDetection(null);
-      
+
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Fehler");
     }
@@ -261,7 +261,7 @@ export default function DataManager() {
       toast.error("Keine Berechtigung");
       return;
     }
-    
+
     try {
       // Build partial dataset from PDF results
       const pdfDataset: Partial<CanonicalDataset> = {
@@ -272,7 +272,7 @@ export default function DataManager() {
           notes: `PDF-Import: ${file?.name || "Unbekannt"}`,
         },
       };
-      
+
       if (pdfResult.hardware && pdfResult.hardware.length > 0) {
         pdfDataset.hardwareCatalog = pdfResult.hardware;
       }
@@ -282,7 +282,7 @@ export default function DataManager() {
       if (pdfResult.omoMatrix && pdfResult.omoMatrix.length > 0) {
         pdfDataset.omoMatrix = pdfResult.omoMatrix;
       }
-      
+
       const newDataset = createDraftDataset(
         identity.tenantId,
         identity.departmentId,
@@ -290,7 +290,7 @@ export default function DataManager() {
         identity.userId,
         identity.displayName
       );
-      
+
       logDatasetImport(
         identity.tenantId,
         identity.departmentId,
@@ -300,14 +300,14 @@ export default function DataManager() {
         newDataset.datasetId,
         newDataset.datasetVersion
       );
-      
+
       toast.success(`${pdfResult.rowsExtracted} Einträge als PDF-Entwurf gespeichert`);
-      
+
       refreshDatasets();
       setFile(null);
       setPdfDetection(null);
       setPdfResult(null);
-      
+
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Fehler");
     }
@@ -316,9 +316,9 @@ export default function DataManager() {
   const handleTransition = useCallback((datasetId: string, newStatus: DatasetStatus) => {
     const dataset = datasets.find(d => d.datasetId === datasetId);
     if (!dataset) return;
-    
+
     const oldStatus = dataset.status;
-    
+
     const result = transitionDatasetStatus(
       identity.tenantId,
       identity.departmentId,
@@ -327,7 +327,7 @@ export default function DataManager() {
       identity.userId,
       identity.displayName
     );
-    
+
     if (result) {
       // Audit log
       logDatasetStatusChange(
@@ -340,7 +340,7 @@ export default function DataManager() {
         oldStatus,
         newStatus
       );
-      
+
       refreshDatasets();
       toast.success(`${result.datasetVersion} → ${newStatus}`);
     }
@@ -450,8 +450,8 @@ export default function DataManager() {
               </CardHeader>
               <CardContent className="space-y-3">
                 {reviewDatasets.map(ds => (
-                  <DatasetCard 
-                    key={ds.datasetId} 
+                  <DatasetCard
+                    key={ds.datasetId}
                     dataset={ds}
                     onTransition={handleTransition}
                     onPreview={handlePreview}
@@ -468,8 +468,8 @@ export default function DataManager() {
               </CardHeader>
               <CardContent className="space-y-3">
                 {draftDatasets.map(ds => (
-                  <DatasetCard 
-                    key={ds.datasetId} 
+                  <DatasetCard
+                    key={ds.datasetId}
                     dataset={ds}
                     onTransition={handleTransition}
                     onPreview={handlePreview}
@@ -488,8 +488,8 @@ export default function DataManager() {
               </CardHeader>
               <CardContent className="space-y-3">
                 {archivedDatasets.slice(0, 5).map(ds => (
-                  <DatasetCard 
-                    key={ds.datasetId} 
+                  <DatasetCard
+                    key={ds.datasetId}
                     dataset={ds}
                     onTransition={handleTransition}
                     onPreview={handlePreview}
@@ -563,7 +563,7 @@ export default function DataManager() {
                 Erkanntes Format: {detection.format === "BUSINESS" ? "Business (SoHo/PK)" : detection.format}
               </AlertTitle>
               <AlertDescription>
-                {detection.format === "BUSINESS" && detection.sheets.length > 0 && (
+                {detection.format === "BUSINESS" && detection.sheets && detection.sheets.length > 0 && (
                   <span>
                     {detection.sheets.length} Sheet(s):{" "}
                     {detection.sheets.map((s, i) => (
@@ -580,9 +580,9 @@ export default function DataManager() {
             <Alert className={pdfDetection.format === "unknown" ? "border-destructive" : ""}>
               <FileText className="h-4 w-4" />
               <AlertTitle>
-                PDF erkannt: {pdfDetection.format === "provision_tkworld" ? "TK-World Provisionsliste" : 
-                             pdfDetection.format === "hardware_distri" ? "Hardware-Preisliste" : 
-                             "Unbekanntes Format"}
+                PDF erkannt: {pdfDetection.format === "provision_tkworld" ? "TK-World Provisionsliste" :
+                  pdfDetection.format === "hardware_distri" ? "Hardware-Preisliste" :
+                    "Unbekanntes Format"}
               </AlertTitle>
               <AlertDescription>
                 {pdfDetection.pageCount} Seiten • Konfidenz: {pdfDetection.confidence}
@@ -634,7 +634,7 @@ export default function DataManager() {
                     </>
                   )}
                 </div>
-                
+
                 {pdfResult.warnings.length > 0 && (
                   <div className="space-y-1 max-h-32 overflow-y-auto">
                     {pdfResult.warnings.slice(0, 5).map((w, i) => (
@@ -645,7 +645,7 @@ export default function DataManager() {
                     )}
                   </div>
                 )}
-                
+
                 {pdfResult.errors.length > 0 && (
                   <Alert variant="destructive">
                     <AlertDescription>
@@ -659,9 +659,9 @@ export default function DataManager() {
 
           {/* PDF Import Button */}
           {pdfResult && pdfResult.errors.length === 0 && pdfResult.rowsExtracted > 0 && (
-            <Button 
-              onClick={handlePdfImport} 
-              className="w-full" 
+            <Button
+              onClick={handlePdfImport}
+              className="w-full"
               size="lg"
             >
               <Upload className="h-4 w-4 mr-2" />
@@ -718,7 +718,7 @@ export default function DataManager() {
                     </AlertDescription>
                   </Alert>
                 )}
-                
+
                 <div className="grid grid-cols-3 gap-4 text-sm">
                   <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950/20">
                     <p className="font-semibold text-green-700 dark:text-green-400">Hinzugefügt</p>
@@ -740,9 +740,9 @@ export default function DataManager() {
           {/* Create Draft Button */}
           {parsedData && validation?.isValid && (
             <div className="flex gap-3">
-              <Button 
-                onClick={() => handleCreateDraft(false)} 
-                className="flex-1" 
+              <Button
+                onClick={() => handleCreateDraft(false)}
+                className="flex-1"
                 size="lg"
                 variant={canBypassApproval ? "outline" : "default"}
                 disabled={diff?.breakingRisk && diff.summary.totalRemoved > 0}
@@ -755,11 +755,11 @@ export default function DataManager() {
                   </Badge>
                 )}
               </Button>
-              
+
               {canBypassApproval && (
-                <Button 
-                  onClick={() => handleCreateDraft(true)} 
-                  className="flex-1 bg-amber-600 hover:bg-amber-700" 
+                <Button
+                  onClick={() => handleCreateDraft(true)}
+                  className="flex-1 bg-amber-600 hover:bg-amber-700"
                   size="lg"
                   disabled={diff?.breakingRisk && diff.summary.totalRemoved > 0}
                 >
@@ -786,7 +786,7 @@ export default function DataManager() {
                 </>
               ) : (
                 <>
-                  Importierte Datasets werden als Entwurf gespeichert. Ein Manager muss sie zur Prüfung freigeben, 
+                  Importierte Datasets werden als Entwurf gespeichert. Ein Manager muss sie zur Prüfung freigeben,
                   und ein Admin muss sie veröffentlichen, bevor sie für Berechnungen aktiv werden.
                 </>
               )}

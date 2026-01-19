@@ -69,19 +69,19 @@ export function useSharedOffers() {
     }
 
     setIsSaving(true);
-    
+
     try {
       const offerId = generateOfferId();
       const accessToken = generateAccessToken();
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + offerData.validDays);
-      
+
       // Generate QR code
       const qrCodeDataUrl = await generateOfferQrCode(offerId, accessToken);
-      
+
       // Build share URL
       const shareUrl = `${window.location.origin}/share/offer/${encodeURIComponent(offerId)}?token=${encodeURIComponent(accessToken)}`;
-      
+
       // Save to database (only customer-visible data!)
       const { error } = await supabase
         .from("shared_offers")
@@ -124,11 +124,11 @@ export function useSharedOffers() {
    * Gets a shared offer by ID and token (public access)
    */
   const getSharedOffer = useCallback(async (
-    offerId: string, 
+    offerId: string,
     accessToken: string
   ): Promise<SharedOffer | null> => {
     setIsLoading(true);
-    
+
     try {
       const { data, error } = await supabase
         .rpc("get_shared_offer_public", {
@@ -199,7 +199,7 @@ export function useSharedOffers() {
     if (!user) return [];
 
     setIsLoading(true);
-    
+
     try {
       const { data, error } = await supabase
         .from("shared_offers")
@@ -221,7 +221,7 @@ export function useSharedOffers() {
         valid_days: row.valid_days ?? 14,
         view_count: row.view_count ?? 0,
         is_revoked: row.is_revoked || false,
-        created_at: row.created_at,
+        created_at: row.created_at || new Date().toISOString(),
       }));
     } catch (err: any) {
       console.error("[useSharedOffers] Unexpected error:", err);

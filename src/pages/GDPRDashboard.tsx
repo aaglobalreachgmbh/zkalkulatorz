@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { 
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -25,11 +25,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { 
-  Trash2, 
-  Shield, 
-  FileText, 
-  Search, 
+import {
+  Trash2,
+  Shield,
+  FileText,
+  Search,
   RefreshCw,
   UserX,
   Calendar,
@@ -53,7 +53,7 @@ interface DeletionLog {
   deletion_reason: string;
   deleted_tables: Json;
   deleted_at: string;
-  deletion_requested_by: string;
+  deletion_requested_by: string | null;
 }
 
 interface InactiveUser {
@@ -70,7 +70,7 @@ export default function GDPRDashboard() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
-  
+
 
   // Fetch deletion logs
   const fetchDeletionLogs = async () => {
@@ -353,8 +353,8 @@ export default function GDPRDashboard() {
                               {log.deletion_reason === "inactivity_2_years"
                                 ? "2 Jahre inaktiv"
                                 : log.deletion_reason === "user_request"
-                                ? "Nutzeranfrage"
-                                : log.deletion_reason}
+                                  ? "Nutzeranfrage"
+                                  : log.deletion_reason}
                             </Badge>
                           </TableCell>
                           <TableCell>
@@ -442,7 +442,7 @@ export default function GDPRDashboard() {
                           0,
                           Math.ceil(
                             (twoYearsFromActivity.getTime() - Date.now()) /
-                              (1000 * 60 * 60 * 24)
+                            (1000 * 60 * 60 * 24)
                           )
                         );
 
@@ -461,8 +461,8 @@ export default function GDPRDashboard() {
                             <TableCell>
                               {user.last_activity_at
                                 ? format(new Date(user.last_activity_at), "dd.MM.yyyy", {
-                                    locale: de,
-                                  })
+                                  locale: de,
+                                })
                                 : "Nie"}
                             </TableCell>
                             <TableCell>
@@ -476,8 +476,8 @@ export default function GDPRDashboard() {
                                   daysUntilDeletion < 90
                                     ? "destructive"
                                     : daysUntilDeletion < 180
-                                    ? "secondary"
-                                    : "outline"
+                                      ? "secondary"
+                                      : "outline"
                                 }
                               >
                                 {daysUntilDeletion} Tage
@@ -547,7 +547,7 @@ export default function GDPRDashboard() {
                         Wichtiger Hinweis
                       </p>
                       <p className="text-yellow-700 dark:text-yellow-300 mt-1">
-                        Löschanfragen müssen innerhalb von 30 Tagen bearbeitet werden 
+                        Löschanfragen müssen innerhalb von 30 Tagen bearbeitet werden
                         (DSGVO Art. 12). Dokumentieren Sie die Anfrage und den Löschgrund.
                       </p>
                     </div>

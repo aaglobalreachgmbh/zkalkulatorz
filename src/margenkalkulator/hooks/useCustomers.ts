@@ -129,9 +129,11 @@ export function useCustomers() {
       return data as Customer;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["customers"] });
-      toast.success("Kunde erstellt");
-      trackCustomerCreated(data.id, data.company_name);
+      if (data) {
+        queryClient.invalidateQueries({ queryKey: ["customers"] });
+        toast.success("Kunde erstellt");
+        trackCustomerCreated(data.id, data.company_name);
+      }
     },
     onError: (error) => {
       toast.error("Fehler beim Erstellen: " + error.message);

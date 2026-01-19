@@ -41,9 +41,9 @@ interface SecurityEvent {
   ip_hash: string | null;
   user_agent_hash: string | null;
   details: unknown;
-  email_sent: boolean;
-  is_bot: boolean;
-  is_phishing: boolean;
+  email_sent: boolean | null;
+  is_bot: boolean | null;
+  is_phishing: boolean | null;
 }
 
 const ITEMS_PER_PAGE = 10;

@@ -78,10 +78,10 @@ function normalizeMobileTariffRows(rows: Record<string, unknown>[]): MobileTarif
         name,
         minTermMonths,
         base_sim_only_net: baseSim,
-        sub_basic_add_net: parseGermanNumber(row.sub_basic_add_net || row.sub5),
-        sub_smartphone_add_net: parseGermanNumber(row.sub_smartphone_add_net || row.sub10),
-        sub_premium_add_net: parseGermanNumber(row.sub_premium_add_net || row.sub20),
-        sub_special_premium_add_net: parseGermanNumber(row.sub_special_premium_add_net || row.sub30),
+        sub_basic_add_net: parseGermanNumber(row.sub_basic_add_net || row.sub5) ?? undefined,
+        sub_smartphone_add_net: parseGermanNumber(row.sub_smartphone_add_net || row.sub10) ?? undefined,
+        sub_premium_add_net: parseGermanNumber(row.sub_premium_add_net || row.sub20) ?? undefined,
+        sub_special_premium_add_net: parseGermanNumber(row.sub_special_premium_add_net || row.sub30) ?? undefined,
         data_de: dataDeValue,
         eu_rule: row.eu_rule === "text" ? "text" : "numeric",
         eu_data_gb: parseGermanNumber(row.eu_data_gb),
@@ -93,8 +93,8 @@ function normalizeMobileTariffRows(rows: Record<string, unknown>[]): MobileTarif
         roaming_zone1_frequency: row.roaming_zone1_frequency ? String(row.roaming_zone1_frequency) : null,
         sort_order: parseGermanNumber(row.sort_order) ?? 999,
         active: parseBool(row.active ?? row.aktiv ?? true),
-        fh_partner_net: parseGermanNumber(row.fh_partner_net),
-        push_net: parseGermanNumber(row.push_net),
+        fh_partner_net: parseGermanNumber(row.fh_partner_net) ?? undefined,
+        push_net: parseGermanNumber(row.push_net) ?? undefined,
       };
     });
 }
@@ -117,7 +117,7 @@ function normalizeOMOMatrixRows(rows: Record<string, unknown>[]): OMOMatrixRow[]
         omo_17_5: parseGermanNumber(row.omo_17_5 || row["OMO17.5"] || row.OMO175),
         omo_20: parseGermanNumber(row.omo_20 || row.OMO20),
         omo_25: parseGermanNumber(row.omo_25 || row.OMO25),
-        notes: row.notes ? String(row.notes) : undefined,
+        notes: row.notes ?? undefined ? String(row.notes) : undefined,
       };
     });
 }
@@ -136,11 +136,11 @@ function normalizeProvisionRows(rows: Record<string, unknown>[]): ProvisionRow[]
         tariff_id: tariffId,
         tariff_type: tariffType as "mobile" | "fixednet" | "iot" | "voip",
         provision_new_net: parseGermanNumber(row.provision_new_net || row.ProvisionNeu) ?? 0,
-        provision_renewal_net: parseGermanNumber(row.provision_renewal_net || row.ProvisionVVL),
-        provision_renewal_pct: parseGermanNumber(row.provision_renewal_pct),
-        fh_partner_modifier: parseGermanNumber(row.fh_partner_modifier),
-        push_modifier: parseGermanNumber(row.push_modifier),
-        notes: row.notes ? String(row.notes) : undefined,
+        provision_renewal_net: parseGermanNumber(row.provision_renewal_net || row.ProvisionVVL) ?? undefined,
+        provision_renewal_pct: parseGermanNumber(row.provision_renewal_pct) ?? undefined,
+        fh_partner_modifier: parseGermanNumber(row.fh_partner_modifier) ?? undefined,
+        push_modifier: parseGermanNumber(row.push_modifier) ?? undefined,
+        notes: row.notes ?? undefined ? String(row.notes) : undefined,
       };
     });
 }

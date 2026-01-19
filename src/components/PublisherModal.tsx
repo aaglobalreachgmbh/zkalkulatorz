@@ -27,7 +27,7 @@ export function PublisherModal({ trigger }: PublisherModalProps) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        {trigger ?? (
+        {(trigger as any) ?? (
           <Button variant="ghost" size="icon" className="h-8 w-8">
             <Info className="h-4 w-4" />
             <span className="sr-only">Über diese App</span>
@@ -38,7 +38,7 @@ export function PublisherModal({ trigger }: PublisherModalProps) {
         <DialogHeader>
           <DialogTitle>Über diese App</DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-4 text-sm">
           {/* Publisher */}
           <div className="space-y-2">
@@ -62,7 +62,7 @@ export function PublisherModal({ trigger }: PublisherModalProps) {
             <div className="pl-6 space-y-1 text-muted-foreground">
               <p className="flex items-center gap-2">
                 <Mail className="h-3 w-3" />
-                <a 
+                <a
                   href={`mailto:${PUBLISHER.email}`}
                   className="hover:text-foreground transition-colors"
                 >
@@ -71,7 +71,7 @@ export function PublisherModal({ trigger }: PublisherModalProps) {
               </p>
               <p className="flex items-center gap-2">
                 <Phone className="h-3 w-3" />
-                <a 
+                <a
                   href={`tel:${PUBLISHER.phone}`}
                   className="hover:text-foreground transition-colors"
                 >

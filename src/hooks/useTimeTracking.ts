@@ -247,6 +247,7 @@ export function useTimeTracking(options?: {
       return data;
     },
     onSuccess: (data) => {
+      if (!data) return;
       queryClient.invalidateQueries({ queryKey: ["time-entries"] });
       if (!data) return;
       const hours = Math.floor((data.work_minutes || 0) / 60);
@@ -485,6 +486,7 @@ export function useTimeEntryCorrections() {
       return { approved: input.approved };
     },
     onSuccess: (data) => {
+      if (!data) return;
       queryClient.invalidateQueries({ queryKey: ["time-entry-corrections"] });
       queryClient.invalidateQueries({ queryKey: ["time-entries"] });
       toast.success(data.approved ? "Korrektur genehmigt" : "Korrektur abgelehnt");

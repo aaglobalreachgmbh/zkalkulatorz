@@ -257,7 +257,7 @@ export function SummarySidebar({
                   <PdfDownloadButton
                     option={option}
                     result={result}
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
                     type="customer"
                     viewMode={viewMode}
@@ -273,7 +273,7 @@ export function SummarySidebar({
                     <PdfDownloadButton
                       option={option}
                       result={result}
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
                       type="dealer"
                       viewMode={viewMode}

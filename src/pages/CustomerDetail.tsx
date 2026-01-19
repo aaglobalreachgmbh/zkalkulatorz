@@ -10,8 +10,8 @@ import {
   type CustomerContract,
   type ContractInput,
 } from "@/margenkalkulator/hooks/useCustomerContracts";
-import { ContractCard } from "./CustomerDetail/ContractCard";
-import { OfferToContractDialog } from "./CustomerDetail/OfferToContractDialog";
+import { ContractCard } from "@/components/customer/ContractCard";
+import { OfferToContractDialog } from "@/components/customer/OfferToContractDialog";
 import { CustomerEmailsTab } from "@/margenkalkulator/ui/components/CustomerEmailsTab";
 import { CustomerTimeline } from "@/margenkalkulator/ui/components/CustomerTimeline";
 import type { CloudOffer } from "@/margenkalkulator/hooks/useCloudOffers";
@@ -61,10 +61,10 @@ import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { useCustomerMargins } from "@/margenkalkulator/hooks/useCustomerMargins";
 import { MarginBadge } from "@/margenkalkulator/ui/components/MarginBadge";
-import { 
-  formatCurrency, 
-  getProfitabilityStatus, 
-  getStatusColors 
+import {
+  formatCurrency,
+  getProfitabilityStatus,
+  getStatusColors
 } from "@/margenkalkulator/lib/formatters";
 
 const NOTE_TYPE_CONFIG = {
@@ -100,7 +100,7 @@ export default function CustomerDetail() {
 
   const [newNoteContent, setNewNoteContent] = useState("");
   const [newNoteType, setNewNoteType] = useState<NoteType>("info");
-  
+
   // Contract Dialog State
   const [isContractDialogOpen, setIsContractDialogOpen] = useState(false);
   const [contractForm, setContractForm] = useState<ContractInput>(initialContractForm);
@@ -476,7 +476,20 @@ export default function CustomerDetail() {
                     contract={contract}
                     customerId={id!}
                     onDelete={(contractId) => deleteContract.mutate(contractId)}
-                    onUpdate={(contractId, data) => updateContract.mutate({ id: contractId, ...data })}
+                    onUpdate={(contractId, data) => updateContract.mutate({
+                      id: contractId,
+                      ...data,
+                      tarif_name: data.tarif_name || undefined,
+                      handy_nr: data.handy_nr || undefined,
+                      vertragsbeginn: data.vertragsbeginn || undefined,
+                      vertragsende: data.vertragsende || undefined,
+                      vvl_datum: data.vvl_datum || undefined,
+                      hardware_name: data.hardware_name || undefined,
+                      ek_preis: data.ek_preis || undefined,
+                      monatspreis: data.monatspreis || undefined,
+                      provision_erhalten: data.provision_erhalten || undefined,
+                      notes: data.notes || undefined
+                    })}
                     isDeleting={deleteContract.isPending}
                     isUpdating={updateContract.isPending}
                   />
@@ -529,9 +542,9 @@ export default function CustomerDetail() {
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => setOfferToConvert(offer)}
                         >
                           <ScrollText className="h-4 w-4 mr-1" />
@@ -708,8 +721,8 @@ export default function CustomerDetail() {
                           {marginEntries.map((entry) => {
                             const statusColors = getStatusColors(entry.status);
                             return (
-                              <tr 
-                                key={entry.offerId} 
+                              <tr
+                                key={entry.offerId}
                                 className="border-b hover:bg-muted/30 cursor-pointer"
                                 onClick={() => navigate(`/offers/${entry.offerId}`)}
                               >

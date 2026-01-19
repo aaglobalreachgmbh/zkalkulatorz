@@ -8,15 +8,15 @@
  */
 
 import { useState } from "react";
-import { 
-  Users, 
-  FileText, 
-  RefreshCw, 
-  Wifi, 
-  WifiOff, 
-  MapPin, 
-  Phone, 
-  Clock, 
+import {
+  Users,
+  FileText,
+  RefreshCw,
+  Wifi,
+  WifiOff,
+  MapPin,
+  Phone,
+  Clock,
   AlertCircle,
   CheckCircle,
   ExternalLink,
@@ -79,7 +79,7 @@ export function FieldServiceDashboard() {
           </CardTitle>
           <div className="flex items-center gap-2">
             {/* Connection Status */}
-            <Badge 
+            <Badge
               variant={isOnline ? "default" : "destructive"}
               className="gap-1"
             >
@@ -95,10 +95,10 @@ export function FieldServiceDashboard() {
                 </>
               )}
             </Badge>
-            
+
             {/* Sync Button */}
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               onClick={handleSync}
               disabled={!isOnline || syncing || isSyncing}
@@ -111,7 +111,7 @@ export function FieldServiceDashboard() {
             </Button>
           </div>
         </div>
-        
+
         {/* Pending Items Banner */}
         {pendingCount > 0 && (
           <div className="flex items-center gap-2 mt-2 p-2 bg-warning/10 rounded-lg text-sm">
@@ -136,7 +136,7 @@ export function FieldServiceDashboard() {
               Neuer Besuch
             </Button>
           </div>
-          
+
           <ScrollArea className="h-[180px]">
             {isLoading ? (
               <div className="flex items-center justify-center h-full text-muted-foreground">
@@ -162,10 +162,10 @@ export function FieldServiceDashboard() {
                           <span className="font-medium truncate">
                             {customer.company_name}
                           </span>
-                          <Badge 
+                          <Badge
                             variant={
                               customer.urgency === "high" ? "destructive" :
-                              customer.urgency === "medium" ? "default" : "secondary"
+                                customer.urgency === "medium" ? "default" : "secondary"
                             }
                             className="text-xs shrink-0"
                           >
@@ -205,7 +205,7 @@ export function FieldServiceDashboard() {
                             className="h-8 w-8"
                             onClick={(e) => {
                               e.stopPropagation();
-                              window.open(`https://maps.google.com/?q=${encodeURIComponent(customer.address)}`, "_blank");
+                              window.open(`https://maps.google.com/?q=${encodeURIComponent(customer.address || "")}`, "_blank");
                             }}
                           >
                             <MapPin className="h-4 w-4" />
@@ -231,7 +231,7 @@ export function FieldServiceDashboard() {
               Ausstehende Berichte ({pendingReports.length})
             </h4>
           </div>
-          
+
           <ScrollArea className="h-[120px]">
             {pendingReports.length === 0 ? (
               <div className="flex items-center justify-center h-full text-muted-foreground">
@@ -256,11 +256,11 @@ export function FieldServiceDashboard() {
                           {report.customer_name}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {report.days_overdue === 0 
-                            ? "Heute" 
-                            : report.days_overdue === 1 
-                            ? "Gestern"
-                            : `Vor ${report.days_overdue} Tagen`
+                          {report.days_overdue === 0
+                            ? "Heute"
+                            : report.days_overdue === 1
+                              ? "Gestern"
+                              : `Vor ${report.days_overdue} Tagen`
                           }
                         </p>
                       </div>
@@ -283,12 +283,12 @@ export function FieldServiceDashboard() {
             <Cloud className="h-4 w-4 text-muted-foreground" />
             Sync-Status
           </h4>
-          
+
           <div className="grid grid-cols-2 gap-2 text-sm">
             <div className="p-2 rounded-lg bg-muted/50">
               <p className="text-muted-foreground text-xs">Letzte Sync</p>
               <p className="font-medium">
-                {stats.lastSync 
+                {stats.lastSync
                   ? formatDistanceToNow(new Date(stats.lastSync), { addSuffix: true, locale: de })
                   : "Nie"
                 }
@@ -301,14 +301,14 @@ export function FieldServiceDashboard() {
               </p>
             </div>
           </div>
-          
+
           {syncStatus === "error" && (
             <div className="mt-2 p-2 bg-destructive/10 rounded-lg text-sm text-destructive flex items-center gap-2">
               <AlertCircle className="h-4 w-4" />
               Sync fehlgeschlagen. Bitte erneut versuchen.
             </div>
           )}
-          
+
           {syncStatus === "success" && (
             <div className="mt-2 p-2 bg-green-500/10 rounded-lg text-sm text-green-600 flex items-center gap-2">
               <CheckCircle className="h-4 w-4" />

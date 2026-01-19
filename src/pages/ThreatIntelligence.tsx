@@ -39,13 +39,13 @@ interface ThreatFeed {
   feed_url: string;
   last_sync_at: string | null;
   sync_status: string;
-  total_entries: number;
-  enabled: boolean;
+  total_entries: number | null;
+  enabled: boolean | null;
 }
 
 interface RecentThreat {
   id: string;
-  ip_hash: string;
+  ip_hash: string | null;
   event_type: string;
   risk_level: string;
   created_at: string;
@@ -111,7 +111,7 @@ export default function ThreatIntelligence() {
 
       if (eventsData) {
         // Check which IPs are blocked
-        const ipHashes = eventsData.map((e) => e.ip_hash).filter(Boolean);
+        const ipHashes = eventsData.map((e) => e.ip_hash).filter((hash): hash is string => !!hash);
         const { data: blockedIps } = await supabase
           .from("blocked_ips")
           .select("ip_hash")
@@ -122,7 +122,7 @@ export default function ThreatIntelligence() {
         setRecentThreats(
           eventsData.map((e) => ({
             ...e,
-            is_blocked: blockedSet.has(e.ip_hash),
+            is_blocked: blockedSet.has(e.ip_hash || ""),
           }))
         );
       }
@@ -398,7 +398,7 @@ export default function ThreatIntelligence() {
                           <Button
                             size="sm"
                             variant="destructive"
-                            onClick={() => handleBlockIp(threat.ip_hash)}
+                            onClick={() => handleBlockIp(threat.ip_hash!)}
                           >
                             <Ban className="h-3 w-3 mr-1" />
                             Blockieren
@@ -442,15 +442,15 @@ export default function ThreatIntelligence() {
                     <TableCell className="text-muted-foreground">
                       {feed.last_sync_at
                         ? formatDistanceToNow(new Date(feed.last_sync_at), {
-                            addSuffix: true,
-                            locale: de,
-                          })
+                          addSuffix: true,
+                          locale: de,
+                        })
                         : "Noch nie"}
                     </TableCell>
-                    <TableCell>{feed.total_entries.toLocaleString()}</TableCell>
+                    <TableCell>{(feed.total_entries || 0).toLocaleString()}</TableCell>
                     <TableCell>
                       <Switch
-                        checked={feed.enabled}
+                        checked={feed.enabled || false}
                         onCheckedChange={(checked) => handleToggleFeed(feed.id, checked)}
                       />
                     </TableCell>

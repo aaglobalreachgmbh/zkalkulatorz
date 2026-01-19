@@ -34,11 +34,11 @@ const SidebarContext = React.createContext<SidebarContext | null>(null);
 const SAFE_DEFAULT_SIDEBAR: SidebarContext = {
   state: "expanded",
   open: true,
-  setOpen: () => {},
+  setOpen: () => { },
   openMobile: false,
-  setOpenMobile: () => {},
+  setOpenMobile: () => { },
   isMobile: false,
-  toggleSidebar: () => {},
+  toggleSidebar: () => { },
 };
 
 function useSidebar() {
@@ -125,7 +125,7 @@ const SidebarProvider = React.forwardRef<
               "--sidebar-width": SIDEBAR_WIDTH,
               "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
               ...style,
-            } as React.CSSProperties
+            } as any
           }
           className={cn("group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar", className)}
           ref={ref}
@@ -171,7 +171,7 @@ const Sidebar = React.forwardRef<
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
-            } as React.CSSProperties
+            } as any
           }
           side={side}
         >
@@ -507,7 +507,7 @@ const SidebarMenuAction = React.forwardRef<
         "peer-data-[size=lg]/menu-button:top-2.5",
         "group-data-[collapsible=icon]:hidden",
         showOnHover &&
-          "group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 data-[state=open]:opacity-100 peer-data-[active=true]/menu-button:text-sidebar-accent-foreground md:opacity-0",
+        "group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 data-[state=open]:opacity-100 peer-data-[active=true]/menu-button:text-sidebar-accent-foreground md:opacity-0",
         className,
       )}
       {...props}

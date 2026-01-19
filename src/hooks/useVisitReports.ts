@@ -137,14 +137,14 @@ export function useVisitReports() {
       // Offline: Lokal speichern
       if (!isOnline) {
         const offlineId = await offlineStorage.addPendingVisit({
-          customerId: input.customer_id,
-          visitDate: input.visit_date,
-          locationLat: input.location_lat,
-          locationLng: input.location_lng,
-          locationAddress: input.location_address,
-          notes: input.notes,
-          checklistId: input.checklist_id,
-          checklistResponses: input.checklist_responses as Record<string, unknown>,
+          customerId: input.customer_id ?? "",
+          visitDate: input.visit_date || new Date().toISOString(),
+          locationLat: input.location_lat ?? undefined,
+          locationLng: input.location_lng ?? undefined,
+          locationAddress: input.location_address ?? undefined,
+          notes: input.notes ?? undefined,
+          checklistId: input.checklist_id ?? undefined,
+          checklistResponses: (input.checklist_responses || {}) as Record<string, unknown>,
         });
         toast.info("Besuchsbericht offline gespeichert");
         return offlineId;
@@ -184,16 +184,16 @@ export function useVisitReports() {
 
   // Bericht aktualisieren
   const updateReport = useMutation({
-    mutationFn: async ({ 
-      id, 
-      ...updates 
+    mutationFn: async ({
+      id,
+      ...updates
     }: Partial<CreateVisitReportInput> & { id: string }) => {
       const { error } = await supabase
         .from("visit_reports")
         .update({
           ...updates,
-          checklist_responses: updates.checklist_responses 
-            ? (updates.checklist_responses as Json) 
+          checklist_responses: updates.checklist_responses
+            ? (updates.checklist_responses as Json)
             : undefined,
           updated_at: new Date().toISOString(),
         })
@@ -217,7 +217,7 @@ export function useVisitReports() {
     mutationFn: async (reportId: string) => {
       const { error } = await supabase
         .from("visit_reports")
-        .update({ 
+        .update({
           status: "submitted",
           updated_at: new Date().toISOString(),
         })

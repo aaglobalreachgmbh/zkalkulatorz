@@ -404,6 +404,7 @@ export function useShifts(options?: { startDate?: Date; endDate?: Date }) {
       return data as ShiftSwapRequest;
     },
     onSuccess: (data) => {
+      if (!data) return;
       queryClient.invalidateQueries({ queryKey: SHIFTS_KEY });
       queryClient.invalidateQueries({ queryKey: SWAP_REQUESTS_KEY });
 

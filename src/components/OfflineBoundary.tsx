@@ -56,7 +56,7 @@ export function OfflineBoundary({ children }: OfflineBoundaryProps) {
           timestamp: new Date().toISOString(),
           action: "resuming_normal_operations",
         },
-      });
+      } as any);
     }
   }, [isOnline, wasOffline, security]);
 

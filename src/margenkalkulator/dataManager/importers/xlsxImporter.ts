@@ -64,38 +64,42 @@ export async function parseXLSX(file: File): Promise<ParsedSheets> {
 
   try {
     const buffer = await file.arrayBuffer();
-    const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.load(buffer);
-
-    const result: ParsedSheets = {};
-
-    // Parse each sheet according to schema, respecting aliases
-    for (const sheetKey of Object.keys(TEMPLATE_SCHEMA)) {
-      // Find the sheet by canonical key or aliases
-      let sheet: ExcelJS.Worksheet | undefined = workbook.getWorksheet(sheetKey);
-
-      if (!sheet) {
-        const aliases = SHEET_KEY_MAPPINGS[sheetKey];
-        if (aliases) {
-          for (const alias of aliases) {
-            const found = workbook.getWorksheet(alias);
-            if (found) {
-              sheet = found;
-              break;
-            }
-          }
-        }
-      }
-
-      if (sheet) {
-        result[sheetKey as keyof ParsedSheets] = extractRowsFromSheet(sheet);
-      }
-    }
-
-    return result;
+    return await parseXLSXFromBuffer(buffer);
   } catch (err) {
     throw new Error(`XLSX parsing failed: ${err instanceof Error ? err.message : "Unknown error"}`);
   }
+}
+
+export async function parseXLSXFromBuffer(buffer: ArrayBuffer): Promise<ParsedSheets> {
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(buffer);
+
+  const result: ParsedSheets = {};
+
+  // Parse each sheet according to schema, respecting aliases
+  for (const sheetKey of Object.keys(TEMPLATE_SCHEMA)) {
+    // Find the sheet by canonical key or aliases
+    let sheet: ExcelJS.Worksheet | undefined = workbook.getWorksheet(sheetKey);
+
+    if (!sheet) {
+      const aliases = SHEET_KEY_MAPPINGS[sheetKey];
+      if (aliases) {
+        for (const alias of aliases) {
+          const found = workbook.getWorksheet(alias);
+          if (found) {
+            sheet = found;
+            break;
+          }
+        }
+      }
+    }
+
+    if (sheet) {
+      result[sheetKey as keyof ParsedSheets] = extractRowsFromSheet(sheet);
+    }
+  }
+
+  return result;
 }
 
 // Generic safe parser for custom sheets not in Schema (e.g. TeamDeal)

@@ -4,7 +4,7 @@
 
 import { useState } from "react";
 import {
-  Building2, User, FileText, Tag, Coins, TrendingUp,
+  Building2, User, FileText, Tag, Coins, TrendingUp, TrendingDown,
   Sparkles, Mail, Calendar, Download, Save, ChevronDown, ChevronUp
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

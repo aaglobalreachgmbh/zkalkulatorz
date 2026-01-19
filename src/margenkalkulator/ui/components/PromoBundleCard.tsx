@@ -19,16 +19,16 @@ interface PromoBundleCardProps {
 
 function formatValidityText(validUntil: string | null): string {
   if (!validUntil) return "Unbegrenzt gültig";
-  
+
   try {
     const endDate = parseISO(validUntil);
     const daysLeft = differenceInDays(endDate, new Date());
-    
+
     if (daysLeft < 0) return "Abgelaufen";
     if (daysLeft === 0) return "Nur noch heute!";
     if (daysLeft === 1) return "Noch 1 Tag!";
     if (daysLeft <= 7) return `Noch ${daysLeft} Tage`;
-    
+
     return `Gültig bis ${format(endDate, "dd.MM.yyyy", { locale: de })}`;
   } catch {
     return validUntil;
@@ -37,15 +37,15 @@ function formatValidityText(validUntil: string | null): string {
 
 function getUrgencyColor(validUntil: string | null): string {
   if (!validUntil) return "text-muted-foreground";
-  
+
   try {
     const endDate = parseISO(validUntil);
     const daysLeft = differenceInDays(endDate, new Date());
-    
+
     if (daysLeft < 0) return "text-muted-foreground line-through";
     if (daysLeft <= 3) return "text-red-500 font-medium";
     if (daysLeft <= 7) return "text-orange-500";
-    
+
     return "text-muted-foreground";
   } catch {
     return "text-muted-foreground";
@@ -59,9 +59,8 @@ export function PromoBundleCard({ bundle, onSelect }: PromoBundleCardProps) {
 
   return (
     <div
-      className={`bg-background border rounded-xl overflow-hidden hover:shadow-lg transition-all ${
-        bundle.promo_badge_text ? "border-t-4 border-t-primary" : "border-border"
-      } ${isExpired ? "opacity-60" : ""}`}
+      className={`bg-background border rounded-xl overflow-hidden hover:shadow-lg transition-all ${bundle.promo_badge_text ? "border-t-4 border-t-primary" : "border-border"
+        } ${isExpired ? "opacity-60" : ""}`}
     >
       {/* Badge Header */}
       {bundle.promo_badge_text && (
@@ -119,7 +118,7 @@ export function PromoBundleCard({ bundle, onSelect }: PromoBundleCardProps) {
       <div className="px-5 py-3 border-t border-border bg-muted/30">
         <Button
           onClick={onSelect}
-          disabled={isExpired}
+          disabled={!!isExpired}
           className="w-full gap-2"
           variant={isExpired ? "outline" : "default"}
         >

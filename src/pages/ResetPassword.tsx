@@ -40,7 +40,7 @@ export default function ResetPassword() {
         setCheckingSession(false);
       }
     };
-    
+
     checkSession();
 
     // Listen for auth state changes (important for magic link flow)
@@ -57,7 +57,7 @@ export default function ResetPassword() {
   const validatePassword = (value: string): boolean => {
     const result = passwordSchema.safeParse(value);
     if (!result.success) {
-      setErrors(prev => ({ ...prev, password: result.error.errors[0].message }));
+      setErrors(prev => ({ ...prev, password: result.error.issues[0].message }));
       return false;
     }
     setErrors(prev => {
@@ -95,7 +95,7 @@ export default function ResetPassword() {
 
       setIsSuccess(true);
       toast.success("Passwort erfolgreich geändert!");
-      
+
       // Redirect after 2 seconds
       setTimeout(() => {
         navigate("/auth", { replace: true });
@@ -126,14 +126,14 @@ export default function ResetPassword() {
             <div>
               <CardTitle className="text-xl">Link ungültig oder abgelaufen</CardTitle>
               <CardDescription className="text-muted-foreground mt-2">
-                Der Link zum Zurücksetzen des Passworts ist nicht mehr gültig. 
+                Der Link zum Zurücksetzen des Passworts ist nicht mehr gültig.
                 Bitte fordern Sie einen neuen Link an.
               </CardDescription>
             </div>
           </CardHeader>
           <CardContent>
-            <Button 
-              className="w-full" 
+            <Button
+              className="w-full"
               onClick={() => navigate("/auth")}
             >
               Zur Anmeldung
@@ -155,7 +155,7 @@ export default function ResetPassword() {
             <div>
               <CardTitle className="text-xl">Passwort geändert!</CardTitle>
               <CardDescription className="text-muted-foreground mt-2">
-                Ihr Passwort wurde erfolgreich aktualisiert. 
+                Ihr Passwort wurde erfolgreich aktualisiert.
                 Sie werden zur Anmeldung weitergeleitet...
               </CardDescription>
             </div>

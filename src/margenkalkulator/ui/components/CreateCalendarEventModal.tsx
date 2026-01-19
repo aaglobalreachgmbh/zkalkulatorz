@@ -6,13 +6,13 @@
 import { useState, useCallback } from "react";
 import { addHours, format, setHours, setMinutes, addDays } from "date-fns";
 import { de } from "date-fns/locale";
-import { 
-  Calendar, 
-  Clock, 
-  MapPin, 
-  User, 
-  AtSign, 
-  FileText, 
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  User,
+  AtSign,
+  FileText,
   Loader2,
   ExternalLink,
   Download,
@@ -80,7 +80,7 @@ export function CreateCalendarEventModal({ trigger }: CreateCalendarEventModalPr
   const [attendeeName, setAttendeeName] = useState("");
   const [activeTab, setActiveTab] = useState<"create" | "sync">("create");
   const [showCalendarPicker, setShowCalendarPicker] = useState(false);
-  
+
   const [showResult, setShowResult] = useState(false);
   const [resultData, setResultData] = useState<{ googleCalendarUrl?: string; icsContent?: string } | null>(null);
 
@@ -184,7 +184,7 @@ export function CreateCalendarEventModal({ trigger }: CreateCalendarEventModalPr
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        {trigger || (
+        {trigger ? (trigger as any) : (
           <Button variant="outline" size="sm" className="gap-2">
             <Calendar className="w-4 h-4" />
             Termin erstellen
@@ -234,7 +234,7 @@ export function CreateCalendarEventModal({ trigger }: CreateCalendarEventModalPr
                 <ExternalLink className="w-4 h-4" />
                 In Google Kalender öffnen
               </Button>
-              
+
               <Button
                 onClick={handleDownloadIcs}
                 className="w-full gap-2 h-12"
@@ -243,7 +243,7 @@ export function CreateCalendarEventModal({ trigger }: CreateCalendarEventModalPr
                 <Download className="w-4 h-4" />
                 .ics Datei herunterladen
               </Button>
-              
+
               <p className="text-xs text-center text-muted-foreground pt-2">
                 Die .ics Datei kann in Outlook, Apple Kalender und anderen Apps importiert werden.
               </p>
@@ -309,7 +309,7 @@ export function CreateCalendarEventModal({ trigger }: CreateCalendarEventModalPr
                   <div className="flex gap-2">
                     {QUICK_DATES.map((qd) => {
                       const targetDate = addDays(new Date(), qd.days);
-                      const isSelected = selectedDate && 
+                      const isSelected = selectedDate &&
                         format(selectedDate, "yyyy-MM-dd") === format(targetDate, "yyyy-MM-dd");
                       return (
                         <Button
@@ -513,14 +513,14 @@ export function CreateCalendarEventModal({ trigger }: CreateCalendarEventModalPr
 
                 <div className="space-y-2">
                   {/* Google Calendar */}
-                  <button 
+                  <button
                     className="w-full p-4 rounded-xl border border-border hover:border-primary/30 hover:bg-muted/50 transition-all flex items-center gap-4 text-left group"
                     onClick={() => toast.info("Google Kalender Integration kommt bald!")}
                   >
                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0 shadow-sm">
                       <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M19.5 22h-15A2.5 2.5 0 012 19.5v-15A2.5 2.5 0 014.5 2H9v2H4.5a.5.5 0 00-.5.5v15a.5.5 0 00.5.5h15a.5.5 0 00.5-.5V15h2v4.5a2.5 2.5 0 01-2.5 2.5z"/>
-                        <path d="M18 8h-6V6h6a2 2 0 012 2v6h-2V8zM8 10h8v2H8z"/>
+                        <path d="M19.5 22h-15A2.5 2.5 0 012 19.5v-15A2.5 2.5 0 014.5 2H9v2H4.5a.5.5 0 00-.5.5v15a.5.5 0 00.5.5h15a.5.5 0 00.5-.5V15h2v4.5a2.5 2.5 0 01-2.5 2.5z" />
+                        <path d="M18 8h-6V6h6a2 2 0 012 2v6h-2V8zM8 10h8v2H8z" />
                       </svg>
                     </div>
                     <div className="flex-1">
@@ -531,13 +531,13 @@ export function CreateCalendarEventModal({ trigger }: CreateCalendarEventModalPr
                   </button>
 
                   {/* Microsoft Outlook */}
-                  <button 
+                  <button
                     className="w-full p-4 rounded-xl border border-border hover:border-primary/30 hover:bg-muted/50 transition-all flex items-center gap-4 text-left group"
                     onClick={() => toast.info("Outlook Integration kommt bald!")}
                   >
                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center flex-shrink-0 shadow-sm">
                       <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M7.88 12.04q0 .45-.11.87-.1.41-.33.74-.22.33-.58.52-.37.2-.87.2t-.85-.2q-.35-.21-.57-.55-.22-.33-.33-.75-.1-.42-.1-.86t.1-.87q.1-.43.34-.76.22-.34.59-.54.36-.2.87-.2t.86.2q.35.21.57.55.22.34.31.77.1.43.1.88zM24 12v9.38q0 .46-.33.8-.33.32-.8.32H7.13q-.46 0-.8-.33-.32-.33-.32-.8V18H1q-.41 0-.7-.3-.3-.29-.3-.7V7q0-.41.3-.7Q.58 6 1 6h6.13V2.55q0-.44.3-.75.3-.3.7-.3h6.35q.42 0 .71.3.3.3.3.75V6h6.13q.46 0 .8.33.33.33.33.8v3.79zM8 17.88h5.63v-3.5H8v3.5zm10.25-5.63h-5.5v3.79H18V12.26zm0-5.01H7.13V9h11.12V7.25z"/>
+                        <path d="M7.88 12.04q0 .45-.11.87-.1.41-.33.74-.22.33-.58.52-.37.2-.87.2t-.85-.2q-.35-.21-.57-.55-.22-.33-.33-.75-.1-.42-.1-.86t.1-.87q.1-.43.34-.76.22-.34.59-.54.36-.2.87-.2t.86.2q.35.21.57.55.22.34.31.77.1.43.1.88zM24 12v9.38q0 .46-.33.8-.33.32-.8.32H7.13q-.46 0-.8-.33-.32-.33-.32-.8V18H1q-.41 0-.7-.3-.3-.29-.3-.7V7q0-.41.3-.7Q.58 6 1 6h6.13V2.55q0-.44.3-.75.3-.3.7-.3h6.35q.42 0 .71.3.3.3.3.75V6h6.13q.46 0 .8.33.33.33.33.8v3.79zM8 17.88h5.63v-3.5H8v3.5zm10.25-5.63h-5.5v3.79H18V12.26zm0-5.01H7.13V9h11.12V7.25z" />
                       </svg>
                     </div>
                     <div className="flex-1">
@@ -548,7 +548,7 @@ export function CreateCalendarEventModal({ trigger }: CreateCalendarEventModalPr
                   </button>
 
                   {/* Apple Calendar */}
-                  <button 
+                  <button
                     className="w-full p-4 rounded-xl border border-border hover:border-primary/30 hover:bg-muted/50 transition-all flex items-center gap-4 text-left group"
                     onClick={() => toast.info("Apple Kalender Integration kommt bald!")}
                   >

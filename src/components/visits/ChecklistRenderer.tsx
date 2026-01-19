@@ -80,7 +80,7 @@ function ChecklistItemRenderer({
             htmlFor={item.id}
             className={cn(
               "text-sm cursor-pointer leading-relaxed",
-              value && "line-through text-muted-foreground"
+              !!value && "line-through text-muted-foreground"
             )}
           >
             {item.label}

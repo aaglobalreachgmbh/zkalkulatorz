@@ -91,6 +91,8 @@ export function useTenants() {
         return {
           ...tenant,
           address: tenant.address as Record<string, string> | null,
+          created_at: tenant.created_at || new Date().toISOString(),
+          updated_at: tenant.updated_at || new Date().toISOString(),
           status: tenant.status as Tenant["status"],
           license: license ? {
             id: license.id,

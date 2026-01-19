@@ -20,7 +20,7 @@ export const THREAT_PATTERNS = {
     /(\b(EXEC|EXECUTE)\s*\()/i,
     /(--\s*$|\/\*|\*\/)/,
   ],
-  
+
   // XSS (Cross-Site Scripting)
   xss: [
     /<script\b[^>]*>[\s\S]*?<\/script>/gi,
@@ -34,7 +34,7 @@ export const THREAT_PATTERNS = {
     /expression\s*\(/gi,
     /url\s*\(\s*["']?\s*javascript:/gi,
   ],
-  
+
   // Prompt Injection (für AI-Komponenten)
   promptInjection: [
     /ignore\s+(previous|all|above|prior)\s+(instructions?|prompts?|context)/gi,
@@ -51,7 +51,7 @@ export const THREAT_PATTERNS = {
     /new\s+instructions?:/gi,
     /override\s+(previous|all)/gi,
   ],
-  
+
   // Path Traversal
   pathTraversal: [
     /\.\.\//g,
@@ -61,19 +61,19 @@ export const THREAT_PATTERNS = {
     /\.\.%2f/gi,
     /%252e%252e%252f/gi,
   ],
-  
+
   // Command Injection
   commandInjection: [
     /[;&|`$]|\$\(/,
     /\b(cat|ls|rm|mv|cp|chmod|chown|wget|curl|bash|sh|zsh|powershell|cmd)\b/i,
   ],
-  
+
   // LDAP Injection
   ldapInjection: [
     /[()\\*]/,
     /\x00/,
   ],
-  
+
   // NoSQL Injection
   noSqlInjection: [
     /\$where\s*:/i,
@@ -98,7 +98,7 @@ export const SANITIZE_RULES = {
     /data\s*:/gi, // Data URLs (can be used for XSS)
     /vbscript\s*:/gi, // VBScript protocol
   ],
-  
+
   // Ersetzungen
   replacements: [
     { pattern: /&/g, replacement: "&amp;" },
@@ -107,7 +107,7 @@ export const SANITIZE_RULES = {
     { pattern: /"/g, replacement: "&quot;" },
     { pattern: /'/g, replacement: "&#x27;" },
   ],
-  
+
   // Maximale Längen für verschiedene Eingabetypen
   maxLengths: {
     default: 1000,
@@ -131,7 +131,7 @@ export const VALIDATION_SCHEMAS = {
     .trim()
     .email({ message: "Ungültige E-Mail-Adresse" })
     .max(255, { message: "E-Mail zu lang (max. 255 Zeichen)" }),
-  
+
   // Passwort (SÄULE 2: Starke Passwort-Richtlinien)
   password: z.string()
     .min(12, { message: "Passwort muss mindestens 12 Zeichen haben" })
@@ -140,41 +140,41 @@ export const VALIDATION_SCHEMAS = {
     .regex(/[a-z]/, { message: "Mindestens ein Kleinbuchstabe erforderlich" })
     .regex(/[0-9]/, { message: "Mindestens eine Zahl erforderlich" })
     .regex(/[^A-Za-z0-9]/, { message: "Mindestens ein Sonderzeichen erforderlich" }),
-  
+
   // Name
   name: z.string()
     .trim()
     .min(1, { message: "Name erforderlich" })
     .max(100, { message: "Name zu lang (max. 100 Zeichen)" })
     .regex(/^[a-zA-ZäöüÄÖÜß\s\-']+$/, { message: "Ungültige Zeichen im Namen" }),
-  
+
   // Suchfeld
   search: z.string()
     .trim()
     .max(200, { message: "Suchbegriff zu lang" }),
-  
+
   // Allgemeiner Text
   text: z.string()
     .trim()
     .max(5000, { message: "Text zu lang (max. 5000 Zeichen)" }),
-  
+
   // URL
   url: z.string()
     .trim()
     .url({ message: "Ungültige URL" })
     .max(2048, { message: "URL zu lang" }),
-  
+
   // Nummer
   positiveNumber: z.number()
     .positive({ message: "Muss eine positive Zahl sein" }),
-    
+
   // SÄULE 1: Tenant-ID Validierung
   tenantId: z.string()
     .trim()
     .min(3, { message: "Tenant-ID zu kurz" })
     .max(50, { message: "Tenant-ID zu lang" })
     .regex(/^[a-z][a-z0-9_]*$/, { message: "Ungültige Tenant-ID (nur Kleinbuchstaben, Zahlen, Unterstriche)" }),
-  
+
   // SÄULE 3: CSV-Hardware-Import Validierung
   hardwareCsvRow: z.object({
     brand: z.string().trim().min(1).max(100),
@@ -182,12 +182,12 @@ export const VALIDATION_SCHEMAS = {
     ek_net: z.number().min(0).max(10000),
     hardware_id: z.string().trim().min(1).max(100),
   }),
-  
+
   // SÄULE 3: Provision Validierung
   provisionAmount: z.number()
     .min(0, { message: "Provision muss positiv sein" })
     .max(5000, { message: "Provision zu hoch (max. 5000€)" }),
-    
+
   // SÄULE 3: EK-Preis Validierung
   ekPreis: z.number()
     .min(0, { message: "EK-Preis muss positiv sein" })
@@ -218,14 +218,14 @@ export const FILE_VALIDATION = {
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     ],
   },
-  
+
   // Erlaubte Dateiendungen
   allowedExtensions: {
     spreadsheet: [".xlsx", ".xls", ".csv"],
     image: [".jpg", ".jpeg", ".png", ".gif", ".webp"],
     document: [".pdf", ".doc", ".docx"],
   },
-  
+
   // Maximale Dateigrößen (in Bytes)
   maxSizes: {
     spreadsheet: 10 * 1024 * 1024, // 10MB
@@ -233,7 +233,7 @@ export const FILE_VALIDATION = {
     document: 20 * 1024 * 1024, // 20MB
     default: 5 * 1024 * 1024, // 5MB
   },
-  
+
   // Gefährliche Dateiendungen (immer blockieren)
   dangerousExtensions: [
     ".exe", ".dll", ".bat", ".cmd", ".com", ".msi",
@@ -253,19 +253,19 @@ export const RATE_LIMITS = {
     maxRequests: 60,
     windowMs: 60 * 1000, // 1 Minute
   },
-  
+
   // AI-Anfragen (teurer/langsamer)
   ai: {
     maxRequests: 10,
     windowMs: 60 * 1000, // 1 Minute
   },
-  
+
   // Login-Versuche
   login: {
     maxAttempts: 5,
     lockoutMs: 5 * 60 * 1000, // 5 Minuten
   },
-  
+
   // Datei-Uploads
   upload: {
     maxRequests: 10,
@@ -280,10 +280,10 @@ export const RATE_LIMITS = {
 export const SESSION_CONFIG = {
   // Session-Timeout (Inaktivität)
   timeoutMs: 30 * 60 * 1000, // 30 Minuten
-  
+
   // Warnung vor Timeout
   warningBeforeMs: 5 * 60 * 1000, // 5 Minuten vorher
-  
+
   // Activity Events, die die Session verlängern
   activityEvents: [
     "mousemove",
@@ -293,7 +293,7 @@ export const SESSION_CONFIG = {
     "touchstart",
     "click",
   ],
-  
+
   // Check-Intervall
   checkIntervalMs: 60 * 1000, // Jede Minute
 } as const;
@@ -311,7 +311,7 @@ export function checkAllThreats(input: string): {
   riskLevel: "none" | "low" | "medium" | "high" | "critical";
 } {
   const threats: string[] = [];
-  
+
   for (const [category, patterns] of Object.entries(THREAT_PATTERNS)) {
     for (const pattern of patterns) {
       if (pattern.test(input)) {
@@ -320,15 +320,15 @@ export function checkAllThreats(input: string): {
       }
     }
   }
-  
+
   const uniqueThreats = [...new Set(threats)];
-  
+
   let riskLevel: "none" | "low" | "medium" | "high" | "critical" = "none";
   if (uniqueThreats.length >= 3) riskLevel = "critical";
   else if (uniqueThreats.length === 2) riskLevel = "high";
   else if (uniqueThreats.length === 1) riskLevel = "medium";
   else if (uniqueThreats.length === 0) riskLevel = "none";
-  
+
   return {
     isSafe: uniqueThreats.length === 0,
     threats: uniqueThreats,
@@ -341,19 +341,19 @@ export function checkAllThreats(input: string): {
  */
 export function sanitizeAll(input: string, maxLength?: number): string {
   let result = input;
-  
+
   // Entferne gefährliche Patterns
   for (const pattern of SANITIZE_RULES.removePatterns) {
     result = result.replace(pattern, "");
   }
-  
+
   // Trimmen und Längenbegrenzung
   result = result.trim();
   const limit = maxLength || SANITIZE_RULES.maxLengths.default;
   if (result.length > limit) {
     result = result.slice(0, limit);
   }
-  
+
   return result;
 }
 
@@ -362,11 +362,11 @@ export function sanitizeAll(input: string, maxLength?: number): string {
  */
 export function escapeHtml(input: string): string {
   let result = input;
-  
+
   for (const { pattern, replacement } of SANITIZE_RULES.replacements) {
     result = result.replace(pattern, replacement);
   }
-  
+
   return result;
 }
 
@@ -378,14 +378,13 @@ export function validateProps<T>(
   schema: z.ZodSchema<T>
 ): { success: true; data: T } | { success: false; errors: string[] } {
   const result = schema.safeParse(props);
-  
+
   if (result.success) {
     return { success: true, data: result.data };
   }
-  
+
   return {
-    success: false,
-    errors: result.error.errors.map((e) => e.message),
+    success: false, errors: (result.error as any).errors.map((err: any) => err.message)
   };
 }
 
@@ -395,18 +394,18 @@ export function validateProps<T>(
 export function isSecureFilename(filename: string): boolean {
   // Keine Path Traversal
   if (/\.\.[\\/]/.test(filename)) return false;
-  
+
   // Keine gefährlichen Endungen
   const ext = filename.toLowerCase().slice(filename.lastIndexOf("."));
   const dangerousExts: readonly string[] = FILE_VALIDATION.dangerousExtensions;
   if (dangerousExts.includes(ext)) return false;
-  
+
   // Keine Null-Bytes oder Control Characters
   if (/[\x00-\x1f]/.test(filename)) return false;
-  
+
   // Nur erlaubte Zeichen
   if (!/^[a-zA-Z0-9äöüÄÖÜß\-_. ]+$/.test(filename)) return false;
-  
+
   return true;
 }
 

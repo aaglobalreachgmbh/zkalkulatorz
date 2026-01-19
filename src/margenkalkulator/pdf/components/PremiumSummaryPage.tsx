@@ -505,33 +505,33 @@ export function PremiumSummaryPage({
       key={idx}
       style={[
         styles.tableRow,
-        isAlt && !row.isDiscount && !row.isSubtotal && !row.isTotal && styles.tableRowAlt,
-        row.isDiscount && styles.tableRowDiscount,
-        row.isSubtotal && styles.tableRowSubtotal,
-        row.isTotal && styles.tableRowTotal,
+        isAlt && !row.isDiscount && !row.isSubtotal && !row.isTotal ? styles.tableRowAlt : {},
+        row.isDiscount ? styles.tableRowDiscount : {},
+        row.isSubtotal ? styles.tableRowSubtotal : {},
+        row.isTotal ? styles.tableRowTotal : {},
       ]}
     >
-      <Text style={[styles.tableCell, styles.colQty, row.isTotal && styles.tableCellTotal]}>
+      <Text style={[styles.tableCell, styles.colQty, row.isTotal ? styles.tableCellTotal : {}]}>
         {row.quantity ? `${row.quantity}x` : ""}
       </Text>
       <Text style={[
         styles.tableCell, 
         styles.colPosition,
-        (row.isSubtotal || row.isTotal) && styles.tableCellBold,
-        row.isTotal && styles.tableCellTotal,
+        (row.isSubtotal || row.isTotal) ? styles.tableCellBold : {},
+        row.isTotal ? styles.tableCellTotal : {},
       ]}>
         {row.label}
       </Text>
-      <Text style={[styles.tableCell, styles.colOneTime, row.isTotal && styles.tableCellTotal]}>
+      <Text style={[styles.tableCell, styles.colOneTime, row.isTotal ? styles.tableCellTotal : {}]}>
         {row.oneTime !== undefined ? formatCurrencyPdf(row.oneTime) : "—"}
       </Text>
       {row.monthlyByPeriod.map((amount, pIdx) => (
         <Text key={pIdx} style={[
           styles.tableCell,
           styles.colPeriod,
-          row.isDiscount && styles.tableCellDiscount,
-          (row.isSubtotal || row.isTotal) && styles.tableCellBold,
-          row.isTotal && styles.tableCellTotal,
+          row.isDiscount ? styles.tableCellDiscount : {},
+          (row.isSubtotal || row.isTotal) ? styles.tableCellBold : {},
+          row.isTotal ? styles.tableCellTotal : {},
         ]}>
           {row.isDiscount && amount < 0 ? formatDiscountPdf(amount) : formatCurrencyPdf(amount)}
           {row.footnote && pIdx === row.monthlyByPeriod.length - 1 && row.footnote}

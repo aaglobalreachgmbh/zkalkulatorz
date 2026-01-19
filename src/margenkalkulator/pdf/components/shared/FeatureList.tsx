@@ -68,7 +68,7 @@ export function FeatureList({
         {items.map((item, idx) => (
           <View
             key={idx}
-            style={[styles.item, isTwoCol && styles.itemTwoCol]}
+            style={[styles.item, isTwoCol ? styles.itemTwoCol : {}]}
           >
             <Text style={[styles.check, { color: checkColor }]}>✓</Text>
             <Text style={styles.text}>{item}</Text>

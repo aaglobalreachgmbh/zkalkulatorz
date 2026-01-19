@@ -17,13 +17,13 @@ export function CalculationExplainer({ result, option, className }: CalculationE
 
     // Hardware surcharge (per month)
     const hardwareSurcharge = result.breakdown
-        .filter(r => r.category === "hardware" && r.amount > 0)
-        .reduce((sum, r) => sum + r.amount, 0);
+        .filter(r => r.category === "hardware" && (r.amount ?? 0) > 0)
+        .reduce((sum, r) => sum + (r.amount ?? 0), 0);
 
     // Total Discounts (per month average)
     const discounts = result.breakdown
-        .filter(r => r.amount < 0)
-        .reduce((sum, r) => sum + r.amount, 0);
+        .filter(r => (r.amount ?? 0) < 0)
+        .reduce((sum, r) => sum + (r.amount ?? 0), 0);
 
     const finalPrice = result.totals.avgTermNet;
 

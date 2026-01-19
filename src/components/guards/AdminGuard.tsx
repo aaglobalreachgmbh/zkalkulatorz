@@ -11,12 +11,18 @@ interface AdminGuardProps {
 /**
  * Protects routes for Admins only.
  * Redirects to home if user does not have 'admin' or 'superadmin' role.
+ * 
+ * @deprecated Use Server Components and `requireAdmin()` for route protection.
+ * This component is only for client-side fallbacks or legacy pages.
  */
 export function AdminGuard({ children }: AdminGuardProps) {
     const { isAdmin, isLoading, error } = useUserRole();
     const router = useRouter();
 
     useEffect(() => {
+        if (process.env.NODE_ENV === 'development') {
+            console.warn("[AdminGuard] Deprecated: server-side `requireAdmin` should be used for route protection.");
+        }
         if (!isLoading && !isAdmin) {
             toast.error("Zugriff verweigert: Nur für Administratoren.");
             router.push("/");

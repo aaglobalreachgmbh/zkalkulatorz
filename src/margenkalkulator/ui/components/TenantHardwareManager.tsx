@@ -11,16 +11,16 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { 
-  Upload, FileSpreadsheet, Trash2, Check, AlertTriangle, Download, Loader2, 
-  Plus, Minus, RefreshCw, History, Clock 
+import {
+  Upload, FileSpreadsheet, Trash2, Check, AlertTriangle, Download, Loader2,
+  Plus, Minus, RefreshCw, History, Clock
 } from "lucide-react";
 import { useTenantHardware, type TenantHardwareInput } from "@/margenkalkulator/hooks/useTenantHardware";
 import { useHardwareImports, type HardwareImportInput } from "@/margenkalkulator/hooks/useHardwareImports";
-import { 
-  parseHardwareXLSX, 
-  parseHardwareCSV, 
-  validateHardwareRows, 
+import {
+  parseHardwareXLSX,
+  parseHardwareCSV,
+  validateHardwareRows,
   diffHardware,
   generateHardwareTemplate,
   type HardwareItemRow,
@@ -66,20 +66,20 @@ export function TenantHardwareManager() {
 
   const validateAndConvert = (rows: HardwareItemRow[]): ValidationResult => {
     const validation = validateHardwareRows(rows);
-    
+
     // Convert error objects to strings
-    const errorStrings = validation.errors.map(e => 
+    const errorStrings = validation.errors.map(e =>
       e.row ? `Zeile ${e.row}: ${e.message}` : e.message
     );
 
     const valid: ParsedRow[] = validation.isValid
       ? rows.map(row => ({
-          hardware_id: row.id,
-          brand: row.brand,
-          model: row.model,
-          category: row.category ?? "smartphone",
-          ek_net: row.ek_net,
-        }))
+        hardware_id: row.id,
+        brand: row.brand,
+        model: row.model,
+        category: row.category ?? "smartphone",
+        ek_net: row.ek_net,
+      }))
       : [];
 
     return {
@@ -91,10 +91,10 @@ export function TenantHardwareManager() {
 
   const handleFile = useCallback(async (file: File) => {
     setFileName(file.name);
-    
+
     try {
       let rows: HardwareItemRow[];
-      
+
       // Detect file type and parse accordingly
       if (file.name.endsWith(".xlsx") || file.name.endsWith(".xls")) {
         setFileType("xlsx");
@@ -136,7 +136,7 @@ export function TenantHardwareManager() {
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    
+
     const file = e.dataTransfer.files[0];
     if (file && (file.name.endsWith(".csv") || file.name.endsWith(".xlsx") || file.name.endsWith(".xls"))) {
       handleFile(file);
@@ -152,7 +152,7 @@ export function TenantHardwareManager() {
 
   const handleImport = async () => {
     if (!parseResult?.valid.length) return;
-    
+
     const items: TenantHardwareInput[] = parseResult.valid.map((row, index) => ({
       hardware_id: row.hardware_id,
       brand: row.brand,
@@ -164,7 +164,7 @@ export function TenantHardwareManager() {
 
     try {
       await bulkImport(items);
-      
+
       // Log the import
       const importLog: HardwareImportInput = {
         file_name: fileName,
@@ -177,9 +177,9 @@ export function TenantHardwareManager() {
         error_count: parseResult.errors.length,
         warnings: parseResult.warnings,
       };
-      
+
       await logImport(importLog);
-      
+
       setParseResult(null);
       setDiffResult(null);
       setFileName("");
@@ -199,8 +199,8 @@ export function TenantHardwareManager() {
     }
   };
 
-  const downloadTemplate = () => {
-    const blob = generateHardwareTemplate();
+  const downloadTemplate = async () => {
+    const blob = await generateHardwareTemplate();
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -302,9 +302,8 @@ export function TenantHardwareManager() {
         </CardHeader>
         <CardContent>
           <div
-            className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-              isDragging ? "border-primary bg-primary/5" : "border-muted-foreground/25"
-            }`}
+            className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${isDragging ? "border-primary bg-primary/5" : "border-muted-foreground/25"
+              }`}
             onDragOver={(e) => {
               e.preventDefault();
               setIsDragging(true);
@@ -383,26 +382,26 @@ export function TenantHardwareManager() {
                 </TableHeader>
                 <TableBody>
                   {diffResult.items.slice(0, 15).map((item) => (
-                    <TableRow 
+                    <TableRow
                       key={item.id}
                       className={
                         item.type === "added" ? "bg-green-500/10" :
-                        item.type === "removed" ? "bg-red-500/10" :
-                        "bg-yellow-500/10"
+                          item.type === "removed" ? "bg-red-500/10" :
+                            "bg-yellow-500/10"
                       }
                     >
                       <TableCell>
-                        <Badge 
+                        <Badge
                           variant="outline"
                           className={
                             item.type === "added" ? "border-green-500 text-green-600" :
-                            item.type === "removed" ? "border-red-500 text-red-600" :
-                            "border-yellow-500 text-yellow-600"
+                              item.type === "removed" ? "border-red-500 text-red-600" :
+                                "border-yellow-500 text-yellow-600"
                           }
                         >
                           {item.type === "added" ? <Plus className="h-3 w-3" /> :
-                           item.type === "removed" ? <Minus className="h-3 w-3" /> :
-                           <RefreshCw className="h-3 w-3" />}
+                            item.type === "removed" ? <Minus className="h-3 w-3" /> :
+                              <RefreshCw className="h-3 w-3" />}
                         </Badge>
                       </TableCell>
                       <TableCell>{item.brand}</TableCell>
@@ -493,8 +492,8 @@ export function TenantHardwareManager() {
                 </Alert>
 
                 <div className="flex gap-2">
-                  <Button 
-                    onClick={handleImport} 
+                  <Button
+                    onClick={handleImport}
                     disabled={isUploading}
                     className="flex-1"
                   >
@@ -505,8 +504,8 @@ export function TenantHardwareManager() {
                     )}
                     {parseResult.valid.length} Einträge importieren
                   </Button>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={() => {
                       setParseResult(null);
                       setDiffResult(null);
@@ -563,12 +562,12 @@ export function TenantHardwareManager() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge 
-                          variant={log.status === "completed" ? "default" : 
-                                   log.status === "partial" ? "secondary" : "destructive"}
+                        <Badge
+                          variant={log.status === "completed" ? "default" :
+                            log.status === "partial" ? "secondary" : "destructive"}
                         >
                           {log.status === "completed" ? "Erfolgreich" :
-                           log.status === "partial" ? "Teilweise" : "Fehlgeschlagen"}
+                            log.status === "partial" ? "Teilweise" : "Fehlgeschlagen"}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
@@ -603,8 +602,8 @@ export function TenantHardwareManager() {
             <CardTitle className="text-destructive">Gefahrenbereich</CardTitle>
           </CardHeader>
           <CardContent>
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={() => {
                 if (confirm("Wirklich alle Hardware-Daten löschen?")) {
                   clearAll();

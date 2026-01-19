@@ -66,7 +66,7 @@ export default function Reporting() {
   if (!permissionsLoading && !hasFullAccess && !canViewReporting) {
     return (
       <MainLayout>
-        <AccessDeniedCard 
+        <AccessDeniedCard
           title="Kein Zugriff auf Auswertungen"
           description="Sie haben keine Berechtigung, Auswertungen einzusehen. Kontaktieren Sie Ihren Shop-Administrator."
         />
@@ -436,7 +436,7 @@ export default function Reporting() {
                           paddingAngle={2}
                           dataKey="count"
                           nameKey="category"
-                          label={({ category, percentage }) => `${marginLabels[category]}: ${percentage}%`}
+                          label={({ category, percentage }: any) => `${marginLabels[category]}: ${percentage}%`}
                           labelLine={false}
                         >
                           {stats!.marginDistribution.map((entry) => (
@@ -449,9 +449,9 @@ export default function Reporting() {
                             border: "1px solid hsl(var(--border))",
                             borderRadius: "var(--radius)",
                           }}
-                          formatter={(value: number, name: string) => [
+                          formatter={(value: number | undefined, name: string | undefined) => [
                             `${value} Angebote`,
-                            marginLabels[name] || name,
+                            marginLabels[name || ""] || name,
                           ]}
                         />
                       </PieChart>
@@ -488,7 +488,7 @@ export default function Reporting() {
                           border: "1px solid hsl(var(--border))",
                           borderRadius: "var(--radius)",
                         }}
-                        formatter={(value: number) => [`${value} Angebote`, "Anzahl"]}
+                        formatter={(value: number | undefined) => [`${value} Angebote`, "Anzahl"]}
                       />
                       <Bar dataKey="count" radius={[0, 4, 4, 0]} name="Angebote">
                         {stats!.hardwareDistribution.map((_, index) => (
@@ -532,7 +532,7 @@ export default function Reporting() {
                             border: "1px solid hsl(var(--border))",
                             borderRadius: "var(--radius)",
                           }}
-                          formatter={(value: number, name: string) => [
+                          formatter={(value: number | undefined, name: string | undefined) => [
                             `${value} VVLs`,
                             name === "critical" ? "Kritisch" : "Gesamt",
                           ]}
@@ -573,7 +573,7 @@ export default function Reporting() {
                             border: "1px solid hsl(var(--border))",
                             borderRadius: "var(--radius)",
                           }}
-                          formatter={(value: number) => [`${value.toFixed(0)} €`, "Provision"]}
+                          formatter={(value: number | undefined) => [`${(value || 0).toFixed(0)} €`, "Provision"]}
                         />
                         <Bar dataKey="amount" fill="hsl(142 76% 36%)" radius={[4, 4, 0, 0]} name="Provision" />
                       </BarChart>
@@ -611,13 +611,13 @@ export default function Reporting() {
                           border: "1px solid hsl(var(--border))",
                           borderRadius: "var(--radius)",
                         }}
-                        formatter={(value: number, name: string) => [
-                          `${value.toFixed(0)} €`,
+                        formatter={(value: number | undefined, name: string | undefined) => [
+                          `${(value || 0).toFixed(0)} €`,
                           name === "ek" ? "Hardware-EK" : name === "provision" ? "Provision" : "Differenz",
                         ]}
                       />
-                      <Legend 
-                        formatter={(value) => 
+                      <Legend
+                        formatter={(value) =>
                           value === "ek" ? "Hardware-EK" : value === "provision" ? "Provision" : value
                         }
                       />
@@ -682,17 +682,16 @@ export default function Reporting() {
                 {stats!.salesLeaderboard.map((seller, index) => {
                   const maxRevenue = stats!.salesLeaderboard[0]?.monthlyRevenue || 1;
                   const percentage = Math.round((seller.monthlyRevenue / maxRevenue) * 100);
-                  
+
                   return (
                     <Card key={seller.userId} className={index === 0 ? "border-amber-500/50 bg-amber-500/5" : ""}>
                       <CardContent className="pt-4">
                         <div className="flex items-center gap-4">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                            index === 0 ? "bg-amber-500 text-white" :
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${index === 0 ? "bg-amber-500 text-white" :
                             index === 1 ? "bg-gray-400 text-white" :
-                            index === 2 ? "bg-amber-700 text-white" :
-                            "bg-muted text-muted-foreground"
-                          }`}>
+                              index === 2 ? "bg-amber-700 text-white" :
+                                "bg-muted text-muted-foreground"
+                            }`}>
                             #{index + 1}
                           </div>
                           <div className="flex-1">

@@ -76,6 +76,8 @@ export function useNews(options?: { includeExpired?: boolean }) {
       return (data || []).map(item => ({
         ...item,
         type: item.type as NewsType,
+        created_at: item.created_at || new Date().toISOString(),
+        updated_at: item.updated_at || new Date().toISOString(),
         is_pinned: item.is_pinned ?? false,
       }));
     },

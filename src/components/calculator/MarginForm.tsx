@@ -4,13 +4,15 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
 import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { CalculationInputSchema, CustomerTypeEnum, type CalculationInput, type CalculationOutput } from "@/lib/contracts"
 import { calculateMargin, type Product } from "@/services/calculationService"
+import { WizardContainer } from "@/components/ui/wizard-container"
+import { SectionPanel } from "@/components/ui/section-panel"
+import { HelpTooltip } from "@/components/ui/help-tooltip"
 
 // Mock Products (Replace with getProducts() in next step)
 const MOCK_PRODUCTS: Product[] = [
@@ -23,7 +25,7 @@ export function MarginForm() {
     const [result, setResult] = useState<CalculationOutput | null>(null)
 
     const form = useForm<CalculationInput>({
-        resolver: zodResolver(CalculationInputSchema),
+        resolver: zodResolver(CalculationInputSchema) as any,
         defaultValues: {
             volume: 1,
             customerType: "BUSINESS",
@@ -48,114 +50,131 @@ export function MarginForm() {
     }
 
     return (
-        <Card className="w-full max-w-md border-t-4 border-t-vodafone-red shadow-lg">
-            <CardHeader>
-                <CardTitle className="text-2xl font-bold text-vodafone-blue">Margin Calculator</CardTitle>
-                <CardDescription>Enter deal details to calculate margins.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <WizardContainer
+            title="Margin Calculator"
+            description="Configure deal parameters."
+            currentStep={1}
+            totalSteps={1}
+        >
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
 
-                        {/* Product Selection */}
-                        <FormField
-                            control={form.control}
-                            name="productId"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Product</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select a product" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {MOCK_PRODUCTS.map((p) => (
-                                                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                    {/* Primary Selection Panel */}
+                    <SectionPanel title="Deal Configuration">
+                        <div className="grid gap-6 md:grid-cols-2">
+                            {/* Product Selection */}
+                            <FormField
+                                control={form.control}
+                                name="productId"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Product <HelpTooltip content="Select the product for which you want to calculate the margin." /></FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger className="h-12 bg-slate-50 dark:bg-slate-800">
+                                                    <SelectValue placeholder="Select a product" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {MOCK_PRODUCTS.map((p) => (
+                                                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
 
-                        {/* Volume Input */}
-                        <FormField
-                            control={form.control}
-                            name="volume"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Volume</FormLabel>
-                                    <FormControl>
-                                        <Input type="number" {...field} className="font-geist-mono tabular-nums" />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        {/* Customer Type */}
-                        <FormField
-                            control={form.control}
-                            name="customerType"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Customer Type</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select type" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {CustomerTypeEnum.options.map((opt) => (
-                                                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <Button
-                            type="submit"
-                            className="w-full bg-vodafone-red font-bold text-white hover:bg-red-700"
-                            disabled={isLoading}
-                        >
-                            {isLoading ? "Calculating..." : "Calculate Margin"}
-                        </Button>
-                    </form>
-                </Form>
-
-                {/* Result Display */}
-                {result && (
-                    <div className="mt-8 rounded-lg bg-gray-50 p-4 animate-in fade-in slide-in-from-bottom-2">
-                        <div className="grid grid-cols-2 gap-4 text-center">
-                            <div>
-                                <p className="text-xs text-gray-500 uppercase">Margin</p>
-                                <p className="font-geist-mono text-xl font-bold text-vodafone-blue tabular-nums">
-                                    {result.margin.toFixed(2)} {result.currency}
-                                </p>
-                            </div>
-                            <div>
-                                <p className="text-xs text-gray-500 uppercase">Margin %</p>
-                                <p className="font-geist-mono text-xl font-bold text-vodafone-blue tabular-nums">
-                                    {result.marginPercent.toFixed(1)}%
-                                </p>
-                            </div>
-                            <div>
-                                <p className="text-xs text-gray-500 uppercase">Rec. Price</p>
-                                <p className="font-geist-mono text-xl font-bold text-vodafone-blue tabular-nums">
-                                    {result.recommendedPrice.toFixed(2)} {result.currency}
-                                </p>
-                            </div>
+                            {/* Customer Type */}
+                            <FormField
+                                control={form.control}
+                                name="customerType"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Customer Type <HelpTooltip content="Choose the customer type to apply relevant pricing rules." /></FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger className="h-12 bg-slate-50 dark:bg-slate-800">
+                                                    <SelectValue placeholder="Select type" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {CustomerTypeEnum.options.map((opt) => (
+                                                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                         </div>
-                    </div>
-                )}
-            </CardContent>
-        </Card>
+
+                        {/* Volume Input (Full Width below) */}
+                        <div className="mt-6">
+                            <FormField
+                                control={form.control}
+                                name="volume"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Volume (Sim Cards)</FormLabel>
+                                        <FormControl>
+                                            <Input type="number" {...field} className="h-12 font-geist-mono text-lg tabular-nums bg-slate-50 dark:bg-slate-800" />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                    </SectionPanel>
+
+                    {/* Result Panel (Conditional) */}
+                    {result ? (
+                        <SectionPanel className="border-l-4 border-l-green-500 bg-green-50/50 dark:bg-green-900/10">
+                            <div className="grid grid-cols-3 gap-6 text-center">
+                                <div>
+                                    <p className="text-xs font-semibold uppercase text-slate-500 tracking-wider">Margin</p>
+                                    <p className="font-geist-mono text-3xl font-bold text-slate-900 dark:text-white tabular-nums mt-1">
+                                        {result.margin.toFixed(2)}€
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-semibold uppercase text-slate-500 tracking-wider">Margin %</p>
+                                    <p className="font-geist-mono text-3xl font-bold text-slate-900 dark:text-white tabular-nums mt-1">
+                                        {result.marginPercent.toFixed(1)}%
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-semibold uppercase text-slate-500 tracking-wider">Rec. Price</p>
+                                    <p className="font-geist-mono text-3xl font-bold text-slate-900 dark:text-white tabular-nums mt-1">
+                                        {result.recommendedPrice.toFixed(2)}€
+                                    </p>
+                                </div>
+                            </div>
+                        </SectionPanel>
+                    ) : (
+                        // Placeholder Panel to maintain layout stability
+                        <div className="h-32 rounded-lg border border-dashed border-slate-200 flex items-center justify-center text-slate-400">
+                            Result will appear here...
+                        </div>
+                    )}
+
+                    <Button
+                        type="submit"
+                        className="w-full h-14 text-lg font-bold bg-vodafone-red hover:bg-red-700 shadow-lg shadow-red-500/20 rounded-xl transition-all hover:scale-[1.01] active:scale-[0.99]"
+                        disabled={isLoading}
+                    >
+                        {isLoading ? (
+                            <div className="flex items-center gap-2">
+                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                Calculating...
+                            </div>
+                        ) : "Calculate Margin"}
+                    </Button>
+                </form>
+            </Form>
+        </WizardContainer>
     )
 }
+

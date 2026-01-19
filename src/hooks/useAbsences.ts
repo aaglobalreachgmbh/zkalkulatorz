@@ -196,15 +196,16 @@ export function useAbsences(options?: { startDate?: Date; endDate?: Date }) {
       return data as Absence;
     },
     onSuccess: (data) => {
+      if (!data) return;
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-      
+
       // Create notification for the user
       supabase.from("notifications").insert({
         user_id: data.user_id,
         tenant_id: data.tenant_id,
         type: data.status === "approved" ? "absence_approved" : "absence_rejected",
-        title: data.status === "approved" 
-          ? "Abwesenheit genehmigt" 
+        title: data.status === "approved"
+          ? "Abwesenheit genehmigt"
           : "Abwesenheit abgelehnt",
         message: `Ihre ${absenceTypeLabels[data.absence_type as AbsenceType]} vom ${new Date(data.start_date).toLocaleDateString("de-DE")} bis ${new Date(data.end_date).toLocaleDateString("de-DE")} wurde ${data.status === "approved" ? "genehmigt" : "abgelehnt"}.`,
       });

@@ -5,7 +5,7 @@ export type CustomerType = z.infer<typeof CustomerTypeEnum>;
 
 export const CalculationInputSchema = z.object({
     productId: z.string().uuid("Invalid Product ID"),
-    volume: z.coerce.number().positive("Volume must be positive"),
+    volume: z.coerce.number().min(1, "Volume must be at least 1"),
     customerType: CustomerTypeEnum,
 });
 

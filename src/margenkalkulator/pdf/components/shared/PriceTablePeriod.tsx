@@ -165,14 +165,14 @@ export function PriceTablePeriod({
             key={idx}
             style={[
               styles.dataRow,
-              isAlt && !row.isDiscount && !row.isSubtotal && !row.isTotal && styles.dataRowAlt,
-              row.isDiscount && styles.dataRowDiscount,
-              row.isSubtotal && styles.dataRowSubtotal,
-              row.isTotal && styles.dataRowTotal,
+              isAlt && !row.isDiscount && !row.isSubtotal && !row.isTotal ? styles.dataRowAlt : {},
+              row.isDiscount ? styles.dataRowDiscount : {},
+              row.isSubtotal ? styles.dataRowSubtotal : {},
+              row.isTotal ? styles.dataRowTotal : {},
             ]}
           >
             {showQuantityColumn && (
-              <Text style={[styles.cell, styles.colQty, row.isTotal && styles.cellTotal]}>
+              <Text style={[styles.cell, styles.colQty, row.isTotal ? styles.cellTotal : {}]}>
                 {row.quantity ? `${row.quantity}x` : ""}
               </Text>
             )}
@@ -181,8 +181,8 @@ export function PriceTablePeriod({
               style={[
                 styles.cell,
                 styles.colPosition,
-                (row.isSubtotal || row.isTotal) && styles.cellBold,
-                row.isTotal && styles.cellTotal,
+                (row.isSubtotal || row.isTotal) ? styles.cellBold : {},
+                row.isTotal ? styles.cellTotal : {},
               ]}
             >
               {row.label}
@@ -193,7 +193,7 @@ export function PriceTablePeriod({
                 style={[
                   styles.cell,
                   styles.colOneTime,
-                  row.isTotal && styles.cellTotal,
+                  row.isTotal ? styles.cellTotal : {},
                 ]}
               >
                 {row.oneTime !== undefined ? formatCurrencyPdf(row.oneTime) : "—"}
@@ -206,9 +206,9 @@ export function PriceTablePeriod({
                 style={[
                   styles.cell,
                   { width: `${periodWidth}%`, textAlign: "right" },
-                  row.isDiscount && styles.cellDiscount,
-                  (row.isSubtotal || row.isTotal) && styles.cellBold,
-                  row.isTotal && styles.cellTotal,
+                  row.isDiscount ? styles.cellDiscount : {},
+                  (row.isSubtotal || row.isTotal) ? styles.cellBold : {},
+                  row.isTotal ? styles.cellTotal : {},
                 ]}
               >
                 {row.isDiscount && amount < 0

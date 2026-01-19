@@ -222,9 +222,13 @@ function ContractTable({ contracts, urgency }: { contracts: ContractWithCustomer
           const contact = c.customer?.vorname && c.customer?.nachname
             ? `${c.customer.vorname} ${c.customer.nachname}`
             : c.customer?.contact_name || "-";
-          
+
           return (
-            <View key={c.id} style={[styles.tableRow, idx % 2 === 1 && styles.tableRowAlt]}>
+            <View key={c.id}
+              style={[
+                styles.tableRow,
+                idx % 2 === 1 ? { backgroundColor: '#f9fafb' } : {}
+              ]}>
               <Text style={[styles.tableCell, styles.colCustomer]}>
                 {c.customer?.company_name || "-"}
               </Text>

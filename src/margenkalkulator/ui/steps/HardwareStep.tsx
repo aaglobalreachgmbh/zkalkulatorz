@@ -199,7 +199,7 @@ export function HardwareStep({ value, onChange, onHardwareSelected, datasetVersi
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground inline-flex items-center gap-1">
                 Im Monatspreis anzeigen
-                <HelpTooltip term="hwImMonatspreis" iconClassName="w-3.5 h-3.5" />
+                <HelpTooltip content="Hardware-Auswahl" />
               </span>
               <Switch
                 checked={value.amortize}

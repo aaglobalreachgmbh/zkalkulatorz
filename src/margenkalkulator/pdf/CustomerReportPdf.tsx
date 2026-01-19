@@ -44,15 +44,15 @@ function getRemainingDays(dateStr: string | null): number | null {
   return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-export function CustomerReportPdf({ 
-  customer, 
-  contracts, 
-  offers, 
+export function CustomerReportPdf({
+  customer,
+  contracts,
+  offers,
   generatedAt,
-  branding = DEFAULT_BRANDING 
+  branding = DEFAULT_BRANDING
 }: CustomerReportPdfProps) {
   const styles = createReportStyles(branding);
-  
+
   const activeContracts = contracts.filter((c) => c.status === "aktiv");
   const totalMonthly = activeContracts.reduce((sum, c) => sum + (c.monatspreis || 0), 0);
   const nextVVL = activeContracts
@@ -66,10 +66,10 @@ export function CustomerReportPdf({
     customer.strasse && customer.hausnummer ? `${customer.strasse} ${customer.hausnummer}` : customer.strasse,
     customer.plz && customer.ort ? `${customer.plz} ${customer.ort}` : customer.ort,
   ].filter(Boolean).join(", ");
-  
+
   // Display name for header
   const displayName = branding.companyName || "MargenKalkulator";
-  
+
   // Helper for urgency styling
   const getUrgencyStyle = (days: number | null) => {
     if (days === null) return null;
@@ -165,7 +165,7 @@ export function CustomerReportPdf({
                 const days = getRemainingDays(c.vvl_datum);
                 const urgencyStyle = getUrgencyStyle(days);
                 return (
-                  <View key={c.id} style={[styles.tableRow, idx % 2 === 1 && styles.tableRowAlt]}>
+                  <View key={c.id} style={[styles.tableRow, idx % 2 === 1 ? styles.tableRowAlt : {}]}>
                     <Text style={[styles.tableCell, { width: "20%" }]}>{c.tarif_name || "-"}</Text>
                     <Text style={[styles.tableCell, { width: "20%" }]}>{c.hardware_name || "SIM-Only"}</Text>
                     <Text style={[styles.tableCell, { width: "15%" }]}>{c.netz}</Text>
@@ -204,7 +204,7 @@ export function CustomerReportPdf({
                 <Text style={[styles.tableHeaderCell, { width: "15%" }]}>Erstellt</Text>
               </View>
               {offers.map((o, idx) => (
-                <View key={o.id} style={[styles.tableRow, idx % 2 === 1 && styles.tableRowAlt]}>
+                <View key={o.id} style={[styles.tableRow, idx % 2 === 1 ? styles.tableRowAlt : {}]}>
                   <Text style={[styles.tableCell, { width: "30%" }]}>{o.name}</Text>
                   <Text style={[styles.tableCell, { width: "20%" }]}>{o.preview?.hardware || "-"}</Text>
                   <Text style={[styles.tableCell, { width: "20%" }]}>{o.preview?.tariff || "-"}</Text>

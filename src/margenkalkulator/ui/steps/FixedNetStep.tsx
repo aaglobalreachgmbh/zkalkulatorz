@@ -67,13 +67,13 @@ export function FixedNetStep({ value, onChange, datasetVersion, onFixedNetEnable
   };
 
   // Get products for selected access type
-  const productsForAccessType = useMemo(() => 
+  const productsForAccessType = useMemo(() =>
     listFixedNetByAccessType(datasetVersion, selectedAccessType),
     [datasetVersion, selectedAccessType]
   );
 
   const selectedProduct = value.enabled && value.productId
-    ? getFixedNetProductFromCatalog(datasetVersion, value.productId) 
+    ? getFixedNetProductFromCatalog(datasetVersion, value.productId)
     : undefined;
 
   // Handle access type change
@@ -102,7 +102,7 @@ export function FixedNetStep({ value, onChange, datasetVersion, onFixedNetEnable
                 <h2 className="text-lg font-semibold text-foreground">
                   Festnetz & Internet hinzufügen
                 </h2>
-                <HelpTooltip term="gigaKombi" />
+                <HelpTooltip content="Verfügbarkeitsprüfung" />
               </div>
               <p className="text-sm text-muted-foreground">
                 Aktivieren für GigaKombi Vorteil (-5€ mtl.)
@@ -134,18 +134,17 @@ export function FixedNetStep({ value, onChange, datasetVersion, onFixedNetEnable
           <div className="space-y-3">
             <Label className="text-sm text-muted-foreground flex items-center gap-1.5">
               Zugangstyp
-              <HelpTooltip term="cable" side="right" />
+              <HelpTooltip content="Kabel-Anschluss prüfen" />
             </Label>
             <div className="flex flex-wrap gap-2">
               {(["CABLE", "DSL", "FIBER"] as FixedNetAccessType[]).map((type) => (
                 <button
                   key={type}
                   onClick={() => handleAccessTypeChange(type)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    selectedAccessType === type
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground hover:bg-muted/80"
-                  }`}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${selectedAccessType === type
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    }`}
                 >
                   {type === "CABLE" && "Kabel"}
                   {type === "DSL" && "DSL"}
@@ -218,7 +217,7 @@ export function FixedNetStep({ value, onChange, datasetVersion, onFixedNetEnable
                   <li>Unlimited Datenvolumen für bis zu 10 Business Prime SIMs</li>
                 </ul>
               </div>
-              <HelpTooltip term="gigaKombi" iconClassName="text-emerald-600" />
+              <HelpTooltip content="Festnetz" />
             </div>
           </div>
         </div>

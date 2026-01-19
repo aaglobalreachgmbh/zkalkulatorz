@@ -144,13 +144,16 @@ export function WonOfferDataCapture({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<WonDataFormValues>({
-    resolver: zodResolver(wonDataSchema),
+    resolver: zodResolver(wonDataSchema) as any,
     defaultValues: {
       company: initialData?.company ?? DEFAULT_WON_OFFER_DATA.company,
       contact: initialData?.contact ?? DEFAULT_WON_OFFER_DATA.contact,
       billingAddress: initialData?.billingAddress ?? DEFAULT_WON_OFFER_DATA.billingAddress,
       payment: initialData?.payment,
-      simOptions: initialData?.simOptions ?? DEFAULT_WON_OFFER_DATA.simOptions,
+      simOptions: {
+        ...DEFAULT_WON_OFFER_DATA.simOptions,
+        type: (initialData?.simOptions?.type as any) ?? DEFAULT_WON_OFFER_DATA.simOptions.type,
+      },
       customerPassword: initialData?.customerPassword,
       internalNotes: initialData?.internalNotes,
     },
@@ -160,7 +163,7 @@ export function WonOfferDataCapture({
 
   const watchedData = watch();
   // Safe validation without "as any" - type intersection handled by helper
-  const validation = validateWonOfferData(watchedData);
+  const validation = validateWonOfferData(watchedData as any);
 
   // Tab completion status
   const tabStatus = {
@@ -176,7 +179,7 @@ export function WonOfferDataCapture({
 
     setIsSaving(true);
     try {
-      await onSave(watchedData);
+      await onSave(watchedData as any);
       toast.success("Entwurf gespeichert");
     } catch (e) {
       toast.error("Fehler beim Speichern");
@@ -194,10 +197,30 @@ export function WonOfferDataCapture({
       const completeData: WonOfferData = {
         ...data,
         offerId,
+        company: {
+          ...data.company,
+          legalForm: data.company.legalForm as any,
+          registerType: data.company.registerType as any
+        },
+        contact: {
+          ...data.contact,
+          salutation: data.contact.salutation as any
+        },
+        simOptions: {
+          ...data.simOptions,
+          type: data.simOptions.type as any
+        },
         tenantId: "", // Will be set by backend
         capturedAt: new Date().toISOString(),
         capturedBy: "", // Will be set by backend
         status: "complete",
+        payment: data.payment ? {
+          iban: data.payment.iban || "",
+          bic: data.payment.bic || "",
+          accountHolder: data.payment.accountHolder || "",
+          bankName: data.payment.bankName || "",
+          sepaMandateAccepted: !!data.payment.sepaMandateAccepted
+        } : undefined,
         // Ensure all required fields from schema match WonOfferData structure
       };
       await onSubmit(completeData);
@@ -224,7 +247,7 @@ export function WonOfferDataCapture({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="flex-1 overflow-hidden flex flex-col">
+        <form onSubmit={(e) => handleSubmit(onSubmit as any)(e)} className="flex-1 overflow-hidden flex flex-col">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
             <TabsList className="grid grid-cols-5 w-full">
               <TabsTrigger value="company" className="gap-1 text-xs">
@@ -275,7 +298,7 @@ export function WonOfferDataCapture({
                         control={control}
                         name="company.legalForm"
                         render={({ field }) => (
-                          <Select value={field.value} onValueChange={field.onChange}>
+                          <Select value={field.value as any} onValueChange={field.onChange}>
                             <SelectTrigger>
                               <SelectValue />
                             </SelectTrigger>

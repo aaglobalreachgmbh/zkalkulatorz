@@ -37,7 +37,7 @@ export function GigaKombiBadge({
     >
       <Zap className="w-3.5 h-3.5 fill-current" />
       <span>GigaKombi −{discountAmount}€</span>
-      {showTooltip && <HelpTooltip term="gigaKombi" />}
+      {showTooltip && <HelpTooltip content="GigaKombi" />}
     </Badge>
   );
 }

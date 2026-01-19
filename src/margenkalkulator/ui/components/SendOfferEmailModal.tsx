@@ -58,9 +58,9 @@ export function SendOfferEmailModal({ trigger }: SendOfferEmailModalProps) {
   }, [customer]);
 
   // Get sender info
-  const senderName = user?.user_metadata?.display_name || 
-                     user?.email?.split("@")[0] || 
-                     "Ihr Berater";
+  const senderName = user?.user_metadata?.display_name ||
+    user?.email?.split("@")[0] ||
+    "Ihr Berater";
   const senderEmail = user?.email;
 
   // Generate PDF and send email
@@ -127,11 +127,11 @@ export function SendOfferEmailModal({ trigger }: SendOfferEmailModalProps) {
         if (saveToCloud && items.length > 0) {
           const firstItem = items[0];
           const offerName = `${customer.firma || recipientName || "Angebot"} - ${new Date().toLocaleDateString("de-DE")}`;
-          
+
           // Use the config from the first basket item
           const baseConfig = firstItem.option;
           const avgMonthly = items.reduce((sum, item) => sum + (item.result?.totals?.avgTermNet || 0), 0) / items.length;
-          
+
           createOffer.mutate({
             name: offerName,
             config: baseConfig,
@@ -160,7 +160,7 @@ export function SendOfferEmailModal({ trigger }: SendOfferEmailModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        {trigger || (
+        {trigger ? (trigger as React.ReactElement) : (
           <Button variant="outline" size="sm" className="gap-2">
             <Mail className="w-4 h-4" />
             Per E-Mail senden
@@ -319,7 +319,7 @@ export function SendOfferEmailModal({ trigger }: SendOfferEmailModalProps) {
               </>
             )}
           </Button>
-          
+
           <div className="flex gap-2">
             <Button
               variant="outline"

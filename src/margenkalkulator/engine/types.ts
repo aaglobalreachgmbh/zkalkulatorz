@@ -167,6 +167,10 @@ export type BreakdownItem = {
   net: number;
   /** Bruttobetrag (optional, wird meist aus net berechnet) */
   gross?: number;
+  /** Deprecated: Use net instead */
+  amount?: number;
+  category?: string;
+  isBase?: boolean;
   /** Regel-Identifikator für Debugging und Nachvollziehbarkeit */
   ruleId: string;
 };
@@ -550,11 +554,11 @@ export type CalculationResult = {
  * Kunde kann SIM_ONLY buchen und trotzdem ein iPhone kaufen.
  * Der Unterschied liegt in der Raten-Finanzierung vs. Einmalkauf.
  */
-export type SubVariantId = 
-  | "SIM_ONLY" 
-  | "BASIC_PHONE" 
-  | "SMARTPHONE" 
-  | "PREMIUM_SMARTPHONE" 
+export type SubVariantId =
+  | "SIM_ONLY"
+  | "BASIC_PHONE"
+  | "SMARTPHONE"
+  | "PREMIUM_SMARTPHONE"
   | "SPECIAL_PREMIUM_SMARTPHONE";
 
 /**
@@ -617,7 +621,7 @@ export type ContractVariant = "SIM_ONLY" | "BASIC" | "SMARTPHONE";
  * - Prime S: Optional buchbar (+5€)
  * - Prime M/L/XL: Inklusive
  */
-export type GigaDepotStatus = 
+export type GigaDepotStatus =
   | { status: "included" }
   | { status: "optional"; priceNet: number };
 
@@ -935,6 +939,8 @@ export type FixedNetProduct = {
   }[];
 };
 
+
+
 /**
  * Hardware-Artikel aus dem Katalog.
  * 
@@ -1167,7 +1173,7 @@ export type Catalog = {
   version: DatasetVersion;
   /** Gültig ab (für historische Angebote) */
   validFrom?: string;
-  
+
   // MOBILFUNK
   /** SUB-Varianten (Geräte-Klassen) */
   subVariants: SubVariant[];
@@ -1175,25 +1181,25 @@ export type Catalog = {
   mobileTariffs: MobileTariff[];
   /** Promos/Rabattaktionen */
   promos: Promo[];
-  
+
   // FESTNETZ
   /** Festnetz-Produkte */
   fixedNetProducts: FixedNetProduct[];
-  
+
   // HARDWARE
   /** Hardware-Katalog (optional) */
   hardwareCatalog?: HardwareItem[];
-  
+
   // IoT (NEU)
   /** IoT/M2M-Tarife */
   iotTariffs?: IoTTariff[];
-  
+
   // VoIP (NEU)
   /** VoIP-Produkte (RingCentral) */
   voipProducts?: VoIPProduct[];
   /** VoIP-Hardware */
   voipHardware?: VoIPHardware[];
-  
+
   // PROVISIONEN & OMO (NEU)
   /** Provisions-Matrix */
   provisions?: ProvisionEntry[];

@@ -25,7 +25,7 @@ function createStyles(primaryColor: string, accentColor: string) {
       fontSize: 9,
       backgroundColor: "#ffffff",
     },
-    
+
     // Cover Page
     coverPage: {
       backgroundColor: accentColor,
@@ -82,7 +82,7 @@ function createStyles(primaryColor: string, accentColor: string) {
       fontSize: 10,
       color: "#999999",
     },
-    
+
     // Header
     header: {
       flexDirection: "row",
@@ -126,7 +126,7 @@ function createStyles(primaryColor: string, accentColor: string) {
       fontSize: 10,
       color: "#666666",
     },
-    
+
     // Contact Section
     contactSection: {
       flexDirection: "row",
@@ -174,7 +174,7 @@ function createStyles(primaryColor: string, accentColor: string) {
       width: 60,
       height: 60,
     },
-    
+
     // Offer Info
     offerInfo: {
       marginBottom: 15,
@@ -189,7 +189,7 @@ function createStyles(primaryColor: string, accentColor: string) {
       color: primaryColor,
       textDecoration: "underline",
     },
-    
+
     // Greeting
     greeting: {
       marginBottom: 15,
@@ -199,7 +199,7 @@ function createStyles(primaryColor: string, accentColor: string) {
       fontSize: 9,
       color: "#333333",
     },
-    
+
     // Promo Box
     promoBox: {
       backgroundColor: primaryColor + "15",
@@ -221,7 +221,7 @@ function createStyles(primaryColor: string, accentColor: string) {
       fontWeight: "bold",
       color: primaryColor,
     },
-    
+
     // Table
     table: {
       marginBottom: 20,
@@ -275,7 +275,7 @@ function createStyles(primaryColor: string, accentColor: string) {
     colPosition: { width: "42%" },
     colOneTime: { width: "15%", textAlign: "right" },
     colPeriod: { width: "17.5%", textAlign: "right" },
-    
+
     // Validity
     validity: {
       marginTop: 15,
@@ -286,7 +286,7 @@ function createStyles(primaryColor: string, accentColor: string) {
       fontWeight: "bold",
       color: accentColor,
     },
-    
+
     // Closing
     closing: {
       marginTop: 20,
@@ -304,7 +304,7 @@ function createStyles(primaryColor: string, accentColor: string) {
     signatureName: {
       fontWeight: "bold",
     },
-    
+
     // Footer
     footer: {
       position: "absolute",
@@ -332,7 +332,7 @@ function createStyles(primaryColor: string, accentColor: string) {
       color: "#999999",
       textAlign: "right",
     },
-    
+
     // Disclaimer
     disclaimer: {
       marginTop: 20,
@@ -349,7 +349,7 @@ function createStyles(primaryColor: string, accentColor: string) {
       fontSize: 5,
       verticalAlign: "super",
     },
-    
+
     // Detail Pages
     sectionTitle: {
       fontSize: 14,
@@ -364,7 +364,7 @@ function createStyles(primaryColor: string, accentColor: string) {
       marginTop: -8,
       marginBottom: 15,
     },
-    
+
     // Detail Card
     detailCard: {
       borderWidth: 1,
@@ -388,7 +388,7 @@ function createStyles(primaryColor: string, accentColor: string) {
     detailCardPrice: {
       textAlign: "right",
     },
-    
+
     // Feature List
     featureList: {
       marginTop: 10,
@@ -413,7 +413,7 @@ function createStyles(primaryColor: string, accentColor: string) {
       fontSize: 8,
       color: "#333333",
     },
-    
+
     // Hardware Row
     hardwareRow: {
       flexDirection: "row",
@@ -445,7 +445,7 @@ function createStyles(primaryColor: string, accentColor: string) {
       color: "#333333",
       marginTop: 4,
     },
-    
+
     // Publisher
     publisherBadge: {
       marginTop: 20,
@@ -488,9 +488,9 @@ function generatePeriodColumns(periods: Array<{ fromMonth: number; toMonth: numb
   if (periods.length <= 1) {
     return [{ header: "Monatlich", fromMonth: 1, toMonth: 24 }];
   }
-  
+
   return periods.map(p => ({
-    header: p.fromMonth === p.toMonth 
+    header: p.fromMonth === p.toMonth
       ? `Monat ${p.fromMonth}`
       : `${p.fromMonth}.-${p.toMonth}. Monat`,
     fromMonth: p.fromMonth,
@@ -502,13 +502,13 @@ function generatePeriodColumns(periods: Array<{ fromMonth: number; toMonth: numb
 // Cover Page Component
 // ============================================
 
-function CoverPage({ 
-  styles, 
-  customer, 
-  offerId 
-}: { 
-  styles: ReturnType<typeof createStyles>; 
-  customer: ProfessionalOfferPdfProps["customer"]; 
+function CoverPage({
+  styles,
+  customer,
+  offerId
+}: {
+  styles: ReturnType<typeof createStyles>;
+  customer: ProfessionalOfferPdfProps["customer"];
   offerId: string;
 }) {
   return (
@@ -516,7 +516,7 @@ function CoverPage({
       <View style={styles.coverContent}>
         <Text style={styles.coverHeadline}>Top-Leistung zu</Text>
         <Text style={styles.coverSubheadline}>Top-Konditionen</Text>
-        
+
         <View style={styles.coverCustomer}>
           <Text style={styles.coverCustomerLabel}>Erstellt für:</Text>
           <Text style={styles.coverCustomerName}>
@@ -528,7 +528,7 @@ function CoverPage({
             </Text>
           )}
         </View>
-        
+
         <View style={styles.coverFooter}>
           <Text style={styles.coverOfferId}>Angebotsnummer:</Text>
           <Text style={[styles.coverOfferId, { fontWeight: "bold" }]}>{offerId}</Text>
@@ -571,12 +571,12 @@ function SummaryPage({
 }) {
   const today = new Date();
   const validUntil = new Date(today.getTime() + options.validDays * 24 * 60 * 60 * 1000);
-  
+
   // Collect all periods from all items
   const allPeriods = items.flatMap(item => item.result.periods);
   const periodColumns = generatePeriodColumns(allPeriods.length > 1 ? allPeriods : []);
   const hasMultiplePeriods = periodColumns.length > 1;
-  
+
   // REDESIGNED: Separate calculation for Mobilfunk and Festnetz
   const calculateSeparateCosts = () => {
     let mobileTotal = 0;
@@ -584,46 +584,46 @@ function SummaryPage({
     let oneTimeTotal = 0;
     const mobileRows: PositionRow[] = [];
     const fixedNetRows: PositionRow[] = [];
-    
+
     for (const item of items) {
       const { option, result } = item;
       const qty = option.mobile.quantity;
-      
+
       // Mobile costs
       const tariffBase = result.breakdown.find(b => b.ruleId === "base");
       const tariffName = tariffBase?.label?.replace(" Grundpreis", "") || "Mobilfunk-Tarif";
       const tariffMonthly = result.periods.map(p => p.monthly.net);
       const avgMobileMonthly = result.totals.avgTermNet;
-      
+
       mobileRows.push({
         quantity: qty,
         label: tariffName,
         monthlyByPeriod: hasMultiplePeriods ? tariffMonthly : [avgMobileMonthly],
       });
-      
+
       // Mobile discounts
-      const discounts = result.breakdown.filter(b => 
+      const discounts = result.breakdown.filter(b =>
         b.appliesTo === "monthly" && b.net < 0 && !b.ruleId?.includes("fixed")
       );
-      
+
       for (const discount of discounts) {
         mobileRows.push({
           label: `   ${discount.label}`,
-          monthlyByPeriod: hasMultiplePeriods 
+          monthlyByPeriod: hasMultiplePeriods
             ? result.periods.map(() => discount.net)
             : [discount.net],
           isDiscount: true,
         });
       }
-      
+
       mobileTotal += avgMobileMonthly * qty;
-      
+
       // Hardware (add to mobile section)
       if (option.hardware.ekNet > 0) {
-        const hwMonthly = option.hardware.amortize 
+        const hwMonthly = option.hardware.amortize
           ? option.hardware.ekNet / (option.hardware.amortMonths || 24)
           : 0;
-        
+
         if (option.hardware.amortize) {
           mobileRows.push({
             quantity: qty,
@@ -635,24 +635,24 @@ function SummaryPage({
           oneTimeTotal += option.hardware.ekNet * qty;
         }
       }
-      
+
       // Fixed net costs (separate block)
       if (option.fixedNet.enabled) {
         const fixedBase = result.breakdown.find(b => b.ruleId === "fixed_base");
         const fixedName = fixedBase?.label || `${option.fixedNet.accessType} Internet`;
         const fixedMonthly = fixedBase?.net || 0;
-        
+
         fixedNetRows.push({
           quantity: 1,
           label: fixedName,
           monthlyByPeriod: [fixedMonthly],
         });
-        
+
         // Fixed net discounts
-        const fixedDiscounts = result.breakdown.filter(b => 
+        const fixedDiscounts = result.breakdown.filter(b =>
           b.appliesTo === "monthly" && b.net < 0 && b.ruleId?.includes("fixed")
         );
-        
+
         for (const discount of fixedDiscounts) {
           fixedNetRows.push({
             label: `   ${discount.label}`,
@@ -660,18 +660,18 @@ function SummaryPage({
             isDiscount: true,
           });
         }
-        
+
         fixedNetTotal += fixedMonthly;
       }
     }
-    
+
     // Add subtotals
     mobileRows.push({
       label: "Zwischensumme Mobilfunk",
       monthlyByPeriod: [mobileTotal],
       isSubtotal: true,
     });
-    
+
     if (fixedNetRows.length > 0) {
       fixedNetRows.push({
         label: "Zwischensumme Festnetz",
@@ -679,15 +679,15 @@ function SummaryPage({
         isSubtotal: true,
       });
     }
-    
+
     return { mobileRows, fixedNetRows, mobileTotal, fixedNetTotal, oneTimeTotal };
   };
-  
+
   const { mobileRows, fixedNetRows, mobileTotal, fixedNetTotal, oneTimeTotal } = calculateSeparateCosts();
   const grandTotal = mobileTotal + fixedNetTotal;
   const hasFixedNet = fixedNetRows.length > 1; // More than just subtotal
   const displayName = branding?.companyName || template.publisherInfo.name;
-  
+
   return (
     <Page size="A4" style={styles.page}>
       {/* Header */}
@@ -706,7 +706,7 @@ function SummaryPage({
           <Text style={styles.headerSubbrand}>can do</Text>
         </View>
       </View>
-      
+
       {/* Contact Section */}
       <View style={styles.contactSection}>
         <View style={styles.recipientBlock}>
@@ -732,14 +732,14 @@ function SummaryPage({
           )}
         </View>
       </View>
-      
+
       {/* Offer Info */}
       <View style={styles.offerInfo}>
         <Text style={styles.offerTitle}>
           Ihr Angebot vom {formatDate(today)} mit der Angebotsnummer {offerId}
         </Text>
       </View>
-      
+
       {/* Greeting */}
       <View style={styles.greeting}>
         <Text style={styles.greetingText}>
@@ -749,7 +749,7 @@ function SummaryPage({
           {options.offerText || "vielen Dank für Ihr Interesse. Im Folgenden sehen Sie eine Zusammenfassung Ihres persönlichen Angebots. Alle Preise verstehen sich zzgl. MwSt."}
         </Text>
       </View>
-      
+
       {/* Promo Box */}
       {options.promoHighlight && (
         <View style={styles.promoBox}>
@@ -758,45 +758,45 @@ function SummaryPage({
           </Text>
         </View>
       )}
-      
+
       {/* MOBILFUNK Block */}
       <View style={styles.table}>
         <View style={[styles.tableHeader, { backgroundColor: "#f0f9ff" }]}>
           <Text style={[styles.tableHeaderCell, { flex: 1, fontWeight: "bold", fontSize: 10 }]}>MOBILFUNK</Text>
           <Text style={[styles.tableHeaderCell, styles.colPeriod]}>Monatlich</Text>
         </View>
-        
+
         {mobileRows.map((row, idx) => (
-          <View 
-            key={idx} 
+          <View
+            key={idx}
             style={[
               styles.tableRow,
-              row.isDiscount && styles.tableRowDiscount,
-              row.isSubtotal && styles.tableRowSubtotal,
+              row.isDiscount ? styles.tableRowDiscount : {},
+              row.isSubtotal ? styles.tableRowSubtotal : {},
             ]}
           >
             <Text style={[styles.tableCell, styles.colQty]}>
               {row.quantity ? `${row.quantity}x` : ""}
             </Text>
             <Text style={[
-              styles.tableCell, 
+              styles.tableCell,
               styles.colPosition,
-              row.isSubtotal && styles.tableCellBold,
+              row.isSubtotal ? styles.tableCellBold : {},
             ]}>
               {row.label}
             </Text>
             <Text style={[
-              styles.tableCell, 
+              styles.tableCell,
               styles.colPeriod,
-              row.isDiscount && styles.tableCellNegative,
-              row.isSubtotal && styles.tableCellBold,
+              row.isDiscount ? styles.tableCellNegative : {},
+              row.isSubtotal ? styles.tableCellBold : {},
             ]}>
               {formatCurrency(row.monthlyByPeriod[0])}
             </Text>
           </View>
         ))}
       </View>
-      
+
       {/* FESTNETZ Block (if applicable) */}
       {hasFixedNet && (
         <View style={[styles.table, { marginTop: 15 }]}>
@@ -804,31 +804,31 @@ function SummaryPage({
             <Text style={[styles.tableHeaderCell, { flex: 1, fontWeight: "bold", fontSize: 10 }]}>FESTNETZ</Text>
             <Text style={[styles.tableHeaderCell, styles.colPeriod]}>Monatlich</Text>
           </View>
-          
+
           {fixedNetRows.map((row, idx) => (
-            <View 
-              key={idx} 
+            <View
+              key={idx}
               style={[
                 styles.tableRow,
-                row.isDiscount && styles.tableRowDiscount,
-                row.isSubtotal && styles.tableRowSubtotal,
+                row.isDiscount ? styles.tableRowDiscount : {},
+                row.isSubtotal ? styles.tableRowSubtotal : {},
               ]}
             >
               <Text style={[styles.tableCell, styles.colQty]}>
                 {row.quantity ? `${row.quantity}x` : ""}
               </Text>
               <Text style={[
-                styles.tableCell, 
+                styles.tableCell,
                 styles.colPosition,
-                row.isSubtotal && styles.tableCellBold,
+                row.isSubtotal ? styles.tableCellBold : {},
               ]}>
                 {row.label}
               </Text>
               <Text style={[
-                styles.tableCell, 
+                styles.tableCell,
                 styles.colPeriod,
-                row.isDiscount && styles.tableCellNegative,
-                row.isSubtotal && styles.tableCellBold,
+                row.isDiscount ? styles.tableCellNegative : {},
+                row.isSubtotal ? styles.tableCellBold : {},
               ]}>
                 {formatCurrency(row.monthlyByPeriod[0])}
               </Text>
@@ -836,7 +836,7 @@ function SummaryPage({
           ))}
         </View>
       )}
-      
+
       {/* GESAMTÜBERSICHT */}
       <View style={[styles.table, { marginTop: 15 }]}>
         <View style={[styles.tableRow, styles.tableRowTotal]}>
@@ -854,14 +854,14 @@ function SummaryPage({
           </View>
         )}
       </View>
-      
+
       {/* Validity */}
       <View style={styles.validity}>
         <Text style={styles.validityText}>
           Dieses Angebot ist gültig bis {formatDate(validUntil)}. Weitere Details ab Seite {pageNumber + 1}.
         </Text>
       </View>
-      
+
       {/* Closing */}
       <View style={styles.closing}>
         <Text style={styles.closingText}>
@@ -872,16 +872,16 @@ function SummaryPage({
           {contact?.name || "Ihr Vertriebsteam"}
         </Text>
       </View>
-      
+
       {/* Disclaimer */}
       <View style={styles.disclaimer}>
         <Text style={styles.disclaimerText}>
-          Alle Preise zzgl. MwSt. Wichtiger Hinweis: Bei diesem Angebot handelt es sich um ein unverbindliches Tarifbeispiel. 
-          Die hier angegebenen Preise können nach Ablauf der Mindestlaufzeit abweichend sein. 
+          Alle Preise zzgl. MwSt. Wichtiger Hinweis: Bei diesem Angebot handelt es sich um ein unverbindliches Tarifbeispiel.
+          Die hier angegebenen Preise können nach Ablauf der Mindestlaufzeit abweichend sein.
           Zur Bearbeitung Ihrer Bestellung benötigen wir einen Nachweis für Ihren Geschäftskundenstatus.
         </Text>
       </View>
-      
+
       {/* Footer */}
       <View style={styles.footer}>
         <View style={styles.footerRow}>
@@ -917,7 +917,7 @@ function DetailPage({
   totalPages: number;
 }) {
   const displayName = branding?.companyName || template.publisherInfo.name;
-  
+
   return (
     <Page size="A4" style={styles.page}>
       {/* Header */}
@@ -935,16 +935,16 @@ function DetailPage({
           <Text style={styles.headerBrand}>Details</Text>
         </View>
       </View>
-      
+
       {/* Mobile Section */}
       <Text style={styles.sectionTitle}>1. Mobilfunkverträge</Text>
       <Text style={styles.sectionSubtitle}>(Mindestlaufzeit: 24 Monate)</Text>
-      
+
       {items.map((item, idx) => {
         const { option, result } = item;
         const tariffBase = result.breakdown.find(b => b.ruleId === "base");
         const tariffName = tariffBase?.label?.replace(" Grundpreis", "") || "Mobilfunk-Tarif";
-        
+
         // Get features from tariff
         const features = [
           "Unbegrenztes Datenvolumen",
@@ -952,7 +952,7 @@ function DetailPage({
           "Allnet-Flat: Telefonie/SMS in alle deutschen Netze",
           "EU-Roaming inklusive",
         ];
-        
+
         return (
           <View key={idx} style={styles.detailCard}>
             <View style={styles.detailCardHeader}>
@@ -968,7 +968,7 @@ function DetailPage({
                 </Text>
               </View>
             </View>
-            
+
             <View style={styles.featureList}>
               <Text style={styles.featureTitle}>Im Tarif inklusive:</Text>
               {features.map((feature, i) => (
@@ -981,23 +981,23 @@ function DetailPage({
           </View>
         );
       })}
-      
+
       {/* Hardware Section */}
       {items.some(item => item.option.hardware.ekNet > 0) && (
         <>
           <Text style={styles.sectionTitle}>2. Hardware-Finanzierung</Text>
           <Text style={styles.sectionSubtitle}>(Vertragslaufzeit: 24 Monate)</Text>
-          
+
           {items.filter(item => item.option.hardware.ekNet > 0).map((item, idx) => {
             const { option } = item;
             const hwName = option.hardware.name || "Gerät";
-            const hwMonthly = option.hardware.amortize 
+            const hwMonthly = option.hardware.amortize
               ? option.hardware.ekNet / (option.hardware.amortMonths || 24)
               : 0;
-            
+
             // Try to get hardware image
             const hwImageUrl = hardwareImages?.get(hwName.split(" ")[0]?.toLowerCase() || "");
-            
+
             return (
               <View key={idx} style={styles.detailCard}>
                 <View style={styles.hardwareRow}>
@@ -1019,18 +1019,18 @@ function DetailPage({
           })}
         </>
       )}
-      
+
       {/* Fixed Net Section */}
       {items.some(item => item.option.fixedNet.enabled) && (
         <>
           <Text style={styles.sectionTitle}>3. Festnetz & Internet</Text>
-          
+
           {items.filter(item => item.option.fixedNet.enabled).map((item, idx) => {
             const { option, result } = item;
             const fixedNetBreakdown = result.breakdown.find(b => b.ruleId === "fixed_base");
             const fixedNetName = fixedNetBreakdown?.label || "Festnetz";
             const fixedNetMonthly = fixedNetBreakdown?.net || 0;
-            
+
             return (
               <View key={idx} style={styles.detailCard}>
                 <View style={styles.detailCardHeader}>
@@ -1051,14 +1051,14 @@ function DetailPage({
           })}
         </>
       )}
-      
+
       {/* Publisher Badge */}
       <View style={styles.publisherBadge}>
         <Text style={styles.publisherText}>
           Erstellt mit {template.publisherInfo.name} | {template.publisherInfo.website}
         </Text>
       </View>
-      
+
       {/* Footer */}
       <View style={styles.footer}>
         <View style={styles.footerRow}>
@@ -1092,22 +1092,22 @@ export function ProfessionalOfferPdf({
   const primaryColor = branding?.primaryColor || template.primaryColor;
   const accentColor = template.accentColor;
   const styles = createStyles(primaryColor, accentColor);
-  
+
   // Calculate total pages
   const hasCover = options.showCoverPage && template.showCoverPage;
-  const totalPages = (hasCover ? 1 : 0) + 2 + (showDealerSummary && dealerData ? 1 : 0);
-  
+  const totalPages = (hasCover ? 1 : 0) + 2 + ((showDealerSummary && dealerData) ? 1 : 0);
+
   return (
     <Document>
       {/* Cover Page (optional) */}
       {hasCover && (
-        <CoverPage 
-          styles={styles} 
-          customer={customer} 
-          offerId={offerId} 
+        <CoverPage
+          styles={styles}
+          customer={customer}
+          offerId={offerId}
         />
       )}
-      
+
       {/* Summary Page */}
       <SummaryPage
         styles={styles}
@@ -1122,7 +1122,7 @@ export function ProfessionalOfferPdf({
         pageNumber={hasCover ? 2 : 1}
         totalPages={totalPages}
       />
-      
+
       {/* Detail Page */}
       <DetailPage
         styles={styles}
@@ -1133,7 +1133,7 @@ export function ProfessionalOfferPdf({
         pageNumber={hasCover ? 3 : 2}
         totalPages={totalPages}
       />
-      
+
       {/* Dealer Summary Page (optional, confidential) */}
       {showDealerSummary && dealerData && (
         <DealerSummaryPage

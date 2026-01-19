@@ -3,7 +3,7 @@
 // Echtzeit-Übersicht aller Schutzmaßnahmen + Benutzer/Lizenzen
 // ============================================
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";

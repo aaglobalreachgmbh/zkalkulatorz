@@ -5,7 +5,8 @@
 // ============================================
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonProps } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { FileText, Loader2, ShieldCheck } from "lucide-react";
 import { useActivityTracker } from "@/hooks/useActivityTracker";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
@@ -134,7 +135,7 @@ export function PdfDownloadButton({
       toast.success(type === "dealer" ? "Händler-PDF wurde heruntergeladen" : "Kunden-PDF wurde heruntergeladen");
 
       // Track PDF export (Legacy)
-      trackPdfExported(undefined, `${tariffName}_${type}`);
+      trackPdfExported("", `${tariffName}_${type}`);
 
       // Phase 9 Telemetry
       onDownload?.();
@@ -161,7 +162,6 @@ export function PdfDownloadButton({
       variant={variant}
       size={size}
       onClick={handleDownload}
-      disabled={loading}
       disabled={loading}
       className={cn("gap-2", className)}
     >

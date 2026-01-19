@@ -29,20 +29,21 @@ export function validateEnvironment(): EnvValidationResult {
     const missing: string[] = [];
     const warnings: string[] = [];
 
-    // Check required vars
-    for (const varName of REQUIRED_VARS) {
-        const value = import.meta.env[varName];
-        if (!value || value === 'undefined' || value === '') {
-            missing.push(varName);
-        }
+    // Check required URL
+    const url = import.meta.env.VITE_SUPABASE_URL;
+    if (!url || url === 'undefined' || url === '') {
+        missing.push('VITE_SUPABASE_URL');
     }
 
-    // Check recommended vars
-    for (const varName of RECOMMENDED_VARS) {
-        const value = import.meta.env[varName];
-        if (!value || value === 'undefined' || value === '') {
-            warnings.push(`${varName} is not set (optional)`);
-        }
+    // Check for either PUBLISHABLE_KEY or ANON_KEY (Lovable Cloud uses ANON_KEY usually)
+    const pubKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+    const hasKey = (pubKey && pubKey !== 'undefined' && pubKey !== '') ||
+        (anonKey && anonKey !== 'undefined' && anonKey !== '');
+
+    if (!hasKey) {
+        missing.push('VITE_SUPABASE_ANON_KEY / VITE_SUPABASE_PUBLISHABLE_KEY');
     }
 
     return {

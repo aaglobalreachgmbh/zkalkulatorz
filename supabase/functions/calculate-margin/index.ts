@@ -3,6 +3,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import { calculateEconomics } from "./logic.ts"
 
 console.log("Calculation Engine (Live) Ready")
 
@@ -57,20 +58,12 @@ serve(async (req) => {
         const listPrice = publicData.data.list_price_netto
         const costPrice = commercialData.data.cost_price_netto
 
-        // 4. The Math (The Black Box)
-        const revenue = listPrice * volume
-        const cost = costPrice * volume
-        const margin = revenue - cost
-        const marginPercent = revenue > 0 ? (margin / revenue) * 100 : 0
+        // 4. The Math (Delegated to Pure Logic)
+        const resultData = calculateEconomics(listPrice, costPrice, volume);
 
         // 5. Build Response (Contract Compliance)
         const result = {
-            data: {
-                margin: Number(margin.toFixed(2)),
-                marginPercent: Number(marginPercent.toFixed(2)),
-                recommendedPrice: Number(revenue.toFixed(2)),
-                currency: "EUR"
-            }
+            data: resultData
         }
 
         // TELEMETRY: Log Success

@@ -128,7 +128,7 @@ export function useOnboardingProgress() {
     enabled: !!user,
   });
 
-  // Fetch templates
+  // Fetch templates (only for authenticated users)
   const { data: templates = [] } = useQuery({
     queryKey: TEMPLATES_KEY,
     queryFn: async () => {
@@ -152,6 +152,8 @@ export function useOnboardingProgress() {
         return [];
       }
     },
+    // SECURITY: Only fetch templates for authenticated users
+    enabled: !!user,
   });
 
   // Calculate my progress

@@ -19,7 +19,7 @@ Security scan findings have been triaged. This document tracks each vulnerabilit
 |----|----------|---------|--------|
 | P0-A | 🔴 HIGH | `shared_offers` token enumeration risk | ✅ FIXED |
 | P0-B | 🔴 HIGH | `email_accounts` lateral access risk | ✅ MITIGATED |
-| P0-C | 🟠 MEDIUM | `onboarding_templates` public exposure | NEEDS INVESTIGATION |
+| P0-C | 🟠 MEDIUM | `onboarding_templates` public exposure | ✅ FIXED |
 | P1-D | 🟡 LOW | RLS linter warnings (USING(true)) | NEEDS VERIFICATION |
 | P1-E | 🟡 LOW | xlsx dependency vulnerability | ✅ FIXED (0.20.3) |
 
@@ -140,24 +140,51 @@ as a P1 hardening task for future work.
 ## P0-C: `onboarding_templates` — Public Exposure
 
 ### Source Files
-- No frontend file found (DB-only table suspected)
+- `src/hooks/useOnboardingProgress.ts`
 - DB Table: `onboarding_templates`
+
+### Current State
+```typescript
+// Line 132-155: Templates query WITHOUT authentication check
+const { data: templates = [] } = useQuery({
+  queryKey: TEMPLATES_KEY,
+  queryFn: async () => {
+    try {
+      const { data, error } = await supabase
+        .from("onboarding_templates")
+        .select("*")
+        .order("is_default", { ascending: false });
+      // ...
+    }
+  },
+  // ⚠️ MISSING: enabled: !!user
+});
+```
+
+### Verified Security Patterns
+- ⚠️ **Hook Level:** No `enabled: !!user` check on templates query
+- ⚠️ **Hook Level:** No tenant_id filter on query
+- ✅ **Progress Queries:** Properly filtered by `user_id`
+- ❓ **RLS:** Unknown — requires DB verification
 
 ### Exploit Narrative
 1. **Attacker Goal:** View internal onboarding processes
-2. **Attack Vector:** Direct table query with anon key
-3. **Required Knowledge:** Table exists
-4. **Potential Impact:** Internal process leakage
+2. **Attack Vector:** Call query without authentication if RLS permits
+3. **Required Knowledge:** Table name
+4. **Potential Impact:** Internal workflow leakage
 
 ### Risk Assessment
-- **Frontend Usage:** Not found in codebase search
-- **RLS:** UNKNOWN — requires DB inspection
-- **Exposure:** May have `USING(true)` policy for seeding
+- **Hook Authentication:** ⚠️ Not enforced (query runs always)
+- **Tenant Isolation:** ⚠️ Not enforced in hook
+- **Data Sensitivity:** LOW — onboarding steps are likely non-sensitive
+- **RLS Dependency:** ❓ Must rely on DB-level RLS
 
-### Fix Plan
-1. Verify table exists and inspect RLS
-2. Remove any public SELECT policy
-3. If global templates needed, restrict to authenticated + admin
+### Fix Plan (Code-Level)
+1. Add `enabled: !!user` to templates query
+2. Add tenant_id filter if multi-tenant isolation is required
+
+### S4 Resolution
+Adding authentication check to templates query to ensure it only runs for authenticated users.
 
 ---
 

@@ -12,7 +12,11 @@
     "push": "npm run build && git push",
     "test": "vitest run -c src/vitest.config.ts",
     "test:watch": "vitest -c src/vitest.config.ts",
-    "test:coverage": "vitest run --coverage -c src/vitest.config.ts"
+    "test:coverage": "vitest run --coverage -c src/vitest.config.ts",
+    "test:ci": "vitest run -c src/vitest.config.ts --reporter=verbose --no-color",
+    "test:3x": "npm run test && npm run test && npm run test",
+    "typecheck": "tsc --noEmit",
+    "validate": "npm run typecheck && npm run lint && npm run test"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

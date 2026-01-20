@@ -210,7 +210,10 @@ export function useTimeTracking(options?: {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.warn("[useTimeTracking] Clock in error:", error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
@@ -243,7 +246,10 @@ export function useTimeTracking(options?: {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.warn("[useTimeTracking] Clock out error:", error);
+        throw error;
+      }
       return data;
     },
     onSuccess: (data) => {
@@ -277,7 +283,10 @@ export function useTimeTracking(options?: {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.warn("[useTimeTracking] Add break error:", error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
@@ -327,7 +336,10 @@ export function useTimeTracking(options?: {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.warn("[useTimeTracking] Request correction error:", error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
@@ -359,7 +371,10 @@ export function useTimeTracking(options?: {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.warn("[useTimeTracking] Approve error:", error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
@@ -480,7 +495,10 @@ export function useTimeEntryCorrections() {
           .update(updates)
           .eq("id", correction.time_entry_id);
 
-        if (entryError) throw entryError;
+        if (entryError) {
+          console.warn("[useTimeTracking] Entry update error:", entryError);
+          throw entryError;
+        }
       }
 
       return { approved: input.approved };

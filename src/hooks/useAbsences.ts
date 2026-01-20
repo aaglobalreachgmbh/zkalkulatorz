@@ -151,7 +151,10 @@ export function useAbsences(options?: { startDate?: Date; endDate?: Date }) {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.warn("[useAbsences] Create error:", error);
+        throw error;
+      }
       return data as Absence;
     },
     onSuccess: () => {
@@ -160,7 +163,7 @@ export function useAbsences(options?: { startDate?: Date; endDate?: Date }) {
     },
     onError: (error) => {
       console.error("[useAbsences] Create error:", error);
-      toast.error("Fehler beim Eintragen der Abwesenheit");
+      toast.error("Fehler beim Eintragen der Abwesenheit: " + error.message);
     },
   });
 
@@ -192,7 +195,10 @@ export function useAbsences(options?: { startDate?: Date; endDate?: Date }) {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.warn("[useAbsences] Update status error:", error);
+        throw error;
+      }
       return data as Absence;
     },
     onSuccess: (data) => {
@@ -218,7 +224,7 @@ export function useAbsences(options?: { startDate?: Date; endDate?: Date }) {
     },
     onError: (error) => {
       console.error("[useAbsences] Update status error:", error);
-      toast.error("Fehler beim Aktualisieren");
+      toast.error("Fehler beim Aktualisieren: " + error.message);
     },
   });
 
@@ -230,7 +236,10 @@ export function useAbsences(options?: { startDate?: Date; endDate?: Date }) {
         .delete()
         .eq("id", absenceId);
 
-      if (error) throw error;
+      if (error) {
+        console.warn("[useAbsences] Delete error:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
@@ -238,7 +247,7 @@ export function useAbsences(options?: { startDate?: Date; endDate?: Date }) {
     },
     onError: (error) => {
       console.error("[useAbsences] Delete error:", error);
-      toast.error("Fehler beim Löschen");
+      toast.error("Fehler beim Löschen: " + error.message);
     },
   });
 

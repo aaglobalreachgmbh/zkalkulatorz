@@ -6,8 +6,8 @@ import { Database } from "./types";
 const FALLBACK_URL = "https://missing-env-vars.com";
 const FALLBACK_KEY = "missing-env-vars";
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || FALLBACK_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || FALLBACK_KEY;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || import.meta.env.SUPABASE_URL || FALLBACK_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.SUPABASE_ANON_KEY || FALLBACK_KEY;
 
 // Initialize Supabase client
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);

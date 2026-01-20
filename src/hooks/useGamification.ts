@@ -295,13 +295,20 @@ export function useGamification() {
         .select("id")
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.warn("[useGamification] Award points error:", error);
+        throw error;
+      }
       return data.id;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-points", userId] });
       queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
     },
+    onError: (err) => {
+      console.error("[useGamification] Award points failed:", err);
+      // Toast here is optional depending on if we want to annoy user about background gamification
+    }
   });
 
   // ------------------------------------------
@@ -339,7 +346,10 @@ export function useGamification() {
         .select("id")
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.warn("[useGamification] Award badge error:", error);
+        throw error;
+      }
 
       // Get badge info for bonus points
       const badge = badgeDefinitionsQuery.data?.find(b => b.id === badgeId);

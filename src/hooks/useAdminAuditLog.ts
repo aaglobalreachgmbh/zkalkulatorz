@@ -107,7 +107,10 @@ export function useAdminAuditLog() {
           .order("created_at", { ascending: false })
           .limit(limit);
 
-        if (error) throw error;
+        if (error) {
+          console.warn("[useAdminAuditLog] Get recent error:", error);
+          return [];
+        }
         return data || [];
       } catch (err) {
         console.error("Failed to fetch audit logs:", err);
@@ -127,7 +130,10 @@ export function useAdminAuditLog() {
           .order("created_at", { ascending: false })
           .limit(limit);
 
-        if (error) throw error;
+        if (error) {
+          console.warn("[useAdminAuditLog] Get by admin error:", error);
+          return [];
+        }
         return data || [];
       } catch (err) {
         console.error("Failed to fetch admin audit logs:", err);

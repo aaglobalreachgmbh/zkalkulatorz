@@ -107,7 +107,10 @@ export function useNotificationPreferences() {
           })
           .eq("user_id", user.id);
 
-        if (error) throw error;
+        if (error) {
+          console.warn("[useNotificationPreferences] Update error:", error);
+          throw error;
+        }
       } else {
         const { error } = await supabase
           .from("notification_preferences")
@@ -120,7 +123,10 @@ export function useNotificationPreferences() {
             notification_types: (updates.notification_types || DEFAULT_NOTIFICATION_TYPES) as unknown as Json,
           });
 
-        if (error) throw error;
+        if (error) {
+          console.warn("[useNotificationPreferences] Insert error:", error);
+          throw error;
+        }
       }
     },
     onSuccess: () => {

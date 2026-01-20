@@ -68,7 +68,10 @@ export function useVisitPhotos() {
           upsert: false,
         });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.warn("[useVisitPhotos] Storage upload error:", uploadError);
+        throw uploadError;
+      }
 
       // 2. Eintrag in visit_photos erstellen
       const { data, error: dbError } = await supabase
@@ -83,6 +86,7 @@ export function useVisitPhotos() {
 
       if (dbError) {
         // Rollback: Datei löschen wenn DB-Insert fehlschlägt
+        console.warn("[useVisitPhotos] DB insert error, rolling back storage:", dbError);
         await supabase.storage.from("visit-photos").remove([fileName]);
         throw dbError;
       }
@@ -90,8 +94,8 @@ export function useVisitPhotos() {
       return { offline: false, id: data.id };
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ 
-        queryKey: ["visit-report", variables.visitReportId] 
+      queryClient.invalidateQueries({
+        queryKey: ["visit-report", variables.visitReportId]
       });
       toast.success("Foto hochgeladen");
     },
@@ -103,12 +107,12 @@ export function useVisitPhotos() {
 
   // Foto löschen
   const deletePhoto = useMutation({
-    mutationFn: async ({ 
-      photoId, 
+    mutationFn: async ({
+      photoId,
       storagePath,
       visitReportId,
-    }: { 
-      photoId: string; 
+    }: {
+      photoId: string;
       storagePath: string;
       visitReportId: string;
     }) => {
@@ -127,7 +131,10 @@ export function useVisitPhotos() {
         .delete()
         .eq("id", photoId);
 
-      if (dbError) throw dbError;
+      if (dbError) {
+        console.warn("[useVisitPhotos] DB delete error:", dbError);
+        throw dbError;
+      }
 
       return visitReportId;
     },

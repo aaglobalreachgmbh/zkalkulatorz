@@ -8,11 +8,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 
-export type NotificationType = 
-  | "promotion" 
-  | "demotion" 
-  | "permission_change" 
-  | "event_assigned" 
+export type NotificationType =
+  | "promotion"
+  | "demotion"
+  | "permission_change"
+  | "event_assigned"
   | "event_updated"
   | "event_cancelled"
   | "invitation_expiring"
@@ -118,7 +118,10 @@ export function useNotifications() {
         .update({ is_read: true })
         .eq("id", notificationId);
 
-      if (error) throw error;
+      if (error) {
+        console.warn("[useNotifications] Mark as read error:", error);
+        // Do not throw, just log
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
@@ -139,7 +142,9 @@ export function useNotifications() {
         .eq("user_id", user.id)
         .eq("is_read", false);
 
-      if (error) throw error;
+      if (error) {
+        console.warn("[useNotifications] Mark all as read error:", error);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });

@@ -82,19 +82,22 @@ export interface InvitePartnerInput {
 
 export function useDistributionPartners(distributionId?: string) {
   const { user } = useAuth();
-  
+
   return useQuery({
     queryKey: ["distribution-partners", distributionId],
     queryFn: async () => {
       if (!distributionId) return [];
-      
+
       const { data, error } = await supabase
         .from("distribution_partners" as never)
         .select("*")
         .eq("distribution_id", distributionId)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.warn("[useDistributionPartners] Query error:", error);
+        return [];
+      }
       return (data ?? []) as DistributionPartner[];
     },
     enabled: !!user && !!distributionId,
@@ -119,7 +122,10 @@ export function useDistributions() {
         .select("*")
         .order("name");
 
-      if (error) throw error;
+      if (error) {
+        console.warn("[useDistributions] Query error:", error);
+        return [];
+      }
       return (data ?? []) as Distribution[];
     },
     enabled: !!user,
@@ -177,7 +183,10 @@ export function useDistributions() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.warn("[useDistributions] Create distribution error:", error);
+        throw error;
+      }
       return data as Distribution;
     },
     onSuccess: () => {
@@ -199,7 +208,10 @@ export function useDistributions() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.warn("[useDistributions] Update distribution error:", error);
+        throw error;
+      }
       return data as Distribution;
     },
     onSuccess: () => {
@@ -238,7 +250,10 @@ export function useDistributions() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.warn("[useDistributions] Invite partner error:", error);
+        throw error;
+      }
       return data as DistributionPartner;
     },
     onSuccess: (_, variables) => {
@@ -264,7 +279,10 @@ export function useDistributions() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.warn("[useDistributions] Activate partner error:", error);
+        throw error;
+      }
       const result = data as DistributionPartner;
       result.distribution_id = distributionId;
       return result;
@@ -288,7 +306,10 @@ export function useDistributions() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.warn("[useDistributions] Update partner error:", error);
+        throw error;
+      }
       return data as DistributionPartner;
     },
     onSuccess: (data) => {
@@ -310,7 +331,10 @@ export function useDistributions() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.warn("[useDistributions] Suspend partner error:", error);
+        throw error;
+      }
       const result = data as DistributionPartner;
       result.distribution_id = distributionId;
       return result;
@@ -330,7 +354,7 @@ export function useDistributions() {
     isLoading: distributionsQuery.isLoading,
     myDistribution: myDistributionQuery.data,
     isLoadingMyDistribution: myDistributionQuery.isLoading,
-    
+
     // Mutations
     createDistribution,
     updateDistribution,

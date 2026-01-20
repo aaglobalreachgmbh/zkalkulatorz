@@ -64,9 +64,9 @@ export function useCloudSeats() {
         // CRITICAL: Don't throw on auth errors - session is being cleaned up
         if (error) {
           const errorMsg = error.message?.toLowerCase() || "";
-          if (errorMsg.includes("refresh_token") || 
-              errorMsg.includes("jwt") ||
-              error.code === "PGRST301") {
+          if (errorMsg.includes("refresh_token") ||
+            errorMsg.includes("jwt") ||
+            error.code === "PGRST301") {
             console.warn("[useCloudSeats] Auth error, returning []:", error.message);
             return [];
           }
@@ -125,7 +125,10 @@ export function useCloudSeats() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.warn("[useCloudSeats] Assign error:", error);
+        throw error;
+      }
 
       // Update license seat count
       await updateSeatsUsed(seats.length + 1);
@@ -160,7 +163,10 @@ export function useCloudSeats() {
         .eq("user_id", userId)
         .eq("tenant_id", identity.tenantId);
 
-      if (error) throw error;
+      if (error) {
+        console.warn("[useCloudSeats] Revoke error:", error);
+        throw error;
+      }
 
       // Update license seat count
       await updateSeatsUsed(Math.max(0, seats.length - 1));

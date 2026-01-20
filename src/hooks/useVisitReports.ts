@@ -169,7 +169,10 @@ export function useVisitReports() {
         .select("id")
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.warn("[useVisitReports] Create error:", error);
+        throw error;
+      }
       return data.id;
     },
     onSuccess: () => {
@@ -199,7 +202,10 @@ export function useVisitReports() {
         })
         .eq("id", id);
 
-      if (error) throw error;
+      if (error) {
+        console.warn("[useVisitReports] Update error:", error);
+        throw error;
+      }
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["visit-reports"] });

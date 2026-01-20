@@ -220,7 +220,10 @@ export function useEmployeeGoals(month?: Date) {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.warn("[useEmployeeGoals] Set goal error:", error);
+        throw error;
+      }
       return data as EmployeeGoal;
     },
     onSuccess: () => {
@@ -243,7 +246,10 @@ export function useEmployeeGoals(month?: Date) {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.warn("[useEmployeeGoals] Update progress error:", error);
+        throw error;
+      }
 
       // Check if goal was just achieved
       if (data.target_value > 0 && data.current_value >= data.target_value) {
@@ -277,7 +283,10 @@ export function useEmployeeGoals(month?: Date) {
         .delete()
         .eq("id", goalId);
 
-      if (error) throw error;
+      if (error) {
+        console.warn("[useEmployeeGoals] Delete goal error:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });

@@ -143,13 +143,19 @@ export function useCloudDatasets() {
           })
           .eq("id", existing.id);
 
-        if (error) throw error;
+        if (error) {
+          console.warn("[useCloudDatasets] Update error:", error);
+          throw error;
+        }
       } else {
         const { error } = await supabase
           .from("custom_datasets")
           .insert(payload);
 
-        if (error) throw error;
+        if (error) {
+          console.warn("[useCloudDatasets] Insert error:", error);
+          throw error;
+        }
       }
     },
     onSuccess: () => {
@@ -161,7 +167,7 @@ export function useCloudDatasets() {
     onError: (error) => {
       console.error("Save dataset error:", error);
       toast.error("Fehler", {
-        description: "Dataset konnte nicht gespeichert werden. Nur Admins können Datasets speichern.",
+        description: "Dataset konnte nicht gespeichert werden: " + (error instanceof Error ? error.message : "Unknown error"),
       });
     },
   });
@@ -180,7 +186,10 @@ export function useCloudDatasets() {
         .delete()
         .eq("tenant_id", identity.tenantId);
 
-      if (error) throw error;
+      if (error) {
+        console.warn("[useCloudDatasets] Clear error:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       toast.success("Dataset zurückgesetzt", {

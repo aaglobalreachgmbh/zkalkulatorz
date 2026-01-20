@@ -285,7 +285,10 @@ export function useProvisionCalculator(options?: {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.warn("[useProvisionCalculator] Save error:", error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
@@ -317,7 +320,10 @@ export function useProvisionCalculator(options?: {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.warn("[useProvisionCalculator] Approve error:", error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
@@ -342,7 +348,10 @@ export function useProvisionCalculator(options?: {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.warn("[useProvisionCalculator] Mark paid error:", error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {

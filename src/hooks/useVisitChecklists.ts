@@ -201,7 +201,10 @@ export function useVisitChecklists() {
         })
         .eq("id", id);
 
-      if (error) throw error;
+      if (error) {
+        console.warn("[useVisitChecklists] Update error:", error);
+        throw error;
+      }
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["visit-checklists"] });
@@ -222,7 +225,10 @@ export function useVisitChecklists() {
         .update({ is_active: false })
         .eq("id", checklistId);
 
-      if (error) throw error;
+      if (error) {
+        console.warn("[useVisitChecklists] Delete error:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["visit-checklists"] });
@@ -259,11 +265,11 @@ export function useVisitChecklists() {
     for (const item of checklist.items) {
       if (item.required) {
         const value = responses[item.id];
-        
+
         if (value === undefined || value === null || value === "") {
           errors.push(`"${item.label}" ist erforderlich`);
         }
-        
+
         if (item.type === "checkbox" && value !== true) {
           errors.push(`"${item.label}" muss bestätigt werden`);
         }

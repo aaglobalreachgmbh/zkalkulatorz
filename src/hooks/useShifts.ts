@@ -260,7 +260,10 @@ export function useShifts(options?: { startDate?: Date; endDate?: Date }) {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.warn("[useShifts] Create error:", error);
+        throw error;
+      }
 
       // Notify assigned user if not self
       if (input.user_id !== user.id) {
@@ -282,24 +285,28 @@ export function useShifts(options?: { startDate?: Date; endDate?: Date }) {
     },
     onError: (error) => {
       console.error("[useShifts] Create error:", error);
-      toast.error("Fehler beim Erstellen der Schicht");
+      toast.error("Fehler beim Erstellen der Schicht: " + error.message);
     },
   });
 
   // Update shift mutation
   const updateShiftMutation = useMutation({
     mutationFn: async (input: Partial<CreateShiftInput> & { id: string; status?: ShiftStatus }) => {
-      const { id, ...updates } = input;
+      try {
+        const { id, ...updates } = input;
+        const { data, error } = await supabase
+          .from("shifts")
+          .update(updates)
+          .eq("id", id)
+          .select()
+          .single();
 
-      const { data, error } = await supabase
-        .from("shifts")
-        .update(updates)
-        .eq("id", id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data as Shift;
+        if (error) throw error;
+        return data as Shift;
+      } catch (e) {
+        console.warn("[useShifts] Update exception", e);
+        throw e; // Mutation error boundary handling
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: SHIFTS_KEY });
@@ -307,15 +314,20 @@ export function useShifts(options?: { startDate?: Date; endDate?: Date }) {
     },
     onError: (error) => {
       console.error("[useShifts] Update error:", error);
-      toast.error("Fehler beim Aktualisieren");
+      toast.error("Fehler beim Aktualisieren: " + error.message);
     },
   });
 
   // Delete shift mutation
   const deleteShiftMutation = useMutation({
     mutationFn: async (shiftId: string) => {
-      const { error } = await supabase.from("shifts").delete().eq("id", shiftId);
-      if (error) throw error;
+      try {
+        const { error } = await supabase.from("shifts").delete().eq("id", shiftId);
+        if (error) throw error;
+      } catch (e) {
+        console.warn("[useShifts] Delete exception", e);
+        throw e;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: SHIFTS_KEY });
@@ -323,7 +335,7 @@ export function useShifts(options?: { startDate?: Date; endDate?: Date }) {
     },
     onError: (error) => {
       console.error("[useShifts] Delete error:", error);
-      toast.error("Fehler beim Löschen");
+      toast.error("Fehler beim Löschen: " + error.message);
     },
   });
 
@@ -340,21 +352,26 @@ export function useShifts(options?: { startDate?: Date; endDate?: Date }) {
         return null;
       }
 
-      const { data, error } = await supabase
-        .from("shift_swap_requests")
-        .insert({
-          tenant_id: identity.tenantId,
-          shift_id: input.shift_id,
-          requesting_user_id: user.id,
-          target_user_id: input.target_user_id || null,
-          reason: input.reason || null,
-          status: "pending",
-        })
-        .select()
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from("shift_swap_requests")
+          .insert({
+            tenant_id: identity.tenantId,
+            shift_id: input.shift_id,
+            requesting_user_id: user.id,
+            target_user_id: input.target_user_id || null,
+            reason: input.reason || null,
+            status: "pending",
+          })
+          .select()
+          .single();
 
-      if (error) throw error;
-      return data as ShiftSwapRequest;
+        if (error) throw error;
+        return data as ShiftSwapRequest;
+      } catch (e) {
+        console.warn("Swap Request Error", e);
+        throw e;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: SWAP_REQUESTS_KEY });
@@ -362,7 +379,7 @@ export function useShifts(options?: { startDate?: Date; endDate?: Date }) {
     },
     onError: (error) => {
       console.error("[useShifts] Create swap request error:", error);
-      toast.error("Fehler beim Erstellen der Tausch-Anfrage");
+      toast.error("Fehler beim Erstellen der Tausch-Anfrage: " + error.message);
     },
   });
 
@@ -384,24 +401,29 @@ export function useShifts(options?: { startDate?: Date; endDate?: Date }) {
         updateData.approved_at = new Date().toISOString();
       }
 
-      const { data, error } = await supabase
-        .from("shift_swap_requests")
-        .update(updateData)
-        .eq("id", input.id)
-        .select(`*, shift:shifts(*)`)
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from("shift_swap_requests")
+          .update(updateData)
+          .eq("id", input.id)
+          .select(`*, shift:shifts(*)`)
+          .single();
 
-      if (error) throw error;
+        if (error) throw error;
 
-      // If approved, swap the shifts
-      if (input.status === "approved" && data.target_user_id && data.shift) {
-        await supabase
-          .from("shifts")
-          .update({ user_id: data.target_user_id })
-          .eq("id", data.shift_id);
+        // If approved, swap the shifts
+        if (input.status === "approved" && data.target_user_id && data.shift) {
+          await supabase
+            .from("shifts")
+            .update({ user_id: data.target_user_id })
+            .eq("id", data.shift_id);
+        }
+
+        return data as ShiftSwapRequest;
+      } catch (e) {
+        console.warn("Update Swap Error", e);
+        throw e;
       }
-
-      return data as ShiftSwapRequest;
     },
     onSuccess: (data) => {
       if (!data) return;
@@ -424,7 +446,7 @@ export function useShifts(options?: { startDate?: Date; endDate?: Date }) {
     },
     onError: (error) => {
       console.error("[useShifts] Update swap request error:", error);
-      toast.error("Fehler beim Aktualisieren");
+      toast.error("Fehler beim Aktualisieren: " + error.message);
     },
   });
 

@@ -160,7 +160,10 @@ export function useCloudDepartments() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.warn("[useCloudDepartments] Create error:", error);
+        throw error;
+      }
       return rowToDepartment(data);
     },
     onSuccess: () => {
@@ -206,7 +209,10 @@ export function useCloudDepartments() {
         .update(updates)
         .eq("id", id);
 
-      if (error) throw error;
+      if (error) {
+        console.warn("[useCloudDepartments] Update error:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: DEPARTMENTS_KEY });
@@ -236,7 +242,10 @@ export function useCloudDepartments() {
       // Then delete department
       const { error } = await supabase.from("departments").delete().eq("id", id);
 
-      if (error) throw error;
+      if (error) {
+        console.warn("[useCloudDepartments] Create error:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       toast.success("Abteilung gelöscht");
@@ -284,7 +293,10 @@ export function useCloudDepartments() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.warn("[useCloudDepartments] Assign user error:", error);
+        throw error;
+      }
       return rowToAssignment(data);
     },
     onSuccess: () => {
@@ -312,7 +324,10 @@ export function useCloudDepartments() {
         .eq("user_id", userId)
         .eq("tenant_id", identity.tenantId);
 
-      if (error) throw error;
+      if (error) {
+        console.warn("[useCloudDepartments] Remove user error:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ASSIGNMENTS_KEY });

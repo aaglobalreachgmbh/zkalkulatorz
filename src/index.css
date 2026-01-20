@@ -14,9 +14,13 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    /* Vodafone Red - deeper, more saturated */
-    --primary: 0 85% 47%;
-    --primary-foreground: 0 0% 100%;
+    /* Authority Move: Primary is now Slate-900 (Deep Black/Blue) */
+    --primary: 222 47% 11%;
+    --primary-foreground: 210 40% 98%;
+
+    /* Brand Accent: Vodafone Red (preserved for logos/highlights) */
+    --brand: 0 85% 47%;
+    --brand-foreground: 0 0% 100%;
 
     --secondary: 220 13% 91%;
     --secondary-foreground: 222 47% 11%;
@@ -32,9 +36,10 @@
 
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 0 85% 47%;
+    --ring: 222 47% 11%; /* Ring matches Primary */
 
-    --radius: 0.75rem;
+    /* Precision Cut: 8px (0.5rem) */
+    --radius: 0.5rem;
 
     /* Dark panel for contrast cards */
     --panel-dark: 222 47% 11%;
@@ -48,12 +53,12 @@
 
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 222 47% 11%;
-    --sidebar-primary: 0 85% 47%;
+    --sidebar-primary: 222 47% 11%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 220 13% 96%;
     --sidebar-accent-foreground: 222 47% 11%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 0 85% 47%;
+    --sidebar-ring: 222 47% 11%;
   }
 
   .dark {
@@ -66,8 +71,11 @@
     --popover: 222 47% 11%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 0 85% 55%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222 47% 11%;
+
+    --brand: 0 85% 55%;
+    --brand-foreground: 0 0% 100%;
 
     --secondary: 222 30% 18%;
     --secondary-foreground: 0 0% 98%;
@@ -83,7 +91,7 @@
 
     --border: 222 30% 20%;
     --input: 222 30% 20%;
-    --ring: 0 85% 55%;
+    --ring: 210 40% 98%;
 
     --panel-dark: 222 47% 6%;
     --panel-dark-foreground: 0 0% 98%;
@@ -108,6 +116,8 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    /* Financial Standard: Tabular Nums & Stylistic Sets */
+    font-feature-settings: "cv11", "ss01";
   }
   
   /* Tenant Branding: CSS variable for dynamic primary color */

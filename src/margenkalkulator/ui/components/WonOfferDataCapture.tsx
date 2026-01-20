@@ -146,16 +146,45 @@ export function WonOfferDataCapture({
   const form = useForm<WonDataFormValues>({
     resolver: zodResolver(wonDataSchema) as any,
     defaultValues: {
-      company: initialData?.company ?? DEFAULT_WON_OFFER_DATA.company,
-      contact: initialData?.contact ?? DEFAULT_WON_OFFER_DATA.contact,
-      billingAddress: initialData?.billingAddress ?? DEFAULT_WON_OFFER_DATA.billingAddress,
-      payment: initialData?.payment,
+      company: {
+        name: initialData?.company?.name ?? DEFAULT_WON_OFFER_DATA.company.name,
+        legalForm: initialData?.company?.legalForm ?? DEFAULT_WON_OFFER_DATA.company.legalForm,
+        registerType: initialData?.company?.registerType ?? "",
+        registerNumber: initialData?.company?.registerNumber ?? "",
+        registerPlace: initialData?.company?.registerPlace ?? "",
+        taxId: initialData?.company?.taxId ?? "",
+        vatId: initialData?.company?.vatId ?? "",
+      },
+      contact: {
+        salutation: initialData?.contact?.salutation ?? DEFAULT_WON_OFFER_DATA.contact.salutation,
+        firstName: initialData?.contact?.firstName ?? DEFAULT_WON_OFFER_DATA.contact.firstName,
+        lastName: initialData?.contact?.lastName ?? DEFAULT_WON_OFFER_DATA.contact.lastName,
+        email: initialData?.contact?.email ?? DEFAULT_WON_OFFER_DATA.contact.email,
+        phone: initialData?.contact?.phone ?? "",
+        mobile: initialData?.contact?.mobile ?? "",
+        position: initialData?.contact?.position ?? "",
+      },
+      billingAddress: {
+        street: initialData?.billingAddress?.street ?? DEFAULT_WON_OFFER_DATA.billingAddress.street,
+        houseNumber: initialData?.billingAddress?.houseNumber ?? DEFAULT_WON_OFFER_DATA.billingAddress.houseNumber,
+        addressLine2: initialData?.billingAddress?.addressLine2 ?? "",
+        zipCode: initialData?.billingAddress?.zipCode ?? DEFAULT_WON_OFFER_DATA.billingAddress.zipCode,
+        city: initialData?.billingAddress?.city ?? DEFAULT_WON_OFFER_DATA.billingAddress.city,
+        country: initialData?.billingAddress?.country ?? "Deutschland",
+      },
+      payment: initialData?.payment ?? {
+        iban: "",
+        bic: "",
+        accountHolder: "",
+        bankName: "",
+        sepaMandateAccepted: false,
+      },
       simOptions: {
         ...DEFAULT_WON_OFFER_DATA.simOptions,
         type: (initialData?.simOptions?.type as any) ?? DEFAULT_WON_OFFER_DATA.simOptions.type,
       },
-      customerPassword: initialData?.customerPassword,
-      internalNotes: initialData?.internalNotes,
+      customerPassword: initialData?.customerPassword ?? "",
+      internalNotes: initialData?.internalNotes ?? "",
     },
   });
 

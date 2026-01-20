@@ -34,8 +34,19 @@ jobs:
       - name: 🧪 Unit Tests
         run: npm run test
 
-      # Playwright testing is heavier, so we might want to split it or cache browsers
-      # For now, let's keep it simple and ensure at least unit tests pass
-      
+      - name: ⚡ Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: 🚀 Start Supabase (Ephemeral DB)
+        run: supabase start -x realtime,storage-api,imgproxy,studio,migra,postgres-meta
+
+      - name: 🔒 Run Canary Security Queries
+        run: supabase test db
+
+      - name: 🛑 Stop Supabase
+        run: supabase stop --no-backup
+
       - name: 🏗️ Build Verification
         run: npm run build

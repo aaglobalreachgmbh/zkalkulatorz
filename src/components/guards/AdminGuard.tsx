@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router-dom";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -11,23 +11,17 @@ interface AdminGuardProps {
 /**
  * Protects routes for Admins only.
  * Redirects to home if user does not have 'admin' or 'superadmin' role.
- * 
- * @deprecated Use Server Components and `requireAdmin()` for route protection.
- * This component is only for client-side fallbacks or legacy pages.
  */
 export function AdminGuard({ children }: AdminGuardProps) {
     const { isAdmin, isLoading, error } = useUserRole();
-    const router = useRouter();
+    const navigate = useNavigate();
 
     useEffect(() => {
-        if (process.env.NODE_ENV === 'development') {
-            console.warn("[AdminGuard] Deprecated: server-side `requireAdmin` should be used for route protection.");
-        }
         if (!isLoading && !isAdmin) {
             toast.error("Zugriff verweigert: Nur für Administratoren.");
-            router.push("/");
+            navigate("/");
         }
-    }, [isAdmin, isLoading, router]);
+    }, [isAdmin, isLoading, navigate]);
 
     if (isLoading) {
         return (

@@ -20,16 +20,8 @@ describe('Calculation Service (Golden Tests)', () => {
     // CLAIM 1: Invalid Input throws BEFORE Edge Function
     it('should throw "Invalid Input" instantly if volume is negative', async () => {
         const invalidInput = {
-            productId: 'test-id', // Schema accepts uuid, but invalid call throws before Zod check in this test case logic? 
-            // Wait, for this test case "invalid input", we want it to fail Zod validation.
-            // If we pass -1 volume, it fails volume check. 
-            // If productId is also invalid, it might fail that first.
-            // But the test expects /Invalid Input/. 
-            // 'test-id' is invalid UUID, so it should throw.
-            // Claim 1 says invalid input throws. So 'test-id' is actually fine for Claim 1 if we expect it to fail.
-            // But Claim 2 and Happy Path need VALID input to pass Zod and reach the mock.
-            productId: 'test-id',
-            volume: -1, // Invalid
+            productId: 'test-id', // Invalid UUID should fail validation
+            volume: -1, // Invalid volume
             customerType: 'BUSINESS' as const,
         };
 

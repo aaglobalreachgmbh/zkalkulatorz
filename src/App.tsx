@@ -768,4 +768,6 @@ const App = () => {
     </AppErrorBoundary>
   );
 
-  export default App;
+};
+
+export default App;

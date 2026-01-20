@@ -35,7 +35,7 @@ export interface OfferCustomerInfo {
   ort: string;
   strasse: string;
   hausnummer: string;
-  
+
   // Ansprechpartner (rechts im Formular)
   apName: string;
   apAnrede: "Herr" | "Frau" | "Divers" | "";
@@ -116,17 +116,17 @@ export const DEFAULT_OFFER_OPTIONS: OfferOptions = {
 interface OfferBasketContextType {
   items: BasketItem[];
   itemCount: number;
-  
+
   // Basket-Operationen
   addItem: (name: string, option: OfferOptionState, result: CalculationResult) => void;
   removeItem: (id: string) => void;
   clearBasket: () => void;
-  
+
   // Modal-State
   isModalOpen: boolean;
   openModal: () => void;
   closeModal: () => void;
-  
+
   // Aktueller Angebots-State
   customer: OfferCustomerInfo;
   setCustomer: (info: OfferCustomerInfo) => void;
@@ -136,7 +136,7 @@ interface OfferBasketContextType {
   setAnschreiben: (text: string) => void;
   angebotstext: string;
   setAngebotstext: (text: string) => void;
-  
+
   // Finales Angebot erstellen
   createOfferConfig: () => OfferConfig;
   resetOffer: () => void;
@@ -227,7 +227,7 @@ export function OfferBasketProvider({ children }: { children: React.ReactNode })
     createOfferConfig,
     resetOffer,
   }), [
-    items, addItem, removeItem, clearBasket, 
+    items, addItem, removeItem, clearBasket,
     isModalOpen, openModal, closeModal,
     customer, options, anschreiben, angebotstext,
     createOfferConfig, resetOffer
@@ -240,13 +240,51 @@ export function OfferBasketProvider({ children }: { children: React.ReactNode })
   );
 }
 
+// ============================================
+// SAFE DEFAULT für useOfferBasket
+// Verhindert White-Screen Crashes wenn Hook
+// außerhalb des Providers verwendet wird
+// ============================================
+const SAFE_DEFAULT_BASKET: OfferBasketContextType = {
+  items: [],
+  itemCount: 0,
+  addItem: () => console.warn("[useOfferBasket] Cannot add item - no provider"),
+  removeItem: () => console.warn("[useOfferBasket] Cannot remove item - no provider"),
+  clearBasket: () => console.warn("[useOfferBasket] Cannot clear basket - no provider"),
+  isModalOpen: false,
+  openModal: () => console.warn("[useOfferBasket] Cannot open modal - no provider"),
+  closeModal: () => console.warn("[useOfferBasket] Cannot close modal - no provider"),
+  customer: DEFAULT_CUSTOMER_INFO,
+  setCustomer: () => console.warn("[useOfferBasket] Cannot set customer - no provider"),
+  options: DEFAULT_OFFER_OPTIONS,
+  setOptions: () => console.warn("[useOfferBasket] Cannot set options - no provider"),
+  anschreiben: "",
+  setAnschreiben: () => console.warn("[useOfferBasket] Cannot set anschreiben - no provider"),
+  angebotstext: "",
+  setAngebotstext: () => console.warn("[useOfferBasket] Cannot set angebotstext - no provider"),
+  createOfferConfig: () => {
+    console.warn("[useOfferBasket] Cannot create config - no provider");
+    return {
+      customer: DEFAULT_CUSTOMER_INFO,
+      options: DEFAULT_OFFER_OPTIONS,
+      anschreiben: "",
+      angebotstext: "",
+      items: [],
+      createdAt: new Date(),
+    };
+  },
+  resetOffer: () => console.warn("[useOfferBasket] Cannot reset offer - no provider"),
+};
+
 /**
  * Hook zum Verwenden des Offer Basket
+ * Gibt Safe Default zurück wenn außerhalb des Providers verwendet
  */
-export function useOfferBasket() {
+export function useOfferBasket(): OfferBasketContextType {
   const context = useContext(OfferBasketContext);
   if (!context) {
-    throw new Error("useOfferBasket must be used within an OfferBasketProvider");
+    console.warn("[useOfferBasket] Used outside OfferBasketProvider, returning safe default");
+    return SAFE_DEFAULT_BASKET;
   }
   return context;
 }

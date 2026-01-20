@@ -1,15 +1,52 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { createContext, useContext, useCallback, useEffect, useMemo, useState } from "react";
 import { checkAllThreats, sanitizeAll, escapeHtml, RATE_LIMITS } from "@/lib/securityPatterns";
 import { logSecurityEvent as logLocalSecurityEvent } from "@/lib/securityUtils";
 import {
   logSecurityEvent as logRemoteSecurityEvent,
   logThreat,
   logRateLimit,
+  type SecurityEventType,
   type RiskLevel
 } from "@/lib/securityLogger";
 import { auditLocalStorage, formatAuditForLog } from "@/lib/localStoragePolicy";
 import { isCryptoAvailable } from "@/lib/secureStorage";
-import { SecurityContext, type SecurityContextType, type SecurityEvent } from "@/contexts/SecurityContext";
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+interface SecurityEvent {
+  type: SecurityEventType;
+  timestamp: number;
+  details: Record<string, unknown>;
+}
+
+interface SecurityContextType {
+  // Input Security
+  sanitize: (input: string, maxLength?: number) => string;
+  escape: (input: string) => string;
+  checkThreats: (input: string) => ReturnType<typeof checkAllThreats>;
+
+  // Rate Limiting (Client-side)
+  canMakeRequest: (category: keyof typeof RATE_LIMITS) => boolean;
+  getRemainingRequests: (category: keyof typeof RATE_LIMITS) => number;
+
+  // Event Logging
+  logEvent: (event: Omit<SecurityEvent, "timestamp">) => void;
+
+  // Status
+  isSecurityActive: boolean;
+  recentEvents: SecurityEvent[];
+
+  // Phase C additions
+  isEncryptionAvailable: boolean;
+}
+
+// ============================================================================
+// CONTEXT
+// ============================================================================
+
+const SecurityContext = createContext<SecurityContextType | null>(null);
 
 // ============================================================================
 // RATE LIMITER IMPLEMENTATION
@@ -31,6 +68,7 @@ function createRateLimiterState(config: { maxRequests: number; windowMs: number 
 
 function canMakeRequestWithState(state: RateLimiterState): boolean {
   const now = Date.now();
+  // Entferne alte Einträge
   state.requests = state.requests.filter((t) => t > now - state.windowMs);
 
   if (state.requests.length >= state.maxRequests) {
@@ -178,9 +216,10 @@ export function SecurityProvider({ children }: { children: React.ReactNode }) {
 
   // Prevent common attacks
   useEffect(() => {
-    // Prevent drag-and-drop of external files
+    // Prevent drag-and-drop of external files (can be used for attacks)
     const preventDrop = (e: DragEvent) => {
       if (e.dataTransfer?.types.includes("Files")) {
+        // Only allow on specific drop zones
         const target = e.target as HTMLElement;
         if (!target.closest("[data-allow-drop]")) {
           e.preventDefault();
@@ -189,10 +228,14 @@ export function SecurityProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
+    // Prevent paste of HTML content
     const sanitizePaste = (e: ClipboardEvent) => {
       const target = e.target as HTMLElement;
+
+      // Only for inputs and textareas
       if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") {
         const html = e.clipboardData?.getData("text/html");
+
         if (html && /<script|javascript:|on\w+=/i.test(html)) {
           e.preventDefault();
           const plainText = e.clipboardData?.getData("text/plain") || "";
@@ -212,9 +255,10 @@ export function SecurityProvider({ children }: { children: React.ReactNode }) {
     };
   }, [sanitize]);
 
-  // Block devtools in production
+  // Block devtools in production (basic protection)
   useEffect(() => {
     if (import.meta.env.PROD) {
+      // Disable right-click context menu on sensitive elements
       const handleContextMenu = (e: MouseEvent) => {
         const target = e.target as HTMLElement;
         if (target.closest("[data-sensitive]")) {
@@ -230,31 +274,36 @@ export function SecurityProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // localStorage Security Audit
+  // localStorage Security Audit bei App-Start
   useEffect(() => {
     const audit = auditLocalStorage();
 
+    // In Development: Immer loggen
     if (import.meta.env.DEV) {
       console.log(formatAuditForLog(audit));
     }
 
+    // Warnung bei sensiblen Daten (auch in Production)
     if (audit.sensitive.length > 0) {
       console.warn(
         "[Security] Potentiell sensible Daten in localStorage gefunden:",
         audit.sensitive
       );
 
+      // Remote-Logging für sensible Daten
       logRemoteSecurityEvent({
         event_type: "anomaly_detected",
         risk_level: "medium",
         details: {
           audit_type: "localStorage_sensitive_keys",
           sensitive_keys_count: audit.sensitive.length,
+          // Keine Key-Namen senden aus Datenschutzgründen
         },
       });
     }
   }, []);
 
+  // Check encryption availability
   const isEncryptionAvailable = useMemo(() => isCryptoAvailable(), []);
 
   const value = useMemo<SecurityContextType>(
@@ -279,7 +328,57 @@ export function SecurityProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default SecurityProvider;
+// ============================================================================
+// SAFE DEFAULT für useSecurity
+// Verhindert White-Screen Crashes wenn Hook außerhalb des Providers verwendet wird
+// ============================================================================
+const SAFE_DEFAULT_SECURITY: SecurityContextType = {
+  sanitize: (input: string) => {
+    console.warn("[useSecurity] Sanitize called without provider - returning input as-is");
+    return input;
+  },
+  escape: (input: string) => {
+    console.warn("[useSecurity] Escape called without provider - returning input as-is");
+    return input;
+  },
+  checkThreats: () => {
+    console.warn("[useSecurity] checkThreats called without provider - returning safe");
+    return { isSafe: true, threats: [], riskLevel: "none" as const };
+  },
+  canMakeRequest: () => {
+    console.warn("[useSecurity] canMakeRequest called without provider - allowing request");
+    return true;
+  },
+  getRemainingRequests: () => {
+    console.warn("[useSecurity] getRemainingRequests called without provider");
+    return Infinity;
+  },
+  logEvent: () => {
+    console.warn("[useSecurity] logEvent called without provider - event ignored");
+  },
+  isSecurityActive: false,  // Indicates degraded mode
+  recentEvents: [],
+  isEncryptionAvailable: false,
+};
 
-// eslint-disable-next-line react-refresh/only-export-components
-export { useSecurity, useSecurityOptional } from "@/contexts/SecurityContext";
+// ============================================================================
+// HOOK
+// ============================================================================
+
+export function useSecurity(): SecurityContextType {
+  const context = useContext(SecurityContext);
+
+  if (!context) {
+    console.warn("[useSecurity] Used outside SecurityProvider, returning safe default");
+    return SAFE_DEFAULT_SECURITY;
+  }
+
+  return context;
+}
+
+// Optional hook that returns null if not in provider (for HOC usage)
+export function useSecurityOptional(): SecurityContextType | null {
+  return useContext(SecurityContext);
+}
+
+export default SecurityProvider;

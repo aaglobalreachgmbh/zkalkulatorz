@@ -379,335 +379,393 @@ function SafeProviderStack({ children }: { children: ReactNode }) {
 // ============================================================================
 // MAIN APP COMPONENT
 // ============================================================================
-const App = () => (
-  // PHASE 1: Top-level error boundary OUTSIDE all providers
-  <AppErrorBoundary>
-    <QueryClientProvider client={queryClient}>
-      <SafeProviderStack>
-        <SeatLimitGate>
-          <MobileAccessGate allowedPaths={ALWAYS_ALLOWED_PATHS}>
-            <Toaster richColors position="top-right" />
-            <BrowserRouter>
-              <RouteErrorBoundary>
-                <Suspense fallback={<PageLoader />}>
-                  <Routes>
-                    {/* Public routes - no authentication required */}
-                    <Route path="/auth" element={<Auth />} />
-                    <Route path="/auth/reset-password" element={<ResetPassword />} />
-                    <Route path="/datenschutz" element={<Privacy />} />
-                    <Route path="/pending-approval" element={<PendingApproval />} />
+import { isSupabaseConfigured } from "@/lib/supabase";
+import { AlertCircle, LockKeyhole } from "lucide-react";
 
-                    {/* ALL other routes require authentication */}
-                    <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-                    <Route
-                      path="/calculator"
-                      element={
-                        <ProtectedRoute>
-                          <EnterpriseErrorBoundary moduleName="Calculator Engine">
-                            <Index />
-                          </EnterpriseErrorBoundary>
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route path="/bundles" element={<ProtectedRoute><Bundles /></ProtectedRoute>} />
-                    <Route path="/daten" element={<ProtectedRoute><DataHub /></ProtectedRoute>} />
-                    <Route path="/license" element={<ProtectedRoute><License /></ProtectedRoute>} />
+// Fallback screen when environment variables are missing
+const ConfigurationGate = () => (
+  <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 p-4 font-sans">
+    <div className="max-w-lg w-full bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 p-8 text-center space-y-6">
+      <div className="w-20 h-20 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+        <LockKeyhole className="w-10 h-10 text-amber-600 dark:text-amber-500" />
+      </div>
 
-                    {/* Admin routes */}
-                    <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
-                    <Route path="/admin/employees" element={<AdminRoute><AdminEmployees /></AdminRoute>} />
-                    <Route path="/admin/push-provisions" element={<AdminRoute><AdminPushProvisions /></AdminRoute>} />
-                    <Route path="/admin/quantity-bonus" element={<AdminRoute><AdminQuantityBonus /></AdminRoute>} />
-                    <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
-                    {/* Redirect old route to new super-admin */}
-                    <Route path="/admin/customers" element={<Navigate to="/super-admin" replace />} />
-                    <Route path="/super-admin" element={<AdminRoute><SuperAdmin /></AdminRoute>} />
-                    <Route path="/admin/permissions" element={<TenantAdminRoute><AdminPermissions /></TenantAdminRoute>} />
+      <div className="space-y-2">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+          Access Restricted
+        </h1>
+        <p className="text-slate-500 dark:text-slate-400">
+          Application secrets are missing.
+        </p>
+      </div>
 
-                    <Route
-                      path="/offers"
-                      element={
-                        <ProtectedRoute>
-                          <Offers />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/offers/:id"
-                      element={
-                        <ProtectedRoute>
-                          <EnterpriseErrorBoundary moduleName="Offer Detail">
-                            <OfferDetail />
-                          </EnterpriseErrorBoundary>
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/customers"
-                      element={
-                        <ProtectedRoute>
-                          <Customers />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/customers/:id"
-                      element={
-                        <ProtectedRoute>
-                          <CustomerDetail />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/customers/import"
-                      element={
-                        <ProtectedRoute>
-                          <MoccaImport />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/contracts"
-                      element={
-                        <ProtectedRoute>
-                          <Contracts />
-                        </ProtectedRoute>
-                      }
-                    />
-                    {/* VVL-Tracker alias for /contracts */}
-                    <Route
-                      path="/vvl-tracker"
-                      element={<Navigate to="/contracts" replace />}
-                    />
-                    <Route
-                      path="/team"
-                      element={
-                        <ProtectedRoute>
-                          <Team />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/reporting"
-                      element={
-                        <ProtectedRoute>
-                          <Reporting />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/settings/security"
-                      element={
-                        <ProtectedRoute>
-                          <SecuritySettings />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/settings/hardware-images"
-                      element={
-                        <ProtectedRoute>
-                          <HardwareImages />
-                        </ProtectedRoute>
-                      }
-                    />
-                    {/* Distribution Dashboard - Tenant Admin */}
-                    <Route
-                      path="/admin/distribution"
-                      element={
-                        <ProtectedRoute>
-                          <DistributionDashboard />
-                        </ProtectedRoute>
-                      }
-                    />
-                    {/* Time Tracking */}
-                    <Route
-                      path="/time-tracking"
-                      element={
-                        <ProtectedRoute>
-                          <TimeTracking />
-                        </ProtectedRoute>
-                      }
-                    />
-                    {/* Provisions */}
-                    <Route
-                      path="/provisions"
-                      element={
-                        <ProtectedRoute>
-                          <Provisions />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/security"
-                      element={
-                        <FeatureRoute feature="adminSecurityAccess">
-                          <AdminRoute>
-                            <SecurityDashboard />
-                          </AdminRoute>
-                        </FeatureRoute>
-                      }
-                    />
-                    <Route
-                      path="/security/report"
-                      element={
-                        <FeatureRoute feature="adminSecurityAccess">
-                          <AdminRoute>
-                            <SecurityReport />
-                          </AdminRoute>
-                        </FeatureRoute>
-                      }
-                    />
-                    <Route
-                      path="/security/threat-intel"
-                      element={
-                        <FeatureRoute feature="adminSecurityAccess">
-                          <AdminRoute>
-                            <ThreatIntelligence />
-                          </AdminRoute>
-                        </FeatureRoute>
-                      }
-                    />
-                    <Route
-                      path="/security/status"
-                      element={
-                        <FeatureRoute feature="adminSecurityAccess">
-                          <AdminRoute>
-                            <SecurityStatusDashboard />
-                          </AdminRoute>
-                        </FeatureRoute>
-                      }
-                    />
-                    <Route
-                      path="/security/gdpr"
-                      element={
-                        <FeatureRoute feature="adminSecurityAccess">
-                          <AdminRoute>
-                            <GDPRDashboard />
-                          </AdminRoute>
-                        </FeatureRoute>
-                      }
-                    />
-                    <Route
-                      path="/admin/activity"
-                      element={
-                        <FeatureRoute feature="adminSecurityAccess">
-                          <AdminRoute>
-                            <ActivityDashboard />
-                          </AdminRoute>
-                        </FeatureRoute>
-                      }
-                    />
-                    <Route
-                      path="/security/test"
-                      element={
-                        <FeatureRoute feature="adminSecurityAccess">
-                          <AdminRoute>
-                            <SecurityTestPage />
-                          </AdminRoute>
-                        </FeatureRoute>
-                      }
-                    />
-                    <Route
-                      path="/data-manager"
-                      element={
-                        <FeatureRoute feature="dataGovernance">
-                          <ProtectedRoute>
-                            <DataManager />
-                          </ProtectedRoute>
-                        </FeatureRoute>
-                      }
-                    />
-                    <Route
-                      path="/data-manager/hardware"
-                      element={
-                        <FeatureRoute feature="dataGovernance">
-                          <ProtectedRoute>
-                            <HardwareManager />
-                          </ProtectedRoute>
-                        </FeatureRoute>
-                      }
-                    />
-                    {/* Tenant Admin Routes */}
-                    <Route
-                      path="/tenant-admin"
-                      element={
-                        <TenantAdminRoute>
-                          <TenantAdmin />
-                        </TenantAdminRoute>
-                      }
-                    />
-                    <Route
-                      path="/settings/branding"
-                      element={
-                        <FeatureRoute feature="customBranding">
-                          <TenantAdminRoute>
-                            <BrandingSettings />
-                          </TenantAdminRoute>
-                        </FeatureRoute>
-                      }
-                    />
+      <div className="bg-slate-100 dark:bg-slate-800/50 rounded-lg p-4 text-left border border-slate-200 dark:border-slate-700">
+        <div className="flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <p className="font-semibold text-sm text-slate-900 dark:text-slate-200">Required Action:</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+              Please configure the following environment variables in your deployment settings (Lovable Secrets):
+            </p>
+            <ul className="text-xs font-mono text-slate-500 mt-2 space-y-1 list-disc list-inside">
+              <li>VITE_SUPABASE_URL</li>
+              <li>VITE_SUPABASE_ANON_KEY</li>
+            </ul>
+          </div>
+        </div>
+      </div>
 
-                    {/* Inbox - Zentrale Dokumentenablage */}
-                    <Route
-                      path="/inbox"
-                      element={
-                        <ProtectedRoute>
-                          <Inbox />
-                        </ProtectedRoute>
-                      }
-                    />
-
-                    {/* Calendar */}
-                    <Route
-                      path="/calendar"
-                      element={
-                        <ProtectedRoute>
-                          <Calendar />
-                        </ProtectedRoute>
-                      }
-                    />
-
-                    {/* News & Aktionen */}
-                    <Route
-                      path="/news"
-                      element={
-                        <ProtectedRoute>
-                          <News />
-                        </ProtectedRoute>
-                      }
-                    />
-
-                    {/* Admin News */}
-                    <Route
-                      path="/admin/news"
-                      element={
-                        <TenantAdminRoute>
-                          <AdminNews />
-                        </TenantAdminRoute>
-                      }
-                    />
-
-                    {/* Redirect routes for commonly attempted paths - prevents 404s */}
-                    <Route path="/settings" element={<Navigate to="/settings/security" replace />} />
-                    <Route path="/profile" element={<Navigate to="/" replace />} />
-                    <Route path="/reports" element={<Navigate to="/reporting" replace />} />
-                    <Route path="/wizard" element={<Navigate to="/calculator" replace />} />
-
-                    {/* Public shared offer view (no auth required) */}
-                    <Route path="/share/offer/:offerId" element={<SharedOfferPage />} />
-
-                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </Suspense>
-              </RouteErrorBoundary>
-            </BrowserRouter>
-          </MobileAccessGate>
-        </SeatLimitGate>
-      </SafeProviderStack>
-    </QueryClientProvider>
-  </AppErrorBoundary>
+      <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+        <Button
+          onClick={() => window.location.reload()}
+          className="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium"
+        >
+          Check Configuration Again
+        </Button>
+        <p className="text-[10px] text-slate-400 mt-3">
+          Error Code: MISSING_ENV_VARS
+        </p>
+      </div>
+    </div>
+  </div>
 );
 
-export default App;
+const App = () => {
+  // CRITICAL: Block app initialization if secrets are missing.
+  // This prevents the "White Screen" or DNS errors caused by invalid Supabase URLs.
+  if (!isSupabaseConfigured()) {
+    return <ConfigurationGate />;
+  }
+
+  return (
+    // PHASE 1: Top-level error boundary OUTSIDE all providers
+    <AppErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <SafeProviderStack>
+          <SeatLimitGate>
+            <MobileAccessGate allowedPaths={ALWAYS_ALLOWED_PATHS}>
+              <Toaster richColors position="top-right" />
+              <BrowserRouter>
+                <RouteErrorBoundary>
+                  <Suspense fallback={<PageLoader />}>
+                    <Routes>
+                      {/* Public routes - no authentication required */}
+                      <Route path="/auth" element={<Auth />} />
+                      <Route path="/auth/reset-password" element={<ResetPassword />} />
+                      <Route path="/datenschutz" element={<Privacy />} />
+                      <Route path="/pending-approval" element={<PendingApproval />} />
+
+                      {/* ALL other routes require authentication */}
+                      <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+                      <Route
+                        path="/calculator"
+                        element={
+                          <ProtectedRoute>
+                            <EnterpriseErrorBoundary moduleName="Calculator Engine">
+                              <Index />
+                            </EnterpriseErrorBoundary>
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route path="/bundles" element={<ProtectedRoute><Bundles /></ProtectedRoute>} />
+                      <Route path="/daten" element={<ProtectedRoute><DataHub /></ProtectedRoute>} />
+                      <Route path="/license" element={<ProtectedRoute><License /></ProtectedRoute>} />
+
+                      {/* Admin routes */}
+                      <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+                      <Route path="/admin/employees" element={<AdminRoute><AdminEmployees /></AdminRoute>} />
+                      <Route path="/admin/push-provisions" element={<AdminRoute><AdminPushProvisions /></AdminRoute>} />
+                      <Route path="/admin/quantity-bonus" element={<AdminRoute><AdminQuantityBonus /></AdminRoute>} />
+                      <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
+                      {/* Redirect old route to new super-admin */}
+                      <Route path="/admin/customers" element={<Navigate to="/super-admin" replace />} />
+                      <Route path="/super-admin" element={<AdminRoute><SuperAdmin /></AdminRoute>} />
+                      <Route path="/admin/permissions" element={<TenantAdminRoute><AdminPermissions /></TenantAdminRoute>} />
+
+                      <Route
+                        path="/offers"
+                        element={
+                          <ProtectedRoute>
+                            <Offers />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/offers/:id"
+                        element={
+                          <ProtectedRoute>
+                            <EnterpriseErrorBoundary moduleName="Offer Detail">
+                              <OfferDetail />
+                            </EnterpriseErrorBoundary>
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/customers"
+                        element={
+                          <ProtectedRoute>
+                            <Customers />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/customers/:id"
+                        element={
+                          <ProtectedRoute>
+                            <CustomerDetail />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/customers/import"
+                        element={
+                          <ProtectedRoute>
+                            <MoccaImport />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/contracts"
+                        element={
+                          <ProtectedRoute>
+                            <Contracts />
+                          </ProtectedRoute>
+                        }
+                      />
+                      {/* VVL-Tracker alias for /contracts */}
+                      <Route
+                        path="/vvl-tracker"
+                        element={<Navigate to="/contracts" replace />}
+                      />
+                      <Route
+                        path="/team"
+                        element={
+                          <ProtectedRoute>
+                            <Team />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/reporting"
+                        element={
+                          <ProtectedRoute>
+                            <Reporting />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/settings/security"
+                        element={
+                          <ProtectedRoute>
+                            <SecuritySettings />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/settings/hardware-images"
+                        element={
+                          <ProtectedRoute>
+                            <HardwareImages />
+                          </ProtectedRoute>
+                        }
+                      />
+                      {/* Distribution Dashboard - Tenant Admin */}
+                      <Route
+                        path="/admin/distribution"
+                        element={
+                          <ProtectedRoute>
+                            <DistributionDashboard />
+                          </ProtectedRoute>
+                        }
+                      />
+                      {/* Time Tracking */}
+                      <Route
+                        path="/time-tracking"
+                        element={
+                          <ProtectedRoute>
+                            <TimeTracking />
+                          </ProtectedRoute>
+                        }
+                      />
+                      {/* Provisions */}
+                      <Route
+                        path="/provisions"
+                        element={
+                          <ProtectedRoute>
+                            <Provisions />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/security"
+                        element={
+                          <FeatureRoute feature="adminSecurityAccess">
+                            <AdminRoute>
+                              <SecurityDashboard />
+                            </AdminRoute>
+                          </FeatureRoute>
+                        }
+                      />
+                      <Route
+                        path="/security/report"
+                        element={
+                          <FeatureRoute feature="adminSecurityAccess">
+                            <AdminRoute>
+                              <SecurityReport />
+                            </AdminRoute>
+                          </FeatureRoute>
+                        }
+                      />
+                      <Route
+                        path="/security/threat-intel"
+                        element={
+                          <FeatureRoute feature="adminSecurityAccess">
+                            <AdminRoute>
+                              <ThreatIntelligence />
+                            </AdminRoute>
+                          </FeatureRoute>
+                        }
+                      />
+                      <Route
+                        path="/security/status"
+                        element={
+                          <FeatureRoute feature="adminSecurityAccess">
+                            <AdminRoute>
+                              <SecurityStatusDashboard />
+                            </AdminRoute>
+                          </FeatureRoute>
+                        }
+                      />
+                      <Route
+                        path="/security/gdpr"
+                        element={
+                          <FeatureRoute feature="adminSecurityAccess">
+                            <AdminRoute>
+                              <GDPRDashboard />
+                            </AdminRoute>
+                          </FeatureRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin/activity"
+                        element={
+                          <FeatureRoute feature="adminSecurityAccess">
+                            <AdminRoute>
+                              <ActivityDashboard />
+                            </AdminRoute>
+                          </FeatureRoute>
+                        }
+                      />
+                      <Route
+                        path="/security/test"
+                        element={
+                          <FeatureRoute feature="adminSecurityAccess">
+                            <AdminRoute>
+                              <SecurityTestPage />
+                            </AdminRoute>
+                          </FeatureRoute>
+                        }
+                      />
+                      <Route
+                        path="/data-manager"
+                        element={
+                          <FeatureRoute feature="dataGovernance">
+                            <ProtectedRoute>
+                              <DataManager />
+                            </ProtectedRoute>
+                          </FeatureRoute>
+                        }
+                      />
+                      <Route
+                        path="/data-manager/hardware"
+                        element={
+                          <FeatureRoute feature="dataGovernance">
+                            <ProtectedRoute>
+                              <HardwareManager />
+                            </ProtectedRoute>
+                          </FeatureRoute>
+                        }
+                      />
+                      {/* Tenant Admin Routes */}
+                      <Route
+                        path="/tenant-admin"
+                        element={
+                          <TenantAdminRoute>
+                            <TenantAdmin />
+                          </TenantAdminRoute>
+                        }
+                      />
+                      <Route
+                        path="/settings/branding"
+                        element={
+                          <FeatureRoute feature="customBranding">
+                            <TenantAdminRoute>
+                              <BrandingSettings />
+                            </TenantAdminRoute>
+                          </FeatureRoute>
+                        }
+                      />
+
+                      {/* Inbox - Zentrale Dokumentenablage */}
+                      <Route
+                        path="/inbox"
+                        element={
+                          <ProtectedRoute>
+                            <Inbox />
+                          </ProtectedRoute>
+                        }
+                      />
+
+                      {/* Calendar */}
+                      <Route
+                        path="/calendar"
+                        element={
+                          <ProtectedRoute>
+                            <Calendar />
+                          </ProtectedRoute>
+                        }
+                      />
+
+                      {/* News & Aktionen */}
+                      <Route
+                        path="/news"
+                        element={
+                          <ProtectedRoute>
+                            <News />
+                          </ProtectedRoute>
+                        }
+                      />
+
+                      {/* Admin News */}
+                      <Route
+                        path="/admin/news"
+                        element={
+                          <TenantAdminRoute>
+                            <AdminNews />
+                          </TenantAdminRoute>
+                        }
+                      />
+
+                      {/* Redirect routes for commonly attempted paths - prevents 404s */}
+                      <Route path="/settings" element={<Navigate to="/settings/security" replace />} />
+                      <Route path="/profile" element={<Navigate to="/" replace />} />
+                      <Route path="/reports" element={<Navigate to="/reporting" replace />} />
+                      <Route path="/wizard" element={<Navigate to="/calculator" replace />} />
+
+                      {/* Public shared offer view (no auth required) */}
+                      <Route path="/share/offer/:offerId" element={<SharedOfferPage />} />
+
+                      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </Suspense>
+                </RouteErrorBoundary>
+              </BrowserRouter>
+            </MobileAccessGate>
+          </SeatLimitGate>
+        </SafeProviderStack>
+      </QueryClientProvider>
+    </AppErrorBoundary>
+  );
+
+  export default App;

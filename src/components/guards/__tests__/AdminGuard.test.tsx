@@ -7,19 +7,14 @@
  * - Server-side `requireAdmin()` MUST be primary protection
  */
 
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { MemoryRouter } from "react-router-dom";
 import { AdminGuard } from "../AdminGuard";
 import { useUserRole } from "../../../hooks/useUserRole";
 
 // Mock dependencies
 vi.mock("../../../hooks/useUserRole");
-vi.mock("next/navigation", () => ({
-    useRouter: () => ({
-        push: vi.fn(),
-        replace: vi.fn(),
-    }),
-}));
 vi.mock("sonner", () => ({
     toast: {
         error: vi.fn(),
@@ -27,6 +22,11 @@ vi.mock("sonner", () => ({
 }));
 
 const mockUseUserRole = useUserRole as unknown as ReturnType<typeof vi.fn>;
+
+// Wrapper component with Router
+const TestWrapper = ({ children }: { children: React.ReactNode }) => (
+    <MemoryRouter>{children}</MemoryRouter>
+);
 
 describe("AdminGuard", () => {
     beforeEach(() => {
@@ -44,7 +44,8 @@ describe("AdminGuard", () => {
             render(
                 <AdminGuard>
                     <div data-testid="admin-content">Admin Dashboard</div>
-                </AdminGuard>
+                </AdminGuard>,
+                { wrapper: TestWrapper }
             );
 
             expect(screen.getByText("Überprüfe Berechtigungen...")).toBeInTheDocument();
@@ -63,7 +64,8 @@ describe("AdminGuard", () => {
             render(
                 <AdminGuard>
                     <div data-testid="admin-content">Admin Dashboard</div>
-                </AdminGuard>
+                </AdminGuard>,
+                { wrapper: TestWrapper }
             );
 
             expect(screen.getByTestId("admin-content")).toBeInTheDocument();
@@ -81,7 +83,8 @@ describe("AdminGuard", () => {
             render(
                 <AdminGuard>
                     <div data-testid="admin-content">Admin Dashboard</div>
-                </AdminGuard>
+                </AdminGuard>,
+                { wrapper: TestWrapper }
             );
 
             // Children should NOT be visible
@@ -100,7 +103,8 @@ describe("AdminGuard", () => {
             render(
                 <AdminGuard>
                     <div data-testid="admin-content">Admin Dashboard</div>
-                </AdminGuard>
+                </AdminGuard>,
+                { wrapper: TestWrapper }
             );
 
             expect(screen.getByText("Authentifizierungsfehler")).toBeInTheDocument();
@@ -119,7 +123,8 @@ describe("AdminGuard", () => {
             render(
                 <AdminGuard>
                     <div data-testid="admin-content">Secret Admin Data</div>
-                </AdminGuard>
+                </AdminGuard>,
+                { wrapper: TestWrapper }
             );
 
             // Must not show content during loading

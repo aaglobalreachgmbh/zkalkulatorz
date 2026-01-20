@@ -71,7 +71,7 @@ export function MarginForm() {
                                         <FormLabel>Product <HelpTooltip content="Select the product for which you want to calculate the margin." /></FormLabel>
                                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                                             <FormControl>
-                                                <SelectTrigger className="h-12 bg-slate-50 dark:bg-slate-800">
+                                                <SelectTrigger className="h-12 bg-muted/30 border-input/50 transition-colors focus:border-ring">
                                                     <SelectValue placeholder="Select a product" />
                                                 </SelectTrigger>
                                             </FormControl>
@@ -95,7 +95,7 @@ export function MarginForm() {
                                         <FormLabel>Customer Type <HelpTooltip content="Choose the customer type to apply relevant pricing rules." /></FormLabel>
                                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                                             <FormControl>
-                                                <SelectTrigger className="h-12 bg-slate-50 dark:bg-slate-800">
+                                                <SelectTrigger className="h-12 bg-muted/30 border-input/50 transition-colors focus:border-ring">
                                                     <SelectValue placeholder="Select type" />
                                                 </SelectTrigger>
                                             </FormControl>
@@ -120,7 +120,7 @@ export function MarginForm() {
                                     <FormItem>
                                         <FormLabel>Volume (Sim Cards)</FormLabel>
                                         <FormControl>
-                                            <Input type="number" {...field} className="h-12 font-geist-mono text-lg tabular-nums bg-slate-50 dark:bg-slate-800" />
+                                            <Input type="number" {...field} className="h-12 text-lg tabular-nums bg-muted/30 border-input/50 transition-colors focus:border-ring" />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -131,23 +131,23 @@ export function MarginForm() {
 
                     {/* Result Panel (Conditional) */}
                     {result ? (
-                        <SectionPanel className="border-l-4 border-l-green-500 bg-green-50/50 dark:bg-green-900/10">
+                        <SectionPanel className="border-l-4 border-l-success bg-success/10 dark:bg-success/5 animate-fade-in-up">
                             <div className="grid grid-cols-3 gap-6 text-center">
                                 <div>
-                                    <p className="text-xs font-semibold uppercase text-slate-500 tracking-wider">Margin</p>
-                                    <p className="font-geist-mono text-3xl font-bold text-slate-900 dark:text-white tabular-nums mt-1">
+                                    <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">Margin</p>
+                                    <p className="text-3xl font-bold text-foreground tabular-nums mt-1 font-feature-settings-cv11">
                                         {result.margin.toFixed(2)}€
                                     </p>
                                 </div>
                                 <div>
-                                    <p className="text-xs font-semibold uppercase text-slate-500 tracking-wider">Margin %</p>
-                                    <p className="font-geist-mono text-3xl font-bold text-slate-900 dark:text-white tabular-nums mt-1">
+                                    <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">Margin %</p>
+                                    <p className="text-3xl font-bold text-foreground tabular-nums mt-1 font-feature-settings-cv11">
                                         {result.marginPercent.toFixed(1)}%
                                     </p>
                                 </div>
                                 <div>
-                                    <p className="text-xs font-semibold uppercase text-slate-500 tracking-wider">Rec. Price</p>
-                                    <p className="font-geist-mono text-3xl font-bold text-slate-900 dark:text-white tabular-nums mt-1">
+                                    <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">Rec. Price</p>
+                                    <p className="text-3xl font-bold text-foreground tabular-nums mt-1 font-feature-settings-cv11">
                                         {result.recommendedPrice.toFixed(2)}€
                                     </p>
                                 </div>
@@ -155,19 +155,19 @@ export function MarginForm() {
                         </SectionPanel>
                     ) : (
                         // Placeholder Panel to maintain layout stability
-                        <div className="h-32 rounded-lg border border-dashed border-slate-200 flex items-center justify-center text-slate-400">
+                        <div className="h-32 rounded-lg border border-dashed border-border flex items-center justify-center text-muted-foreground">
                             Result will appear here...
                         </div>
                     )}
 
                     <Button
                         type="submit"
-                        className="w-full h-14 text-lg font-bold bg-vodafone-red hover:bg-red-700 shadow-lg shadow-red-500/20 rounded-xl transition-all hover:scale-[1.01] active:scale-[0.99]"
+                        className="w-full h-14 text-lg font-bold bg-primary hover:bg-primary/90 shadow-md transition-all active:scale-[0.98]"
                         disabled={isLoading}
                     >
                         {isLoading ? (
                             <div className="flex items-center gap-2">
-                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
                                 Calculating...
                             </div>
                         ) : "Calculate Margin"}

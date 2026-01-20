@@ -65,8 +65,8 @@ export default function TenantAdmin() {
             <AlertDescription>
               Bevor der Kalkulator verwendet werden kann, müssen Sie folgende Daten hochladen:
               <ul className="list-disc list-inside mt-2">
-                {!hasHardware && <li>Hardware-EK-Preise (CSV-Upload im Tab "Hardware")</li>}
-                {!hasProvisions && <li>Provisions-Tabelle (CSV-Upload im Tab "Provisionen")</li>}
+                {!hasHardware && <li>Hardware-EK-Preise (CSV-Upload im Tab &quot;Hardware&quot;)</li>}
+                {!hasProvisions && <li>Provisions-Tabelle (CSV-Upload im Tab &quot;Provisionen&quot;)</li>}
               </ul>
             </AlertDescription>
           </Alert>

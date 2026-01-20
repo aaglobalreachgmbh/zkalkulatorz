@@ -1,5 +1,6 @@
 -- Migration: 20240105_observability.sql
 -- Phase 9: Feature Observability & Usage Audit
+-- FIXED: Removed dependency on profiles table, using auth.jwt() claims instead
 
 -- ============================================
 -- 1. User Events Table (Frontend Actions)
@@ -20,6 +21,7 @@ CREATE TABLE IF NOT EXISTS user_events (
 -- RLS: Users can only see their own events
 ALTER TABLE user_events ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "user_events_own" ON user_events;
 CREATE POLICY "user_events_own" ON user_events
 FOR ALL
 USING (auth.uid() = user_id);
@@ -43,20 +45,23 @@ CREATE TABLE IF NOT EXISTS api_logs (
     error_message text
 );
 
--- RLS: Only service role can write, admins can read
+-- RLS: Only service role can write, admins can read via JWT claims
 ALTER TABLE api_logs ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "api_logs_service_insert" ON api_logs;
 CREATE POLICY "api_logs_service_insert" ON api_logs
 FOR INSERT
 TO service_role
 WITH CHECK (true);
 
+-- Admin check via JWT custom claims (no profiles table dependency)
+DROP POLICY IF EXISTS "api_logs_admin_select" ON api_logs;
 CREATE POLICY "api_logs_admin_select" ON api_logs
 FOR SELECT
 USING (
-    EXISTS (
-        SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'
-    )
+    (auth.jwt() ->> 'role')::text = 'admin'
+    OR (auth.jwt() -> 'app_metadata' ->> 'role')::text = 'admin'
+    OR (auth.jwt() -> 'user_metadata' ->> 'is_admin')::boolean = true
 );
 
 CREATE INDEX IF NOT EXISTS idx_api_logs_function ON api_logs(function_name);
@@ -79,12 +84,14 @@ CREATE TABLE IF NOT EXISTS error_logs (
 
 ALTER TABLE error_logs ENABLE ROW LEVEL SECURITY;
 
+-- Admin check via JWT custom claims (no profiles table dependency)
+DROP POLICY IF EXISTS "error_logs_admin_only" ON error_logs;
 CREATE POLICY "error_logs_admin_only" ON error_logs
 FOR ALL
 USING (
-    EXISTS (
-        SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'
-    )
+    (auth.jwt() ->> 'role')::text = 'admin'
+    OR (auth.jwt() -> 'app_metadata' ->> 'role')::text = 'admin'
+    OR (auth.jwt() -> 'user_metadata' ->> 'is_admin')::boolean = true
 );
 
 CREATE INDEX IF NOT EXISTS idx_error_logs_source ON error_logs(source);
@@ -93,6 +100,7 @@ CREATE INDEX IF NOT EXISTS idx_error_logs_created ON error_logs(created_at DESC)
 -- ============================================
 -- 4. Usage Summary View (Analytics)
 -- ============================================
+DROP VIEW IF EXISTS vw_usage_summary;
 CREATE OR REPLACE VIEW vw_usage_summary AS
 SELECT
     date_trunc('day', created_at) AS day,

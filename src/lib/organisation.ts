@@ -1,9 +1,10 @@
 // ============================================
-// Organisation Layer - Phase 3B.1
+// Organisation Layer (Supabase Connected)
 // Tenant-scoped Departments & User Assignment
 // ============================================
 
 import { type IdentityState } from "@/contexts/IdentityContext";
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Department structure
@@ -16,7 +17,7 @@ export interface Department {
 }
 
 /**
- * User-Department assignment (for mock/offline mode)
+ * User-Department assignment 
  */
 export interface UserDepartmentAssignment {
   userId: string;
@@ -25,184 +26,106 @@ export interface UserDepartmentAssignment {
 }
 
 // ============================================
-// Storage Keys (Tenant-Scoped)
+// Department CRUD (Async / Supabase)
 // ============================================
 
-function getDepartmentsKey(tenantId: string): string {
-  return `org_departments_${tenantId}`;
-}
+export async function loadDepartments(tenantId: string): Promise<Department[]> {
+  const { data, error } = await supabase
+    .from("departments")
+    .select("*")
+    .eq("tenant_id", tenantId)
+    .order("name");
 
-function getUserAssignmentsKey(tenantId: string): string {
-  return `org_user_assignments_${tenantId}`;
-}
-
-// ============================================
-// Default Data
-// ============================================
-
-const DEFAULT_DEPARTMENTS: Department[] = [
-  { 
-    id: "hq", 
-    name: "Hauptverwaltung", 
-    description: "Zentrale Administration",
-    createdAt: "2025-01-01T00:00:00Z"
-  },
-  { 
-    id: "store_berlin", 
-    name: "Store Berlin", 
-    description: "Filiale Berlin Mitte",
-    createdAt: "2025-01-01T00:00:00Z"
-  },
-  { 
-    id: "store_munich", 
-    name: "Store München", 
-    description: "Filiale München Zentrum",
-    createdAt: "2025-01-01T00:00:00Z"
-  },
-];
-
-// ============================================
-// Department CRUD
-// ============================================
-
-export function loadDepartments(tenantId: string): Department[] {
-  try {
-    const key = getDepartmentsKey(tenantId);
-    const json = localStorage.getItem(key);
-    return json ? JSON.parse(json) : [...DEFAULT_DEPARTMENTS];
-  } catch {
-    return [...DEFAULT_DEPARTMENTS];
+  if (error) {
+    console.error("[organisation] loadDepartments error:", error);
+    return [];
   }
+
+  return (data || []).map(row => ({
+    id: row.id,
+    name: row.name,
+    description: "", // Description column missing in current schema, defaulting to empty
+    createdAt: row.created_at
+  }));
 }
 
-export function saveDepartments(tenantId: string, departments: Department[]): void {
-  const key = getDepartmentsKey(tenantId);
-  localStorage.setItem(key, JSON.stringify(departments));
-}
-
-export function createDepartment(
-  tenantId: string, 
-  name: string, 
+export async function createDepartment(
+  tenantId: string,
+  name: string,
   description: string = ""
-): Department {
-  const departments = loadDepartments(tenantId);
-  const newDept: Department = {
-    id: `dept_${Date.now()}`,
-    name: name.trim(),
-    description,
-    createdAt: new Date().toISOString(),
+): Promise<Department | null> {
+  const departmentId = name.toLowerCase().replace(/[^a-z0-9]/g, "_");
+
+  const { data, error } = await supabase
+    .from("departments")
+    .insert([
+      {
+        tenant_id: tenantId,
+        department_id: departmentId, // Human readable ID derived from name
+        name: name.trim(),
+        // Note: 'description' column is not in the migration, omitting
+      }
+    ])
+    .select()
+    .single();
+
+  if (error) {
+    console.error("[organisation] createDepartment error:", error);
+    return null;
+  }
+
+  return {
+    id: data.id,
+    name: data.name,
+    description: "",
+    createdAt: data.created_at
   };
-  saveDepartments(tenantId, [...departments, newDept]);
-  return newDept;
 }
 
-export function updateDepartment(
-  tenantId: string, 
-  departmentId: string, 
-  updates: Partial<Pick<Department, "name" | "description">>
-): Department | null {
-  const departments = loadDepartments(tenantId);
-  const index = departments.findIndex(d => d.id === departmentId);
-  if (index === -1) return null;
-  
-  departments[index] = { ...departments[index], ...updates };
-  saveDepartments(tenantId, departments);
-  return departments[index];
-}
+export async function deleteDepartment(tenantId: string, departmentId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("departments")
+    .delete()
+    .eq("id", departmentId) // Using UUID Primary Key
+    .eq("tenant_id", tenantId);
 
-export function deleteDepartment(tenantId: string, departmentId: string): boolean {
-  const departments = loadDepartments(tenantId);
-  const filtered = departments.filter(d => d.id !== departmentId);
-  if (filtered.length === departments.length) return false;
-  
-  saveDepartments(tenantId, filtered);
+  if (error) {
+    console.error("[organisation] deleteDepartment error:", error);
+    return false;
+  }
+
   return true;
 }
 
-export function getDepartmentById(tenantId: string, departmentId: string): Department | null {
-  const departments = loadDepartments(tenantId);
-  return departments.find(d => d.id === departmentId) ?? null;
-}
-
 // ============================================
-// User-Department Assignments (Mock Mode)
+// Assignment Logic (Async / Supabase)
 // ============================================
 
-export function loadUserAssignments(tenantId: string): UserDepartmentAssignment[] {
-  try {
-    const key = getUserAssignmentsKey(tenantId);
-    const json = localStorage.getItem(key);
-    return json ? JSON.parse(json) : [];
-  } catch {
-    return [];
+export async function getUserDepartment(tenantId: string, userId: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("user_department_assignments")
+    .select("department_id")
+    .eq("tenant_id", tenantId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[organisation] getUserDepartment error:", error);
+    return null;
   }
-}
 
-export function saveUserAssignments(tenantId: string, assignments: UserDepartmentAssignment[]): void {
-  const key = getUserAssignmentsKey(tenantId);
-  localStorage.setItem(key, JSON.stringify(assignments));
+  return data?.department_id ?? null;
 }
-
-export function assignUserToDepartment(
-  tenantId: string, 
-  userId: string, 
-  departmentId: string
-): UserDepartmentAssignment {
-  const assignments = loadUserAssignments(tenantId);
-  const existing = assignments.findIndex(a => a.userId === userId);
-  
-  const newAssignment: UserDepartmentAssignment = {
-    userId,
-    departmentId,
-    assignedAt: new Date().toISOString(),
-  };
-  
-  if (existing >= 0) {
-    assignments[existing] = newAssignment;
-  } else {
-    assignments.push(newAssignment);
-  }
-  
-  saveUserAssignments(tenantId, assignments);
-  return newAssignment;
-}
-
-export function getUserDepartment(tenantId: string, userId: string): string | null {
-  const assignments = loadUserAssignments(tenantId);
-  return assignments.find(a => a.userId === userId)?.departmentId ?? null;
-}
-
-// ============================================
-// Visibility Rules
-// ============================================
 
 /**
  * Check if a user can see a specific department's data
- * - Admin/Manager can see all departments
- * - Sales can only see their own department
  */
 export function canAccessDepartment(
-  identity: IdentityState, 
+  identity: IdentityState,
   targetDepartmentId: string
 ): boolean {
   if (identity.role === "admin" || identity.role === "manager") {
     return true;
   }
   return identity.departmentId === targetDepartmentId;
-}
-
-/**
- * Get list of departments a user can access
- */
-export function getAccessibleDepartments(
-  identity: IdentityState, 
-  tenantId: string
-): Department[] {
-  const allDepartments = loadDepartments(tenantId);
-  
-  if (identity.role === "admin" || identity.role === "manager") {
-    return allDepartments;
-  }
-  
-  return allDepartments.filter(d => d.id === identity.departmentId);
 }

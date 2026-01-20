@@ -22,15 +22,15 @@ import { toast } from "sonner";
 import { useLocalStorageAudit, formatBytes, getCategoryLabel, getCategoryColor } from "@/hooks/useLocalStorageAudit";
 
 // Organisation imports
-import { 
-  loadDepartments, 
-  createDepartment, 
+import {
+  loadDepartments,
+  createDepartment,
   deleteDepartment,
-  type Department 
+  type Department
 } from "@/lib/organisation";
 
 // Policies imports
-import { 
+import {
   getEffectivePolicy,
   updateTenantPolicyField,
   updateDeptPolicyField,
@@ -41,12 +41,12 @@ import {
 } from "@/lib/policies";
 
 // Audit imports
-import { 
-  getRecentAuditEvents, 
+import {
+  getRecentAuditEvents,
   formatAuditAction,
   logDepartmentAction,
   logPolicyChange,
-  type AuditEvent 
+  type AuditEvent
 } from "@/lib/auditLog";
 
 // License imports
@@ -59,7 +59,7 @@ import { de } from "date-fns/locale";
 export default function Admin() {
   const navigate = useNavigate();
   const { identity, setMockIdentity, canAccessAdmin } = useIdentity();
-  
+
   // State
   const [departments, setDepartments] = useState<Department[]>([]);
   const [policy, setPolicy] = useState<Policy>(DEFAULT_POLICY);
@@ -73,77 +73,91 @@ export default function Admin() {
       navigate("/");
       return;
     }
-    
-    // Load departments
-    const depts = loadDepartments(identity.tenantId);
-    setDepartments(depts);
-    
+
+    // Load departments (ASYNC)
+    const fetchDepartments = async () => {
+      const depts = await loadDepartments(identity.tenantId);
+      setDepartments(depts);
+    };
+    fetchDepartments();
+
     // Load effective policy
     const eff = getEffectivePolicy(identity.tenantId, identity.departmentId);
     setPolicy(eff);
-    
-    // Load audit log
-    const log = getRecentAuditEvents(identity.tenantId, identity.departmentId, 50);
-    setAuditLog(log);
+
+    // Load audit log (ASYNC)
+    const fetchAudit = async () => {
+      const log = await getRecentAuditEvents(identity.tenantId, identity.departmentId, 50);
+      setAuditLog(log);
+    };
+    fetchAudit();
   }, [canAccessAdmin, identity.tenantId, identity.departmentId, navigate]);
 
   // Department CRUD
-  const handleAddDepartment = useCallback(() => {
+  const handleAddDepartment = useCallback(async () => {
     if (!newDeptName.trim()) return;
-    
-    const newDept = createDepartment(identity.tenantId, newDeptName.trim());
-    setDepartments(prev => [...prev, newDept]);
-    setNewDeptName("");
-    
-    // Audit log
-    logDepartmentAction(
-      identity.tenantId,
-      identity.departmentId,
-      identity.userId,
-      identity.displayName,
-      identity.role,
-      "department_create",
-      newDept.id,
-      { name: newDept.name }
-    );
-    
-    toast.success("Abteilung hinzugefügt", { description: newDept.name });
+
+    const newDept = await createDepartment(identity.tenantId, newDeptName.trim());
+    if (newDept) {
+      setDepartments(prev => [...prev, newDept]);
+      setNewDeptName("");
+
+      // Audit log
+      await await logDepartmentAction(
+        identity.tenantId,
+        identity.departmentId,
+        identity.userId,
+        identity.displayName,
+        identity.role,
+        "department_create",
+        newDept.id,
+        { name: newDept.name }
+      );
+
+      toast.success("Abteilung hinzugefügt", { description: newDept.name });
+    } else {
+      toast.error("Fehler beim Erstellen der Abteilung");
+    }
   }, [identity, newDeptName]);
 
-  const handleDeleteDepartment = useCallback((id: string) => {
+  const handleDeleteDepartment = useCallback(async (id: string) => {
     const dept = departments.find(d => d.id === id);
     if (!dept) return;
-    
-    deleteDepartment(identity.tenantId, id);
-    setDepartments(prev => prev.filter(d => d.id !== id));
-    
-    // Audit log
-    logDepartmentAction(
-      identity.tenantId,
-      identity.departmentId,
-      identity.userId,
-      identity.displayName,
-      identity.role,
-      "department_delete",
-      id,
-      { name: dept.name }
-    );
-    
-    toast.success("Abteilung gelöscht");
+
+    const success = await deleteDepartment(identity.tenantId, id);
+    if (success) {
+      setDepartments(prev => prev.filter(d => d.id !== id));
+
+      // Audit log
+      await await logDepartmentAction(
+        identity.tenantId,
+        identity.departmentId,
+        identity.userId,
+        identity.displayName,
+        identity.role,
+        "department_delete",
+        id,
+        { name: dept.name }
+      );
+
+      toast.success("Abteilung gelöscht");
+    } else {
+      toast.error("Fehler beim Löschen der Abteilung");
+    }
   }, [identity, departments]);
 
   // Policy updates
-  const handlePolicyChange = useCallback(<K extends keyof Policy>(key: K, value: Policy[K]) => {
+  const handlePolicyChange = useCallback(async <K extends keyof Policy>(key: K, value: Policy[K]) => {
     const oldValue = policy[key];
-    
+
     if (selectedDeptForPolicy) {
       updateDeptPolicyField(identity.tenantId, selectedDeptForPolicy, key, value);
     } else {
       updateTenantPolicyField(identity.tenantId, key, value);
     }
-    
+
     // Audit log
-    logPolicyChange(
+    await logPolicyChange(
       identity.tenantId,
       identity.departmentId,
       identity.userId,
@@ -152,10 +166,10 @@ export default function Admin() {
       selectedDeptForPolicy ? "department" : "tenant",
       { [key]: { from: oldValue, to: value } }
     );
-    
+
     // Refresh policy
     const newPolicy = getEffectivePolicy(
-      identity.tenantId, 
+      identity.tenantId,
       selectedDeptForPolicy || identity.departmentId
     );
     setPolicy(newPolicy);
@@ -270,11 +284,10 @@ export default function Admin() {
                     <button
                       key={id.userId}
                       onClick={() => switchToIdentity(id)}
-                      className={`p-4 rounded-lg border text-left transition-all ${
-                        identity?.userId === id.userId
-                          ? "border-primary bg-primary/5"
-                          : "border-border hover:border-primary/50"
-                      }`}
+                      className={`p-4 rounded-lg border text-left transition-all ${identity?.userId === id.userId
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-primary/50"
+                        }`}
                     >
                       <div className="flex items-center justify-between mb-1">
                         <span className="font-medium">{id.displayName}</span>
@@ -329,8 +342,8 @@ export default function Admin() {
                 </div>
                 {selectedDeptForPolicy && (
                   <div className="mt-4">
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       size="sm"
                       onClick={() => {
                         clearDeptPolicy(identity.tenantId, selectedDeptForPolicy);
@@ -349,8 +362,8 @@ export default function Admin() {
               <CardHeader>
                 <CardTitle>Anzeigerichtlinien</CardTitle>
                 <CardDescription>
-                  {selectedDeptForPolicy 
-                    ? `Overrides für ${departments.find(d => d.id === selectedDeptForPolicy)?.name}` 
+                  {selectedDeptForPolicy
+                    ? `Overrides für ${departments.find(d => d.id === selectedDeptForPolicy)?.name}`
                     : "Tenant-weite Standardeinstellungen"}
                 </CardDescription>
               </CardHeader>
@@ -464,7 +477,7 @@ export default function Admin() {
           <TabsContent value="daten" className="space-y-6">
             {/* localStorage Status Widget */}
             <LocalStorageStatusWidget />
-            
+
             <Card>
               <CardHeader>
                 <CardTitle>Datenverwaltung</CardTitle>
@@ -477,9 +490,9 @@ export default function Admin() {
                   <Database className="w-4 h-4" />
                   Zum Datenmanager
                 </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => navigate("/data-manager/hardware")} 
+                <Button
+                  variant="outline"
+                  onClick={() => navigate("/data-manager/hardware")}
                   className="gap-2 ml-2"
                 >
                   Hardware verwalten
@@ -639,13 +652,13 @@ function LicenseTab() {
       setFeatureEnabled(key, checked);
       return;
     }
-    
+
     // For standard features, check if admin has control permission
     if (!canControlFeatures) {
       toast.error("Keine Berechtigung: Feature-Steuerung erfordert 'adminFeatureControl' Berechtigung.");
       return;
     }
-    
+
     setFeatureEnabled(key, checked);
   };
 
@@ -698,19 +711,18 @@ function LicenseTab() {
                 {seatUsage.used} / {seatUsage.limit}
               </Badge>
             </div>
-            
+
             {/* Progress bar */}
             <div className="w-full bg-muted rounded-full h-2 mb-2">
-              <div 
-                className={`h-2 rounded-full transition-all ${
-                  seatUsage.available > 0 ? "bg-primary" : "bg-destructive"
-                }`}
+              <div
+                className={`h-2 rounded-full transition-all ${seatUsage.available > 0 ? "bg-primary" : "bg-destructive"
+                  }`}
                 style={{ width: `${Math.min(100, (seatUsage.used / seatUsage.limit) * 100)}%` }}
               />
             </div>
-            
+
             <p className="text-sm text-muted-foreground">
-              {seatUsage.available > 0 
+              {seatUsage.available > 0
                 ? `${seatUsage.available} Seats verfügbar`
                 : "Keine Seats verfügbar - Limit erreicht"
               }
@@ -738,9 +750,9 @@ function LicenseTab() {
             {/* Mock users for assignment */}
             {MOCK_IDENTITIES.map((mockUser) => {
               const hasSeact = seatedUsers.some(s => s.userId === mockUser.userId);
-              
+
               return (
-                <div 
+                <div
                   key={mockUser.userId}
                   className="flex items-center justify-between py-3 border-b last:border-0"
                 >
@@ -755,7 +767,7 @@ function LicenseTab() {
                       </p>
                     </div>
                   </div>
-                  
+
                   {hasSeact ? (
                     <Button
                       variant="ghost"
@@ -833,7 +845,7 @@ function LicenseTab() {
             )}
           </CardTitle>
           <CardDescription>
-            {canControlFeatures 
+            {canControlFeatures
               ? "Aktivieren oder deaktivieren Sie Features für diesen Tenant"
               : "Feature-Steuerung erfordert 'adminFeatureControl' Berechtigung"
             }
@@ -869,11 +881,11 @@ function LicenseTab() {
 
 function LocalStorageStatusWidget() {
   const { audit, runAudit, isLoading } = useLocalStorageAudit();
-  
+
   if (!audit) return null;
-  
+
   const totalSize = audit.allowed.length + audit.unknown.length + audit.sensitive.length;
-  
+
   return (
     <Card className="bg-muted/30">
       <CardHeader className="py-3 px-4">
@@ -882,9 +894,9 @@ function LocalStorageStatusWidget() {
             <HardDrive className="w-4 h-4" />
             localStorage-Status
           </CardTitle>
-          <Button 
-            variant="ghost" 
-            size="sm" 
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={runAudit}
             disabled={isLoading}
             className="h-7 px-2"
@@ -925,12 +937,12 @@ function LocalStorageStatusWidget() {
 // ============================================
 
 function StorageTab() {
-  
+
   const { audit, keyDetails, runAudit, cleanup, isLoading } = useLocalStorageAudit();
-  
+
   const handleCleanup = useCallback(() => {
     const result = cleanup();
-    
+
     if (result.errors.length > 0) {
       toast.error(`Bereinigung mit Fehlern: ${result.removed.length} entfernt, ${result.errors.length} Fehler`);
     } else if (result.removed.length > 0) {
@@ -944,7 +956,7 @@ function StorageTab() {
 
   // Calculate total size
   const totalSize = keyDetails.reduce((acc, k) => acc + k.size, 0);
-  
+
   return (
     <TabsContent value="speicher" className="space-y-6">
       {/* Audit Overview */}
@@ -957,9 +969,9 @@ function StorageTab() {
                 Übersicht aller lokalen Daten mit Kategorisierung
               </CardDescription>
             </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={runAudit}
               disabled={isLoading}
               className="gap-2"
@@ -979,39 +991,39 @@ function StorageTab() {
                 </div>
                 <p className="text-sm text-green-600 dark:text-green-400 mt-1">Erlaubte Keys</p>
               </div>
-              
-              <div className={`p-4 rounded-lg ${audit.sensitive.length > 0 
-                ? "bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800" 
+
+              <div className={`p-4 rounded-lg ${audit.sensitive.length > 0
+                ? "bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800"
                 : "bg-muted border"}`}>
-                <div className={`flex items-center gap-2 ${audit.sensitive.length > 0 
-                  ? "text-red-700 dark:text-red-300" 
+                <div className={`flex items-center gap-2 ${audit.sensitive.length > 0
+                  ? "text-red-700 dark:text-red-300"
                   : "text-muted-foreground"}`}>
                   <AlertTriangle className="w-5 h-5" />
                   <span className="text-2xl font-bold">{audit.sensitive.length}</span>
                 </div>
-                <p className={`text-sm mt-1 ${audit.sensitive.length > 0 
-                  ? "text-red-600 dark:text-red-400" 
+                <p className={`text-sm mt-1 ${audit.sensitive.length > 0
+                  ? "text-red-600 dark:text-red-400"
                   : "text-muted-foreground"}`}>
                   Sensible Keys
                 </p>
               </div>
-              
-              <div className={`p-4 rounded-lg ${audit.unknown.length > 0 
-                ? "bg-orange-50 dark:bg-orange-950 border border-orange-200 dark:border-orange-800" 
+
+              <div className={`p-4 rounded-lg ${audit.unknown.length > 0
+                ? "bg-orange-50 dark:bg-orange-950 border border-orange-200 dark:border-orange-800"
                 : "bg-muted border"}`}>
-                <div className={`flex items-center gap-2 ${audit.unknown.length > 0 
-                  ? "text-orange-700 dark:text-orange-300" 
+                <div className={`flex items-center gap-2 ${audit.unknown.length > 0
+                  ? "text-orange-700 dark:text-orange-300"
                   : "text-muted-foreground"}`}>
                   <Info className="w-5 h-5" />
                   <span className="text-2xl font-bold">{audit.unknown.length}</span>
                 </div>
-                <p className={`text-sm mt-1 ${audit.unknown.length > 0 
-                  ? "text-orange-600 dark:text-orange-400" 
+                <p className={`text-sm mt-1 ${audit.unknown.length > 0
+                  ? "text-orange-600 dark:text-orange-400"
                   : "text-muted-foreground"}`}>
                   Unbekannte Keys
                 </p>
               </div>
-              
+
               <div className="p-4 rounded-lg bg-muted border">
                 <div className="flex items-center gap-2 text-foreground">
                   <HardDrive className="w-5 h-5" />
@@ -1021,11 +1033,11 @@ function StorageTab() {
               </div>
             </div>
           )}
-          
+
           {/* Cleanup Button */}
           <div className="flex gap-3">
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               size="sm"
               onClick={handleCleanup}
               className="gap-2"
@@ -1036,7 +1048,7 @@ function StorageTab() {
           </div>
         </CardContent>
       </Card>
-      
+
       {/* Key Details Table */}
       <Card>
         <CardHeader>

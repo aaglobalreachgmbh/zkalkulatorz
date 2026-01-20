@@ -1,9 +1,10 @@
 // ============================================
-// Audit Log Layer - Phase 3B.4
-// Local audit trail for governance actions
+// Audit Log Layer (Supabase Connected)
+// Tenant-scoped Audit Trail
 // ============================================
 
 import { type AppRole } from "@/contexts/IdentityContext";
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Audit action types
@@ -22,88 +23,112 @@ export type AuditAction =
  */
 export interface AuditEvent {
   id: string;
-  ts: string;              // ISO timestamp
+  ts: string;
   actorUserId: string;
   actorDisplayName: string;
   actorRole: AppRole;
   tenantId: string;
   departmentId: string;
   action: AuditAction;
-  target: string;          // e.g., "department:store_berlin", "dataset:abc123", "policy:tenant"
+  target: string;
   meta?: Record<string, unknown>;
 }
 
-/**
- * Maximum number of audit events to keep per scope
- */
-const MAX_AUDIT_EVENTS = 100;
-
 // ============================================
-// Storage Keys
-// ============================================
-
-function getAuditKey(tenantId: string, departmentId: string): string {
-  return `audit_${tenantId}_${departmentId}`;
-}
-
-// ============================================
-// Audit Log CRUD
+// Audit Log CRUD (Async / Supabase)
 // ============================================
 
 /**
  * Load audit log for a scope
  */
-export function loadAuditLog(tenantId: string, departmentId: string): AuditEvent[] {
-  try {
-    const key = getAuditKey(tenantId, departmentId);
-    const json = localStorage.getItem(key);
-    return json ? JSON.parse(json) : [];
-  } catch {
+export async function loadAuditLog(tenantId: string, departmentId: string, limit: number = 100): Promise<AuditEvent[]> {
+  // Query Supabase 'audit_logs'
+  // We filter by metadata->>tenantId
+  const { data, error } = await supabase
+    .from("audit_logs")
+    .select("*")
+    .contains("metadata", { tenantId }) // JSONB filter
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error("[auditLog] loadAuditLog error:", error);
     return [];
   }
-}
 
-/**
- * Save audit log
- */
-function saveAuditLog(tenantId: string, departmentId: string, events: AuditEvent[]): void {
-  const key = getAuditKey(tenantId, departmentId);
-  // Keep only the most recent MAX_AUDIT_EVENTS
-  const trimmed = events.slice(-MAX_AUDIT_EVENTS);
-  localStorage.setItem(key, JSON.stringify(trimmed));
+  // Map DB result to AuditEvent
+  return (data || []).map((row: any) => {
+    const meta = row.metadata || {};
+    return {
+      id: row.id,
+      ts: row.created_at,
+      actorUserId: row.actor_id || meta.actorUserId || "system",
+      actorDisplayName: meta.actorDisplayName || "Unknown",
+      actorRole: meta.actorRole || "user",
+      tenantId: meta.tenantId || tenantId,
+      departmentId: meta.departmentId || departmentId,
+      action: row.action as AuditAction,
+      target: row.target || "",
+      meta: meta.details as Record<string, unknown> // 'details' inside metadata
+    };
+  });
 }
 
 /**
  * Log a new audit event
  */
-export function logAuditEvent(
+export async function logAuditEvent(
   tenantId: string,
   departmentId: string,
   event: Omit<AuditEvent, "id" | "ts" | "tenantId" | "departmentId">
-): AuditEvent {
-  const newEvent: AuditEvent = {
-    id: `audit_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-    ts: new Date().toISOString(),
-    tenantId,
-    departmentId,
-    ...event,
+): Promise<AuditEvent | null> {
+
+  const payload = {
+    actor_id: event.actorUserId,
+    action: event.action,
+    target: event.target,
+    metadata: {
+      tenantId,
+      departmentId,
+      actorUserId: event.actorUserId,
+      actorDisplayName: event.actorDisplayName,
+      actorRole: event.actorRole,
+      details: event.meta
+    }
   };
-  
-  const log = loadAuditLog(tenantId, departmentId);
-  log.push(newEvent);
-  saveAuditLog(tenantId, departmentId, log);
-  
-  return newEvent;
+
+  const { data, error } = await supabase
+    .from("audit_logs")
+    .insert([payload])
+    .select()
+    .single();
+
+  if (error) {
+    console.error("[auditLog] logAuditEvent error:", error);
+    return null;
+  }
+
+  // Return constructed event
+  const meta = data.metadata || {};
+  return {
+    id: data.id,
+    ts: data.created_at,
+    actorUserId: data.actor_id,
+    actorDisplayName: meta.actorDisplayName,
+    actorRole: meta.actorRole,
+    tenantId: meta.tenantId,
+    departmentId: meta.departmentId,
+    action: data.action as AuditAction,
+    target: data.target,
+    meta: meta.details
+  };
 }
 
 // ============================================
-// Convenience Logging Functions
+// Convenience Logging Functions (Async)
 // ============================================
 
-/**
- * Log a policy change
- */
-export function logPolicyChange(
+export async function logPolicyChange(
   tenantId: string,
   departmentId: string,
   actorUserId: string,
@@ -111,7 +136,7 @@ export function logPolicyChange(
   actorRole: AppRole,
   policyScope: "tenant" | "department",
   changes: Record<string, { from: unknown; to: unknown }>
-): AuditEvent {
+): Promise<AuditEvent | null> {
   return logAuditEvent(tenantId, departmentId, {
     actorUserId,
     actorDisplayName,
@@ -122,10 +147,7 @@ export function logPolicyChange(
   });
 }
 
-/**
- * Log a dataset import
- */
-export function logDatasetImport(
+export async function logDatasetImport(
   tenantId: string,
   departmentId: string,
   actorUserId: string,
@@ -133,7 +155,7 @@ export function logDatasetImport(
   actorRole: AppRole,
   datasetId: string,
   datasetVersion: string
-): AuditEvent {
+): Promise<AuditEvent | null> {
   return logAuditEvent(tenantId, departmentId, {
     actorUserId,
     actorDisplayName,
@@ -144,10 +166,7 @@ export function logDatasetImport(
   });
 }
 
-/**
- * Log a dataset status change
- */
-export function logDatasetStatusChange(
+export async function logDatasetStatusChange(
   tenantId: string,
   departmentId: string,
   actorUserId: string,
@@ -157,7 +176,7 @@ export function logDatasetStatusChange(
   fromStatus: string,
   toStatus: string,
   reason?: string
-): AuditEvent {
+): Promise<AuditEvent | null> {
   return logAuditEvent(tenantId, departmentId, {
     actorUserId,
     actorDisplayName,
@@ -168,10 +187,7 @@ export function logDatasetStatusChange(
   });
 }
 
-/**
- * Log a department action
- */
-export function logDepartmentAction(
+export async function logDepartmentAction(
   tenantId: string,
   departmentId: string,
   actorUserId: string,
@@ -180,7 +196,7 @@ export function logDepartmentAction(
   action: "department_create" | "department_update" | "department_delete",
   targetDepartmentId: string,
   details?: Record<string, unknown>
-): AuditEvent {
+): Promise<AuditEvent | null> {
   return logAuditEvent(tenantId, departmentId, {
     actorUserId,
     actorDisplayName,
@@ -191,10 +207,7 @@ export function logDepartmentAction(
   });
 }
 
-/**
- * Log a user assignment change
- */
-export function logUserAssignmentChange(
+export async function logUserAssignmentChange(
   tenantId: string,
   departmentId: string,
   actorUserId: string,
@@ -203,7 +216,7 @@ export function logUserAssignmentChange(
   targetUserId: string,
   fromDepartment: string | null,
   toDepartment: string
-): AuditEvent {
+): Promise<AuditEvent | null> {
   return logAuditEvent(tenantId, departmentId, {
     actorUserId,
     actorDisplayName,
@@ -221,38 +234,15 @@ export function logUserAssignmentChange(
 /**
  * Get recent audit events
  */
-export function getRecentAuditEvents(
+export async function getRecentAuditEvents(
   tenantId: string,
   departmentId: string,
   limit: number = 20
-): AuditEvent[] {
-  const log = loadAuditLog(tenantId, departmentId);
-  return log.slice(-limit).reverse(); // Most recent first
+): Promise<AuditEvent[]> {
+  return loadAuditLog(tenantId, departmentId, limit);
 }
 
-/**
- * Get audit events by action type
- */
-export function getAuditEventsByAction(
-  tenantId: string,
-  departmentId: string,
-  action: AuditAction
-): AuditEvent[] {
-  const log = loadAuditLog(tenantId, departmentId);
-  return log.filter(e => e.action === action).reverse();
-}
-
-/**
- * Get audit events by actor
- */
-export function getAuditEventsByActor(
-  tenantId: string,
-  departmentId: string,
-  actorUserId: string
-): AuditEvent[] {
-  const log = loadAuditLog(tenantId, departmentId);
-  return log.filter(e => e.actorUserId === actorUserId).reverse();
-}
+// Removed: getAuditEventsByAction, getAuditEventsByActor (YAGNI for now, kept interface clean)
 
 /**
  * Format audit action for display
@@ -269,3 +259,4 @@ export function formatAuditAction(action: AuditAction): string {
   };
   return labels[action] || action;
 }
+

@@ -55,8 +55,6 @@ verify_jwt = true
 [functions.generate-pdf]
 verify_jwt = true
 
-[functions.gmail-oauth]
-verify_jwt = true
 
 [functions.ionos-connect]
 verify_jwt = true

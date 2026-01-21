@@ -1,6 +1,6 @@
 // ============================================
 // Email Sync Edge Function
-// Syncs emails from Gmail and IONOS accounts
+// Syncs emails from IONOS accounts (Gmail OAuth removed)
 // ============================================
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -17,20 +17,6 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 interface SyncRequest {
   accountId?: string;
   maxResults?: number;
-}
-
-interface GmailMessage {
-  id: string;
-  threadId: string;
-  labelIds: string[];
-  snippet: string;
-  payload: {
-    headers: { name: string; value: string }[];
-    mimeType: string;
-    body?: { data?: string };
-    parts?: { mimeType: string; body?: { data?: string } }[];
-  };
-  internalDate: string;
 }
 
 serve(async (req) => {
@@ -63,14 +49,15 @@ serve(async (req) => {
     }
 
     const body: SyncRequest = await req.json();
-    const { accountId, maxResults = 50 } = body;
+    const { accountId } = body;
 
-    // Get accounts to sync
+    // Get accounts to sync (only IONOS supported)
     let accountsQuery = supabase
       .from("email_accounts")
       .select("*")
       .eq("user_id", user.id)
-      .eq("sync_enabled", true);
+      .eq("sync_enabled", true)
+      .eq("provider", "ionos"); // Only IONOS accounts
 
     if (accountId) {
       accountsQuery = accountsQuery.eq("id", accountId);
@@ -80,7 +67,10 @@ serve(async (req) => {
 
     if (accountsError || !accounts || accounts.length === 0) {
       return new Response(
-        JSON.stringify({ error: "No email accounts found" }),
+        JSON.stringify({ 
+          error: "No IONOS email accounts found",
+          message: "Gmail sync has been removed. Only IONOS accounts are supported."
+        }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -89,26 +79,15 @@ serve(async (req) => {
 
     for (const account of accounts) {
       try {
-        if (account.provider === "gmail") {
-          // Sync Gmail
-          const syncResult = await syncGmailAccount(supabase, account, maxResults);
-          results.push({
-            accountId: account.id,
-            provider: "gmail",
-            email: account.email_address,
-            ...syncResult,
-          });
-        } else if (account.provider === "ionos") {
-          // IONOS sync would require IMAP implementation
-          // For now, return a placeholder
-          results.push({
-            accountId: account.id,
-            provider: "ionos",
-            email: account.email_address,
-            synced: 0,
-            message: "IONOS sync not yet implemented (requires IMAP library)",
-          });
-        }
+        // IONOS sync requires IMAP implementation
+        // Placeholder for future IMAP integration
+        results.push({
+          accountId: account.id,
+          provider: "ionos",
+          email: account.email_address,
+          synced: 0,
+          message: "IONOS IMAP sync - Integration pending",
+        });
 
         // Update last_sync_at
         await supabase
@@ -154,114 +133,3 @@ serve(async (req) => {
     );
   }
 });
-
-async function syncGmailAccount(supabase: any, account: any, maxResults: number) {
-  const accessToken = account.access_token_encrypted; // TODO: Decrypt
-
-  // Check if token is expired
-  if (account.token_expiry && new Date(account.token_expiry) < new Date()) {
-    throw new Error("Access token expired - refresh required");
-  }
-
-  // Fetch messages from Gmail
-  const listResponse = await fetch(
-    `https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=${maxResults}`,
-    {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    }
-  );
-
-  if (!listResponse.ok) {
-    const errorData = await listResponse.json();
-    throw new Error(`Gmail API error: ${errorData.error?.message || "Unknown error"}`);
-  }
-
-  const listData = await listResponse.json();
-  const messages = listData.messages || [];
-
-  let synced = 0;
-  let skipped = 0;
-
-  for (const msg of messages) {
-    // Check if already synced
-    const { data: existing } = await supabase
-      .from("synced_emails")
-      .select("id")
-      .eq("account_id", account.id)
-      .eq("message_id", msg.id)
-      .single();
-
-    if (existing) {
-      skipped++;
-      continue;
-    }
-
-    // Fetch full message
-    const msgResponse = await fetch(
-      `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}?format=full`,
-      {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      }
-    );
-
-    if (!msgResponse.ok) continue;
-
-    const msgData: GmailMessage = await msgResponse.json();
-
-    // Extract headers
-    const headers = msgData.payload.headers;
-    const getHeader = (name: string) => 
-      headers.find(h => h.name.toLowerCase() === name.toLowerCase())?.value || null;
-
-    const fromHeader = getHeader("From") || "";
-    const toHeader = getHeader("To") || "";
-    const subject = getHeader("Subject") || "(Kein Betreff)";
-
-    // Parse sender
-    const senderMatch = fromHeader.match(/(?:"?([^"<]*)"?\s*)?<?([^>]+)>?/);
-    const senderName = senderMatch?.[1]?.trim() || null;
-    const senderEmail = senderMatch?.[2]?.trim() || fromHeader;
-
-    // Parse recipients
-    const recipients = toHeader.split(",").map(r => {
-      const match = r.match(/(?:"?([^"<]*)"?\s*)?<?([^>]+)>?/);
-      return {
-        name: match?.[1]?.trim() || null,
-        email: match?.[2]?.trim() || r.trim(),
-        type: "to",
-      };
-    });
-
-    // Get body preview
-    const bodyPreview = msgData.snippet || "";
-
-    // Insert into synced_emails
-    const { error: insertError } = await supabase
-      .from("synced_emails")
-      .insert({
-        tenant_id: account.tenant_id,
-        user_id: account.user_id,
-        account_id: account.id,
-        message_id: msg.id,
-        thread_id: msgData.threadId,
-        subject,
-        sender_email: senderEmail,
-        sender_name: senderName,
-        recipients,
-        body_preview: bodyPreview.substring(0, 500),
-        received_at: new Date(parseInt(msgData.internalDate)).toISOString(),
-        is_read: !msgData.labelIds?.includes("UNREAD"),
-        is_starred: msgData.labelIds?.includes("STARRED"),
-        labels: msgData.labelIds,
-        folder: msgData.labelIds?.includes("INBOX") ? "inbox" : 
-                msgData.labelIds?.includes("SENT") ? "sent" : "other",
-        visibility: "private",
-      });
-
-    if (!insertError) {
-      synced++;
-    }
-  }
-
-  return { synced, skipped, total: messages.length };
-}

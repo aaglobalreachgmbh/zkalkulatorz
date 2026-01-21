@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Calculator, Loader2, Mail, Lock, User } from "lucide-react";
+import { Calculator, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { PUBLISHER } from "@/margenkalkulator/publisherConfig";
 import { PublisherModal } from "@/components/PublisherModal";
@@ -84,82 +84,88 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/30 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4">
       <div className="w-full max-w-md flex flex-col items-center">
-        <Card className="w-full shadow-elevated animate-fade-in">
-          <CardHeader className="text-center space-y-4">
-            <div className="mx-auto w-16 h-16 rounded-2xl bg-primary flex items-center justify-center shadow-lg">
-              <Calculator className="w-8 h-8 text-primary-foreground" />
+        <Card className="w-full rounded-2xl shadow-lg border-border/50 animate-fade-in">
+          <CardHeader className="text-center space-y-6 pb-2 pt-8">
+            {/* Logo */}
+            <div className="mx-auto w-20 h-20 rounded-2xl bg-primary flex items-center justify-center shadow-lg">
+              <Calculator className="w-10 h-10 text-primary-foreground" />
             </div>
-            <div>
-              <CardTitle className="text-2xl font-bold">MargenKalkulator</CardTitle>
-              <CardDescription className="text-muted-foreground">
-                {isLogin ? "Anmelden" : "Registrieren"}
+            
+            {/* Title & Subtitle */}
+            <div className="space-y-1">
+              <CardTitle className="text-2xl font-bold tracking-tight">
+                MargenKalkulator
+              </CardTitle>
+              <p className="text-sm font-medium text-primary">
+                Vodafone Business Partner
+              </p>
+              <CardDescription className="text-muted-foreground pt-2">
+                {isLogin ? "Anmelden" : "Konto erstellen"}
               </CardDescription>
             </div>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+          
+          <CardContent className="px-8 pb-8">
+            <form onSubmit={handleSubmit} className="space-y-5">
               {/* Display Name - nur bei Registrierung */}
               {!isLogin && (
                 <div className="space-y-2">
-                  <Label htmlFor="displayName">Name</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="displayName"
-                      type="text"
-                      placeholder="Ihr Name"
-                      value={displayName}
-                      onChange={(e) => setDisplayName(e.target.value)}
-                      className="pl-10"
-                      disabled={isSubmitting}
-                    />
-                  </div>
+                  <Label htmlFor="displayName" className="text-sm font-medium">
+                    Name
+                  </Label>
+                  <Input
+                    id="displayName"
+                    type="text"
+                    placeholder="Ihr Name"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    disabled={isSubmitting}
+                    className="h-11"
+                  />
                 </div>
               )}
 
               {/* Email */}
               <div className="space-y-2">
-                <Label htmlFor="email">E-Mail</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="ihre@email.de"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
-                    disabled={isSubmitting}
-                    autoComplete="email"
-                  />
-                </div>
+                <Label htmlFor="email" className="text-sm font-medium">
+                  E-Mail
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="ihre@email.de"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={isSubmitting}
+                  autoComplete="email"
+                  className="h-11"
+                />
               </div>
 
               {/* Password */}
               <div className="space-y-2">
-                <Label htmlFor="password">Passwort</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10"
-                    disabled={isSubmitting}
-                    autoComplete={isLogin ? "current-password" : "new-password"}
-                  />
-                </div>
+                <Label htmlFor="password" className="text-sm font-medium">
+                  Passwort
+                </Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isSubmitting}
+                  autoComplete={isLogin ? "current-password" : "new-password"}
+                  className="h-11"
+                />
               </div>
 
               {/* Submit Button */}
               <Button
                 type="submit"
                 size="lg"
-                className="w-full"
+                className="w-full h-12 text-base font-semibold mt-2"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
@@ -173,14 +179,14 @@ export default function Auth() {
               </Button>
 
               {/* Toggle Login/Register */}
-              <div className="text-center pt-2">
+              <div className="text-center pt-1">
                 <button
                   type="button"
                   onClick={() => {
                     setIsLogin(!isLogin);
                     setPassword("");
                   }}
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200"
                 >
                   {isLogin 
                     ? "Noch kein Konto? Jetzt registrieren" 
@@ -190,19 +196,19 @@ export default function Auth() {
             </form>
 
             {/* Security Note */}
-            <div className="pt-6 mt-6 border-t">
+            <div className="pt-6 mt-6 border-t border-border/50">
               <p className="text-xs text-center text-muted-foreground">
-                🔒 Sichere Authentifizierung über Lovable Cloud
+                🔒 Sichere Authentifizierung
               </p>
             </div>
           </CardContent>
         </Card>
 
         {/* Publisher Info */}
-        <div className="mt-6 text-center">
+        <div className="mt-8 text-center">
           <PublisherModal
             trigger={
-              <button className="text-xs text-muted-foreground hover:text-primary transition-colors">
+              <button className="text-xs text-muted-foreground/70 hover:text-primary transition-colors duration-200">
                 {PUBLISHER.getCopyright()}
               </button>
             }

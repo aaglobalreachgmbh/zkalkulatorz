@@ -11,14 +11,9 @@ interface EnvValidationResult {
 }
 
 // Required for app to function
+// Note: Lovable Cloud injects VITE_SUPABASE_ANON_KEY automatically
 const REQUIRED_VARS = [
     'VITE_SUPABASE_URL',
-    'VITE_SUPABASE_PUBLISHABLE_KEY',
-] as const;
-
-// Optional but recommended
-const RECOMMENDED_VARS = [
-    'VITE_SUPABASE_ANON_KEY', // Alias for publishable key
 ] as const;
 
 /**
@@ -29,21 +24,21 @@ export function validateEnvironment(): EnvValidationResult {
     const missing: string[] = [];
     const warnings: string[] = [];
 
-    // Check required URL
+    // Check required URL - Lovable Cloud injects this automatically
     const url = import.meta.env.VITE_SUPABASE_URL;
     if (!url || url === 'undefined' || url === '') {
         missing.push('VITE_SUPABASE_URL');
     }
 
-    // Check for either PUBLISHABLE_KEY or ANON_KEY (Lovable Cloud uses ANON_KEY usually)
-    const pubKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    // Check for ANON_KEY (Lovable Cloud standard) or PUBLISHABLE_KEY (legacy)
     const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    const pubKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-    const hasKey = (pubKey && pubKey !== 'undefined' && pubKey !== '') ||
-        (anonKey && anonKey !== 'undefined' && anonKey !== '');
+    const hasKey = (anonKey && anonKey !== 'undefined' && anonKey !== '') ||
+        (pubKey && pubKey !== 'undefined' && pubKey !== '');
 
     if (!hasKey) {
-        missing.push('VITE_SUPABASE_ANON_KEY / VITE_SUPABASE_PUBLISHABLE_KEY');
+        missing.push('VITE_SUPABASE_ANON_KEY');
     }
 
     return {

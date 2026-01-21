@@ -1,4 +1,4 @@
-"use client";
+
 
 import { useState, useEffect } from 'react';
 import {
@@ -11,7 +11,7 @@ import {
     ResponsiveContainer,
     Legend // Fix: Add Legend import
 } from 'recharts'; // Fix: Import from recharts main package
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 
 interface ChartData {
@@ -41,7 +41,7 @@ export function ActivityChart() {
 
             // Process data for Recharts (Pivot counting)
             // Format: { day: '2024-01-01', pdf_export: 12, calculation: 45 }
-            const processed = (rawData || []).reduce((acc: any[], curr: ChartData) => {
+            const processed = ((rawData as any[]) || []).reduce((acc: any[], curr: ChartData) => {
                 const date = new Date(curr.day).toLocaleDateString('de-DE');
                 const existing = acc.find(item => item.day === date);
                 if (existing) {

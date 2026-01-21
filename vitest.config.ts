@@ -7,6 +7,7 @@ export default defineConfig({
     resolve: {
         alias: {
             '@': path.resolve(__dirname, './src'),
+            'npm:decimal.js@10.4.3': 'decimal.js',
         },
     },
     test: {

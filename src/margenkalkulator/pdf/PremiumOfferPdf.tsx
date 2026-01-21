@@ -84,7 +84,7 @@ export function PremiumOfferPdf({
       <PremiumCoverPage
         key="cover"
         customer={customer}
-        offerId={offerId}
+        offerId={offerId || ""}
         logoUrl={branding?.logoUrl}
       />
     );

@@ -1,6 +1,7 @@
 // ============================================
 // Audit Log Layer (Supabase Connected)
-// Uses existing user_activity_log table
+// Tenant-scoped Audit Trail
+// Mapped to 'user_activity_log' table
 // ============================================
 
 import { type AppRole } from "@/contexts/IdentityContext";
@@ -16,7 +17,10 @@ export type AuditAction =
   | "department_create"
   | "department_update"
   | "department_delete"
-  | "user_assignment_change";
+  | "user_assignment_change"
+  // Add legacy/standard actions if needed
+  | "offer_create" | "offer_update" | "offer_delete"
+  | "customer_create" | "customer_update" | "customer_delete";
 
 /**
  * Audit event entry
@@ -34,25 +38,15 @@ export interface AuditEvent {
   meta?: Record<string, unknown>;
 }
 
-// Valid AppRole values
-const VALID_ROLES: AppRole[] = ["admin", "tenant_admin", "manager", "sales"];
-
-function toAppRole(role: unknown): AppRole {
-  if (typeof role === "string" && VALID_ROLES.includes(role as AppRole)) {
-    return role as AppRole;
-  }
-  return "sales"; // Default fallback
-}
-
 // ============================================
 // Audit Log CRUD (Async / Supabase)
-// Uses user_activity_log table
 // ============================================
 
 /**
  * Load audit log for a scope
  */
 export async function loadAuditLog(tenantId: string, departmentId: string, limit: number = 100): Promise<AuditEvent[]> {
+  // Query Supabase 'user_activity_log'
   const { data, error } = await supabase
     .from("user_activity_log")
     .select("*")
@@ -61,25 +55,24 @@ export async function loadAuditLog(tenantId: string, departmentId: string, limit
     .limit(limit);
 
   if (error) {
-    console.warn("[auditLog] loadAuditLog error:", error.message);
+    console.error("[auditLog] loadAuditLog error:", error);
     return [];
   }
 
   // Map DB result to AuditEvent
-  return (data || []).map((row) => {
-    const meta = (row.metadata as Record<string, unknown>) || {};
-    
+  return (data || []).map((row: any) => {
+    const meta = row.metadata || {};
     return {
       id: row.id,
       ts: row.created_at,
       actorUserId: row.user_id || "system",
-      actorDisplayName: (meta.actorDisplayName as string) || "Unknown",
-      actorRole: toAppRole(meta.actorRole),
+      actorDisplayName: meta.actorDisplayName || "Unknown",
+      actorRole: meta.actorRole || "user",
       tenantId: row.tenant_id || tenantId,
       departmentId: row.department_id || departmentId,
       action: row.action as AuditAction,
-      target: row.resource_name || "",
-      meta: (meta.details as Record<string, unknown>) || {}
+      target: row.resource_name || row.summary || "",
+      meta: meta.details || meta // Fallback to entire metadata if details not present
     };
   });
 }
@@ -98,45 +91,39 @@ export async function logAuditEvent(
     tenant_id: tenantId,
     department_id: departmentId,
     action: event.action,
-    resource_type: "audit",
     resource_name: event.target,
-    summary: `${event.action}: ${event.target}`,
-    metadata: JSON.parse(JSON.stringify({
+    summary: `Audit: ${event.action} on ${event.target}`,
+    metadata: {
       actorDisplayName: event.actorDisplayName,
       actorRole: event.actorRole,
-      details: event.meta || {}
-    }))
+      details: event.meta
+    }
   };
 
   const { data, error } = await supabase
     .from("user_activity_log")
     .insert([payload])
     .select()
-    .maybeSingle();
+    .single();
 
   if (error) {
-    console.warn("[auditLog] logAuditEvent error:", error.message);
-    return null;
-  }
-
-  if (!data) {
+    console.error("[auditLog] logAuditEvent error:", error);
     return null;
   }
 
   // Return constructed event
-  const meta = (data.metadata as Record<string, unknown>) || {};
-    
+  const meta = data.metadata || {};
   return {
     id: data.id,
     ts: data.created_at,
     actorUserId: data.user_id,
-    actorDisplayName: (meta.actorDisplayName as string) || "",
-    actorRole: toAppRole(meta.actorRole),
+    actorDisplayName: meta.actorDisplayName,
+    actorRole: meta.actorRole,
     tenantId: data.tenant_id,
-    departmentId: data.department_id || departmentId,
+    departmentId: data.department_id,
     action: data.action as AuditAction,
-    target: data.resource_name || "",
-    meta: (meta.details as Record<string, unknown>) || {}
+    target: data.resource_name,
+    meta: meta.details
   };
 }
 
@@ -262,7 +249,7 @@ export async function getRecentAuditEvents(
  * Format audit action for display
  */
 export function formatAuditAction(action: AuditAction): string {
-  const labels: Record<AuditAction, string> = {
+  const labels: Record<string, string> = {
     policy_change: "Richtlinie geändert",
     dataset_import: "Dataset importiert",
     dataset_status_change: "Dataset-Status geändert",

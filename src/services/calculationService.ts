@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/integrations/supabase/client'
 import { CalculationInputSchema, CalculationOutputSchema, type CalculationInput, type CalculationOutput } from '@/lib/contracts'
 
 export interface Product {
@@ -9,7 +9,7 @@ export interface Product {
 
 export async function getProducts(): Promise<Product[]> {
     const { data, error } = await supabase
-        .from('tariffs_public')
+        .from('tariffs_public' as any)
         .select('id, name, provider')
 
     if (error) {
@@ -17,7 +17,7 @@ export async function getProducts(): Promise<Product[]> {
         throw new Error('Failed to fetch products')
     }
 
-    return data || []
+    return (data as any) || []
 }
 
 export async function calculateMargin(input: CalculationInput): Promise<CalculationOutput> {

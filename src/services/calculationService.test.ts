@@ -1,10 +1,10 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { calculateMargin } from './calculationService';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 
 // Mock Supabase
-vi.mock('@/lib/supabase', () => ({
+vi.mock('@/integrations/supabase/client', () => ({
     supabase: {
         functions: {
             invoke: vi.fn(),

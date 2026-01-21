@@ -379,7 +379,7 @@ function SafeProviderStack({ children }: { children: ReactNode }) {
 // ============================================================================
 // MAIN APP COMPONENT
 // ============================================================================
-import { isSupabaseConfigured } from "@/lib/supabase";
+import { isSupabaseConfigured } from "@/integrations/supabase/client";
 import { AlertCircle, LockKeyhole } from "lucide-react";
 
 // Fallback screen when environment variables are missing
@@ -433,7 +433,7 @@ const ConfigurationGate = () => (
 const App = () => {
   // CRITICAL: Block app initialization if secrets are missing.
   // This prevents the "White Screen" or DNS errors caused by invalid Supabase URLs.
-  if (!isSupabaseConfigured()) {
+  if (!isSupabaseConfigured) {
     return <ConfigurationGate />;
   }
 

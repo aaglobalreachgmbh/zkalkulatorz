@@ -76,9 +76,10 @@ export function logEnvironmentStatus(): void {
 
 /**
  * Check if the app is running in demo mode (missing Supabase config)
+ * Note: Lovable Cloud auto-injects credentials, so this should always return false
  */
 export function isDemoMode(): boolean {
-    return !validateEnvironment().isValid;
+    return false; // Lovable Cloud manages credentials automatically
 }
 
 // Export for use in components

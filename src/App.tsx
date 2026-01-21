@@ -379,64 +379,10 @@ function SafeProviderStack({ children }: { children: ReactNode }) {
 // ============================================================================
 // MAIN APP COMPONENT
 // ============================================================================
-import { isSupabaseConfigured } from "@/integrations/supabase/client";
-import { AlertCircle, LockKeyhole } from "lucide-react";
-
-// Fallback screen when environment variables are missing
-const ConfigurationGate = () => (
-  <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 p-4 font-sans">
-    <div className="max-w-lg w-full bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 p-8 text-center space-y-6">
-      <div className="w-20 h-20 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-        <LockKeyhole className="w-10 h-10 text-amber-600 dark:text-amber-500" />
-      </div>
-
-      <div className="space-y-2">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-          Access Restricted
-        </h1>
-        <p className="text-slate-500 dark:text-slate-400">
-          Application secrets are missing.
-        </p>
-      </div>
-
-      <div className="bg-slate-100 dark:bg-slate-800/50 rounded-lg p-4 text-left border border-slate-200 dark:border-slate-700">
-        <div className="flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-          <div className="space-y-1">
-            <p className="font-semibold text-sm text-slate-900 dark:text-slate-200">Required Action:</p>
-            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              Please configure the following environment variables in your deployment settings (Lovable Secrets):
-            </p>
-            <ul className="text-xs font-mono text-slate-500 mt-2 space-y-1 list-disc list-inside">
-              <li>VITE_SUPABASE_URL</li>
-              <li>VITE_SUPABASE_ANON_KEY</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-        <Button
-          onClick={() => window.location.reload()}
-          className="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium"
-        >
-          Check Configuration Again
-        </Button>
-        <p className="text-[10px] text-slate-400 mt-3">
-          Error Code: MISSING_ENV_VARS
-        </p>
-      </div>
-    </div>
-  </div>
-);
+// Lovable Cloud automatically manages Supabase credentials at build time
+// No manual configuration check needed
 
 const App = () => {
-  // CRITICAL: Block app initialization if secrets are missing.
-  // This prevents the "White Screen" or DNS errors caused by invalid Supabase URLs.
-  if (!isSupabaseConfigured) {
-    return <ConfigurationGate />;
-  }
-
   return (
     // PHASE 1: Top-level error boundary OUTSIDE all providers
     <AppErrorBoundary>

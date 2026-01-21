@@ -1,22 +1,15 @@
 import { createClient } from "@supabase/supabase-js";
 import { Database } from "./types";
 
-// Lovable Cloud usually sets VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
-// We use a sentinel value to prevent the client from crashing on empty URL, allowing the UI to show a helpful error instead.
-const FALLBACK_URL = "https://missing-env-vars.com";
-const FALLBACK_KEY = "missing-env-vars";
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || import.meta.env.SUPABASE_URL || FALLBACK_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.SUPABASE_ANON_KEY || FALLBACK_KEY;
+// Lovable Cloud Supabase Credentials
+// Diese sind öffentliche/publishable Keys - sicher für Client-Side Code
+const SUPABASE_URL = "https://mexrgeafzvcestcccmiy.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1leHJnZWFmenZjZXN0Y2NjbWl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY1OTE1OTgsImV4cCI6MjA4MjE2NzU5OH0.rbJXxaijSg0ga8KcxqPS-_mvTMZw_Vtd0ZuNSYXCbcg";
 
 // Initialize Supabase client
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-/**
- * Metadata about the Supabase configuration status.
- * Used by Auth components to show appropriate warnings.
- */
-// Lovable Cloud manages credentials automatically - always configured
+// Lovable Cloud manages configuration - always configured
 export const isSupabaseConfigured = true;
 
-console.info(`[Supabase] Client initialized with URL: ${supabaseUrl ? 'SET' : 'MISSING'}`);
+console.info("[Supabase] Client initialized with Lovable Cloud");

@@ -1,5 +1,16 @@
 name: "Sync: Local <-> GitHub <-> Lovable"
 
+# ============================================
+# This workflow syncs with Lovable platform.
+# 
+# TECH STACK: React + Vite (Lovable compatible)
+# AUTH: Supabase Auth (Gmail/Magic Link supported)
+# 
+# FUTURE MIGRATION: When cloning to Firebase Studios,
+# the project can be migrated to Next.js for better
+# Firebase integration.
+# ============================================
+
 on:
   push:
     branches:
@@ -16,23 +27,24 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: 'src/package-lock.json'
+          # FIXED: package.json is in root, not src/
+          cache-dependency-path: 'package-lock.json'
       
+      # FIXED: Run from root directory (where package.json is)
       - name: Install Dependencies
-        working-directory: ./src
         run: npm ci
 
       - name: Lint
-        working-directory: ./src
         run: npm run lint
 
-      # Placeholder for Tests (Phase 8)
-      # - name: Test
-      #   run: npm run test
+      - name: Type Check
+        run: npx tsc --noEmit
 
-      # Placeholder for Compliance Check (Phase 7)
-      # - name: Verify Compliance Matrix
-      #   run: ./scripts/verify_compliance.sh
+      - name: Unit Tests
+        run: npm run test
+
+      - name: Build Verification
+        run: npm run build
 
   # 2. Deployment (The Sync)
   deploy:

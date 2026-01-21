@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { Bell } from "lucide-react";
 import {
@@ -8,26 +6,53 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { getNotificationsAction, markReadAction } from "@/actions/notifications";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+
+interface Notification {
+  id: string;
+  title: string;
+  message: string | null;
+  is_read: boolean;
+  created_at: string;
+}
 
 export function NotificationBell() {
-    const [notifications, setNotifications] = useState<any[]>([]);
+    const [notifications, setNotifications] = useState<Notification[]>([]);
     const [open, setOpen] = useState(false);
+    const { user } = useAuth();
 
     useEffect(() => {
-        // Poll every 60s
-        const fetch = async () => {
-            const data = await getNotificationsAction();
-            setNotifications(data);
+        if (!user) return;
+        
+        const fetchNotifications = async () => {
+            const { data, error } = await supabase
+                .from("notifications")
+                .select("id, title, message, is_read, created_at")
+                .eq("user_id", user.id)
+                .eq("is_read", false)
+                .order("created_at", { ascending: false })
+                .limit(10);
+            
+            if (!error && data) {
+                setNotifications(data);
+            }
         };
-        fetch();
-        const interval = setInterval(fetch, 60000);
+        
+        fetchNotifications();
+        const interval = setInterval(fetchNotifications, 60000);
         return () => clearInterval(interval);
-    }, []);
+    }, [user]);
 
     const handleMarkRead = async (id: string) => {
-        await markReadAction(id);
-        setNotifications(prev => prev.filter(n => n.id !== id));
+        const { error } = await supabase
+            .from("notifications")
+            .update({ is_read: true })
+            .eq("id", id);
+        
+        if (!error) {
+            setNotifications(prev => prev.filter(n => n.id !== id));
+        }
     };
 
     return (
@@ -41,7 +66,7 @@ export function NotificationBell() {
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-80" align="end">
-                <h4 className="font-medium mb-2">Notifications</h4>
+                <h4 className="font-medium mb-2">Benachrichtigungen</h4>
                 <div className="space-y-2 max-h-64 overflow-auto">
                     {notifications.map(n => (
                         <div key={n.id} className="text-sm p-3 bg-slate-50 dark:bg-slate-800 rounded border border-slate-100 dark:border-slate-700 relative group">
@@ -51,11 +76,11 @@ export function NotificationBell() {
                                 onClick={() => handleMarkRead(n.id)}
                                 className="absolute top-2 right-2 text-xs text-blue-500 opacity-0 group-hover:opacity-100"
                             >
-                                Mark read
+                                Gelesen
                             </button>
                         </div>
                     ))}
-                    {notifications.length === 0 && <p className="text-sm text-slate-500">No new notifications.</p>}
+                    {notifications.length === 0 && <p className="text-sm text-slate-500">Keine neuen Benachrichtigungen.</p>}
                 </div>
             </PopoverContent>
         </Popover>

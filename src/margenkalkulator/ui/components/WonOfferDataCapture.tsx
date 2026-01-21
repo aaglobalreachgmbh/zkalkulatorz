@@ -224,25 +224,46 @@ export function WonOfferDataCapture({
     setIsSubmitting(true);
     try {
       const completeData: WonOfferData = {
-        ...data,
         offerId,
-        company: {
-          ...data.company,
-          legalForm: data.company.legalForm as any,
-          registerType: data.company.registerType as any
-        },
-        contact: {
-          ...data.contact,
-          salutation: data.contact.salutation as any
-        },
-        simOptions: {
-          ...data.simOptions,
-          type: data.simOptions.type as any
-        },
         tenantId: "", // Will be set by backend
         capturedAt: new Date().toISOString(),
         capturedBy: "", // Will be set by backend
         status: "complete",
+        company: {
+          name: data.company.name || "",
+          legalForm: data.company.legalForm as LegalForm,
+          registerType: data.company.registerType as RegisterType | undefined,
+          registerNumber: data.company.registerNumber,
+          registerPlace: data.company.registerPlace,
+          taxId: data.company.taxId,
+          vatId: data.company.vatId,
+        },
+        contact: {
+          salutation: data.contact.salutation as Salutation,
+          firstName: data.contact.firstName || "",
+          lastName: data.contact.lastName || "",
+          email: data.contact.email || "",
+          phone: data.contact.phone,
+          mobile: data.contact.mobile,
+          position: data.contact.position,
+        },
+        billingAddress: {
+          street: data.billingAddress.street || "",
+          houseNumber: data.billingAddress.houseNumber || "",
+          addressLine2: data.billingAddress.addressLine2,
+          zipCode: data.billingAddress.zipCode || "",
+          city: data.billingAddress.city || "",
+          country: data.billingAddress.country || "Deutschland",
+        },
+        simOptions: {
+          type: data.simOptions.type as SimType,
+          quantity: data.simOptions.quantity || 1,
+          wunschrufnummer: data.simOptions.wunschrufnummer,
+          wunschrufnummerDisclaimer: data.simOptions.wunschrufnummerDisclaimer || false,
+          portNumber: data.simOptions.portNumber,
+          existingNumber: data.simOptions.existingNumber,
+          currentProvider: data.simOptions.currentProvider,
+        },
         payment: data.payment ? {
           iban: data.payment.iban || "",
           bic: data.payment.bic || "",
@@ -250,7 +271,8 @@ export function WonOfferDataCapture({
           bankName: data.payment.bankName || "",
           sepaMandateAccepted: !!data.payment.sepaMandateAccepted
         } : undefined,
-        // Ensure all required fields from schema match WonOfferData structure
+        customerPassword: data.customerPassword,
+        internalNotes: data.internalNotes,
       };
       await onSubmit(completeData);
       toast.success("Daten erfolgreich übermittelt");

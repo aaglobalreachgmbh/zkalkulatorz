@@ -91,6 +91,7 @@ export async function logAuditEvent(
     tenant_id: tenantId,
     department_id: departmentId,
     action: event.action,
+    resource_type: "audit_event",
     resource_name: event.target,
     summary: `Audit: ${event.action} on ${event.target}`,
     metadata: {
@@ -102,7 +103,7 @@ export async function logAuditEvent(
 
   const { data, error } = await supabase
     .from("user_activity_log")
-    .insert([payload])
+    .insert([payload as any])
     .select()
     .single();
 
@@ -112,18 +113,18 @@ export async function logAuditEvent(
   }
 
   // Return constructed event
-  const meta = data.metadata || {};
+  const meta = (data.metadata as Record<string, any>) || {};
   return {
     id: data.id,
     ts: data.created_at,
     actorUserId: data.user_id,
-    actorDisplayName: meta.actorDisplayName,
-    actorRole: meta.actorRole,
-    tenantId: data.tenant_id,
-    departmentId: data.department_id,
+    actorDisplayName: meta.actorDisplayName || "Unknown",
+    actorRole: meta.actorRole || "user",
+    tenantId: data.tenant_id || "",
+    departmentId: data.department_id || "",
     action: data.action as AuditAction,
-    target: data.resource_name,
-    meta: meta.details
+    target: data.resource_name || "",
+    meta: meta.details || {}
   };
 }
 

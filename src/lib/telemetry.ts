@@ -5,7 +5,7 @@
  * IMPORTANT: Never log sensitive fields (EK, Marge, Provision, cost_price).
  */
 
-import { supabase } from './supabase';
+import { supabase } from '@/integrations/supabase/client';
 
 // ============================================
 // Types
@@ -40,7 +40,7 @@ export async function logUserAction(
     try {
         const { data: { user } } = await supabase.auth.getUser();
 
-        await supabase.from('user_events').insert({
+        await (supabase.from as any)('user_events').insert({
             user_id: user?.id,
             event,
             context,
@@ -60,7 +60,7 @@ export async function logApiCall(payload: ApiLogPayload): Promise<void> {
     try {
         const { data: { user } } = await supabase.auth.getUser();
 
-        await supabase.from('api_logs').insert({
+        await (supabase.from as any)('api_logs').insert({
             ...payload,
             user_id: user?.id,
         });
@@ -76,7 +76,7 @@ export async function logError(payload: ErrorLogPayload): Promise<void> {
     try {
         const { data: { user } } = await supabase.auth.getUser();
 
-        await supabase.from('error_logs').insert({
+        await (supabase.from as any)('error_logs').insert({
             ...payload,
             user_id: user?.id,
         });

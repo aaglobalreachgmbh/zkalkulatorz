@@ -26,12 +26,12 @@ export function ActivityChart() {
 
     useEffect(() => {
         async function fetchData() {
-            // Fetch from the View
+            // Fetch from user_activity_log directly (view doesn't exist)
             const { data: rawData, error } = await supabase
-                .from('vw_usage_summary')
-                .select('*')
-                .order('day', { ascending: true })
-                .limit(30); // Last 30 entries
+                .from('user_activity_log')
+                .select('action, created_at')
+                .order('created_at', { ascending: true })
+                .limit(500);
 
             if (error) {
                 console.error("Failed to fetch activity:", error);
@@ -39,15 +39,16 @@ export function ActivityChart() {
                 return;
             }
 
-            // Process data for Recharts (Pivot counting)
+            // Process data for Recharts (Pivot counting) - client-side aggregation
             // Format: { day: '2024-01-01', pdf_export: 12, calculation: 45 }
-            const processed = ((rawData as any[]) || []).reduce((acc: any[], curr: ChartData) => {
-                const date = new Date(curr.day).toLocaleDateString('de-DE');
+            const processed = ((rawData as any[]) || []).reduce((acc: any[], curr) => {
+                const date = new Date(curr.created_at).toLocaleDateString('de-DE');
+                const event = curr.action || 'unknown';
                 const existing = acc.find(item => item.day === date);
                 if (existing) {
-                    existing[curr.event] = curr.count;
+                    existing[event] = (existing[event] || 0) + 1;
                 } else {
-                    acc.push({ day: date, [curr.event]: curr.count });
+                    acc.push({ day: date, [event]: 1 });
                 }
                 return acc;
             }, []);

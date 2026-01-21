@@ -1,5 +1,4 @@
 // supabase/functions/calculate-margin/logic.ts
-import { Decimal } from "npm:decimal.js@10.4.3";
 
 /**
  * Pure function to calculate economic margin.
@@ -7,6 +6,8 @@ import { Decimal } from "npm:decimal.js@10.4.3";
  * - listPrice: must be >= 0
  * - costPrice: must be >= 0
  * - volume: must be > 0 (strictly positive number expected)
+ * 
+ * Note: Using native JS arithmetic instead of Decimal.js for Deno compatibility.
  */
 export function calculateEconomics(
     listPrice: number,
@@ -18,18 +19,14 @@ export function calculateEconomics(
     if (costPrice < 0) throw new Error("Cost Price cannot be negative");
     if (volume <= 0) throw new Error("Volume must be positive");
 
-    const listPriceDec = new Decimal(listPrice);
-    const costPriceDec = new Decimal(costPrice);
-    const volumeDec = new Decimal(volume);
-
-    const revenue = listPriceDec.mul(volumeDec);
-    const cost = costPriceDec.mul(volumeDec);
-    const margin = revenue.sub(cost);
+    const revenue = listPrice * volume;
+    const cost = costPrice * volume;
+    const margin = revenue - cost;
 
     // Avoid division by zero
-    const marginPercent = revenue.gt(0)
-        ? margin.div(revenue).mul(100)
-        : new Decimal(0);
+    const marginPercent = revenue > 0
+        ? (margin / revenue) * 100
+        : 0;
 
     return {
         margin: Number(margin.toFixed(2)),

@@ -19,7 +19,7 @@ export function NotificationBell() {
             const { data, error } = await supabase
                 .from('notifications')
                 .select('*')
-                .eq('read', false)
+                .eq('is_read', false)
                 .order('created_at', { ascending: false })
                 .limit(10);
 
@@ -35,7 +35,7 @@ export function NotificationBell() {
     const handleMarkRead = async (id: string) => {
         await supabase
             .from('notifications')
-            .update({ read: true })
+            .update({ is_read: true })
             .eq('id', id);
 
         setNotifications(prev => prev.filter(n => n.id !== id));

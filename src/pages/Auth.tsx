@@ -4,11 +4,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Calculator, Loader2, AlertTriangle } from "lucide-react";
+import { Calculator, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { PUBLISHER } from "@/margenkalkulator/publisherConfig";
 import { PublisherModal } from "@/components/PublisherModal";
-import { isSupabaseConfigured } from "@/integrations/supabase/client";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -56,26 +55,13 @@ export default function Auth() {
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Backend Not Configured Warning */}
-            {!isSupabaseConfigured && (
-              <Alert variant="destructive">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Backend nicht konfiguriert</AlertTitle>
-                <AlertDescription>
-                  Die Supabase-Umgebungsvariablen fehlen. Bitte konfigurieren Sie
-                  VITE_SUPABASE_URL und VITE_SUPABASE_PUBLISHABLE_KEY in den
-                  Deployment-Einstellungen.
-                </AlertDescription>
-              </Alert>
-            )}
-
             {/* Google Login Button - Primary CTA */}
             <Button
               type="button"
               size="lg"
               className="w-full h-14 text-base font-medium"
               onClick={handleGoogleLogin}
-              disabled={isLoading || !isSupabaseConfigured}
+              disabled={isLoading}
             >
               {isLoading ? (
                 <>

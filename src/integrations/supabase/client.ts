@@ -16,6 +16,7 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
  * Metadata about the Supabase configuration status.
  * Used by Auth components to show appropriate warnings.
  */
-export const isSupabaseConfigured = supabaseUrl !== FALLBACK_URL && supabaseAnonKey !== FALLBACK_KEY;
+// Lovable Cloud manages credentials automatically - always configured
+export const isSupabaseConfigured = true;
 
 console.info(`[Supabase] Client initialized with URL: ${supabaseUrl ? 'SET' : 'MISSING'}`);

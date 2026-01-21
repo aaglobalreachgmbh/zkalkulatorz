@@ -1,14 +1,24 @@
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calculator, Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Calculator, Loader2, Mail, Lock, User } from "lucide-react";
+import { toast } from "sonner";
 import { PUBLISHER } from "@/margenkalkulator/publisherConfig";
 import { PublisherModal } from "@/components/PublisherModal";
 
 export default function Auth() {
   const navigate = useNavigate();
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading, signIn, signUp } = useAuth();
+  
+  const [isLogin, setIsLogin] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
 
   // Redirect if already logged in
   useEffect(() => {
@@ -16,6 +26,54 @@ export default function Auth() {
       navigate("/", { replace: true });
     }
   }, [user, authLoading, navigate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email || !password) {
+      toast.error("Bitte E-Mail und Passwort eingeben");
+      return;
+    }
+
+    if (!isLogin && !displayName) {
+      toast.error("Bitte einen Namen eingeben");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      if (isLogin) {
+        const { error } = await signIn(email, password);
+        if (error) {
+          if (error.message.includes("Invalid login credentials")) {
+            toast.error("Ungültige Anmeldedaten. Bitte überprüfen Sie E-Mail und Passwort.");
+          } else if (error.message.includes("Email not confirmed")) {
+            toast.error("E-Mail noch nicht bestätigt. Bitte prüfen Sie Ihr Postfach.");
+          } else {
+            toast.error(`Anmeldung fehlgeschlagen: ${error.message}`);
+          }
+        } else {
+          toast.success("Erfolgreich angemeldet");
+        }
+      } else {
+        const { error } = await signUp(email, password, displayName);
+        if (error) {
+          if (error.message.includes("already registered")) {
+            toast.error("Diese E-Mail-Adresse ist bereits registriert.");
+          } else {
+            toast.error(`Registrierung fehlgeschlagen: ${error.message}`);
+          }
+        } else {
+          toast.success("Registrierung erfolgreich! Sie können sich jetzt anmelden.");
+          setIsLogin(true);
+          setPassword("");
+        }
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   if (authLoading) {
     return (
@@ -36,20 +94,105 @@ export default function Auth() {
             <div>
               <CardTitle className="text-2xl font-bold">MargenKalkulator</CardTitle>
               <CardDescription className="text-muted-foreground">
-                Vodafone Business Partner Portal
+                {isLogin ? "Anmelden" : "Registrieren"}
               </CardDescription>
             </div>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Info Text */}
-            <p className="text-sm text-center text-muted-foreground">
-              Anmeldung ist derzeit deaktiviert.
-            </p>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Display Name - nur bei Registrierung */}
+              {!isLogin && (
+                <div className="space-y-2">
+                  <Label htmlFor="displayName">Name</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      id="displayName"
+                      type="text"
+                      placeholder="Ihr Name"
+                      value={displayName}
+                      onChange={(e) => setDisplayName(e.target.value)}
+                      className="pl-10"
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Email */}
+              <div className="space-y-2">
+                <Label htmlFor="email">E-Mail</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="ihre@email.de"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="pl-10"
+                    disabled={isSubmitting}
+                    autoComplete="email"
+                  />
+                </div>
+              </div>
+
+              {/* Password */}
+              <div className="space-y-2">
+                <Label htmlFor="password">Passwort</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pl-10"
+                    disabled={isSubmitting}
+                    autoComplete={isLogin ? "current-password" : "new-password"}
+                  />
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    {isLogin ? "Anmelden..." : "Registrieren..."}
+                  </>
+                ) : (
+                  isLogin ? "Anmelden" : "Registrieren"
+                )}
+              </Button>
+
+              {/* Toggle Login/Register */}
+              <div className="text-center pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsLogin(!isLogin);
+                    setPassword("");
+                  }}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  {isLogin 
+                    ? "Noch kein Konto? Jetzt registrieren" 
+                    : "Bereits registriert? Anmelden"}
+                </button>
+              </div>
+            </form>
 
             {/* Security Note */}
-            <div className="pt-4 border-t">
+            <div className="pt-6 mt-6 border-t">
               <p className="text-xs text-center text-muted-foreground">
-                🔒 Kontaktieren Sie den Administrator für Zugang
+                🔒 Sichere Authentifizierung über Lovable Cloud
               </p>
             </div>
           </CardContent>

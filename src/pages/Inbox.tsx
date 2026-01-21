@@ -1,5 +1,5 @@
 // ============================================
-// Inbox Page - Email Integration with Gmail and IONOS
+// Inbox Page - Email Integration with IONOS
 // ============================================
 
 import { useState } from "react";
@@ -51,7 +51,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 // Import branded icons
-import { GmailIcon, IonosIcon } from "@/margenkalkulator/ui/components/icons/IntegrationIcons";
+import { IonosIcon } from "@/margenkalkulator/ui/components/icons/IntegrationIcons";
 import { IntegrationPromptCard } from "@/margenkalkulator/ui/components/IntegrationPromptCard";
 
 function formatEmailDate(dateStr: string): string {
@@ -112,33 +112,6 @@ export default function InboxPage() {
   const unreadCount = emails.filter(e => !e.is_read).length;
 
   // Gmail OAuth connect
-  const handleGmailConnect = async () => {
-    setIsConnecting(true);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("Nicht authentifiziert");
-
-      const response = await supabase.functions.invoke("gmail-oauth", {
-        body: {
-          action: "get_auth_url",
-          redirectUri: `${window.location.origin}/inbox`,
-        },
-      });
-
-      if (response.error) throw response.error;
-      if (response.data?.authUrl) {
-        window.location.href = response.data.authUrl;
-      } else if (response.data?.error) {
-        toast.error(response.data.message || "Gmail OAuth nicht konfiguriert");
-      }
-    } catch (error) {
-      console.error("Gmail connect error:", error);
-      toast.error("Gmail-Verbindung fehlgeschlagen");
-    } finally {
-      setIsConnecting(false);
-    }
-  };
-
   // IONOS connect
   const handleIonosConnect = async () => {
     if (!ionosCredentials.email || !ionosCredentials.password) {
@@ -222,7 +195,7 @@ export default function InboxPage() {
               Posteingang
             </h1>
             <p className="text-muted-foreground">
-              E-Mail-Integration für Gmail und IONOS
+              E-Mail-Integration für IONOS
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -252,11 +225,7 @@ export default function InboxPage() {
           <div className="flex flex-wrap items-center gap-3">
             {accounts.map((account) => (
               <Card key={account.id} className="flex items-center gap-3 p-3 pr-4 border-success/30 bg-success/5">
-                {account.provider === "gmail" ? (
-                  <GmailIcon className="w-8 h-8" />
-                ) : (
-                  <IonosIcon className="w-8 h-8" />
-                )}
+                <IonosIcon className="w-8 h-8" />
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm truncate">{account.email_address}</p>
                   <p className="text-xs text-muted-foreground flex items-center gap-1">
@@ -324,11 +293,7 @@ export default function InboxPage() {
           <div className="flex flex-wrap items-center gap-3">
             {accounts.map((account) => (
               <Card key={account.id} className="flex items-center gap-3 p-3 pr-4 border-success/30 bg-success/5">
-                {account.provider === "gmail" ? (
-                  <GmailIcon className="w-8 h-8" />
-                ) : (
-                  <IonosIcon className="w-8 h-8" />
-                )}
+                <IonosIcon className="w-8 h-8" />
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm truncate">{account.email_address}</p>
                   <p className="text-xs text-muted-foreground flex items-center gap-1">
@@ -503,48 +468,15 @@ export default function InboxPage() {
           </DialogHeader>
 
           {!connectProvider ? (
-            <div className="grid grid-cols-2 gap-4 py-4">
+            <div className="py-4">
               <Button
                 variant="outline"
-                className="h-24 flex-col gap-2"
-                onClick={() => setConnectProvider("gmail")}
-              >
-                <GmailIcon className="w-10 h-10" />
-                <span>Gmail</span>
-              </Button>
-              <Button
-                variant="outline"
-                className="h-24 flex-col gap-2"
+                className="w-full h-24 flex-col gap-2"
                 onClick={() => setConnectProvider("ionos")}
               >
                 <IonosIcon className="w-10 h-10" />
-                <span>IONOS</span>
+                <span>IONOS verbinden</span>
               </Button>
-            </div>
-          ) : connectProvider === "gmail" ? (
-            <div className="py-4 space-y-4">
-              <div className="flex items-center gap-3 p-4 bg-muted rounded-lg">
-                <GmailIcon className="w-10 h-10" />
-                <div>
-                  <p className="font-medium">Gmail verbinden</p>
-                  <p className="text-sm text-muted-foreground">
-                    Sie werden zu Google weitergeleitet, um die Verbindung zu autorisieren.
-                  </p>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setConnectProvider(null)}>
-                  Zurück
-                </Button>
-                <Button onClick={handleGmailConnect} disabled={isConnecting}>
-                  {isConnecting ? (
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                  )}
-                  Mit Google verbinden
-                </Button>
-              </DialogFooter>
             </div>
           ) : (
             <div className="py-4 space-y-4">

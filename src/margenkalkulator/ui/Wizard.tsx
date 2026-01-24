@@ -512,9 +512,9 @@ export function Wizard() {
         </div>
       )}
 
-      {/* Header - Compressed for more content space (Quick Win #2) */}
-      <header className="border-b border-border bg-card shrink-0 sticky top-0 z-40 bg-card/95 backdrop-blur-sm">
-        <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-1.5 sm:py-2 flex items-center justify-between gap-2">
+      {/* Header - Enterprise minimal design */}
+      <header className="border-b border-border/50 shrink-0 sticky top-0 z-40 bg-background/95 backdrop-blur-xl shadow-sm">
+        <div className="container mx-auto px-3 sm:px-4 lg:px-6 h-11 flex items-center justify-between gap-3">
           {/* Left: Progress Indicator */}
           <WizardProgress
             currentStep={
@@ -603,14 +603,15 @@ export function Wizard() {
                 collapsible
                 value={activeSection}
                 onValueChange={setActiveSection}
-                className="space-y-3"
+                className="space-y-2"
               >
                 {/* Hardware Section */}
                 <AccordionItem value="hardware" className={cn(
-                  "border rounded-xl overflow-hidden transition-opacity",
-                  activeSection !== "hardware" && "opacity-60 hover:opacity-100"
+                  "border border-border/60 rounded-xl overflow-hidden transition-all duration-200",
+                  activeSection === "hardware" && "ring-2 ring-primary/10 border-primary/30 shadow-sm",
+                  activeSection !== "hardware" && "opacity-70 hover:opacity-100 hover:border-border"
                 )}>
-                  <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50 [&[data-state=open]]:bg-muted/30">
+                  <AccordionTrigger className="px-4 py-2.5 hover:no-underline hover:bg-muted/30 [&[data-state=open]]:bg-muted/20">
                     <div className="flex items-center gap-3 flex-1">
                       <div className={cn(
                         "w-8 h-8 rounded-lg flex items-center justify-center",
@@ -648,10 +649,11 @@ export function Wizard() {
 
                 {/* Mobile Section */}
                 <AccordionItem value="mobile" className={cn(
-                  "border rounded-xl overflow-hidden transition-opacity",
-                  activeSection !== "mobile" && "opacity-60 hover:opacity-100"
+                  "border border-border/60 rounded-xl overflow-hidden transition-all duration-200",
+                  activeSection === "mobile" && "ring-2 ring-primary/10 border-primary/30 shadow-sm",
+                  activeSection !== "mobile" && "opacity-70 hover:opacity-100 hover:border-border"
                 )}>
-                  <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50 [&[data-state=open]]:bg-muted/30">
+                  <AccordionTrigger className="px-4 py-2.5 hover:no-underline hover:bg-muted/30 [&[data-state=open]]:bg-muted/20">
                     <div className="flex items-center gap-3 flex-1">
                       <div className={cn(
                         "w-8 h-8 rounded-lg flex items-center justify-center",
@@ -699,10 +701,11 @@ export function Wizard() {
                 {/* Fixed Net Section - nur wenn Feature aktiv */}
                 {fixedNetModuleEnabled && (
                   <AccordionItem value="fixedNet" className={cn(
-                    "border rounded-xl overflow-hidden transition-opacity",
-                    activeSection !== "fixedNet" && "opacity-60 hover:opacity-100"
+                    "border border-border/60 rounded-xl overflow-hidden transition-all duration-200",
+                    activeSection === "fixedNet" && "ring-2 ring-emerald-500/10 border-emerald-500/30 shadow-sm",
+                    activeSection !== "fixedNet" && "opacity-70 hover:opacity-100 hover:border-border"
                   )}>
-                    <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50 [&[data-state=open]]:bg-muted/30">
+                    <AccordionTrigger className="px-4 py-2.5 hover:no-underline hover:bg-muted/30 [&[data-state=open]]:bg-muted/20">
                       <div className="flex items-center gap-3 flex-1">
                         <div className={cn(
                           "w-8 h-8 rounded-lg flex items-center justify-center",

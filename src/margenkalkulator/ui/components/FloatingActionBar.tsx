@@ -1,17 +1,16 @@
 // ============================================
-// Floating Action Bar - Always-Visible Actions
+// Enterprise Floating Action Bar
 // ============================================
 //
-// Sticky footer bar with:
-// - Live price display (always visible)
-// - "Add to Offer" button (prominent) with disable states
-// - Basket badge (shows item count)
-// - Works on Desktop + Mobile
-//
-// Replaces some sidebar functionality for better UX.
+// Full-width sticky footer with:
+// - Subtle glass morphism effect
+// - Clear visual hierarchy
+// - Enterprise-grade spacing and typography
+// - Prominent CTA with micro-interactions
+// - Accessible focus states
 // ============================================
 
-import { Plus, Check, ShoppingBag, Euro, TrendingUp, TrendingDown, Sparkles, AlertCircle } from "lucide-react";
+import { Plus, Check, ShoppingBag, Euro, TrendingUp, TrendingDown, Sparkles, AlertCircle, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -94,116 +93,140 @@ export function FloatingActionBar({
   };
 
   const marginColor = useMemo(() => {
-    if (margin >= 100) return "text-emerald-400";
-    if (margin >= 0) return "text-amber-400";
-    return "text-red-400";
+    if (margin >= 100) return "text-emerald-500";
+    if (margin >= 0) return "text-amber-500";
+    return "text-red-500";
+  }, [margin]);
+
+  const marginBg = useMemo(() => {
+    if (margin >= 100) return "bg-emerald-500/10";
+    if (margin >= 0) return "bg-amber-500/10";
+    return "bg-red-500/10";
   }, [margin]);
 
   return (
     <div className={cn(
-      "bg-slate-900 text-white border-t border-slate-700 shadow-lg",
+      // Enterprise glass effect with subtle shadow
+      "bg-background/95 backdrop-blur-xl border-t border-border/50",
+      "shadow-[0_-4px_16px_rgba(0,0,0,0.08)]",
       className
     )}>
-      <div className="flex items-center justify-between gap-3 px-4 py-3">
-        {/* Left: Price Info */}
-        <div className="flex items-center gap-4 lg:gap-6">
-          {/* Monthly Price */}
-          <div className="text-center min-w-[80px]">
-            <p className="text-[9px] uppercase tracking-wider text-slate-400">Ø Monat</p>
-            <div className="flex items-center justify-center gap-1">
-              <Euro className="w-3.5 h-3.5 text-slate-400" />
-              <p className="text-lg font-bold">
+      <div className="flex items-center justify-between gap-4 px-4 py-3 max-w-4xl mx-auto">
+        {/* Left: Metrics Grid */}
+        <div className="flex items-center gap-3 sm:gap-5">
+          {/* Monthly Price - Primary Metric */}
+          <div className="flex flex-col items-center">
+            <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground/70">
+              Ø/Monat
+            </span>
+            <div className="flex items-baseline gap-0.5">
+              <span className="text-2xl font-bold tracking-tight text-foreground tabular-nums">
                 <AnimatedCurrency value={avgMonthly} decimals={2} />
-              </p>
+              </span>
+              <span className="text-sm font-medium text-muted-foreground">€</span>
             </div>
           </div>
 
           {/* Quantity Badge */}
           {quantity > 1 && (
-            <div className="text-center">
-              <p className="text-[9px] uppercase tracking-wider text-slate-400">Verträge</p>
-              <p className="text-lg font-bold tabular-nums">{quantity}x</p>
+            <div className="flex flex-col items-center px-3 py-1 rounded-lg bg-muted/50">
+              <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground/70">
+                Verträge
+              </span>
+              <span className="text-lg font-bold tabular-nums text-foreground">{quantity}×</span>
             </div>
           )}
 
-          {/* Dealer: Margin */}
+          {/* Dealer: Margin - Enterprise styling */}
           {showDealerEconomics && (
-            <div className="text-center hidden sm:block">
-              <p className="text-[9px] uppercase tracking-wider text-slate-400">Marge</p>
-              <div className="flex items-center justify-center gap-1">
+            <div className={cn(
+              "flex flex-col items-center px-3 py-1 rounded-lg hidden sm:flex",
+              marginBg
+            )}>
+              <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground/70">
+                Marge
+              </span>
+              <div className="flex items-center gap-1">
                 {margin >= 0 ? (
-                  <TrendingUp className={cn("w-3.5 h-3.5", marginColor)} />
+                  <TrendingUp className={cn("w-4 h-4", marginColor)} />
                 ) : (
-                  <TrendingDown className={cn("w-3.5 h-3.5", marginColor)} />
+                  <TrendingDown className={cn("w-4 h-4", marginColor)} />
                 )}
-                <p className={cn("text-lg font-bold", marginColor)}>
+                <span className={cn("text-lg font-bold tabular-nums", marginColor)}>
                   <AnimatedCurrency value={margin} variant="margin" decimals={0} />
-                </p>
+                </span>
               </div>
             </div>
           )}
         </div>
 
-        {/* Center/Right: Action Button + Basket */}
+        {/* Right: Actions */}
         <div className="flex items-center gap-3">
-          {/* Basket Badge */}
+          {/* Basket Indicator */}
           {items.length > 0 && (
-            <div className="flex items-center gap-1.5 bg-slate-800 rounded-full px-3 py-1.5">
-              <ShoppingBag className="w-4 h-4 text-amber-400" />
-              <span className="text-sm font-medium">{items.length}</span>
+            <div className="flex items-center gap-2 bg-muted/50 rounded-full px-3 py-1.5">
+              <ShoppingBag className="w-4 h-4 text-primary" />
+              <span className="text-sm font-semibold tabular-nums">{items.length}</span>
             </div>
           )}
 
-          {/* Add to Offer Button with Disable State */}
+          {/* Primary CTA */}
           {hasTariff ? (
             isAlreadyAdded ? (
               <div className="flex items-center gap-2">
-                <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
-                  <Check className="w-3.5 h-3.5 mr-1" />
+                <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-200 py-1.5 px-3 font-medium">
+                  <Check className="w-4 h-4 mr-1.5" />
                   Im Angebot
                 </Badge>
                 {onResetForNewTariff && (
                   <Button
                     size="sm"
                     onClick={() => {
-                      if (window.confirm("Möchtest du wirklich einen weiteren Tarif konfigurieren? Deine aktuelle Auswahl im Editor wird zurückgesetzt (bereits hinzugefügte Tarife bleiben im Warenkorb).")) {
+                      if (window.confirm("Möchtest du einen weiteren Tarif konfigurieren?")) {
                         onResetForNewTariff();
                       }
                     }}
-                    className="bg-amber-500 hover:bg-amber-600 text-white gap-1.5"
+                    className={cn(
+                      "bg-primary hover:bg-primary/90 text-primary-foreground",
+                      "shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30",
+                      "transition-all duration-200 font-semibold gap-2"
+                    )}
                   >
                     <Plus className="w-4 h-4" />
-                    <span className="hidden sm:inline">Weiteren Tarif</span>
+                    <span className="hidden sm:inline">Weiterer Tarif</span>
+                    <ArrowRight className="w-4 h-4 hidden sm:inline" />
                   </Button>
                 )}
               </div>
             ) : (
               <Button
-                size="sm"
                 onClick={handleAdd}
-                className="bg-amber-500 hover:bg-amber-600 text-white gap-1.5 font-semibold shadow-lg shadow-amber-500/30"
+                className={cn(
+                  "bg-primary hover:bg-primary/90 text-primary-foreground",
+                  "shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5",
+                  "transition-all duration-200 font-semibold gap-2 px-5"
+                )}
               >
                 <Plus className="w-4 h-4" />
                 <span>Zum Angebot</span>
-                <Sparkles className="w-3.5 h-3.5 hidden sm:inline animate-pulse" />
+                <Sparkles className="w-4 h-4 hidden sm:inline animate-pulse" />
               </Button>
             )
           ) : (
-            /* Disabled state with tooltip explaining why */
+            /* Disabled state with tooltip */
             <Tooltip>
               <TooltipTrigger asChild>
                 <span>
                   <Button
-                    size="sm"
                     disabled
-                    className="opacity-50 cursor-not-allowed gap-1.5"
+                    className="opacity-50 cursor-not-allowed gap-2"
                   >
                     <AlertCircle className="w-4 h-4" />
                     <span>Zum Angebot</span>
                   </Button>
                 </span>
               </TooltipTrigger>
-              <TooltipContent side="top" className="bg-slate-800 text-white border-slate-700">
+              <TooltipContent side="top">
                 <p>{disableReason}</p>
               </TooltipContent>
             </Tooltip>

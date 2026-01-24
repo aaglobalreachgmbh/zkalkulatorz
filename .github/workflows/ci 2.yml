@@ -1,0 +1,52 @@
+name: CI Quality Gate
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+  workflow_dispatch:
+
+jobs:
+  quality-check:
+    name: 🛡️ Quality Gate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 📦 Install Dependencies
+        run: npm ci
+
+      - name: 🧹 Lint Check
+        run: npm run lint
+
+      - name: 📐 Type Check
+        run: npx tsc --noEmit
+
+      - name: 🧪 Unit Tests
+        run: npm run test
+
+      - name: ⚡ Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: 🚀 Start Supabase (Ephemeral DB)
+        run: supabase start -x realtime,storage-api,imgproxy,studio,migra,postgres-meta
+
+      - name: 🔒 Run Canary Security Queries
+        run: supabase test db
+
+      - name: 🛑 Stop Supabase
+        run: supabase stop --no-backup
+
+      - name: 🏗️ Build Verification
+        run: npm run build

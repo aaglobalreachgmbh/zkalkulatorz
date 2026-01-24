@@ -512,9 +512,9 @@ export function Wizard() {
         </div>
       )}
 
-      {/* Header - Simplified with Progress Indicator */}
+      {/* Header - Compressed for more content space (Quick Win #2) */}
       <header className="border-b border-border bg-card shrink-0 sticky top-0 z-40 bg-card/95 backdrop-blur-sm">
-        <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-2 sm:py-3 flex items-center justify-between gap-2">
+        <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-1.5 sm:py-2 flex items-center justify-between gap-2">
           {/* Left: Progress Indicator */}
           <WizardProgress
             currentStep={
@@ -564,11 +564,11 @@ export function Wizard() {
         </div>
       </header>
 
-      {/* POS Mode Indicator */}
+      {/* POS Mode Indicator - Compact Badge (Quick Win #1: reduced from 42px to 28px) */}
       {isPOSMode && (
-        <div className="bg-amber-500/10 border-b border-amber-500/30 px-4 py-2 flex items-center justify-center gap-2">
-          <Zap className="w-4 h-4 text-amber-600" />
-          <span className="text-sm font-medium text-amber-700 dark:text-amber-400">
+        <div className="bg-amber-500/10 border-b border-amber-500/30 px-4 py-1 flex items-center justify-center gap-1.5">
+          <Zap className="w-3.5 h-3.5 text-amber-600" />
+          <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
             POS-Modus aktiv – Schnellverkauf
           </span>
         </div>
@@ -793,8 +793,8 @@ export function Wizard() {
         </div>
       </main>
 
-      {/* Footer with Floating Action Bar - Mobile Only */}
-      <footer className="sticky bottom-0 z-40 shrink-0 pb-safe lg:hidden">
+      {/* Footer with Floating Action Bar - ALL VIEWPORTS (Quick Win #3: primary CTA always visible) */}
+      <footer className="sticky bottom-0 z-40 shrink-0 pb-safe border-t border-border bg-card/95 backdrop-blur-sm">
         <FloatingActionBar
           option={option1}
           result={activeResult}

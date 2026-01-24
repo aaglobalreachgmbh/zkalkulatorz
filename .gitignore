@@ -1,6 +1,7 @@
 # Antigravity/Gemini (Local)
 .DS_Store
 node_modules/
+src/node_modules/
 .env
 .env.local
 .env.production

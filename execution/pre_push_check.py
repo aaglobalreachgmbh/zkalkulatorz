@@ -206,6 +206,29 @@ class ErrorPatternChecker:
             return True
         return False
 
+    def check_design_system(self) -> bool:
+        """CHECKS_002: Enforces Design System (Doc 7) - No Hardcoded Colors"""
+        log("INFO", "Checking for Design System violations (hardcoded colors)...")
+        
+        # Grep for hex codes in tsx files (ignoring common config files)
+        # We look for # followed by 3 or 6 hex digits, but try to exclude valid use cases if possible.
+        # Simple heuristic: alert on arbitrary hex usage in components.
+        code, output = run_cmd(
+            "grep -rE '#[0-9a-fA-F]{3,6}' src/ --include='*.tsx' --include='*.ts' | grep -v 'tailwind.config' | grep -v 'utils.ts' | grep -v 'constants' || true"
+        )
+        
+        if output.strip():
+            count = len(output.strip().split('\n'))
+            # Warn initially, don't error yet (too many false positives likely)
+            self.warnings.append(f"DESIGN_SYSTEM: {count}x Hardcoded Hex Colors detected. Use Tailwind classes or CSS variables! (Doc 7)")
+            # Log first few for user visibility
+            for line in output.strip().split('\n')[:3]:
+                print(f"    {YELLOW}Violation:{RESET} {line.strip()[:80]}...")
+            return False
+            
+        log("OK", "Design System adherence looks good")
+        return True
+
     def run_all_checks(self) -> bool:
         """Führt alle Checks aus"""
         print(f"\n{BLUE}{'='*60}{RESET}")
@@ -216,6 +239,7 @@ class ErrorPatternChecker:
         # Schnelle Pattern-Checks zuerst
         self.check_kernel_existence()
         self.check_anti_patterns()
+        self.check_design_system()
         self.check_nested_node_modules()
         self.check_icloud_duplicates()
         self.check_duplicate_configs()

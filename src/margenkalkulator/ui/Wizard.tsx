@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/accordion";
 import {
   type OfferOptionState,
+  type OfferOptionMeta,
   type ViewMode,
   type WizardStep,
   createDefaultOptionState,
@@ -345,6 +346,14 @@ export function Wizard() {
       setOption2(config);
     }
   }, [activeOption]);
+
+  // Handle Meta Update (Phase 13 - Portfolio/LeadTime)
+  const handleMetaUpdate = useCallback((update: Partial<OfferOptionMeta>) => {
+    setActiveState((prev) => ({
+      ...prev,
+      meta: { ...prev.meta, ...update }
+    }));
+  }, [setActiveState]);
 
   // Handle view mode change with policy checks
   const handleViewModeChange = useCallback((newMode: ViewMode) => {
@@ -694,6 +703,7 @@ export function Wizard() {
                         // Reset for next tariff after adding to basket
                         resetForNewTariff();
                       }}
+                      onMetaUpdate={handleMetaUpdate}
                     />
                   </AccordionContent>
                 </AccordionItem>
@@ -788,6 +798,7 @@ export function Wizard() {
                   viewMode={effectiveViewMode}
                   quantityBonus={quantityBonusForOption1}
                   onResetForNewTariff={resetForNewTariff}
+                  onGoToCheckout={() => setActiveSection("compare")}
                 />
                 <OfferBasketPanel />
               </div>

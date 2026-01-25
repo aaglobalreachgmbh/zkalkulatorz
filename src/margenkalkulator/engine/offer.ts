@@ -8,6 +8,7 @@ import type {
   CalculationResult,
   Money,
   SubVariantId,
+  Promo,
 } from "./types";
 import {
   getSubVariantFromCatalog,
@@ -63,45 +64,63 @@ export function calculateOffer(
   const { meta, hardware, mobile, fixedNet } = state;
   const datasetVersion = meta.datasetVersion;
   const asOfISO = meta.asOfISO;
-  
+
   // Get catalog items using resolver
   const tariff = getMobileTariffFromCatalog(datasetVersion, mobile.tariffId);
   const subVariant = getSubVariantFromCatalog(datasetVersion, mobile.subVariantId);
-  const promo = getPromoFromCatalog(datasetVersion, mobile.promoId);
-  const fixedProduct = fixedNet.enabled 
-    ? getFixedNetProductFromCatalog(datasetVersion, fixedNet.productId) 
+  let promo = getPromoFromCatalog(datasetVersion, mobile.promoId);
+
+  // SUPER AI LOGIC: DGRV Enforcement (Doc 10)
+  // Rule: If Business Portfolio AND Lead Time >= 7 Months -> 12 Months Base Price Free.
+  // This OVERRIDES any user-selected promo because it's a mandatory Association Benefit.
+  const isDgrvTriggered = meta.portfolio === 'business' && (meta.leadTimeMonths ?? 0) >= 7;
+
+  if (isDgrvTriggered) {
+    promo = {
+      id: "DGRV_AUTO_12M",
+      label: "DGRV (12 Monate BP-frei)",
+      appliesTo: "mobile",
+      type: "INTRO_PRICE",
+      durationMonths: 12,
+      value: 0,
+      validFromISO: "2024-01-01",
+      validUntilISO: "2099-12-31"
+    } as Promo;
+  }
+  const fixedProduct = fixedNet.enabled
+    ? getFixedNetProductFromCatalog(datasetVersion, fixedNet.productId)
     : undefined;
-  
+
   // Check GK eligibility (Phase 2)
   const gkEligible = checkGKEligibility(tariff, fixedNet.enabled);
-  
+
   // Determine effective promo durations (Slice B: check validity)
   const mobilePromoValid = isPromoValid(promo, asOfISO);
   const fixedPromoValid = fixedProduct?.promo ? isFixedPromoValid(fixedProduct.promo, asOfISO) : false;
-  
+
   const mobilePromoDuration = mobilePromoValid ? (promo?.durationMonths ?? 0) : 0;
   const fixedPromoDuration = fixedPromoValid ? (fixedProduct?.promo?.durationMonths ?? 0) : 0;
-  
+
   // Calculate hardware amortization
   const hardwareAmortPerMonth = calculateHardwareAmortization(
     hardware.ekNet,
     hardware.amortize,
     hardware.amortMonths
   );
-  
+
   // Collect period boundaries
   const boundaries = collectPeriodBoundaries(
     meta.termMonths,
     mobilePromoDuration,
     fixedPromoDuration
   );
-  
+
   // Create periods with combined costs
   let periods = createPeriodsFromBoundaries(
     boundaries,
     (fromMonth: number, _toMonth: number) => {
       const month = fromMonth;
-      
+
       // Mobile cost (Slice B: pass asOfISO)
       let mobileCost = 0;
       if (tariff && subVariant && promo) {
@@ -115,24 +134,24 @@ export function calculateOffer(
           mobile.primeOnAccount // Slice C: TeamDeal fallback
         );
       }
-      
+
       // Fixed net cost (Slice B: pass asOfISO)
       let fixedCost = 0;
       if (fixedNet.enabled && fixedProduct) {
         fixedCost = calculateFixedNetMonthlyForMonth(fixedProduct, month, asOfISO);
       }
-      
+
       // Hardware amortization (if enabled)
       const hardwareCost = hardware.amortize ? hardwareAmortPerMonth : 0;
-      
+
       return mobileCost + fixedCost + hardwareCost;
     },
     meta.vatRate
   );
-  
+
   // Slice B: Merge periods with same price (avoid unnecessary splits)
   periods = mergePeriodsWithSamePrice(periods);
-  
+
   // One-time costs (Phase 2: consider setupWaived)
   const oneTime: Money[] = [];
   if (fixedNet.enabled && fixedProduct) {
@@ -141,24 +160,25 @@ export function calculateOffer(
       oneTime.push(createMoney(effectiveSetup, meta.vatRate));
     }
   }
-  
+
   // Calculate totals
   const periodTotals = calculateTotalFromPeriods(periods);
   const oneTimeTotalNet = oneTime.reduce((sum, m) => sum + m.net, 0);
   const oneTimeTotalGross = oneTime.reduce((sum, m) => sum + m.gross, 0);
-  
+
   const totals = {
     avgTermNet: calculateAverageMonthly(periods, meta.termMonths),
+    avgTermGross: Math.round((periodTotals.gross / meta.termMonths) * 100) / 100,
     sumTermNet: Math.round((periodTotals.net + oneTimeTotalNet) * 100) / 100,
     sumTermGross: Math.round((periodTotals.gross + oneTimeTotalGross) * 100) / 100,
   };
-  
+
   // Dealer economics (Phase 2: with OMO-Matrix, Fixed Net provision, FH-Partner)
   // Extended: Now includes employeeDeduction, pushBonus, and quantityBonus
   const dealer = calculateDealerEconomics(
-    tariff, 
-    mobile.contractType, 
-    mobile.quantity, 
+    tariff,
+    mobile.contractType,
+    mobile.quantity,
     hardware.ekNet,
     mobile.promoId,
     {
@@ -173,7 +193,7 @@ export function calculateOffer(
       quantityBonusTierName: employeeOptions?.quantityBonusTierName,
     }
   );
-  
+
   // Generate breakdown
   const breakdown = generateBreakdown(
     state,
@@ -184,13 +204,13 @@ export function calculateOffer(
     dealer,
     gkEligible
   );
-  
+
   // Determine convergence flags
   const convergenceEligible = fixedNet.enabled;
-  const primeUnlimitedUpgradeEligible = fixedNet.enabled && 
-    gkEligible && 
+  const primeUnlimitedUpgradeEligible = fixedNet.enabled &&
+    gkEligible &&
     tariff?.family === "prime";
-  
+
   // Calculate DGRV meta-flags (free months detection)
   const freeMonths = periods
     .filter(p => p.monthly.net < 0.01)
@@ -207,7 +227,7 @@ export function calculateOffer(
     meta: {
       convergenceEligible,
       primeUnlimitedUpgradeEligible,
-      isDgrvContract,
+      isDgrvContract: isDgrvTriggered,
       freeMonths,
     },
   };

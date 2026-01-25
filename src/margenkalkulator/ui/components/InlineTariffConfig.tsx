@@ -109,7 +109,9 @@ export function InlineTariffConfig({
   // Calculate prices including SUB
   const basePrice = tariff.baseNet;
   const effectiveBasePrice = basePrice + subVariantAddOn;
-  const avgMonthly = result.totals.avgTermNet;
+
+  const isConsumer = ["consumer_smart", "gigamobil"].includes(tariff.family || "");
+  const avgMonthly = isConsumer ? (result.totals.avgTermGross || result.totals.avgTermNet * 1.19) : result.totals.avgTermNet;
   const margin = result.dealer.margin + quantityBonus;
   const hasDiscount = avgMonthly < effectiveBasePrice;
   const savingsPerMonth = effectiveBasePrice - avgMonthly;
@@ -220,7 +222,7 @@ export function InlineTariffConfig({
         </div>
         <div className="flex items-center gap-1.5 text-muted-foreground text-sm">
           <Euro className="w-3.5 h-3.5" />
-          <span>Basis: {formatCurrency(basePrice)}</span>
+          <span>Basis: {formatCurrency(isConsumer ? basePrice * 1.19 : basePrice)}</span>
         </div>
       </div>
 
@@ -315,11 +317,12 @@ export function InlineTariffConfig({
                 }}
                 disabled={isDisabled}
                 className={cn(
-                  "px-4 py-2 rounded-lg text-sm font-medium transition-all border",
+                  "relative px-5 py-3 rounded-xl text-sm font-semibold transition-all duration-200 border shadow-sm",
+                  "hover:shadow-md hover:-translate-y-0.5 active:translate-y-0",
                   isSelected
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-card text-foreground border-border hover:border-primary/50",
-                  isDisabled && "opacity-50 cursor-not-allowed"
+                    ? "bg-primary text-primary-foreground border-primary ring-2 ring-primary/20"
+                    : "bg-card text-foreground border-border hover:border-primary/50 hover:bg-accent/50",
+                  isDisabled && "opacity-50 cursor-not-allowed hover:shadow-none hover:translate-y-0"
                 )}
               >
                 {shortLabel}
@@ -354,7 +357,7 @@ export function InlineTariffConfig({
 
 
       {/* OMO Quick-Access (extracted from Experten-Optionen) */}
-      {showOmoSelector && onOmoChange && tariff.family !== "teamdeal" && (
+      {showOmoSelector && onOmoChange && !["teamdeal", "consumer_smart", "gigamobil"].includes(tariff.family || "") && (
         <div className="mb-4 p-4 bg-card rounded-lg border border-border">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2">

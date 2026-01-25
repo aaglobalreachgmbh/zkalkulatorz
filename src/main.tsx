@@ -31,6 +31,7 @@
 
 import React from "react";
 import { createRoot } from "react-dom/client";
+import { EnterpriseErrorBoundary } from "./components/EnterpriseErrorBoundary";
 import App from "./App";
 import "./index.css";
 import { markHydrationComplete } from "./lib/performance";
@@ -45,7 +46,9 @@ const root = createRoot(document.getElementById("root")!);
 
 root.render(
   <React.StrictMode>
-    <App />
+    <EnterpriseErrorBoundary fallbackTitle="Anwendungs-Fehler" moduleName="Root">
+      <App />
+    </EnterpriseErrorBoundary>
   </React.StrictMode>
 );
 

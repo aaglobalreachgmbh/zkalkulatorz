@@ -16,8 +16,8 @@ import type {
 } from "./types";
 import { dummyCatalog } from "./catalog.dummy";
 import { businessCatalog2025_09 } from "../data/business/v2025_09";
-import { 
-  loadCustomDataset, 
+import {
+  loadCustomDataset,
   hasCustomDataset,
   getStoredDatasetVersion,
 } from "../dataManager/storage";
@@ -180,8 +180,9 @@ export function checkGKEligibility(
   if (!tariff || !fixedNetEnabled) {
     return false;
   }
-  // GK benefit applies to Prime product line
-  if (tariff.productLine !== "PRIME") {
+  // GK benefit applies to Prime, GigaMobil, and Smart product lines
+  const eligibleLines = ["PRIME", "GIGAMOBIL", "CONSUMER_SMART"];
+  if (!tariff.productLine || !eligibleLines.includes(tariff.productLine)) {
     return false;
   }
   // Only Cable, DSL, Fiber are GK-eligible

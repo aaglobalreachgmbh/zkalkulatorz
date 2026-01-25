@@ -37,7 +37,9 @@
     "Contracts": "Contract-First with Zod. [Doc 5]",
     "Orchestration": "DOE Framework & Self-Annealing. [Doc 8]",
     "QA": "Property-Based Testing (pgTAP). [Doc 6 & 9]",
-    "Deployment": "Lovable Cloud - NO direct supabase.com access"
+    "Deployment": "Lovable Cloud via GitHub Sync [Doc 3]",
+    "UX Priority": "Enterprise-Grade 'Human Simulator' Testing required. No functional dead-ends. [Doc 7]",
+    "Lovable Constraints": "No direct Supabase Dashboard changes. All Schema via Migration/Lovable."
   },
   "active_phase": "Phase 12: Super AI Integration & System Hardening",
   "last_updated": "2026-01-25",
@@ -45,7 +47,8 @@
     "kernel": "directives/ANTIGRAVITY_KERNEL.md",
     "constitution": "GEMINI.md",
     "error_memory": "directives/ERROR_PATTERNS.md",
-    "validator": "execution/pre_push_check.py",
+    "validator": "execution/pre_push_check.py (Static Guard)",
+    "qa_workflow": ".agent/workflows/enterprise_qa.md (Dynamic Guard)",
     "learning_workflow": ".agent/workflows/self_correction.md"
   },
   "knowledge_base": {

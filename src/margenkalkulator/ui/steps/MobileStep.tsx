@@ -22,6 +22,10 @@ import { Signal, AlertTriangle, Minus, Plus, Ban, Check } from "lucide-react";
 import { InlineTariffConfig } from "../components/InlineTariffConfig";
 import { useEmployeeSettings, isTariffBlocked } from "@/margenkalkulator/hooks/useEmployeeSettings";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
+import { PortfolioSelector } from "../components/PortfolioSelector";
+import { cn } from "@/lib/utils";
+import { LeadTimeInput } from "../components/LeadTimeInput";
+import { OfferOptionMeta } from "@/margenkalkulator";
 
 interface MobileStepProps {
   value: MobileState;
@@ -38,6 +42,8 @@ interface MobileStepProps {
   quantityBonus?: number;
   /** Callback after config complete or added to offer */
   onConfigComplete?: () => void;
+  /** Callback to update global meta (Portfolio, Lead Time) */
+  onMetaUpdate?: (update: Partial<OfferOptionMeta>) => void;
 }
 
 const FAMILY_LABELS: Record<TariffFamily, string> = {
@@ -45,6 +51,8 @@ const FAMILY_LABELS: Record<TariffFamily, string> = {
   business_smart: "BUSINESS SMART",
   smart_business: "SMART BUSINESS",
   teamdeal: "TEAMDEAL",
+  gigamobil: "GIGAMOBIL",
+  consumer_smart: "SMART TARIF",
 };
 
 const FAMILY_COLORS: Record<TariffFamily, string> = {
@@ -52,6 +60,8 @@ const FAMILY_COLORS: Record<TariffFamily, string> = {
   business_smart: "text-primary",
   smart_business: "text-blue-600",
   teamdeal: "text-orange-600",
+  gigamobil: "text-red-600",
+  consumer_smart: "text-emerald-600",
 };
 
 export function MobileStep({
@@ -65,8 +75,12 @@ export function MobileStep({
   result,
   quantityBonus = 0,
   onConfigComplete,
+  onMetaUpdate,
 }: MobileStepProps) {
   const [selectedFamily, setSelectedFamily] = useState<TariffFamily | "all">("all");
+
+  const currentPortfolio = fullOption?.meta.portfolio || "business";
+  const currentLeadTime = fullOption?.meta.leadTimeMonths || 0;
 
   const updateField = <K extends keyof MobileState>(
     field: K,
@@ -126,6 +140,32 @@ export function MobileStep({
 
   return (
     <div className="space-y-8">
+      {/* Portfolio Selector (Phase 13) */}
+      <PortfolioSelector
+        value={currentPortfolio}
+        onChange={(p) => {
+          // ENTERPRISE HARDENING: State Cleanup
+          // Reset DGRV/LeadTime when leaving business portfolio to prevent "Ghost Data"
+          const newLeadTime = p === "business" ? currentLeadTime : 0;
+
+          onMetaUpdate?.({
+            portfolio: p,
+            leadTimeMonths: newLeadTime
+          });
+
+          // Reset family selection to avoid confusion
+          setSelectedFamily("all");
+        }}
+      />
+
+      {/* Lead Time Input (Business Only - DGRV Logic) */}
+      {currentPortfolio === "business" && (
+        <LeadTimeInput
+          value={currentLeadTime}
+          onChange={(v) => onMetaUpdate?.({ leadTimeMonths: v })}
+        />
+      )}
+
       {/* Contract Type & Quantity Row */}
       <div className="bg-card rounded-xl border border-border p-6">
         <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-between gap-4 sm:gap-6">
@@ -230,7 +270,7 @@ export function MobileStep({
           )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 lg:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6">
           {filteredTariffs.map((tariff) => {
             const isSelected = value.tariffId === tariff.id;
             const familyLabel = FAMILY_LABELS[tariff.family || "prime"];
@@ -244,50 +284,57 @@ export function MobileStep({
                   updateField("tariffId", tariff.id);
                   // NO auto-collapse - let user finish selecting promos/options first
                 }}
-                className={`
-                  relative p-4 rounded-xl border bg-card text-left transition-all
-                  hover:shadow-md hover:border-primary/50
-                  ${isSelected
-                    ? "border-primary ring-1 ring-primary/10 shadow-md bg-primary/5"
-                    : "border-border"
-                  }
-                `}
+                className={cn(
+                  "relative p-4 rounded-xl border text-left transition-all duration-300 ease-out group h-full flex flex-col",
+                  "hover:shadow-lg hover:-translate-y-0.5",
+                  isSelected
+                    ? "border-primary ring-1 ring-primary/20 shadow-md bg-primary/5"
+                    : "border-border bg-card hover:border-primary/30"
+                )}
               >
                 {/* Family Badge */}
-                <div className="flex items-center justify-between mb-2">
-                  <span className={`text-[10px] font-bold tracking-wider uppercase ${familyColor}`}>
+                <div className="flex items-center justify-between mb-4">
+                  <span className={cn(
+                    "text-[10px] font-bold tracking-wider uppercase",
+                    familyColor
+                  )}>
                     {isSelected ? (
-                      <span className="flex items-center gap-1 text-primary">
-                        <Check className="w-3 h-3" />
+                      <span className="flex items-center gap-1.5 text-primary">
+                        <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
                         Ausgewählt
                       </span>
                     ) : familyLabel}
                   </span>
                   {isUnlimited && (
-                    <Badge variant="secondary" className="text-[10px] h-4 px-1">
+                    <Badge variant="secondary" className="text-[10px] h-5 px-1.5 font-semibold bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100">
                       Unlimited
                     </Badge>
                   )}
                 </div>
 
-                {/* Tariff Name */}
-                <h4 className="text-base font-semibold text-foreground mb-3 leading-tight">
+                {/* Tariff Name - Fixed height for alignment if needed, or flex-grow spacer */}
+                <h4 className="text-lg font-bold text-foreground mb-1 leading-tight tracking-tight">
                   {tariff.name}
                 </h4>
 
+                {/* Spacer to push price to bottom */}
+                <div className="flex-1 min-h-[1rem]" />
+
                 {/* Price & Data */}
-                <div className="flex items-end justify-between">
+                <div className="flex items-end justify-between pt-4 mt-auto border-t border-border/50">
                   <div>
-                    <span className="text-2xl font-bold text-foreground">
-                      {tariff.baseNet.toFixed(0)}
+                    <span className="text-3xl font-extrabold text-foreground tracking-tight">
+                      {((tariff.family === 'consumer_smart' || tariff.family === 'gigamobil')
+                        ? tariff.baseNet * 1.19
+                        : tariff.baseNet).toFixed(0)}
                     </span>
-                    <span className="text-xs text-muted-foreground ml-0.5">€</span>
+                    <span className="text-sm text-muted-foreground font-semibold ml-1">€</span>
                   </div>
                   <div className="text-right">
-                    <span className="text-sm font-semibold text-foreground block">
+                    <span className="text-base font-bold text-foreground block">
                       {formatDataVolume(tariff.dataVolumeGB)}
                     </span>
-                    <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Daten</span>
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Daten</span>
                   </div>
                 </div>
               </button>

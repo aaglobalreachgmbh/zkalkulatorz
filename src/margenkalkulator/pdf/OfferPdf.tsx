@@ -208,8 +208,16 @@ export function OfferPdf({ option, result, validDays = 14, branding = DEFAULT_BR
           )}
 
           <View style={styles.summaryTotal}>
-            <Text style={styles.summaryTotalLabel}>Ø Effektiver Monatspreis</Text>
-            <Text style={styles.summaryTotalValue}>{formatCurrency(result.totals.avgTermNet)}</Text>
+            <Text style={styles.summaryTotalLabel}>
+              Ø Effektiver Monatspreis {option.meta.portfolio?.startsWith('consumer') ? '(Brutto)' : '(Netto)'}
+            </Text>
+            <Text style={styles.summaryTotalValue}>
+              {formatCurrency(
+                option.meta.portfolio?.startsWith('consumer')
+                  ? (result.totals.avgTermGross || result.totals.avgTermNet * 1.19)
+                  : result.totals.avgTermNet
+              )}
+            </Text>
           </View>
         </View>
 

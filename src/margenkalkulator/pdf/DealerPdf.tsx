@@ -37,37 +37,37 @@ function sanitizeNumber(value: number | undefined | null): number {
 export function DealerPdf({ option, result, validDays = 14, branding = DEFAULT_BRANDING }: DealerPdfProps) {
   const baseStyles = branding ? createPdfStyles(branding) : defaultBaseStyles;
   const dealerStyles = createDealerStyles(branding);
-  
+
   const today = new Date();
   const validUntil = new Date(today.getTime() + validDays * 24 * 60 * 60 * 1000);
-  
-  const formatDate = (date: Date) => 
+
+  const formatDate = (date: Date) =>
     date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
-  
-  const formatCurrency = (value: number) => 
+
+  const formatCurrency = (value: number) =>
     `${sanitizeNumber(value).toFixed(2).replace(".", ",")} €`;
-  
+
   const oneTimeTotal = result.oneTime.reduce((sum, item) => sum + sanitizeNumber(item.net), 0);
-  
+
   const hasHardware = sanitizeNumber(option.hardware.ekNet) > 0;
   const hardwareName = sanitizePdfText(option.hardware.name) || "Keine Hardware";
-  
+
   const tariffBreakdown = result.breakdown.find(b => b.ruleId === "base");
   const tariffName = sanitizePdfText(tariffBreakdown?.label?.replace(" Grundpreis", "")) || "Mobilfunk-Tarif";
-  
+
   const fixedNetBreakdown = result.breakdown.find(b => b.ruleId === "fixed_base");
   const fixedNetName = sanitizePdfText(fixedNetBreakdown?.label?.replace(" monatlich", "")) || "Festnetz";
   const fixedNetMonthly = sanitizeNumber(fixedNetBreakdown?.net);
-  
+
   const mobileMonthly = sanitizeNumber(result.totals.avgTermNet) - (option.fixedNet.enabled ? fixedNetMonthly : 0);
-  
+
   // Dealer calculations
   const margin = sanitizeNumber(result.dealer.margin);
   const isPositiveMargin = margin >= 0;
-  
+
   // Display name for header
   const displayName = branding.companyName || "MargenKalkulator";
-  
+
   return (
     <Document>
       <Page size="A4" style={baseStyles.page}>
@@ -77,7 +77,7 @@ export function DealerPdf({ option, result, validDays = 14, branding = DEFAULT_B
             VERTRAULICH – NUR FÜR INTERNEN GEBRAUCH
           </Text>
         </View>
-        
+
         {/* Header */}
         <View style={baseStyles.header}>
           <View style={{ flexDirection: "row", alignItems: "center" }}>
@@ -98,7 +98,7 @@ export function DealerPdf({ option, result, validDays = 14, branding = DEFAULT_B
             </Text>
           </View>
         </View>
-        
+
         {/* Offer Details */}
         <View style={baseStyles.infoSection}>
           <Text style={baseStyles.infoTitle}>Angebotsdetails</Text>
@@ -117,7 +117,7 @@ export function DealerPdf({ option, result, validDays = 14, branding = DEFAULT_B
             </Text>
           </View>
         </View>
-        
+
         {/* Positions Table */}
         <View style={baseStyles.table}>
           <View style={baseStyles.tableHeader}>
@@ -125,11 +125,11 @@ export function DealerPdf({ option, result, validDays = 14, branding = DEFAULT_B
             <Text style={[baseStyles.tableHeaderCell, baseStyles.colMonthly]}>Monatlich</Text>
             <Text style={[baseStyles.tableHeaderCell, baseStyles.colOneTime]}>Einmalig</Text>
           </View>
-          
+
           <View style={baseStyles.tableRow}>
             <Text style={[baseStyles.tableCell, baseStyles.colPosition]}>{hardwareName}</Text>
             <Text style={[baseStyles.tableCell, baseStyles.colMonthly]}>
-              {option.hardware.amortize && hasHardware 
+              {option.hardware.amortize && hasHardware
                 ? formatCurrency(option.hardware.ekNet / option.hardware.amortMonths)
                 : "–"
               }
@@ -141,7 +141,7 @@ export function DealerPdf({ option, result, validDays = 14, branding = DEFAULT_B
               }
             </Text>
           </View>
-          
+
           <View style={[baseStyles.tableRow, baseStyles.tableRowAlt]}>
             <Text style={[baseStyles.tableCell, baseStyles.colPosition]}>
               {tariffName} {option.mobile.quantity > 1 ? `(×${option.mobile.quantity})` : ""}
@@ -151,7 +151,7 @@ export function DealerPdf({ option, result, validDays = 14, branding = DEFAULT_B
             </Text>
             <Text style={[baseStyles.tableCell, baseStyles.colOneTime]}>–</Text>
           </View>
-          
+
           {option.fixedNet.enabled && (
             <View style={baseStyles.tableRow}>
               <Text style={[baseStyles.tableCell, baseStyles.colPosition]}>{fixedNetName}</Text>
@@ -164,19 +164,27 @@ export function DealerPdf({ option, result, validDays = 14, branding = DEFAULT_B
             </View>
           )}
         </View>
-        
+
         {/* Customer Summary */}
         <View style={baseStyles.summarySection}>
           <View style={baseStyles.summaryRow}>
-            <Text style={baseStyles.summaryLabel}>Kundenpreis Ø monatlich</Text>
-            <Text style={baseStyles.summaryValue}>{formatCurrency(result.totals.avgTermNet)}</Text>
+            <Text style={baseStyles.summaryLabel}>
+              Kundenpreis Ø monatlich {option.meta.portfolio?.startsWith('consumer') ? '(Brutto)' : '(Netto)'}
+            </Text>
+            <Text style={baseStyles.summaryValue}>
+              {formatCurrency(
+                option.meta.portfolio?.startsWith('consumer')
+                  ? (result.totals.avgTermGross || result.totals.avgTermNet * 1.19)
+                  : result.totals.avgTermNet
+              )}
+            </Text>
           </View>
         </View>
-        
+
         {/* DEALER SECTION */}
         <View style={dealerStyles.dealerSection}>
           <Text style={dealerStyles.dealerTitle}>Händler-Kalkulation</Text>
-          
+
           {/* Provision */}
           <View style={dealerStyles.dealerRow}>
             <Text style={dealerStyles.dealerLabel}>Provision (nach Abzügen)</Text>
@@ -184,7 +192,7 @@ export function DealerPdf({ option, result, validDays = 14, branding = DEFAULT_B
               + {formatCurrency(sanitizeNumber(result.dealer.provisionAfter))}
             </Text>
           </View>
-          
+
           {/* Hardware EK */}
           {hasHardware && (
             <View style={dealerStyles.dealerRow}>
@@ -194,7 +202,7 @@ export function DealerPdf({ option, result, validDays = 14, branding = DEFAULT_B
               </Text>
             </View>
           )}
-          
+
           {/* Deductions */}
           {sanitizeNumber(result.dealer.deductions) > 0 && (
             <View style={dealerStyles.dealerRow}>
@@ -204,19 +212,19 @@ export function DealerPdf({ option, result, validDays = 14, branding = DEFAULT_B
               </Text>
             </View>
           )}
-          
+
           {/* TOTAL MARGIN */}
           <View style={dealerStyles.marginTotal}>
             <Text style={dealerStyles.marginLabel}>NETTO-MARGE</Text>
             <Text style={[
-              dealerStyles.marginValue, 
+              dealerStyles.marginValue,
               isPositiveMargin ? dealerStyles.dealerValuePositive : dealerStyles.dealerValueNegative
             ]}>
               {isPositiveMargin ? "+" : ""}{formatCurrency(margin)}
             </Text>
           </View>
         </View>
-        
+
         {/* Legal */}
         <View style={baseStyles.legalSection}>
           <Text style={baseStyles.legalText}>
@@ -224,7 +232,7 @@ export function DealerPdf({ option, result, validDays = 14, branding = DEFAULT_B
             Die angegebenen Provisionen basieren auf den aktuellen Konditionen und können sich ändern.
           </Text>
         </View>
-        
+
         {/* Footer */}
         <View style={baseStyles.footer}>
           <Text style={baseStyles.footerLeft}>

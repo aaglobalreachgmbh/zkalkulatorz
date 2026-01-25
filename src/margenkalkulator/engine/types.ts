@@ -214,6 +214,24 @@ export type OfferOptionMeta = {
    * - Gesetzt: Simuliert ein bestimmtes Datum (für Tests, historische Angebote)
    */
   asOfISO?: string;
+
+  /**
+   * Portfolio-Auswahl (3-Säulen-Modell).
+   * - business: Business Prime (Netto, DGRV)
+   * - consumer_smart: Smart Tarife (Brutto, Retail)
+   * - consumer_gigamobil: GigaMobil (Brutto, Premium)
+   * Default: "business"
+   */
+  portfolio?: "business" | "consumer_smart" | "consumer_gigamobil";
+
+  /**
+   * Vorlaufzeit in Monaten (Sales Lead Time).
+   * 
+   * RELEVANT FÜR DGRV:
+   * - >= 7 Monate: Triggered 12 Monate BP-frei (Business Prime)
+   * - < 7 Monate: Standard-Promo
+   */
+  leadTimeMonths?: number;
 };
 
 /**
@@ -485,6 +503,8 @@ export type CalculationTotals = {
   sumTermNet: number;
   /** Summe aller Kosten brutto über Laufzeit */
   sumTermGross: number;
+  /** Durchschnittliche monatliche Kosten brutto (für Consumer) */
+  avgTermGross: number;
 };
 
 /**
@@ -593,14 +613,14 @@ export type TariffTier = "XS" | "S" | "M" | "L" | "XL";
  * - SMART_BUSINESS_PLUS: Erweiterte Smart-Linie
  * - TEAMDEAL: Zusatz-SIMs, erfordert Prime auf Account
  */
-export type ProductLine = "PRIME" | "BUSINESS_SMART" | "SMART_BUSINESS" | "SMART_BUSINESS_PLUS" | "TEAMDEAL";
+export type ProductLine = "PRIME" | "BUSINESS_SMART" | "SMART_BUSINESS" | "SMART_BUSINESS_PLUS" | "TEAMDEAL" | "GIGAMOBIL" | "CONSUMER_SMART";
 
 /**
  * Tarif-Familie (für UI-Gruppierung).
  * 
  * ENTSPRICHT ProductLine in Kleinbuchstaben mit Unterstrichen.
  */
-export type TariffFamily = "prime" | "business_smart" | "smart_business" | "teamdeal";
+export type TariffFamily = "prime" | "business_smart" | "smart_business" | "teamdeal" | "gigamobil" | "consumer_smart";
 
 /**
  * Vertragsvariante (erweiterte Preislogik, Slice C).

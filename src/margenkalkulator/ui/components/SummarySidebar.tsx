@@ -43,6 +43,7 @@ interface SummarySidebarProps {
   viewMode: ViewMode;
   quantityBonus?: number;
   onResetForNewTariff?: () => void;
+  onGoToCheckout?: () => void;
   className?: string;
 }
 
@@ -52,6 +53,7 @@ export function SummarySidebar({
   viewMode,
   quantityBonus = 0,
   onResetForNewTariff,
+  onGoToCheckout,
   className
 }: SummarySidebarProps) {
   const visibility = useSensitiveFieldsVisible(viewMode);
@@ -346,7 +348,7 @@ export function SummarySidebar({
       </div>
 
       {/* === PRIMARY CTA FOOTER (Always Visible) === */}
-      <div className="p-4 border-t border-border bg-muted/30 sticky bottom-0">
+      <div className="p-4 border-t border-border bg-background/80 backdrop-blur-xl sticky bottom-0 z-10 transition-all duration-300">
         {hasTariff ? (
           isAlreadyAdded ? (
             <div className="space-y-2">
@@ -404,6 +406,21 @@ export function SummarySidebar({
               <p>Bitte zuerst einen Tarif wählen</p>
             </TooltipContent>
           </Tooltip>
+        )}
+
+        {/* Checkout / Finish Button - Only visible if items in basket */}
+        {items.length > 0 && (
+          <div className="pt-3 mt-3 border-t border-border">
+            <Button
+              size="lg"
+              variant="default"
+              onClick={onGoToCheckout}
+              className="w-full gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md font-semibold"
+            >
+              <FileText className="w-5 h-5" />
+              Zum Gesamtangebot ({items.length})
+            </Button>
+          </div>
         )}
       </div>
     </div>

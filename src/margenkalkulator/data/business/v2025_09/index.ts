@@ -14,6 +14,8 @@ import { fixedNetDSLProducts } from "./fixedNetDSL";
 import { fixedNetFiberProducts } from "./fixedNetFiber";
 import { fixedNetKomfortProducts } from "./fixedNetKomfort";
 import { hardwareCatalog } from "./hardware";
+import { smartTariffs as consumerSmartTariffs } from "../../consumer/smart/tariffs";
+import { gigaMobilTariffs } from "../../consumer/gigamobil/tariffs";
 
 export const businessCatalog2025_09: Catalog = {
   version: "business-2025-09",
@@ -24,6 +26,8 @@ export const businessCatalog2025_09: Catalog = {
     ...businessSmartTariffs,
     ...smartBusinessTariffs,
     ...teamDealTariffs,
+    ...consumerSmartTariffs,
+    ...gigaMobilTariffs,
   ],
   promos: businessPromos,
   fixedNetProducts: [
@@ -47,8 +51,8 @@ export { fixedNetDSLProducts } from "./fixedNetDSL";
 export { fixedNetFiberProducts } from "./fixedNetFiber";
 export { fixedNetKomfortProducts } from "./fixedNetKomfort";
 export { hardwareCatalog } from "./hardware";
-export { 
-  komfortRegioPhoneTiers, 
+export {
+  komfortRegioPhoneTiers,
   komfortRegioInternetOptions,
   komfortFTTHPhoneTiers,
   komfortFTTHInternetOptions,

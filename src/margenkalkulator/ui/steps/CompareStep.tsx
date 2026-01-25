@@ -194,7 +194,10 @@ export function CompareStep({
                     <span>Mobilfunk-Tarif</span>
                   </div>
                   <span className="font-medium">
-                    {result1.totals.avgTermNet.toFixed(2)} € /mtl.
+                    {option1.meta.portfolio?.startsWith('consumer')
+                      ? `${result1.totals.avgTermGross.toFixed(2)} € (Brutto)`
+                      : `${result1.totals.avgTermNet.toFixed(2)} € /mtl.`
+                    }
                   </span>
                 </div>
 
@@ -215,11 +218,17 @@ export function CompareStep({
               {/* Average Monthly Cost with DGRV Badge */}
               <div className="flex items-center justify-between pt-4 border-t-2 border-border">
                 <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground">Ø Kosten pro Monat (pro Vertrag)</span>
+                  <span className="text-muted-foreground">
+                    Ø Kosten pro Monat (pro Vertrag)
+                    {option1.meta.portfolio?.startsWith('consumer') ? " (Brutto)" : " (Netto)"}
+                  </span>
                   {result1.meta.isDgrvContract && <DgrvBadge compact freeMonths={result1.meta.freeMonths} />}
                 </div>
                 <span className="text-4xl font-bold text-foreground">
-                  {result1.totals.avgTermNet.toFixed(2)} €
+                  {option1.meta.portfolio?.startsWith('consumer')
+                    ? result1.totals.avgTermGross.toFixed(2)
+                    : result1.totals.avgTermNet.toFixed(2)
+                  } €
                 </span>
               </div>
 

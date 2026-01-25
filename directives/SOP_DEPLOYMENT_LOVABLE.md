@@ -94,6 +94,25 @@ npm run build
 2. Git-Status prüfen (alle Änderungen gepusht?)
 3. Lovable Dashboard auf Fehler prüfen
 
+### 3.4 iCloud-Konflikt-Duplikate (` 2.ts`, ` 3.ts`)
+
+**Symptom:** Lint-Fehler wie `React Hook "useCallback" is called conditionally` aus Dateien wie `useDrafts 2.ts`
+
+**Ursache:** iCloud-Synchronisierung erstellt Duplikate bei Konflikten (Dateiname mit ` 2`, ` 3` Suffix)
+
+**Lösung:**
+```bash
+# Alle Duplikate finden
+find . \( -name "* 2.*" -o -name "* 3.*" \) -not -path "./node_modules/*" -not -path "./.git/*" -type f
+
+# Alle Duplikate löschen (VORSICHT!)
+find . \( -name "* 2.*" -o -name "* 3.*" \) -not -path "./node_modules/*" -not -path "./.git/*" -not -path "./knowledge/*" -type f -delete
+```
+
+> [!CAUTION]
+> Diese Dateien enthalten oft veralteten Code und verursachen Lint-Fehler.  
+> Vor dem Löschen kurz prüfen, ob die Original-Datei (ohne Suffix) existiert!
+
 ---
 
 ## 4. Deployment-Checkliste
@@ -101,9 +120,10 @@ npm run build
 Vor jedem Push/Deployment diese Schritte durchführen:
 
 - [ ] `npm run typecheck` – keine Fehler
-- [ ] `npm run lint` – keine kritischen Warnungen
+- [ ] `npm run lint` – **0 Errors** (Warnungen OK)
 - [ ] `npm run build` – Build erfolgreich
 - [ ] Keine `src/node_modules/` vorhanden
+- [ ] Keine iCloud-Duplikate (` 2.ts`, ` 3.ts`) vorhanden
 - [ ] Git-Status sauber (commit & push)
 
 ---
@@ -115,8 +135,9 @@ Falls ein Build fehlschlägt:
 1. **Fehlermeldung sofort lesen** – nicht raten
 2. **Lokalen Build testen** – `npm run build`
 3. **Bei node_modules-Problemen:** Clean install durchführen
-4. **Dieses Dokument aktualisieren** – neue Fehlerfälle dokumentieren
-5. **Erneut testen** – erst nach Erfolg pushen
+4. **Bei iCloud-Duplikaten:** Alle `* 2.*` und `* 3.*` Dateien löschen
+5. **Dieses Dokument aktualisieren** – neue Fehlerfälle dokumentieren
+6. **Erneut testen** – erst nach Erfolg pushen
 
 ---
 
@@ -137,3 +158,5 @@ Da wir keinen direkten Supabase-Zugang haben:
 | Datum | Änderung |
 |-------|----------|
 | 2026-01-25 | Initial-Version erstellt |
+| 2026-01-25 | Sektion 3.4 hinzugefügt: iCloud-Konflikt-Duplikate |
+

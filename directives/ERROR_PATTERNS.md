@@ -8,13 +8,14 @@
 
 ## Fehlermuster-Katalog
 
-### ERR_001: CLI Missing Argument
+### ERR_001: CLI Missing Argument ✅ RESOLVED
 ```yaml
 pattern_id: ERR_001
 pattern: "flag needs an argument"
 regex: "flag needs an argument: --(\w+)"
 category: CLI_MISSING_ARG
 severity: HIGH
+status: RESOLVED
 ```
 
 **Symptom:**
@@ -40,6 +41,7 @@ fi
 ```
 
 **Fix angewendet:** 2026-01-25 in `deploy.yml`
+**Verifiziert:** Run #63, #64 erfolgreich (Supabase-Steps werden übersprungen)
 
 ---
 

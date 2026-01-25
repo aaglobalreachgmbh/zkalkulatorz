@@ -86,9 +86,31 @@ This file (`ANTIGRAVITY_KERNEL.md`) is the root.
 
 ---
 
-## 6. COMMANDMENTS FOR THE AI AGENT
+## 6. KNOWLEDGE BASE INDEX
+
+The 9 Deep Research documents provide the theoretical foundation:
+
+| Doc | Topic | Key Concepts |
+|-----|-------|--------------|
+| 1 | Systemarchitektur | Evidence-Based Engineering, Anti-Vibe Coding |
+| 2 | Enterprise Engineering | Backend Black Box, Edge Functions |
+| 3 | Technische Implementierung | Monorepo, Event-Driven Architecture |
+| 4 | SecOps Playbook | RLS, Honeytokens, Active Defense |
+| 5 | Operational Workflow | Contract-First, Zod Validation |
+| 6 | Qualitätssicherung | Property-Based Testing, pgTAP |
+| 7 | Design System | Vodafone Aesthetic, Shadcn UI |
+| 8 | Autonomous Orchestration | DOE Framework, Self-Annealing |
+| 9 | QA Ergänzung | Additional Testing Patterns |
+
+**Location:** `knowledge/*.md`
+
+---
+
+## 7. COMMANDMENTS FOR THE AI AGENT
 
 1.  **Read This First:** Before starting a complex task, re-read this Kernel.
 2.  **Update the Kernel:** If you learn a new fundamental truth, write it down here.
 3.  **Check the Patterns:** Before coding, check `ERROR_PATTERNS.md` for traps.
 4.  **Run the Validator:** Before asking the user to push, run `python3 execution/pre_push_check.py`.
+5.  **Read GEMINI.md:** At the start of every new session, read the root `GEMINI.md`.
+

@@ -1,11 +1,15 @@
 {
   "project_meta": {
-    "name": "MargenKalkulator",
-    "description": "Enterprise-Finanzplattform",
+    "name": "MargenKalkulator / ZKalkulator",
+    "description": "Enterprise-Finanzplattform für Vodafone Business Partner",
+    "version": "2.0",
     "tech_stack": [
-      "Next.js 14",
-      "Tailwind CSS",
-      "Supabase",
+      "React 18",
+      "Vite 6",
+      "TypeScript 5",
+      "Tailwind CSS 3",
+      "Shadcn UI",
+      "Supabase (via Lovable)",
       "Deno (Edge Functions)",
       "Zod",
       "PostgreSQL"
@@ -25,15 +29,25 @@
     }
   },
   "architecture_decisions": {
+    "Framework": "Vite + React (NOT Next.js) - Lovable compatible",
     "Architecture Type": "Event-Driven Serverless Architecture [Doc 3]",
     "Black Box Logic": "Calculations ONLY on Edge Functions. Client is dumb. [Doc 2]",
     "Database Strategy": "Split-Table: public_products vs commercial_costs. [Doc 2 & 3]",
     "Security": "Default Deny RLS & Active Defense (Honeytokens). [Doc 4]",
     "Contracts": "Contract-First with Zod. [Doc 5]",
     "Orchestration": "DOE Framework & Self-Annealing. [Doc 8]",
-    "QA": "Property-Based Testing (pgTAP). [Doc 6 & 9]"
+    "QA": "Property-Based Testing (pgTAP). [Doc 6 & 9]",
+    "Deployment": "Lovable Cloud - NO direct supabase.com access"
   },
-  "active_phase": "Phase 7: MISSION GO LIVE",
+  "active_phase": "Phase 12: Super AI Integration & System Hardening",
+  "last_updated": "2026-01-25",
+  "super_ai_components": {
+    "kernel": "directives/ANTIGRAVITY_KERNEL.md",
+    "constitution": "GEMINI.md",
+    "error_memory": "directives/ERROR_PATTERNS.md",
+    "validator": "execution/pre_push_check.py",
+    "learning_workflow": ".agent/workflows/self_correction.md"
+  },
   "knowledge_base": {
     "doc1": "Systemarchitektur: Evidence-Based Engineering",
     "doc2": "Backend: Logic Black Box (Edge Functions)",
@@ -44,5 +58,11 @@
     "doc7": "Design: Vodafone Enterprise + Shadcn",
     "doc8": "Orchestrierung: DOE Framework & Self-Annealing",
     "doc9": "QA: Property-Based Testing (Additional)"
-  }
+  },
+  "critical_rules": [
+    "NEVER recommend direct supabase.com login",
+    "ALWAYS run pre_push_check.py before pushing",
+    "ALWAYS read GEMINI.md at session start",
+    "UPDATE ERROR_PATTERNS.md after fixing any bug"
+  ]
 }

@@ -90,13 +90,11 @@ export async function parseHardwareXLSX(file: File): Promise<HardwareItemRow[]> 
           if (header) {
             // Handle Rich Text or simple values
             let cellValue = cell.value;
-            if (typeof cellValue === 'object' && cellValue !== null && 'text' in cellValue) {
-              // @ts-ignore
-              cellValue = cellValue.text;
-            } else if (typeof cellValue === 'object' && cellValue !== null && 'result' in cellValue) {
+            if (typeof cellValue === 'object' && cellValue !== null && 'text' in (cellValue as any)) {
+              cellValue = (cellValue as any).text;
+            } else if (typeof cellValue === 'object' && cellValue !== null && 'result' in (cellValue as any)) {
               // Formula result
-              // @ts-ignore
-              cellValue = cellValue.result;
+              cellValue = (cellValue as any).result;
             }
 
             rowData[header] = cellValue;

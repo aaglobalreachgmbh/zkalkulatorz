@@ -180,6 +180,32 @@ class ErrorPatternChecker:
         log("OK", "TypeScript check passed")
         return True
     
+    def check_anti_patterns(self) -> bool:
+        """CHECKS_001: Prüft auf verbotene 'Vibe Coding' Patterns"""
+        log("INFO", "Checking for 'Vibe Coding' anti-patterns...")
+        
+        # Check 1: @ts-ignore (STRICT FORBIDDEN)
+        # Grep-Suche in .ts/.tsx Dateien, Ausschluss von node_modules
+        code, output = run_cmd(
+            "grep -r '// @ts-ignore' src/ --include='*.ts' --include='*.tsx' || true"
+        )
+        if output.strip():
+            count = len(output.strip().split('\n'))
+            self.errors.append(f"ANTI_PATTERN: {count}x '// @ts-ignore' detected. This is forbidden! Use proper types.")
+        
+        # Check 2: console.log (WARNING)
+        code, output = run_cmd(
+            "grep -r 'console.log' src/ --include='*.ts' --include='*.tsx' || true"
+        )
+        if output.strip():
+            count = len(output.strip().split('\n'))
+            self.warnings.append(f"ANTI_PATTERN: {count}x 'console.log' detected. Remove before production.")
+            
+        if not self.errors:
+            log("OK", "No critical anti-patterns found")
+            return True
+        return False
+
     def run_all_checks(self) -> bool:
         """Führt alle Checks aus"""
         print(f"\n{BLUE}{'='*60}{RESET}")
@@ -189,6 +215,7 @@ class ErrorPatternChecker:
         
         # Schnelle Pattern-Checks zuerst
         self.check_kernel_existence()
+        self.check_anti_patterns()
         self.check_nested_node_modules()
         self.check_icloud_duplicates()
         self.check_duplicate_configs()

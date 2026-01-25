@@ -1,7 +1,6 @@
-// @ts-nocheck
 import * as React from "react";
 import * as RechartsPrimitive from "recharts";
-// @ts-ignore
+
 const Recharts = RechartsPrimitive as any;
 
 import { cn } from "@/lib/utils";

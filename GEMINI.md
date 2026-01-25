@@ -81,6 +81,22 @@ Der automatische Validator prüft:
 
 ---
 
+---
+
+## 🚫 ANTI-PATTERNS (Evidence-Based Engineering)
+
+Wir tolerieren kein "Vibe Coding" (Faulheit). Die folgenden Muster sind streng verboten:
+
+| Pattern | Status | Grund |
+|---------|--------|-------|
+| `// @ts-ignore` | ⛔️ VERBOTEN | Versteckt echte Fehler. Nutze `as unknown as Type` nur im Notfall. |
+| `any` | ⛔️ VERBOTEN | Zerstört Typsicherheit. Definiere Interfaces! |
+| `console.log` | ⚠️ WARNUNG | Nur für lokales Debugging. Nicht in Production. |
+| Direkter Supabase-Call | ⛔️ VERBOTEN | Logik muss in Edge Functions sein ("Black Box"). |
+| Hardcoded Secrets | ⛔️ VERBOTEN | Nutze immer `project_brain.json` oder Environment Vars. |
+
+---
+
 ## 🔄 Self-Annealing Protocol
 
 Wenn ein Fehler auftritt:

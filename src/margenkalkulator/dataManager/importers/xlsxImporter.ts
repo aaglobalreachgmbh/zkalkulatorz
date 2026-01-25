@@ -161,12 +161,10 @@ function extractRowsFromSheet(sheet: ExcelJS.Worksheet): Record<string, unknown>
           let cellValue = cell.value;
           // Handle rich text / formulas
           if (typeof cellValue === 'object' && cellValue !== null) {
-            if ('text' in cellValue) {
-              // @ts-ignore
-              cellValue = cellValue.text;
-            } else if ('result' in cellValue) {
-              // @ts-ignore
-              cellValue = cellValue.result;
+            if ('text' in (cellValue as any)) {
+              cellValue = (cellValue as any).text;
+            } else if ('result' in (cellValue as any)) {
+              cellValue = (cellValue as any).result;
             }
           }
           rowData[header] = cellValue;

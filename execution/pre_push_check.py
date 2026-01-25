@@ -54,6 +54,19 @@ class ErrorPatternChecker:
         self.errors = []
         self.warnings = []
     
+    def check_kernel_existence(self) -> bool:
+        """CHECKS_000: ANTIGRAVITY_KERNEL.md muss existieren"""
+        log("INFO", "Checking for ANTIGRAVITY_KERNEL.md...")
+        
+        kernel_path = PROJECT_ROOT / "directives/ANTIGRAVITY_KERNEL.md"
+        
+        if not kernel_path.exists():
+            self.errors.append("ERR_000: ANTIGRAVITY_KERNEL.md not found! The System Kernel is missing.")
+            return False
+        
+        log("OK", "System Kernel online")
+        return True
+
     def check_nested_node_modules(self) -> bool:
         """ERR_003: Parasitäre node_modules AUSSERHALB des Root node_modules"""
         log("INFO", "Checking for nested node_modules outside root...")
@@ -175,6 +188,7 @@ class ErrorPatternChecker:
         print(f"{BLUE}{'='*60}{RESET}\n")
         
         # Schnelle Pattern-Checks zuerst
+        self.check_kernel_existence()
         self.check_nested_node_modules()
         self.check_icloud_duplicates()
         self.check_duplicate_configs()

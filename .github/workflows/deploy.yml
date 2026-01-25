@@ -6,9 +6,9 @@ name: "Sync: Local <-> GitHub <-> Lovable"
 # TECH STACK: React + Vite (Lovable compatible)
 # AUTH: Supabase Auth (Gmail/Magic Link supported)
 # 
-# FUTURE MIGRATION: When cloning to Firebase Studios,
-# the project can be migrated to Next.js for better
-# Firebase integration.
+# NOTE: Supabase deployment is OPTIONAL.
+# If DB_PASSWORD secret is not set, Supabase steps are skipped.
+# Lovable manages Supabase integration directly.
 # ============================================
 
 on:
@@ -27,10 +27,8 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          # FIXED: package.json is in root, not src/
           cache-dependency-path: 'package-lock.json'
       
-      # FIXED: Run from root directory (where package.json is)
       - name: Install Dependencies
         run: npm ci
 
@@ -47,6 +45,9 @@ jobs:
         run: npm run build
 
   # 2. Deployment (The Sync)
+  # NOTE: Supabase steps are now CONDITIONAL.
+  # They only run if DB_PASSWORD secret is configured.
+  # For Lovable-only mode, these steps are skipped automatically.
   deploy:
     needs: verify
     if: github.ref == 'refs/heads/main'
@@ -57,18 +58,47 @@ jobs:
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
-      - uses: supabase/setup-cli@v1
+      
+      # Check if Supabase secrets are configured
+      - name: Check Supabase Configuration
+        id: check_supabase
+        run: |
+          if [ -n "${{ secrets.DB_PASSWORD }}" ] && [ -n "${{ secrets.SUPABASE_ACCESS_TOKEN }}" ]; then
+            echo "supabase_configured=true" >> $GITHUB_OUTPUT
+            echo "✅ Supabase secrets are configured"
+          else
+            echo "supabase_configured=false" >> $GITHUB_OUTPUT
+            echo "⏭️ Supabase secrets not configured - skipping Supabase deployment"
+            echo "ℹ️ This is expected for Lovable-only mode"
+          fi
+
+      # Supabase CLI Setup (conditional)
+      - name: Setup Supabase CLI
+        if: steps.check_supabase.outputs.supabase_configured == 'true'
+        uses: supabase/setup-cli@v1
         with:
           version: latest
 
       - name: Link Supabase Project
+        if: steps.check_supabase.outputs.supabase_configured == 'true'
         run: supabase link --project-ref $PROJECT_ID --password $DB_PASSWORD
 
       - name: Push Database Schema
+        if: steps.check_supabase.outputs.supabase_configured == 'true'
         run: supabase db push
 
       - name: Deploy Edge Functions
+        if: steps.check_supabase.outputs.supabase_configured == 'true'
         run: supabase functions deploy
         
-      # Lovable sync happens automatically via GitHub App integration.
-      # When we push to GitHub, Lovable pulls from GitHub.
+      # Success message for Lovable-only mode
+      - name: Lovable Sync Complete
+        run: |
+          echo "✅ Quality gate passed!"
+          echo "✅ Build verified!"
+          if [ "${{ steps.check_supabase.outputs.supabase_configured }}" == "true" ]; then
+            echo "✅ Supabase deployment complete!"
+          else
+            echo "ℹ️ Lovable-only mode: Supabase sync handled by Lovable"
+          fi
+          echo "🚀 Lovable will automatically sync from GitHub"

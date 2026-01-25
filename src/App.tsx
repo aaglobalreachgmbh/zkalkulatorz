@@ -17,8 +17,10 @@ import { AdminSetupGate } from "@/components/AdminSetupGate";
 import { FeatureRoute } from "@/components/FeatureRoute";
 import { MobileAccessGate } from "@/components/MobileAccessGate";
 import { OfferBasketProvider } from "@/margenkalkulator/contexts";
+import { DensityProvider } from "@/contexts/DensityContext";
 import { Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CommandPalette } from "@/components/CommandPalette";
 
 // Eagerly loaded pages (critical path)
 import Home from "./pages/Home";
@@ -363,9 +365,11 @@ function SafeProviderStack({ children }: { children: ReactNode }) {
             <IdentityProvider>
               <CustomerSessionProvider>
                 <POSModeProvider>
-                  <OfferBasketProvider>
-                    {children}
-                  </OfferBasketProvider>
+                  <DensityProvider>
+                    <OfferBasketProvider>
+                      {children}
+                    </OfferBasketProvider>
+                  </DensityProvider>
                 </POSModeProvider>
               </CustomerSessionProvider>
             </IdentityProvider>
@@ -392,6 +396,7 @@ const App = () => {
             <MobileAccessGate allowedPaths={ALWAYS_ALLOWED_PATHS}>
               <Toaster richColors position="top-right" />
               <BrowserRouter>
+                <CommandPalette />
                 <RouteErrorBoundary>
                   <Suspense fallback={<PageLoader />}>
                     <Routes>

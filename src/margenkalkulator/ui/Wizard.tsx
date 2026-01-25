@@ -39,7 +39,9 @@ import { ValidationWarning } from "./components/ValidationWarning";
 import { AiConsultant } from "./components/AiConsultant";
 import { ActionMenu } from "./components/ActionMenu";
 import { ViewModeToggle } from "./components/ViewModeToggle";
+import { DensityToggle } from "@/components/DensityToggle";
 import { CustomerSessionToggle } from "./components/CustomerSessionToggle";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { LiveCalculationBar, getStepSummary } from "./components/LiveCalculationBar";
 import { FloatingActionBar } from "./components/FloatingActionBar";
 import { SummarySidebar } from "./components/SummarySidebar";
@@ -461,7 +463,7 @@ export function Wizard() {
 
   return (
     <div className={cn(
-      "min-h-screen flex flex-col bg-background",
+      "min-h-screen flex flex-col bg-muted/30",
       customerSession.isActive && "ring-4 ring-amber-400 ring-inset",
       usingFallbackCatalog && "relative"
     )}>
@@ -522,8 +524,8 @@ export function Wizard() {
       )}
 
       {/* Header - Enterprise minimal design */}
-      <header className="border-b border-border/50 shrink-0 sticky top-0 z-40 bg-background/95 backdrop-blur-xl shadow-sm">
-        <div className="container mx-auto px-3 sm:px-4 lg:px-6 h-11 flex items-center justify-between gap-3">
+      <header className="border-b border-border/60 shrink-0 sticky top-0 z-40 bg-background/95 backdrop-blur-xl shadow-sm h-16 flex items-center">
+        <div className="container mx-auto px-4 lg:px-8 max-w-[1600px] flex items-center justify-between gap-4">
           {/* Left: Progress Indicator */}
           <WizardProgress
             currentStep={
@@ -555,6 +557,8 @@ export function Wizard() {
           <div className="flex items-center gap-2">
             {policy.showCustomerSessionToggle && <CustomerSessionToggle />}
 
+            <DensityToggle />
+
             <ViewModeToggle
               value={effectiveViewMode}
               onChange={handleViewModeChange}
@@ -573,15 +577,7 @@ export function Wizard() {
         </div>
       </header>
 
-      {/* POS Mode Indicator - Compact Badge (Quick Win #1: reduced from 42px to 28px) */}
-      {isPOSMode && (
-        <div className="bg-amber-500/10 border-b border-amber-500/30 px-4 py-1 flex items-center justify-center gap-1.5">
-          <Zap className="w-3.5 h-3.5 text-amber-600" />
-          <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
-            POS-Modus aktiv – Schnellverkauf
-          </span>
-        </div>
-      )}
+
 
       {/* Main Content with Sidebar */}
       <main className="flex-1 container mx-auto py-4 sm:py-6 px-3 sm:px-4 lg:px-6 max-w-[1600px] flex flex-col min-h-0 overflow-x-hidden">
@@ -616,9 +612,9 @@ export function Wizard() {
               >
                 {/* Hardware Section */}
                 <AccordionItem value="hardware" className={cn(
-                  "border border-border/60 rounded-xl overflow-hidden transition-all duration-200",
-                  activeSection === "hardware" && "ring-2 ring-primary/10 border-primary/30 shadow-sm",
-                  activeSection !== "hardware" && "opacity-70 hover:opacity-100 hover:border-border"
+                  "bg-card border border-border rounded-xl overflow-hidden transition-all duration-200 shadow-sm",
+                  activeSection === "hardware" && "ring-1 ring-primary/20 border-primary/40 shadow-md",
+                  activeSection !== "hardware" && "hover:border-primary/20"
                 )}>
                   <AccordionTrigger className="px-4 py-2.5 hover:no-underline hover:bg-muted/30 [&[data-state=open]]:bg-muted/20">
                     <div className="flex items-center gap-3 flex-1">
@@ -658,9 +654,9 @@ export function Wizard() {
 
                 {/* Mobile Section */}
                 <AccordionItem value="mobile" className={cn(
-                  "border border-border/60 rounded-xl overflow-hidden transition-all duration-200",
-                  activeSection === "mobile" && "ring-2 ring-primary/10 border-primary/30 shadow-sm",
-                  activeSection !== "mobile" && "opacity-70 hover:opacity-100 hover:border-border"
+                  "bg-card border border-border rounded-xl overflow-hidden transition-all duration-200 shadow-sm",
+                  activeSection === "mobile" && "ring-1 ring-primary/20 border-primary/40 shadow-md",
+                  activeSection !== "mobile" && "hover:border-primary/20"
                 )}>
                   <AccordionTrigger className="px-4 py-2.5 hover:no-underline hover:bg-muted/30 [&[data-state=open]]:bg-muted/20">
                     <div className="flex items-center gap-3 flex-1">
@@ -711,9 +707,9 @@ export function Wizard() {
                 {/* Fixed Net Section - nur wenn Feature aktiv */}
                 {fixedNetModuleEnabled && (
                   <AccordionItem value="fixedNet" className={cn(
-                    "border border-border/60 rounded-xl overflow-hidden transition-all duration-200",
-                    activeSection === "fixedNet" && "ring-2 ring-emerald-500/10 border-emerald-500/30 shadow-sm",
-                    activeSection !== "fixedNet" && "opacity-70 hover:opacity-100 hover:border-border"
+                    "bg-card border border-border rounded-xl overflow-hidden transition-all duration-200 shadow-sm",
+                    activeSection === "fixedNet" && "ring-1 ring-emerald-500/20 border-emerald-500/40 shadow-md",
+                    activeSection !== "fixedNet" && "hover:border-emerald-500/20"
                   )}>
                     <AccordionTrigger className="px-4 py-2.5 hover:no-underline hover:bg-muted/30 [&[data-state=open]]:bg-muted/20">
                       <div className="flex items-center gap-3 flex-1">

@@ -150,51 +150,45 @@ export function SummarySidebar({
       <div className="p-4 space-y-4">
         {/* Components List */}
         <div className="space-y-3">
-          {/* Hardware */}
-          <div className="flex items-start gap-3">
+          {/* Hardware - Boxed */}
+          <div className="p-3 rounded-lg border border-border/50 bg-muted/20 flex items-start gap-3">
             <div className={cn(
-              "w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0",
-              hasHardware ? "bg-primary/10" : "bg-muted/50"
+              "w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 border border-border/30",
+              hasHardware ? "bg-primary/20 text-primary" : "bg-background text-muted-foreground/30"
             )}>
-              <Smartphone className={cn(
-                "w-3.5 h-3.5",
-                hasHardware ? "text-primary" : "text-muted-foreground/50"
-              )} />
+              <Smartphone className="w-4 h-4" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs text-muted-foreground/70">Hardware</p>
-              <p className="font-medium text-sm truncate">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-0.5">Hardware</p>
+              <p className="font-medium text-sm truncate leading-tight">
                 {option.hardware.name || "SIM Only"}
               </p>
               {showDealerEconomics && hasHardware && (
-                <p className="text-xs text-muted-foreground/70">
+                <p className="text-xs text-muted-foreground/70 mt-1">
                   EK: <AnimatedCurrency value={option.hardware.ekNet} decimals={2} className="text-xs" />
                 </p>
               )}
             </div>
           </div>
 
-          {/* Mobile Tariff */}
-          <div className="flex items-start gap-3">
+          {/* Mobile Tariff - Boxed */}
+          <div className="p-3 rounded-lg border border-border/50 bg-muted/20 flex items-start gap-3">
             <div className={cn(
-              "w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0",
-              hasTariff ? "bg-primary/10" : "bg-muted/50"
+              "w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 border border-border/30",
+              hasTariff ? "bg-primary/20 text-primary" : "bg-background text-muted-foreground/30"
             )}>
-              <Signal className={cn(
-                "w-3.5 h-3.5",
-                hasTariff ? "text-primary" : "text-muted-foreground/50"
-              )} />
+              <Signal className="w-4 h-4" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs text-muted-foreground/70">Mobilfunk</p>
-              <p className="font-medium text-sm truncate">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-0.5">Mobilfunk</p>
+              <p className="font-medium text-sm truncate leading-tight">
                 {option.mobile.tariffId
                   ? option.mobile.tariffId.replace(/_/g, " ")
-                  : "Kein Tarif gewählt"}
+                  : "Kein Tarif"}
               </p>
               {hasTariff && (
-                <div className="flex items-center gap-2 mt-0.5">
-                  <Badge variant="outline" className="text-xs h-5">
+                <div className="flex items-center gap-2 mt-1.5">
+                  <Badge variant="outline" className="text-[10px] h-4 px-1 bg-background">
                     {option.mobile.contractType === "new" ? "Neu" : "VVL"}
                   </Badge>
                 </div>
@@ -202,24 +196,21 @@ export function SummarySidebar({
             </div>
           </div>
 
-          {/* Fixed Net */}
-          <div className="flex items-start gap-3">
+          {/* Fixed Net - Boxed */}
+          <div className="p-3 rounded-lg border border-border/50 bg-muted/20 flex items-start gap-3">
             <div className={cn(
-              "w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0",
-              hasFixedNet ? "bg-primary/10" : "bg-muted/50"
+              "w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 border border-border/30",
+              hasFixedNet ? "bg-primary/20 text-primary" : "bg-background text-muted-foreground/30"
             )}>
-              <Wifi className={cn(
-                "w-3.5 h-3.5",
-                hasFixedNet ? "text-primary" : "text-muted-foreground/50"
-              )} />
+              <Wifi className="w-4 h-4" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs text-muted-foreground/70">Festnetz</p>
-              <p className="font-medium text-sm">
-                {hasFixedNet ? "Aktiv" : "Nicht aktiv"}
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-0.5">Festnetz</p>
+              <p className="font-medium text-sm leading-tight">
+                {hasFixedNet ? "Aktiviert" : "Nicht aktiv"}
               </p>
               {hasFixedNet && option.fixedNet.productId && (
-                <p className="text-xs text-muted-foreground/70 truncate">
+                <p className="text-xs text-muted-foreground/70 truncate mt-0.5">
                   {option.fixedNet.productId.replace(/_/g, " ")}
                 </p>
               )}
@@ -348,7 +339,7 @@ export function SummarySidebar({
       </div>
 
       {/* === PRIMARY CTA FOOTER (Always Visible) === */}
-      <div className="p-4 border-t border-border bg-background/80 backdrop-blur-xl sticky bottom-0 z-10 transition-all duration-300">
+      <div className="p-4 border-t border-border bg-muted/40 sticky bottom-0 z-10">
         {hasTariff ? (
           isAlreadyAdded ? (
             <div className="space-y-2">

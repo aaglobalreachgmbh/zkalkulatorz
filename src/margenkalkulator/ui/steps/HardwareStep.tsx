@@ -14,9 +14,10 @@ import {
 } from "@/components/ui/accordion";
 import type { HardwareState, DatasetVersion, ViewMode } from "../../engine/types";
 import { listHardwareItems } from "../../engine/catalogResolver";
-import { Smartphone, Upload, Check, Search, Tablet, ChevronDown, ChevronUp, Image as ImageIcon, AlertTriangle, RefreshCw, Plus } from "lucide-react";
+import { Smartphone, Upload, Check, Search, Tablet, ChevronDown, ChevronUp, Image as ImageIcon, AlertTriangle, RefreshCw, Plus, LayoutGrid } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { SkeletonCard } from "@/components/ui/skeleton-card";
 import {
   groupHardwareFamilies,
   findFamilyAndConfig,
@@ -29,6 +30,7 @@ import { useHardwareImages } from "../../hooks/useHardwareImages";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePOSMode } from "@/contexts/POSModeContext";
+import { useDensity } from "@/contexts/DensityContext";
 import { cn } from "@/lib/utils";
 
 interface HardwareStepProps {
@@ -52,6 +54,8 @@ export function HardwareStep({ value, onChange, onHardwareSelected, datasetVersi
   const showDealerOptions = visibility.showDealerEconomics;
   const isMobile = useIsMobile();
   const { isPOSMode } = usePOSMode();
+  const { density } = useDensity();
+  const isCompact = density === "compact";
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedBrand, setSelectedBrand] = useState<string>("all");
@@ -249,8 +253,8 @@ export function HardwareStep({ value, onChange, onHardwareSelected, datasetVersi
       {!isCollapsed && (
         <>
 
-          {/* Filter Section - STICKY for always-visible search */}
-          <div className="bg-card rounded-xl border border-border p-4 space-y-4 sticky top-16 z-10">
+          {/* Filter Section - ANCHORED (Not Sticky) */}
+          <div className="bg-card rounded-xl border border-border p-4 space-y-4 mb-6 shadow-sm">
             {/* Search and Category Row */}
             <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 sm:gap-4">
               <div className="relative w-full sm:flex-1 sm:min-w-[180px] lg:min-w-[200px]">
@@ -386,42 +390,28 @@ export function HardwareStep({ value, onChange, onHardwareSelected, datasetVersi
             {showSimOnly && simOnlyItem && (
               <button
                 onClick={handleSimOnlySelect}
-                className={`
-              relative p-5 rounded-xl border-2 bg-card text-left 
-              transition-all duration-200 ease-out
-              hover:shadow-lg hover:border-primary/50 hover:-translate-y-1
-              ${selectedInfo?.type === "simOnly"
-                    ? "border-primary ring-2 ring-primary/20"
+                className={cn(
+                  "relative p-4 rounded-lg border bg-card text-left transition-all duration-200",
+                  "hover:border-primary/50 hover:shadow-sm",
+                  selectedInfo?.type === "simOnly"
+                    ? "border-primary ring-1 ring-primary/20 bg-primary/5"
                     : "border-border"
-                  }
-            `}
-              >
-                {selectedInfo?.type === "simOnly" && (
-                  <div className="absolute top-3 right-3 w-6 h-6 bg-primary rounded-full flex items-center justify-center">
-                    <Check className="w-4 h-4 text-primary-foreground" />
-                  </div>
                 )}
-
-                <div className="flex justify-center mb-3">
-                  <img
-                    src={imageMap.get("no_hardware") || SIM_ONLY_IMAGE}
-                    alt="SIM Only"
-                    className="w-20 h-20 object-contain rounded-lg bg-muted"
-                  />
+              >
+                <div className="flex flex-col items-center justify-center gap-3 py-6">
+                  {/* ... icon ... */}
+                  <div className="p-3 bg-muted rounded-full">
+                    <Smartphone className="w-8 h-8 text-muted-foreground/50" />
+                  </div>
+                  <div className="text-center">
+                    <p className="font-semibold text-foreground">SIM Only</p>
+                    <p className="text-xs text-muted-foreground">Kein Gerät</p>
+                  </div>
                 </div>
 
-                <h3 className="font-semibold text-foreground text-center text-sm">
-                  SIM Only
-                </h3>
-                <p className="text-xs text-muted-foreground text-center mt-1">
-                  Nur Tarif
-                </p>
-
-                {showDealerOptions && (
-                  <div className="flex justify-center mt-2">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 text-xs font-medium">
-                      Maximale Marge
-                    </span>
+                {selectedInfo?.type === "simOnly" && (
+                  <div className="absolute top-2 right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                    <Check className="w-3 h-3 text-primary-foreground" />
                   </div>
                 )}
               </button>
@@ -442,68 +432,75 @@ export function HardwareStep({ value, onChange, onHardwareSelected, datasetVersi
                 >
                   <PopoverTrigger asChild>
                     <button
-                      className={`
-                    relative p-5 rounded-xl border-2 bg-card text-left w-full
-                    transition-all duration-200 ease-out
-                    hover:shadow-lg hover:border-primary/50 hover:-translate-y-1
-                    ${isSelected
-                          ? "border-primary ring-2 ring-primary/20"
-                          : "border-border"
-                        }
-                  `}
+                      className={cn(
+                        "group relative flex flex-col h-full w-full bg-card rounded-lg border text-left transition-all duration-200",
+                        "hover:border-primary/50 hover:shadow-sm",
+                        isSelected ? "border-primary ring-1 ring-primary/20 bg-accent/5" : "border-border"
+                      )}
                     >
+                      {/* Selection Indicator */}
                       {isSelected && (
-                        <div className="absolute top-3 right-3 w-6 h-6 bg-primary rounded-full flex items-center justify-center">
-                          <Check className="w-4 h-4 text-primary-foreground" />
+                        <div className="absolute top-2 right-2 z-10 w-5 h-5 bg-primary rounded-full flex items-center justify-center shadow-sm">
+                          <Check className="w-3 h-3 text-primary-foreground" />
                         </div>
                       )}
 
-                      {/* Family Stats Badge */}
-                      {hasMultipleOptions && (
-                        <div className="absolute top-3 left-3">
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted text-xs font-medium">
-                            {family.subModels.length} Modell{family.subModels.length > 1 ? "e" : ""}
-                            <ChevronDown className="w-3 h-3" />
-                          </span>
-                        </div>
-                      )}
-
-                      <div className="flex justify-center mb-3 mt-2">
+                      {/* Image Container - Strict Aspect Ratio */}
+                      <div className="aspect-[4/5] w-full p-4 bg-muted/20 border-b border-border/50 flex items-center justify-center rounded-t-lg group-hover:bg-muted/30 transition-colors">
                         <img
                           src={getHardwareImage(family.familyId, family.familyId)}
                           alt={family.familyName}
-                          className="w-20 h-20 object-contain rounded-lg bg-muted"
+                          className="w-full h-full object-contain mix-blend-multiply"
                           onError={(e) => {
                             (e.target as HTMLImageElement).src = PLACEHOLDER_IMAGE;
                           }}
                         />
                       </div>
 
-                      <h3 className="font-semibold text-foreground text-center text-sm">
-                        {family.familyName}
-                      </h3>
-                      <p className="text-xs text-muted-foreground text-center mt-1">
-                        {family.brand}
-                      </p>
-
-                      {/* Selected SubModel + Config Info */}
-                      {selectedSubModel && selectedConfig && (
-                        <p className="text-xs text-primary text-center mt-1 font-medium">
-                          {selectedSubModel.subModelName ? `${selectedSubModel.subModelName} · ` : ""}
-                          {selectedConfig.storage}
-                        </p>
-                      )}
-
-                      {showHardwareEk && (
-                        <div className="flex justify-center mt-2">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-muted text-xs font-mono">
-                            {hasMultipleOptions
-                              ? `ab ${family.lowestPrice} € EK`
-                              : `EK: ${family.lowestPrice} €`
-                            }
-                          </span>
+                      {/* Content Container - Flex Grow to push footer down */}
+                      <div className="flex-1 p-3 flex flex-col">
+                        <div className="flex justify-between items-start gap-2">
+                          <h3 className="font-semibold text-sm text-foreground leading-tight">
+                            {family.familyName}
+                          </h3>
                         </div>
-                      )}
+                        <p className="text-xs text-muted-foreground mt-0.5 mb-2">
+                          {family.brand}
+                        </p>
+
+                        {/* Selected Spec Badge */}
+                        {selectedSubModel && selectedConfig && (
+                          <div className="mt-auto pt-2">
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/10 text-primary border border-primary/20 truncate max-w-full">
+                              {selectedSubModel.subModelName ? `${selectedSubModel.subModelName} · ` : ""}
+                              {selectedConfig.storage}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Footer - Price/Variant Info */}
+                      <div className="p-3 pt-0 mt-auto border-t border-border/50 bg-muted/10 rounded-b-lg">
+                        <div className="flex items-center justify-between pt-2">
+                          {/* Variants Badge */}
+                          {hasMultipleOptions ? (
+                            <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                              <LayoutGrid className="w-3 h-3" />
+                              {family.subModels.length} Varianten
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-muted-foreground">Standard</span>
+                          )}
+
+                          {/* Price Badge */}
+                          {showHardwareEk && (
+                            <span className="font-mono text-[10px] text-muted-foreground bg-background px-1.5 py-0.5 rounded border border-border">
+                              {hasMultipleOptions ? "ab " : ""}
+                              {family.lowestPrice} €
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </button>
                   </PopoverTrigger>
 

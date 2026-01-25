@@ -16,9 +16,10 @@ import {
   listFixedNetByAccessType,
   getFixedNetProductFromCatalog,
 } from "@/margenkalkulator";
-import { Router, Phone, Lock } from "lucide-react";
+import { Router, Phone, Lock, Check, Zap } from "lucide-react";
 import { useFeature } from "@/hooks/useFeature";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
+import { cn } from "@/lib/utils";
 
 interface FixedNetStepProps {
   value: FixedNetState;
@@ -137,21 +138,54 @@ export function FixedNetStep({ value, onChange, datasetVersion, onFixedNetEnable
               Zugangstyp
               <HelpTooltip content="Kabel-Anschluss prüfen" />
             </Label>
-            <div className="flex flex-wrap gap-2">
-              {(["CABLE", "DSL", "FIBER"] as FixedNetAccessType[]).map((type) => (
-                <button
-                  key={type}
-                  onClick={() => handleAccessTypeChange(type)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${selectedAccessType === type
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80"
-                    }`}
-                >
-                  {type === "CABLE" && "Kabel"}
-                  {type === "DSL" && "DSL"}
-                  {type === "FIBER" && "Glasfaser"}
-                </button>
-              ))}
+            {/* Access Type Selection Cards */}
+            <div className="space-y-3">
+              <Label className="text-sm text-muted-foreground flex items-center gap-1.5">
+                Zugangstyp
+                <HelpTooltip content="Kabel-Anschluss prüfen" />
+              </Label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {(["CABLE", "DSL", "FIBER"] as FixedNetAccessType[]).map((type) => {
+                  const isSelected = selectedAccessType === type;
+                  return (
+                    <button
+                      key={type}
+                      onClick={() => handleAccessTypeChange(type)}
+                      className={cn(
+                        "relative flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all duration-200 gap-3 min-h-[120px]",
+                        "hover:shadow-md hover:border-primary/50 hover:bg-muted/50",
+                        isSelected
+                          ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+                          : "border-border bg-card"
+                      )}
+                    >
+                      {isSelected && (
+                        <div className="absolute top-2 right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center shadow-sm">
+                          <Check className="w-3 h-3 text-primary-foreground" />
+                        </div>
+                      )}
+
+                      <div className={cn(
+                        "w-10 h-10 rounded-full flex items-center justify-center transition-colors",
+                        isSelected ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                      )}>
+                        {type === "CABLE" && <Router className="w-5 h-5" />}
+                        {type === "DSL" && <Phone className="w-5 h-5" />}
+                        {type === "FIBER" && <Zap className="w-5 h-5" />}
+                      </div>
+
+                      <span className={cn(
+                        "font-semibold text-sm",
+                        isSelected ? "text-primary" : "text-foreground"
+                      )}>
+                        {type === "CABLE" && "Kabel Internet"}
+                        {type === "DSL" && "DSL Anschluss"}
+                        {type === "FIBER" && "Glasfaser"}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 

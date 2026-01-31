@@ -1,11 +1,10 @@
 // ============================================
 // Wizard - Margenkalkulator Orchestrator
-// Phase 3: Migration - Hybrid Architecture
+// Phase 4: Clean UI Orchestrator
 // ============================================
 //
-// Uses CalculatorProvider for navigation/UI state
-// Keeps business logic (bonuses, calculations) in WizardContent
-// Adapter Pattern: Maps Context state to Step props
+// Business logic (bonuses, calculations) now lives in CalculatorContext.
+// WizardContent is a pure UI orchestrator - rendering only.
 // ============================================
 
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
@@ -33,15 +32,11 @@ import {
   type ViewMode,
   type WizardStep,
   createDefaultOptionState,
-  calculateOffer,
   useWizardValidation,
   getMobileTariffFromCatalog,
 } from "@/margenkalkulator";
-import { useEmployeeSettings } from "@/margenkalkulator/hooks/useEmployeeSettings";
-import { usePushProvisions } from "@/margenkalkulator/hooks/usePushProvisions";
 import { useDatasetVersions } from "@/margenkalkulator/hooks/useDatasetVersions";
 import { useTenantDataStatus } from "@/margenkalkulator/hooks/useTenantDataStatus";
-import { useQuantityBonus } from "@/margenkalkulator/hooks/useQuantityBonus";
 import { useOfferBasket } from "@/margenkalkulator/contexts/OfferBasketContext";
 import { HardwareStep } from "./steps/HardwareStep";
 import { MobileStep } from "./steps/MobileStep";
@@ -88,7 +83,7 @@ function WizardContent() {
   const isMobile = useIsMobile();
   const { isPOSMode } = usePOSMode();
 
-  // === CALCULATOR CONTEXT (Navigation & UI State) ===
+  // === CALCULATOR CONTEXT (ALL State & Business Logic) ===
   const {
     activeSection,
     goToSection,
@@ -108,38 +103,33 @@ function WizardContent() {
     setShowQuickStart,
     showRestoreDialog,
     setShowRestoreDialog,
+    // Phase 4: Results now come from context (with all bonuses)
+    result1,
+    result2,
+    quantityBonusForOption1,
   } = useCalculator();
 
-  // === BUSINESS LOGIC HOOKS (Kept in WizardContent) ===
-  const { settings: employeeSettings } = useEmployeeSettings();
-  const { getBonusAmount } = usePushProvisions();
-  const { addToHistory } = useHistory();
-  const { getBonusForQuantity, tiers: quantityBonusTiers } = useQuantityBonus();
+  // === BASKET (Only for injection to provider + UI) ===
   const { items: basketItems } = useOfferBasket();
 
-  // Onboarding Tour Hook
+  // === UI-ONLY HOOKS ===
+  const { addToHistory } = useHistory();
   const tour = useOnboardingTour();
-
-  // Auto-Save Hook
   const autoSave = useWizardAutoSave();
   const hasCheckedAutoSave = useRef(false);
-
-  // Dataset Versions - Auto-seed if none exist
   const { versions, isLoading: isLoadingVersions, seedDefaultVersion, isSeeding } = useDatasetVersions();
   const hasSeeded = useRef(false);
   const shownGigaKombiToast = useRef(false);
-
-  // Tenant Data Status Check
   const { status: tenantDataStatus, isLoading: isLoadingTenantData } = useTenantDataStatus();
   const { isAdmin: isSuperAdmin } = useUserRole();
-
-  // Feature flags
   const { enabled: option2Enabled, reason: option2Reason } = useFeature("compareOption2");
 
   // === DERIVED STATE ===
   const activeState = activeOption === 1 ? option1 : option2;
   const setActiveState = activeOption === 1 ? setOption1 : setOption2;
   const isCustomerSafeMode = isPOSMode || customerSession.isActive;
+  const activeResult = activeOption === 1 ? result1 : result2;
+  const avgMonthlyNet = activeResult?.totals.avgTermNet ?? 0;
 
   // Auto-seed dataset versions
   useEffect(() => {
@@ -281,77 +271,6 @@ function WizardContent() {
     }
   }, [location.search, handleQuickStartSelect]);
 
-  // === EMPLOYEE OPTIONS FOR CALCULATION ===
-  const employeeOptions = useMemo(
-    () => ({
-      employeeDeduction: employeeSettings
-        ? {
-            deductionValue: employeeSettings.provisionDeduction ?? 0,
-            deductionType: (employeeSettings.provisionDeductionType ?? "fixed") as "fixed" | "percentage",
-          }
-        : null,
-    }),
-    [employeeSettings]
-  );
-
-  // Build push provision context
-  const buildPushContext = useCallback(
-    (option: OfferOptionState) => ({
-      hasHardware: option.hardware.ekNet > 0,
-      hardwareEkNet: option.hardware.ekNet,
-      hasFixedNet: option.fixedNet.enabled,
-      hasGigaKombi: option.fixedNet.enabled && option.mobile.tariffId.toLowerCase().includes("prime"),
-      subVariantId: option.mobile.subVariantId,
-      quantity: option.mobile.quantity,
-      contractType: option.mobile.contractType,
-    }),
-    []
-  );
-
-  // Calculate total quantity for quantity bonus
-  const totalQuantityInBasket = useMemo(() => {
-    return basketItems.reduce((sum, item) => sum + (item.option.mobile.quantity || 1), 0);
-  }, [basketItems]);
-
-  const totalQuantityForBonus = totalQuantityInBasket + option1.mobile.quantity;
-
-  // Determine active quantity bonus tier
-  const activeQuantityBonusTier = useMemo(() => {
-    return getBonusForQuantity(totalQuantityForBonus);
-  }, [getBonusForQuantity, totalQuantityForBonus]);
-
-  // Calculate quantity bonus for current configuration
-  const quantityBonusForOption1 = useMemo(() => {
-    if (!activeQuantityBonusTier) return 0;
-    return activeQuantityBonusTier.bonusPerContract * option1.mobile.quantity;
-  }, [activeQuantityBonusTier, option1.mobile.quantity]);
-
-  // === FULL CALCULATION WITH BONUSES ===
-  const result1 = useMemo(() => {
-    const context = buildPushContext(option1);
-    const pushBonus = getBonusAmount(option1.mobile.tariffId, option1.mobile.contractType, 0, context);
-    return calculateOffer(option1, {
-      ...employeeOptions,
-      pushBonus,
-      quantityBonus: quantityBonusForOption1,
-      quantityBonusTierName: activeQuantityBonusTier?.name,
-    });
-  }, [option1, employeeOptions, getBonusAmount, buildPushContext, quantityBonusForOption1, activeQuantityBonusTier]);
-
-  const result2 = useMemo(() => {
-    const context = buildPushContext(option2);
-    const pushBonus = getBonusAmount(option2.mobile.tariffId, option2.mobile.contractType, 0, context);
-    const quantityBonusForOption2 = activeQuantityBonusTier
-      ? activeQuantityBonusTier.bonusPerContract * option2.mobile.quantity
-      : 0;
-    return calculateOffer(option2, {
-      ...employeeOptions,
-      pushBonus,
-      quantityBonus: quantityBonusForOption2,
-      quantityBonusTierName: activeQuantityBonusTier?.name,
-    });
-  }, [option2, employeeOptions, getBonusAmount, buildPushContext, activeQuantityBonusTier]);
-
   // Validation
   const validation = useWizardValidation(activeState);
 
@@ -417,10 +336,6 @@ function WizardContent() {
       description: "Konfiguriere jetzt den nächsten Tarif für dieses Angebot.",
     });
   }, [setOption1, setOption2, setActiveOption, goToSection]);
-
-  // Get active result
-  const activeResult = activeOption === 1 ? result1 : result2;
-  const avgMonthlyNet = activeResult.totals.avgTermNet;
 
   // Get selected tariff
   const selectedTariff = useMemo(() => {
@@ -730,7 +645,7 @@ function WizardContent() {
         </Accordion>
 
         {/* Price Period Breakdown */}
-        {result1.periods.length > 1 && (
+        {result1 && result1.periods.length > 1 && (
           <div className="mt-4 space-y-4">
             <PricePeriodBreakdown result={result1} termMonths={option1.meta.termMonths} />
             <PriceTimeline
@@ -742,7 +657,7 @@ function WizardContent() {
         )}
 
         {/* Savings Breakdown */}
-        {result1.periods.length > 1 && (
+        {result1 && result1.periods.length > 1 && (
           <div className="mt-4">
             <SavingsBreakdown result={result1} />
           </div>
@@ -757,18 +672,28 @@ function WizardContent() {
       </CalculatorShell>
 
       {/* AI Consultant */}
-      {!isPOSMode && activeState.mobile.tariffId && <AiConsultant config={activeState} result={activeResult} />}
+      {!isPOSMode && activeState.mobile.tariffId && activeResult && (
+        <AiConsultant config={activeState} result={activeResult} />
+      )}
     </div>
   );
 }
 
 // ============================================
-// WIZARD ROOT EXPORT
+// WIZARD ROOT EXPORT (With Basket Injection)
 // ============================================
 
 export function Wizard() {
+  // Get basket items for quantity bonus injection
+  const { items: basketItems } = useOfferBasket();
+  
+  // Calculate total quantity in basket for bonus calculation
+  const basketQuantity = useMemo(() => {
+    return basketItems.reduce((sum, item) => sum + (item.option.mobile.quantity || 1), 0);
+  }, [basketItems]);
+
   return (
-    <CalculatorProvider>
+    <CalculatorProvider basketQuantity={basketQuantity}>
       <WizardContent />
     </CalculatorProvider>
   );

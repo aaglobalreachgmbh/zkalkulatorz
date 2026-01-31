@@ -1,6 +1,6 @@
 // ============================================
 // CalculatorContext - Centralized State for Kalkulator
-// Phase 2: Architecture Implementation
+// Phase 4: Business Logic Migration
 // ============================================
 
 import {
@@ -21,6 +21,18 @@ import { createDefaultOptionState, calculateOffer } from "../engine";
 import { useCustomerSession } from "@/contexts/CustomerSessionContext";
 import { useWorkplaceMode } from "@/contexts/WorkplaceModeContext";
 import { useFeature } from "@/hooks/useFeature";
+import { useEmployeeSettings } from "../hooks/useEmployeeSettings";
+import { usePushProvisions } from "../hooks/usePushProvisions";
+import { useQuantityBonus, type QuantityBonusTier } from "../hooks/useQuantityBonus";
+
+// ============================================
+// TYPES
+// ============================================
+
+interface EmployeeSettings {
+  provisionDeduction: number | null;
+  provisionDeductionType: string | null;
+}
 
 // ============================================
 // STATE INTERFACE
@@ -42,7 +54,26 @@ interface CalculatorState {
   option1: OfferOptionState;
   option2: OfferOptionState;
 
-  // === CALCULATED RESULTS (READ-ONLY) ===
+  // === BONUS CONFIGURATION ===
+  /** Geladene Employee Settings (Provision-Abzug) */
+  employeeSettings: EmployeeSettings | null;
+  
+  /** Aktiver Mengen-Bonus-Tier */
+  activeQuantityBonusTier: QuantityBonusTier | null;
+  
+  /** Berechneter Quantity-Bonus für Option 1 */
+  quantityBonusForOption1: number;
+  
+  /** Berechneter Quantity-Bonus für Option 2 */
+  quantityBonusForOption2: number;
+  
+  /** Push-Bonus für Option 1 */
+  pushBonusForOption1: number;
+  
+  /** Push-Bonus für Option 2 */
+  pushBonusForOption2: number;
+
+  // === CALCULATED RESULTS (COMPLETE WITH BONUSES) ===
   result1: CalculationResult | null;
   result2: CalculationResult | null;
 
@@ -106,6 +137,15 @@ const SAFE_DEFAULT_CALCULATOR: CalculatorContextType = {
   canShowDealerData: false, // Safe: No sensitive data
   option1: createDefaultOptionState(),
   option2: createDefaultOptionState(),
+  
+  // Bonus state defaults
+  employeeSettings: null,
+  activeQuantityBonusTier: null,
+  quantityBonusForOption1: 0,
+  quantityBonusForOption2: 0,
+  pushBonusForOption1: 0,
+  pushBonusForOption2: 0,
+  
   result1: null,
   result2: null,
   showQuickStart: false,
@@ -154,17 +194,25 @@ interface CalculatorProviderProps {
   children: ReactNode;
   /** Override default view mode (for testing) */
   defaultViewMode?: ViewMode;
+  /** Injected basket quantity for quantity bonus calculation (avoids circular dependency) */
+  basketQuantity?: number;
 }
 
 export function CalculatorProvider({
   children,
   defaultViewMode = "dealer",
+  basketQuantity = 0,
 }: CalculatorProviderProps) {
   // === EXTERNAL HOOKS (Security & Features) ===
   const { session: customerSession } = useCustomerSession();
   const { isPOSMode } = useWorkplaceMode();
   const { enabled: option2Enabled } = useFeature("compareOption2");
   const { enabled: fixedNetModuleEnabled } = useFeature("fixedNetModule");
+
+  // === BUSINESS HOOKS (Migrated from WizardContent) ===
+  const { settings: employeeSettings } = useEmployeeSettings();
+  const { getBonusAmount } = usePushProvisions();
+  const { getBonusForQuantity } = useQuantityBonus();
 
   // === CORE STATE ===
   const [activeSection, setActiveSection] = useState<WizardStep>("hardware");
@@ -180,25 +228,86 @@ export function CalculatorProvider({
   const effectiveViewMode: ViewMode = isCustomerSafeMode ? "customer" : viewMode;
   const canShowDealerData = effectiveViewMode === "dealer" && !isCustomerSafeMode;
 
-  // === CALCULATION (Memoized) ===
+  // === EMPLOYEE OPTIONS FOR CALCULATION ===
+  const employeeOptions = useMemo(
+    () => ({
+      employeeDeduction: employeeSettings
+        ? {
+            deductionValue: employeeSettings.provisionDeduction ?? 0,
+            deductionType: (employeeSettings.provisionDeductionType ?? "fixed") as "fixed" | "percentage",
+          }
+        : null,
+    }),
+    [employeeSettings]
+  );
+
+  // === QUANTITY BONUS CALCULATION ===
+  const totalQuantityForBonus = basketQuantity + option1.mobile.quantity;
+
+  const activeQuantityBonusTier = useMemo(() => {
+    return getBonusForQuantity(totalQuantityForBonus);
+  }, [getBonusForQuantity, totalQuantityForBonus]);
+
+  const quantityBonusForOption1 = useMemo(() => {
+    if (!activeQuantityBonusTier) return 0;
+    return activeQuantityBonusTier.bonusPerContract * option1.mobile.quantity;
+  }, [activeQuantityBonusTier, option1.mobile.quantity]);
+
+  const quantityBonusForOption2 = useMemo(() => {
+    if (!activeQuantityBonusTier) return 0;
+    return activeQuantityBonusTier.bonusPerContract * option2.mobile.quantity;
+  }, [activeQuantityBonusTier, option2.mobile.quantity]);
+
+  // === PUSH BONUS CALCULATION ===
+  const buildPushContext = useCallback((option: OfferOptionState) => ({
+    hasHardware: option.hardware.ekNet > 0,
+    hardwareEkNet: option.hardware.ekNet,
+    hasFixedNet: option.fixedNet.enabled,
+    hasGigaKombi: option.fixedNet.enabled && option.mobile.tariffId.toLowerCase().includes("prime"),
+    subVariantId: option.mobile.subVariantId,
+    quantity: option.mobile.quantity,
+    contractType: option.mobile.contractType,
+  }), []);
+
+  const pushBonusForOption1 = useMemo(() => {
+    const context = buildPushContext(option1);
+    return getBonusAmount(option1.mobile.tariffId, option1.mobile.contractType, 0, context);
+  }, [option1, getBonusAmount, buildPushContext]);
+
+  const pushBonusForOption2 = useMemo(() => {
+    const context = buildPushContext(option2);
+    return getBonusAmount(option2.mobile.tariffId, option2.mobile.contractType, 0, context);
+  }, [option2, getBonusAmount, buildPushContext]);
+
+  // === FULL RESULT CALCULATION (With All Bonuses) ===
   const result1 = useMemo<CalculationResult | null>(() => {
     try {
-      return calculateOffer(option1);
+      return calculateOffer(option1, {
+        ...employeeOptions,
+        pushBonus: pushBonusForOption1,
+        quantityBonus: quantityBonusForOption1,
+        quantityBonusTierName: activeQuantityBonusTier?.name,
+      });
     } catch (err) {
       console.warn("[CalculatorContext] result1 calculation failed:", err);
       return null;
     }
-  }, [option1]);
+  }, [option1, employeeOptions, pushBonusForOption1, quantityBonusForOption1, activeQuantityBonusTier]);
 
   const result2 = useMemo<CalculationResult | null>(() => {
     if (!option2Enabled) return null;
     try {
-      return calculateOffer(option2);
+      return calculateOffer(option2, {
+        ...employeeOptions,
+        pushBonus: pushBonusForOption2,
+        quantityBonus: quantityBonusForOption2,
+        quantityBonusTierName: activeQuantityBonusTier?.name,
+      });
     } catch (err) {
       console.warn("[CalculatorContext] result2 calculation failed:", err);
       return null;
     }
-  }, [option2, option2Enabled]);
+  }, [option2, option2Enabled, employeeOptions, pushBonusForOption2, quantityBonusForOption2, activeQuantityBonusTier]);
 
   // === NAVIGATION ACTIONS ===
   const goToSection = useCallback((section: WizardStep) => {
@@ -270,6 +379,15 @@ export function CalculatorProvider({
       canShowDealerData,
       option1,
       option2,
+      
+      // Bonus state
+      employeeSettings,
+      activeQuantityBonusTier,
+      quantityBonusForOption1,
+      quantityBonusForOption2,
+      pushBonusForOption1,
+      pushBonusForOption2,
+      
       result1,
       result2,
       showQuickStart,
@@ -301,6 +419,12 @@ export function CalculatorProvider({
       canShowDealerData,
       option1,
       option2,
+      employeeSettings,
+      activeQuantityBonusTier,
+      quantityBonusForOption1,
+      quantityBonusForOption2,
+      pushBonusForOption1,
+      pushBonusForOption2,
       result1,
       result2,
       showQuickStart,

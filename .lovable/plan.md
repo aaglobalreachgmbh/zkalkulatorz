@@ -443,15 +443,499 @@ export function CalculatorHeader() {
 
 ---
 
-## NÄCHSTE SCHRITTE NACH PHASE 5
+---
 
-**Phase 6 (Optional):**
-- Step-Komponenten aufteilen (HardwareStep → Modul)
-- Animation-System (Framer Motion konsistent)
-- Dark Mode Optimierung
-- Accessibility Audit
+# PHASE 6: STEP-MODULARISIERUNG + POLISH
 
-**Phase 7 (Final):**
-- Performance Monitoring
-- E2E Tests
-- Dokumentation
+## Status: GEPLANT
+
+---
+
+## 🎯 Vision
+
+**Phase 6 = 3 Sub-Phasen:**
+
+1. **6A: Step-Modularisierung** — HardwareStep & MobileStep in fokussierte Module aufteilen
+2. **6B: Animation-System** — Konsistentes Framer Motion Setup
+3. **6C: Accessibility & Polish** — A11y Audit + Dark Mode Fix + Final Touch
+
+---
+
+## IST-ZUSTAND NACH PHASE 5
+
+### Architektur (✅ Gut)
+```
+CalculatorContext → Vollständige Business-Logik
+CalculatorShell 2.0 → Sauberes Grid-Layout
+SummarySidebar 2.0 → Context-basiert, cleanes Design
+MobileActionFooter 2.0 → Context-basiert, Touch-optimiert
+```
+
+### Verbleibende Schulden (❌ Phase 6 Scope)
+
+| Problem | Ort | Impact |
+|---------|-----|--------|
+| **Monolithische Steps** | HardwareStep (621 LOC), MobileStep (495 LOC) | Wartbarkeit, Testbarkeit |
+| **Inkonsistente Animationen** | Verschiedene `transition-*` Klassen | UX-Inkonsistenz |
+| **A11y Lücken** | Fehlende aria-labels, Focus-Management | Barrierefreiheit |
+| **Dark Mode Bugs** | Einige Tokens nicht invertiert | Visuell |
+
+---
+
+## PHASE 6A: STEP-MODULARISIERUNG
+
+### Ziel
+- Monolithische Step-Komponenten in fokussierte Module aufteilen
+- Jedes Modul < 150 LOC
+- Wiederverwendbare Primitives extrahieren
+
+### 6A.1: HardwareStep Modularisierung
+
+**Aktuelle Struktur (621 LOC):**
+```
+HardwareStep.tsx
+├── State Management (~50 LOC)
+├── Search/Filter Logic (~80 LOC)
+├── Hardware Grid Rendering (~200 LOC)
+├── SIM-Only Card (~60 LOC)
+├── Selection Logic (~100 LOC)
+└── UI Components inline (~130 LOC)
+```
+
+**Neue Struktur:**
+```
+src/margenkalkulator/ui/steps/HardwareStep/
+├── index.tsx              # Orchestrator (~80 LOC)
+│   └── Imports, State, Layout
+│
+├── HardwareGrid.tsx       # Grid Container (~60 LOC)
+│   └── Responsive Grid, Loading State
+│
+├── HardwareCard.tsx       # Single Device Card (~100 LOC)
+│   └── Image, Name, Price, Selection
+│
+├── HardwareSearch.tsx     # Search + Filter (~80 LOC)
+│   └── Input, Category Filter, Clear
+│
+├── SIMOnlyCard.tsx        # Special "Ohne Gerät" Card (~50 LOC)
+│   └── Icon, Label, Selection
+│
+├── PriceInput.tsx         # EK/VK Price Editor (~60 LOC)
+│   └── Dual Input, Validation
+│
+└── types.ts               # Local Types (~20 LOC)
+    └── HardwareCardProps, SearchState
+```
+
+**Migration-Pattern:**
+```typescript
+// index.tsx - Orchestrator
+export function HardwareStep() {
+  const { option1, updateOption1 } = useCalculator();
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState<string | null>(null);
+  
+  const filteredHardware = useFilteredHardware(search, category);
+  
+  const handleSelect = useCallback((hw: Hardware) => {
+    updateOption1({ hardware: { ...option1.hardware, ...hw } });
+  }, [option1, updateOption1]);
+  
+  return (
+    <div className="space-y-4">
+      <HardwareSearch 
+        value={search} 
+        onChange={setSearch}
+        category={category}
+        onCategoryChange={setCategory}
+      />
+      <HardwareGrid>
+        <SIMOnlyCard 
+          selected={!option1.hardware.name}
+          onSelect={() => handleSelect(SIM_ONLY_HARDWARE)}
+        />
+        {filteredHardware.map(hw => (
+          <HardwareCard
+            key={hw.id}
+            hardware={hw}
+            selected={option1.hardware.name === hw.name}
+            onSelect={() => handleSelect(hw)}
+          />
+        ))}
+      </HardwareGrid>
+      {option1.hardware.name && (
+        <PriceInput
+          ekNet={option1.hardware.ekNet}
+          vkBrutto={option1.hardware.vkBrutto}
+          onChange={(prices) => updateOption1({ hardware: { ...option1.hardware, ...prices } })}
+        />
+      )}
+    </div>
+  );
+}
+```
+
+### 6A.2: MobileStep Modularisierung
+
+**Aktuelle Struktur (495 LOC):**
+```
+MobileStep.tsx
+├── Contract Type Toggle (~40 LOC)
+├── Tariff Grid (~180 LOC)
+├── Quantity Selector (~60 LOC)
+├── SUB Variant Selector (~80 LOC)
+└── Feature Display (~135 LOC)
+```
+
+**Neue Struktur:**
+```
+src/margenkalkulator/ui/steps/MobileStep/
+├── index.tsx              # Orchestrator (~80 LOC)
+│
+├── ContractToggle.tsx     # Neu/VVL Toggle (~40 LOC)
+│   └── SegmentedControl Component
+│
+├── TariffGrid.tsx         # Grid Container (~50 LOC)
+│   └── Responsive Grid, Category Grouping
+│
+├── TariffCard.tsx         # Single Tariff Card (~120 LOC)
+│   └── Name, Price, Data, Features, Selection
+│
+├── QuantitySelector.tsx   # Quantity Input (~50 LOC)
+│   └── Stepper, Max Validation
+│
+├── SUBVariantSelect.tsx   # Device Tier Selector (~70 LOC)
+│   └── Radio/Select for SIM_ONLY, BASIC, SMARTPHONE, PREMIUM
+│
+├── TariffFeatures.tsx     # Feature Badges (~60 LOC)
+│   └── 5G, WiFi Calling, EU Roaming Display
+│
+└── types.ts               # Local Types (~20 LOC)
+```
+
+### 6A.3: FixedNetStep (Bleibt kompakt)
+
+FixedNetStep ist bereits überschaubar (~300 LOC). Nur minimale Extraktion:
+
+```
+src/margenkalkulator/ui/steps/FixedNetStep/
+├── index.tsx              # Hauptkomponente (~200 LOC)
+├── ProductSelector.tsx    # Access Type + Product (~80 LOC)
+└── GigaKombiInfo.tsx      # Benefit Display (~40 LOC)
+```
+
+---
+
+## PHASE 6B: ANIMATION-SYSTEM
+
+### Ziel
+- Einheitliches Framer Motion Setup
+- Wiederverwendbare Animation-Presets
+- Performance-optimiert (keine Layout Shifts)
+
+### 6B.1: Animation Config
+
+**Neue Datei: `src/lib/animations.ts`**
+
+```typescript
+import { type Variants, type Transition } from "framer-motion";
+
+// === TIMING PRESETS ===
+export const TIMING = {
+  instant: 0.1,
+  fast: 0.15,
+  normal: 0.2,
+  slow: 0.3,
+  enter: 0.25,
+  exit: 0.15,
+} as const;
+
+// === EASING PRESETS ===
+export const EASING = {
+  smooth: [0.4, 0, 0.2, 1],      // Material Design standard
+  snappy: [0.4, 0, 0.6, 1],      // Quick response
+  bounce: [0.68, -0.55, 0.265, 1.55], // Playful
+  decelerate: [0, 0, 0.2, 1],   // Enter
+  accelerate: [0.4, 0, 1, 1],   // Exit
+} as const;
+
+// === VARIANT PRESETS ===
+export const fadeIn: Variants = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  exit: { opacity: 0 },
+};
+
+export const slideUp: Variants = {
+  initial: { opacity: 0, y: 8 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -8 },
+};
+
+export const scaleIn: Variants = {
+  initial: { opacity: 0, scale: 0.95 },
+  animate: { opacity: 1, scale: 1 },
+  exit: { opacity: 0, scale: 0.95 },
+};
+
+export const staggerContainer: Variants = {
+  animate: {
+    transition: {
+      staggerChildren: 0.05,
+    },
+  },
+};
+
+// === TRANSITION PRESETS ===
+export const smoothTransition: Transition = {
+  duration: TIMING.normal,
+  ease: EASING.smooth,
+};
+
+export const snapTransition: Transition = {
+  duration: TIMING.fast,
+  ease: EASING.snappy,
+};
+```
+
+### 6B.2: AnimatedCard Component
+
+**Neue Datei: `src/components/ui/animated-card.tsx`**
+
+```typescript
+import { motion } from "framer-motion";
+import { scaleIn, smoothTransition } from "@/lib/animations";
+import { cn } from "@/lib/utils";
+
+interface AnimatedCardProps {
+  children: React.ReactNode;
+  selected?: boolean;
+  onClick?: () => void;
+  className?: string;
+}
+
+export function AnimatedCard({ children, selected, onClick, className }: AnimatedCardProps) {
+  return (
+    <motion.div
+      variants={scaleIn}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      transition={smoothTransition}
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      onClick={onClick}
+      className={cn(
+        "rounded-lg border bg-card p-4 cursor-pointer transition-colors",
+        selected && "border-primary ring-2 ring-primary/20",
+        !selected && "border-border hover:border-primary/50",
+        className
+      )}
+    >
+      {children}
+    </motion.div>
+  );
+}
+```
+
+### 6B.3: AnimatePresence für Listen
+
+```typescript
+// In HardwareGrid.tsx
+import { motion, AnimatePresence } from "framer-motion";
+import { staggerContainer, slideUp } from "@/lib/animations";
+
+export function HardwareGrid({ children }: { children: ReactNode }) {
+  return (
+    <motion.div
+      variants={staggerContainer}
+      initial="initial"
+      animate="animate"
+      className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+    >
+      <AnimatePresence mode="popLayout">
+        {children}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+```
+
+---
+
+## PHASE 6C: ACCESSIBILITY & POLISH
+
+### 6C.1: A11y Audit Checklist
+
+| Bereich | Anforderung | Implementation |
+|---------|-------------|----------------|
+| **Focus Management** | Visible focus rings | `focus-visible:ring-2 ring-primary` |
+| **Keyboard Navigation** | All interactive elements | `tabIndex`, `onKeyDown` handlers |
+| **Screen Readers** | Descriptive labels | `aria-label`, `aria-describedby` |
+| **Color Contrast** | WCAG AA (4.5:1) | Token validation |
+| **Motion** | Reduced motion support | `prefers-reduced-motion` |
+
+### 6C.2: Reduced Motion Support
+
+```typescript
+// src/lib/animations.ts - Erweitert
+
+export const useReducedMotion = () => {
+  const [reduced, setReduced] = useState(false);
+  
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduced(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setReduced(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  
+  return reduced;
+};
+
+// Usage
+const prefersReducedMotion = useReducedMotion();
+const transition = prefersReducedMotion ? { duration: 0 } : smoothTransition;
+```
+
+### 6C.3: Focus Trap für Modals
+
+```typescript
+// Für alle Dialog/Sheet Komponenten
+import { FocusTrap } from "@radix-ui/react-focus-trap";
+
+// Bereits durch Radix UI abgedeckt, aber sicherstellen dass:
+// - Alle Dialoge FocusTrap nutzen
+// - Escape schließt Dialoge
+// - Focus returns to trigger on close
+```
+
+### 6C.4: Dark Mode Token Fix
+
+**Überprüfen in `index.css`:**
+
+```css
+.dark {
+  /* Sicherstellen dass alle neuen Tokens invertiert sind */
+  --surface-elevated: 222 47% 14%;
+  --surface-sunken: 222 47% 6%;
+  
+  --text-secondary: 220 9% 65%;
+  --text-muted: 220 9% 50%;
+  --text-disabled: 220 9% 35%;
+}
+```
+
+### 6C.5: Final Polish Items
+
+| Item | Beschreibung |
+|------|--------------|
+| **Loading States** | Skeleton Loader für alle async Daten |
+| **Empty States** | "Keine Tarife gefunden" mit Icon |
+| **Error States** | Toast + Inline Error Messages |
+| **Hover States** | Konsistente 0.15s Transitions |
+| **Active States** | Ring + Scale für Touch Feedback |
+
+---
+
+## IMPLEMENTIERUNGS-REIHENFOLGE
+
+### Phase 6A (Modularisierung)
+1. **6A.1** HardwareStep aufteilen (5 neue Dateien)
+2. **6A.2** MobileStep aufteilen (6 neue Dateien)
+3. **6A.3** FixedNetStep minimal refactoren
+4. **BUILD CHECK**
+
+### Phase 6B (Animationen)
+5. **6B.1** `src/lib/animations.ts` erstellen
+6. **6B.2** AnimatedCard Component
+7. **6B.3** Steps mit neuen Animationen
+8. **BUILD CHECK**
+
+### Phase 6C (A11y & Polish)
+9. **6C.1** Focus Styles global
+10. **6C.2** Reduced Motion Support
+11. **6C.3** Dark Mode Token Fix
+12. **6C.4** Empty/Loading/Error States
+13. **FINAL BUILD CHECK**
+14. **A11Y AUDIT mit aXe**
+
+---
+
+## CODE-METRIKEN (Geschätzt)
+
+| Datei/Modul | Vorher | Nachher | Delta |
+|-------------|--------|---------|-------|
+| `HardwareStep.tsx` | 621 | ~80 (index) | -541 |
+| `HardwareStep/*` (NEU) | 0 | ~370 | +370 |
+| `MobileStep.tsx` | 495 | ~80 (index) | -415 |
+| `MobileStep/*` (NEU) | 0 | ~370 | +370 |
+| `animations.ts` (NEU) | 0 | ~80 | +80 |
+| `animated-card.tsx` (NEU) | 0 | ~40 | +40 |
+| **NETTO** | 1116 | ~1020 | **-96** |
+
+**Wichtiger:** Die Reduktion ist gering, aber die Wartbarkeit steigt enorm:
+- Jede Datei < 150 LOC
+- Isolierte Tests möglich
+- Wiederverwendbare Komponenten
+
+---
+
+## RISIKO-MATRIX
+
+| Risiko | Wahrscheinlichkeit | Mitigation |
+|--------|-------------------|------------|
+| Import-Fehler nach Refactor | Mittel | Barrel exports, IDE auto-imports |
+| Animation Performance | Niedrig | `will-change`, GPU-accelerated props |
+| A11y Regression | Niedrig | aXe automated testing |
+| Breaking Changes | Niedrig | Schrittweise Migration mit Tests |
+
+---
+
+## VALIDIERUNG NACH PHASE 6
+
+### Funktional
+- [ ] Hardware-Auswahl funktioniert wie vorher
+- [ ] Tarif-Auswahl funktioniert wie vorher
+- [ ] Animationen smooth (60fps)
+- [ ] Keyboard-Navigation vollständig
+
+### A11y
+- [ ] aXe Audit: 0 Violations
+- [ ] Keyboard-only Navigation möglich
+- [ ] Screen Reader Test (VoiceOver/NVDA)
+- [ ] Color Contrast Check bestanden
+
+### Performance
+- [ ] Lighthouse Performance > 90
+- [ ] CLS = 0
+- [ ] FCP < 1.5s
+
+---
+
+# PHASE 7: FINAL REVIEW & DOCUMENTATION
+
+## Status: GEPLANT (nach Phase 6)
+
+### Scope
+- Performance Monitoring Setup
+- E2E Test Suite (Playwright)
+- Technische Dokumentation
+- README Update
+- Demo-Video/Screenshots
+
+---
+
+## GESAMTÜBERSICHT ALLER PHASEN
+
+| Phase | Focus | Status |
+|-------|-------|--------|
+| 1-3 | Architecture Foundation | ✅ Abgeschlossen |
+| 4 | Business Logic → Context | ✅ Abgeschlossen |
+| 5A | Context-Finalisierung | 📋 Geplant |
+| 5B | UI/UX Neugestaltung | 📋 Geplant |
+| 6A | Step-Modularisierung | 📋 Geplant |
+| 6B | Animation-System | 📋 Geplant |
+| 6C | A11y & Polish | 📋 Geplant |
+| 7 | Final Review | 📋 Geplant |

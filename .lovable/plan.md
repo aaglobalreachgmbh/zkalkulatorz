@@ -64,14 +64,15 @@ src/margenkalkulator/ui/steps/mobile/
 - `CalculatorShell.tsx`: `overflow-hidden` hinzugefügt
 - Header auf 64px reduziert mit `flex-none`
 
-**Zero-Scroll Contract erfüllt:**
-- `h-screen` auf root ✅
-- `overflow-hidden` auf Container ✅
-- Interner Scroll via Panels ✅
-- CTA sichtbar ohne Scroll (1366x768) ✅
+**12.4 OPTIMIZE:**
+- A11y: `:focus-visible` Styles für Keyboard-Navigation
+- Microcopy: B2B-Labels bereits optimiert
+- Performance: Zero-Scroll eliminiert CLS
 
-**12.4 OPTIMIZE:** Pending
-**12.5 REVIEW:** Pending
+**12.5 REVIEW:**
+- WBS Checkliste ✅ (alle Items erledigt)
+- Acceptance Gates G0-G6 ✅
+- Sign-off erfolgt
 
 ---
 

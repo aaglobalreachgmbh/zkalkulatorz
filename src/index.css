@@ -327,6 +327,40 @@
 }
 
 /* ============================================================================
+   ACCESSIBILITY (Phase 12.4)
+   Focus-visible styles for keyboard navigation
+   ============================================================================ */
+@layer base {
+  /* Enhanced focus-visible for all interactive elements */
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+  
+  /* Remove default focus for mouse users */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+  
+  /* Skip-to-main link (screen readers) */
+  .sr-skip-link {
+    position: absolute;
+    left: -9999px;
+    z-index: 999;
+    padding: 1em;
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    opacity: 0;
+  }
+  .sr-skip-link:focus {
+    left: 50%;
+    transform: translateX(-50%);
+    top: 0;
+    opacity: 1;
+  }
+}
+
+/* ============================================================================
    SEMANTIC TOKEN UTILITIES (Phase 5B)
    Use these instead of hardcoded colors like emerald-500, amber-500, red-500
    ============================================================================ */

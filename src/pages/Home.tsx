@@ -4,7 +4,6 @@ import { MainLayout } from "@/components/MainLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { usePOSMode } from "@/contexts/POSModeContext";
 import { Button } from "@/components/ui/button";
-import { ConfigurableDashboard } from "@/margenkalkulator/ui/components/ConfigurableDashboard";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -35,12 +34,6 @@ const Home = () => {
 
         {/* Main Content */}
         <main className="flex-1 flex flex-col justify-center px-4 lg:px-6 py-6">
-
-          {/* Configurable Dashboard - All widgets including headline and quick actions */}
-          <div className="max-w-5xl mx-auto w-full mb-6">
-            <ConfigurableDashboard />
-          </div>
-
           {/* Option Cards */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 max-w-5xl mx-auto w-full mb-6 items-stretch">
             {/* Individual Configuration Card (White) */}

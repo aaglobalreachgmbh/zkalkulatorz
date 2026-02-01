@@ -42,20 +42,14 @@ import { HardwareStep } from "./steps/HardwareStep";
 import { MobileStep } from "./steps/MobileStep";
 import { FixedNetStep } from "./steps/FixedNetStep";
 import { ValidationWarning } from "./components/ValidationWarning";
-import { AiConsultant } from "./components/AiConsultant";
 import { ActionMenu } from "./components/ActionMenu";
 import { ViewModeToggle } from "./components/ViewModeToggle";
-import { DensityToggle } from "@/components/DensityToggle";
 import { CustomerSessionToggle } from "./components/CustomerSessionToggle";
 import { getStepSummary } from "./components/LiveCalculationBar";
 import { SummarySidebar } from "./components/SummarySidebar";
 import { MobileActionFooter } from "./components/MobileActionFooter";
 import { OfferBasketPanel } from "./components/OfferBasketPanel";
-import { WizardProgress } from "./components/WizardProgress";
-import { SavingsBreakdown } from "./components/SavingsBreakdown";
 import { PricePeriodBreakdown } from "./components/PricePeriodBreakdown";
-import { PriceTimeline } from "./components/PriceTimeline";
-import { QuickStartDialog, shouldShowQuickStart } from "./components/QuickStartDialog";
 import { useHistory } from "../hooks/useHistory";
 import { toast } from "sonner";
 import { useIdentity } from "@/contexts/IdentityContext";
@@ -154,11 +148,8 @@ function WizardContent() {
     if (!hasCheckedAutoSave.current && autoSave.hasSavedDraft) {
       hasCheckedAutoSave.current = true;
       setShowRestoreDialog(true);
-    } else if (!hasCheckedAutoSave.current && shouldShowQuickStart()) {
-      hasCheckedAutoSave.current = true;
-      setShowQuickStart(true);
     }
-  }, [autoSave.hasSavedDraft, setShowRestoreDialog, setShowQuickStart]);
+  }, [autoSave.hasSavedDraft, setShowRestoreDialog]);
 
   // Handle draft restore
   const handleRestoreDraft = useCallback(() => {
@@ -183,10 +174,7 @@ function WizardContent() {
   const handleDiscardDraft = useCallback(() => {
     autoSave.discardDraft();
     setShowRestoreDialog(false);
-    if (shouldShowQuickStart()) {
-      setShowQuickStart(true);
-    }
-  }, [autoSave, setShowRestoreDialog, setShowQuickStart]);
+  }, [autoSave, setShowRestoreDialog]);
 
   // Handle QuickStart selection
   const handleQuickStartSelect = useCallback(
@@ -379,12 +367,6 @@ function WizardContent() {
         onDiscard={handleDiscardDraft}
       />
 
-      {/* QuickStart Dialog */}
-      <QuickStartDialog
-        open={showQuickStart}
-        onOpenChange={setShowQuickStart}
-        onSelect={handleQuickStartSelect}
-      />
 
       {/* Onboarding Tour */}
       <OnboardingTour
@@ -428,18 +410,6 @@ function WizardContent() {
         title="Kalkulator"
         headerActions={
           <>
-            {/* Progress Indicator */}
-            <WizardProgress
-              currentStep={activeSection === "hardware" ? 1 : 2}
-              hasHardware={option1.hardware.ekNet > 0 || option1.hardware.name === "KEINE HARDWARE"}
-              hasTariff={!!option1.mobile.tariffId}
-              hasOffer={basketItems.length > 0}
-              onStepClick={(step) => {
-                if (step === 1) goToSection("hardware");
-                else if (step === 2) goToSection("mobile");
-              }}
-            />
-
             {/* Session Badge */}
             {customerSession.isActive && (
               <Badge
@@ -455,7 +425,6 @@ function WizardContent() {
 
             {/* Controls */}
             {policy.showCustomerSessionToggle && <CustomerSessionToggle />}
-            <DensityToggle />
             <ViewModeToggle
               value={effectiveViewMode}
               onChange={handleViewModeChange}
@@ -633,20 +602,8 @@ function WizardContent() {
 
         {/* Price Period Breakdown */}
         {result1 && result1.periods.length > 1 && (
-          <div className="mt-4 space-y-4">
-            <PricePeriodBreakdown result={result1} termMonths={option1.meta.termMonths} />
-            <PriceTimeline
-              periods={result1.periods}
-              termMonths={option1.meta.termMonths}
-              avgMonthly={result1.totals.avgTermNet}
-            />
-          </div>
-        )}
-
-        {/* Savings Breakdown */}
-        {result1 && result1.periods.length > 1 && (
           <div className="mt-4">
-            <SavingsBreakdown result={result1} />
+            <PricePeriodBreakdown result={result1} termMonths={option1.meta.termMonths} />
           </div>
         )}
 
@@ -657,11 +614,6 @@ function WizardContent() {
           </div>
         )}
       </CalculatorShell>
-
-      {/* AI Consultant */}
-      {!isPOSMode && activeState.mobile.tariffId && activeResult && (
-        <AiConsultant config={activeState} result={activeResult} />
-      )}
     </div>
   );
 }

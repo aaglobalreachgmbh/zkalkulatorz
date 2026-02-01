@@ -18,7 +18,6 @@ import { useCustomers } from "@/margenkalkulator/hooks/useCustomers";
 import { MarginBadge } from "@/margenkalkulator/ui/components/MarginBadge";
 import { ProvisionBreakdown } from "@/margenkalkulator/ui/components/ProvisionBreakdown";
 import { ProfitabilityTrafficLight } from "@/margenkalkulator/ui/components/ProfitabilityTrafficLight";
-import { AiRecommendationsPanel } from "@/margenkalkulator/ui/components/AiRecommendationsPanel";
 import { PdfDownloadButton } from "@/margenkalkulator/ui/components/PdfDownloadButton";
 import { calculateOffer } from "@/margenkalkulator";
 import { 
@@ -273,8 +272,6 @@ export default function OfferDetail() {
                 />
               </CardContent>
             </Card>
-            
-            <AiRecommendationsPanel config={config} result={result} />
           </TabsContent>
 
           {/* History Tab */}

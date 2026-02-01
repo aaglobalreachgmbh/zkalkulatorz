@@ -18,7 +18,6 @@ import type { Customer } from "../../hooks/useCustomers";
 import { MarginBadge } from "../components/MarginBadge";
 import { ProvisionBreakdown } from "../components/ProvisionBreakdown";
 import { ProfitabilityTrafficLight } from "../components/ProfitabilityTrafficLight";
-import { AiRecommendationsPanel } from "../components/AiRecommendationsPanel";
 import { PdfDownloadButton } from "../components/PdfDownloadButton";
 import { QuickSaveOfferButton } from "../components/QuickSaveOfferButton";
 import { CreateCalendarEventModal } from "../components/CreateCalendarEventModal";
@@ -323,31 +322,6 @@ export function SummaryStep({
             </Card>
           </Collapsible>
 
-          {/* AI Recommendations */}
-          <Collapsible open={sectionsOpen.ai} onOpenChange={() => toggleSection("ai")}>
-            <Card>
-              <CollapsibleTrigger asChild>
-                <CardHeader className="pb-3 cursor-pointer hover:bg-muted/30 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm font-medium flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-primary" />
-                      KI-Empfehlungen
-                    </CardTitle>
-                    {sectionsOpen.ai ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                  </div>
-                </CardHeader>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <CardContent className="pt-0">
-                  <AiRecommendationsPanel
-                    config={option}
-                    result={result}
-                    compact
-                  />
-                </CardContent>
-              </CollapsibleContent>
-            </Card>
-          </Collapsible>
         </>
       </DealerOnly>
 

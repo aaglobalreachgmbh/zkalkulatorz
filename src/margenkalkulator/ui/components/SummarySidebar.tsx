@@ -1,14 +1,6 @@
 // ============================================
-// Summary Sidebar - Overview Only
-// ============================================
-//
-// Simplified sidebar showing only:
-// - Configuration overview (Hardware, Tarif, Festnetz)
-// - Active discounts
-// - Dealer economics (when in dealer mode)
-// - PRIMARY CTA (Add to Offer) - ALWAYS VISIBLE
-//
-// Actions moved to FloatingActionBar for better UX.
+// Summary Sidebar - Context-Driven
+// Phase 5A: Refactored to use useCalculator()
 // ============================================
 
 import { Smartphone, Signal, Wifi, Check, Tag, FileText, Calendar, LayoutGrid, Plus, ShoppingBag, AlertCircle } from "lucide-react";
@@ -23,10 +15,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { OfferOptionState, CalculationResult, ViewMode } from "../../engine/types";
 import { getMobileTariffFromCatalog } from "../../engine/catalogResolver";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
 import { useOfferBasket } from "../../contexts/OfferBasketContext";
+import { useCalculator } from "../../context/CalculatorContext";
 import { PdfDownloadButton } from "./PdfDownloadButton";
 import { CreateCalendarEventModal } from "./CreateCalendarEventModal";
 import { MarginBadge } from "./MarginBadge";
@@ -35,29 +27,76 @@ import { cn } from "@/lib/utils";
 import { getProfitabilityStatus, calculateMarginPercent } from "../../lib/formatters";
 import { toast } from "sonner";
 import { fireConfetti } from "@/lib/confetti";
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 
 interface SummarySidebarProps {
-  option: OfferOptionState;
-  result: CalculationResult;
-  viewMode: ViewMode;
-  quantityBonus?: number;
   onResetForNewTariff?: () => void;
-  onGoToCheckout?: () => void;
   className?: string;
 }
 
 export function SummarySidebar({
-  option,
-  result,
-  viewMode,
-  quantityBonus = 0,
   onResetForNewTariff,
-  onGoToCheckout,
   className
 }: SummarySidebarProps) {
-  const visibility = useSensitiveFieldsVisible(viewMode);
+  // === ALL HOOKS AT TOP (Before any returns) ===
+  const {
+    option1: option,
+    result1: result,
+    effectiveViewMode,
+    quantityBonusForOption1: quantityBonus,
+    goToSection,
+  } = useCalculator();
+
+  const visibility = useSensitiveFieldsVisible(effectiveViewMode);
+  const { addItem, items } = useOfferBasket();
+
+  // Generate a descriptive name for this tariff
+  const tariffName = useMemo(() => {
+    if (!result) return "";
+    const tariffBreakdown = result.breakdown.find(b => b.ruleId === "base");
+    const baseName = tariffBreakdown?.label?.replace(" Grundpreis", "") || option.mobile.tariffId;
+
+    const parts = [baseName];
+    if (option.mobile.quantity > 1) parts.push(`(×${option.mobile.quantity})`);
+    if (option.hardware.ekNet > 0) parts.push(`+ ${option.hardware.name}`);
+
+    return parts.join(" ");
+  }, [option, result]);
+
+  // Check if already added
+  const isAlreadyAdded = useMemo(() => items.some(
+    item =>
+      item.option.mobile.tariffId === option.mobile.tariffId &&
+      item.option.hardware.name === option.hardware.name &&
+      item.option.mobile.contractType === option.mobile.contractType
+  ), [items, option]);
+
+  const handleAddToOffer = useCallback(() => {
+    if (!result) return;
+    addItem(tariffName, option, result);
+    toast.success(`"${tariffName}" zum Angebot hinzugefügt`, { duration: 2000 });
+    fireConfetti({ duration: 1000, quick: true });
+
+    if (onResetForNewTariff) {
+      setTimeout(() => onResetForNewTariff(), 500);
+    }
+  }, [addItem, tariffName, option, result, onResetForNewTariff]);
+
+  const handleGoToCheckout = useCallback(() => {
+    goToSection("compare");
+  }, [goToSection]);
+
+  // === DERIVED VALUES ===
   const showDealerEconomics = visibility.showDealerEconomics;
+
+  // Early return AFTER all hooks
+  if (!result) {
+    return (
+      <div className={cn("bg-card border border-border rounded-xl p-6 text-center", className)}>
+        <p className="text-muted-foreground text-sm">Wähle einen Tarif aus</p>
+      </div>
+    );
+  }
 
   const margin = result.dealer.margin + quantityBonus;
   const avgMonthly = result.totals.avgTermNet;
@@ -80,39 +119,6 @@ export function SummarySidebar({
   const marginPerContract = margin / quantity;
   const profitabilityStatus = getProfitabilityStatus(marginPerContract);
   const marginPercent = calculateMarginPercent(margin, result.totals.sumTermNet);
-
-  // === PRIMARY CTA LOGIC (Add to Offer) ===
-  const { addItem, items } = useOfferBasket();
-
-  // Generate a descriptive name for this tariff
-  const tariffName = useMemo(() => {
-    const tariffBreakdown = result.breakdown.find(b => b.ruleId === "base");
-    const baseName = tariffBreakdown?.label?.replace(" Grundpreis", "") || option.mobile.tariffId;
-
-    const parts = [baseName];
-    if (option.mobile.quantity > 1) parts.push(`(×${option.mobile.quantity})`);
-    if (option.hardware.ekNet > 0) parts.push(`+ ${option.hardware.name}`);
-
-    return parts.join(" ");
-  }, [option, result]);
-
-  // Check if already added
-  const isAlreadyAdded = items.some(
-    item =>
-      item.option.mobile.tariffId === option.mobile.tariffId &&
-      item.option.hardware.name === option.hardware.name &&
-      item.option.mobile.contractType === option.mobile.contractType
-  );
-
-  const handleAddToOffer = () => {
-    addItem(tariffName, option, result);
-    toast.success(`"${tariffName}" zum Angebot hinzugefügt`, { duration: 2000 });
-    fireConfetti({ duration: 1000, quick: true });
-
-    if (onResetForNewTariff) {
-      setTimeout(() => onResetForNewTariff(), 500);
-    }
-  };
 
   return (
     <div className={cn(
@@ -220,10 +226,10 @@ export function SummarySidebar({
 
         {/* GigaKombi Status */}
         {isGigaKombiEligible && (
-          <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 rounded-lg">
+          <div className="p-2.5 bg-[hsl(var(--status-success)/0.1)] border border-[hsl(var(--status-success)/0.3)] rounded-lg">
             <div className="flex items-center gap-2">
-              <Check className="w-3.5 h-3.5 text-emerald-600" />
-              <span className="text-sm font-medium text-emerald-800 dark:text-emerald-300">
+              <Check className="w-3.5 h-3.5 text-[hsl(var(--status-success))]" />
+              <span className="text-sm font-medium text-[hsl(var(--status-success))]">
                 GigaKombi aktiv
               </span>
             </div>
@@ -240,13 +246,13 @@ export function SummarySidebar({
             {teamDealActive && (
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground/70">TeamDeal ({quantity}x)</span>
-                <span className="text-emerald-600 font-medium">-{teamDealPercentage}%</span>
+                <span className="text-[hsl(var(--status-success))] font-medium">-{teamDealPercentage}%</span>
               </div>
             )}
             {isGigaKombiEligible && (
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground/70">GigaKombi</span>
-                <span className="text-emerald-600 font-medium">-5€/Monat</span>
+                <span className="text-[hsl(var(--status-success))] font-medium">-5€/Monat</span>
               </div>
             )}
           </div>
@@ -257,7 +263,7 @@ export function SummarySidebar({
           <div className="space-y-2 pt-3 border-t border-border">
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground/70">Provision</span>
-              <span className="font-medium text-emerald-600">
+              <span className="font-medium text-[hsl(var(--status-success))]">
                 <AnimatedCurrency value={provision} variant="positive" decimals={0} />
               </span>
             </div>
@@ -294,7 +300,7 @@ export function SummarySidebar({
                     variant="outline"
                     size="sm"
                     type="customer"
-                    viewMode={viewMode}
+                    viewMode={effectiveViewMode}
                     className="w-full justify-start px-2 py-1.5 h-auto font-normal"
                   />
                 </div>
@@ -310,7 +316,7 @@ export function SummarySidebar({
                       variant="outline"
                       size="sm"
                       type="dealer"
-                      viewMode={viewMode}
+                      viewMode={effectiveViewMode}
                       className="w-full justify-start px-2 py-1.5 h-auto font-normal"
                     />
                   </div>
@@ -343,9 +349,9 @@ export function SummarySidebar({
         {hasTariff ? (
           isAlreadyAdded ? (
             <div className="space-y-2">
-              <div className="flex items-center justify-center gap-2 py-2 px-3 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
-                <Check className="w-4 h-4 text-emerald-600" />
-                <span className="text-sm font-medium text-emerald-700 dark:text-emerald-400">Im Angebot</span>
+              <div className="flex items-center justify-center gap-2 py-2 px-3 bg-[hsl(var(--status-success)/0.1)] rounded-lg border border-[hsl(var(--status-success)/0.2)]">
+                <Check className="w-4 h-4 text-[hsl(var(--status-success))]" />
+                <span className="text-sm font-medium text-[hsl(var(--status-success))]">Im Angebot</span>
                 {items.length > 0 && (
                   <Badge variant="secondary" className="ml-auto text-xs">
                     <ShoppingBag className="w-3 h-3 mr-1" />
@@ -357,7 +363,8 @@ export function SummarySidebar({
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     if (window.confirm("Möchtest du wirklich einen weiteren Tarif konfigurieren?")) {
                       onResetForNewTariff();
                     }
@@ -372,7 +379,10 @@ export function SummarySidebar({
           ) : (
             <Button
               size="lg"
-              onClick={handleAddToOffer}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleAddToOffer();
+              }}
               className="w-full bg-amber-500 hover:bg-amber-600 text-white gap-2 font-semibold shadow-lg shadow-amber-500/20"
             >
               <Plus className="w-5 h-5" />
@@ -405,8 +415,11 @@ export function SummarySidebar({
             <Button
               size="lg"
               variant="default"
-              onClick={onGoToCheckout}
-              className="w-full gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md font-semibold"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleGoToCheckout();
+              }}
+              className="w-full gap-2 bg-[hsl(var(--status-success))] hover:bg-[hsl(var(--status-success)/0.9)] text-white shadow-md font-semibold"
             >
               <FileText className="w-5 h-5" />
               Zum Gesamtangebot ({items.length})

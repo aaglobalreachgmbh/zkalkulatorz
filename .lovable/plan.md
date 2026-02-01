@@ -1,114 +1,67 @@
 
-# Plan: Dashboard-Wiederherstellung mit Widget-System
+# Plan: Fix Dashboard Widget Panel Duplicate/Layout Issue
 
-## Zusammenfassung
-Die Home-Seite wird auf das konfigurierbare Widget-Dashboard umgestellt. Das komplette Widget-System (Registry, Hook, Persistence) existiert bereits - nur die Rendering-Logik in `Home.tsx` fehlt.
+## Problem
+`AddWidgetPanel` is rendered **twice** in edit mode:
+1. In `DashboardEditHeader.tsx` - Header controls area (wrong placement)
+2. In `Home.tsx` - Widget grid area (correct placement)
 
----
-
-## Bestandsaufnahme (Vorhanden)
-
-| Komponente | Pfad | Status |
-|------------|------|--------|
-| Widget-Registry | `src/margenkalkulator/config/dashboardWidgets.tsx` | ✅ 14 Widgets |
-| Config-Hook | `src/margenkalkulator/hooks/useDashboardConfig.ts` | ✅ add/remove/move |
-| Add-Panel | `src/margenkalkulator/ui/components/AddWidgetPanel.tsx` | ✅ Dialog |
-| DB-Persistenz | `user_dashboard_config` Tabelle | ✅ Vorhanden |
+The `AddWidgetPanel` component's DialogTrigger renders a large dashed placeholder box, which is appropriate for the widget grid but **breaks the header layout**.
 
 ---
 
-## Änderungen
+## Solution
 
-### 1. `src/pages/Home.tsx` - Komplette Umstellung
+### Option A: Remove from Header (Recommended)
+Remove `AddWidgetPanel` from `DashboardEditHeader.tsx`. Keep only the grid placeholder version in `Home.tsx`.
 
-**Aktuelle Struktur (wird ersetzt):**
-- Zwei statische Karten (Individuelle Konfiguration / Bundles)
-- Kein Widget-System
+**Änderungen:**
+- `DashboardEditHeader.tsx`: Remove `AddWidgetPanel` import and usage (lines 8, 52-55)
 
-**Neue Struktur:**
-```text
-┌─────────────────────────────────────────────────┐
-│ HEADER: Edit-Mode Toggle + "Widget hinzufügen"  │
-├─────────────────────────────────────────────────┤
-│                                                 │
-│  [WelcomeBanner Widget]                         │
-│  [HeadlineWidget]                               │
-│  [QuickActionsWidget]                           │
-│  [TodayTasksWidget]                             │
-│  [DashboardWidgets (KPIs)]                      │
-│  [AverageMarginWidget]                          │
-│  ...weitere konfigurierte Widgets...            │
-│                                                 │
-│  [+ Widget hinzufügen] (Edit-Mode)              │
-│                                                 │
-└─────────────────────────────────────────────────┘
+### Why This is Better:
+- Simpler code
+- The large "Widget hinzufügen" placeholder at the bottom of the grid is more intuitive
+- No duplicate dialogs
+
+---
+
+## Code Changes
+
+### `src/margenkalkulator/ui/components/DashboardEditHeader.tsx`
+
+```diff
+- import { AddWidgetPanel } from "./AddWidgetPanel";
+- import { WidgetLayout } from "@/margenkalkulator/config/dashboardWidgets";
+
+  interface DashboardEditHeaderProps {
+    isEditMode: boolean;
+    onToggleEditMode: () => void;
+    onResetToDefault: () => void;
+-   onAddWidget: (widgetId: string) => void;
+-   currentLayout: WidgetLayout[];
+    isAuthenticated: boolean;
+  }
+
+  // Remove AddWidgetPanel from JSX (lines 52-55)
 ```
 
-**Implementierung:**
-1. Import `useDashboardConfig` Hook
-2. Import `DASHBOARD_WIDGETS` Registry
-3. Import `AddWidgetPanel` Komponente
-4. Render-Loop über `layout.filter(w => w.visible)`
-5. Edit-Mode mit Entfernen-Button pro Widget
-6. Drag-and-Drop via `@dnd-kit/sortable` (bereits installiert)
+### `src/pages/Home.tsx`
+Remove unused props from `DashboardEditHeader`:
 
----
-
-### 2. Widget-Rendering-Komponente (Neu)
-
-**Datei:** `src/margenkalkulator/ui/components/DashboardWidgetRenderer.tsx`
-
-```typescript
-interface Props {
-  widgetId: string;
-  isEditMode: boolean;
-  onRemove: () => void;
-}
+```diff
+  <DashboardEditHeader
+    isEditMode={isEditMode}
+    onToggleEditMode={() => setEditMode(!isEditMode)}
+    onResetToDefault={resetToDefault}
+-   onAddWidget={addWidget}
+-   currentLayout={layout}
+    isAuthenticated={!!user}
+  />
 ```
 
-- Suspense-Wrapper für Lazy-Loading
-- Edit-Mode: X-Button zum Entfernen
-- Fehler-Boundary für robustes Rendering
-
 ---
 
-### 3. Edit-Mode Header (Neu)
-
-**Datei:** `src/margenkalkulator/ui/components/DashboardEditHeader.tsx`
-
-- Toggle "Bearbeiten" / "Fertig"
-- "Zurücksetzen auf Standard" Button
-- Sichtbar nur für eingeloggte User
-
----
-
-## Technische Details
-
-### Drag-and-Drop (Optional, Phase 2)
-```typescript
-import { DndContext, closestCenter } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-```
-
-Bereits in `package.json`: `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities`
-
-### Widget-Lifecycle
-1. `useDashboardConfig()` lädt Layout aus DB oder Default
-2. `layout.filter(w => w.visible)` filtert sichtbare Widgets
-3. `DASHBOARD_WIDGETS[id].component` rendert Lazy-Component
-4. `addWidget()` / `removeWidget()` mutiert & persistiert
-
----
-
-## Ausführungsreihenfolge
-
-1. `DashboardWidgetRenderer.tsx` erstellen (Suspense + Edit-UI)
-2. `DashboardEditHeader.tsx` erstellen (Toggle + Reset)
-3. `Home.tsx` refaktorieren (Widget-Loop statt statische Karten)
-4. Test: Widget hinzufügen/entfernen, Seite neu laden
-
----
-
-## Scope-Abgrenzung
-
-Wie angefordert: **Nur Dashboard-Seite (Home.tsx)** - keine Änderungen am Kalkulator (`/calculator`).
+## Ergebnis
+- Ein `AddWidgetPanel` als große Kachel am Ende der Widget-Liste
+- Sauberer Header mit nur "Bearbeiten/Fertig" und "Zurücksetzen" Buttons
+- Keine doppelten Dialoge

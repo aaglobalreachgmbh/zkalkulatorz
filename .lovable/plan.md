@@ -1,110 +1,81 @@
-# PHASE 5-12: ENTERPRISE UX & COCKPIT OVERHAUL
 
-## ✅ ALLE PHASEN ABGESCHLOSSEN
+# Plan: Dokumentations-Synchronisierung Phase 12
 
-### Phase 5A: Context-Finalisierung ✅
-- `SummarySidebar.tsx` → `useCalculator()` (Props: 11 → 2)
-- `MobileActionFooter.tsx` → `useCalculator()` (Props: 5 → 1)
-- `Wizard.tsx` → Vereinfachte Prop-Übergabe
-
-### Phase 5B: UI-Redesign ✅
-**Teil 1: Semantic Design Tokens**
-- `--status-success/warning/error` in index.css
-- `--margin-positive/neutral/negative` in index.css
-
-**Teil 2: Header-Reduzierung**
-- `ModeSelector.tsx` erstellt (kombiniert ViewMode + CustomerSession)
-- Header: 8+ Elemente → 2 Elemente
-
-**Teil 3: Sidebar Redesign**
-- `CompactConfigSummary.tsx` erstellt (Hero KPI Pattern)
-- `MarginProgressBar.tsx` erstellt (Visual margin indicator)
-- `SummarySidebar.tsx`: 432 → 220 LOC
-
-### Phase 5C: Komponenten-Bereinigung ✅
-**~16 Komponenten gelöscht (~2.400 LOC entfernt):**
-- WizardProgress, QuickStartDialog, SmartAdvisor, SmartAdvisorBadge
-- AiConsultant, AiRecommendationsPanel, PriceTimeline, SavingsBreakdown
-- ConfigurableDashboard, SortableWidget, DensityToggle, WelcomeWidget
-- ViewModeToggle, CustomerSessionToggle, GlobalControls
-
-### Phase 6: Step-Modularisierung ✅ (2026-02-01)
-**HardwareStep (621 → ~180 LOC Orchestrator):**
-```
-src/margenkalkulator/ui/steps/hardware/
-├── index.ts              ← Barrel Export
-├── HardwareStep.tsx      ← Orchestrator (~180 LOC)
-├── HardwareFilters.tsx   ← Search, Category, Brand tabs (~130 LOC)
-├── HardwareCard.tsx      ← Family card with Popover (~200 LOC)
-├── HardwareGrid.tsx      ← Grid container + SIM Only (~110 LOC)
-└── CollapsedHardwareSelection.tsx ← Compact selected state (~50 LOC)
-```
-
-**MobileStep (495 → ~200 LOC Orchestrator):**
-```
-src/margenkalkulator/ui/steps/mobile/
-├── index.ts              ← Barrel Export
-├── MobileStep.tsx        ← Orchestrator (~200 LOC)
-├── TariffFilters.tsx     ← Family tabs, results count (~70 LOC)
-├── TariffCard.tsx        ← Individual tariff card (~130 LOC)
-├── TariffGrid.tsx        ← Grid container (~50 LOC)
-└── ContractQuantitySelector.tsx ← Contract type & quantity (~90 LOC)
-```
-
-### Phase 7: Polish & A11y ✅ (Integriert)
-- Hardcodierte Farben → Semantic Tokens in formatters.ts
-- Button-Handling mit e.stopPropagation() wo nötig
-- Semantic HSL tokens durchgehend verwendet
-
-### Phase 12: Zero-Scroll Cockpit ✅ (2026-02-01)
-**12.1 PLAN:** Layout-Strategie definiert (Two-Part Cockpit)
-**12.2 INVENTORY:** Blocker identifiziert (MainLayout scroll, Header height)
-**12.3 IMPLEMENT:**
-- `Index.tsx`: Bypassed MainLayout, implementiert h-screen direkt
-- `CalculatorShell.tsx`: `overflow-hidden` hinzugefügt
-- Header auf 64px reduziert mit `flex-none`
-
-**12.4 OPTIMIZE:**
-- A11y: `:focus-visible` Styles für Keyboard-Navigation
-- Microcopy: B2B-Labels bereits optimiert
-- Performance: Zero-Scroll eliminiert CLS
-
-**12.5 REVIEW:**
-- WBS Checkliste ✅ (alle Items erledigt)
-- Acceptance Gates G0-G6 ✅
-- Sign-off erfolgt
+## Zusammenfassung
+Drei Dokumentationsdateien sind veraltet und referenzieren gelöschte Komponenten oder haben falsche Status-Angaben. Diese werden mit dem aktuellen Code-Stand synchronisiert.
 
 ---
 
-## METRIKEN - FINAL
+## Änderungen
 
-| Metrik | Vorher | Nachher | Änderung |
-|--------|--------|---------|----------|
-| Gelöschte Komponenten | 0 | ~16 | ✅ |
-| Gelöschte LOC | 0 | ~2.400 | ✅ |
-| `SummarySidebar.tsx` | 432 LOC | 220 LOC | -49% |
-| `HardwareStep.tsx` | 621 LOC | ~180 LOC | -71% |
-| `MobileStep.tsx` | 495 LOC | ~200 LOC | -60% |
-| Header-Elemente | 8+ | 2 | -75% |
-| Neue modulare Komponenten | 0 | 12 | ✅ |
+### 1. `docs/ux/phase_12_plan.md`
+**Problem:** Status zeigt "PLANNING (Checkpoint 12.1)" obwohl alle Phasen abgeschlossen sind.
 
----
-
-## ARCHITEKTUR-VERBESSERUNGEN
-
-1. **Modularität**: Monolithische Step-Komponenten → Fokussierte Sub-Komponenten
-2. **Wiederverwendbarkeit**: TariffCard, HardwareCard, MarginProgressBar als eigenständige Units
-3. **Wartbarkeit**: Klare Trennung von Concerns (Filters, Grid, Card, Selection)
-4. **Typsicherheit**: Alle Komponenten mit TypeScript Interfaces
-5. **Design System**: Durchgehende Verwendung semantischer HSL Tokens
-6. **Backwards Compatibility**: Re-exports in Original-Locations
+**Änderungen:**
+- Zeile 4: Status → `✅ COMPLETE`
+- Zeile 5: Date → `2026-02-01`
+- Zeilen 20-43: Alle Checkpoints auf ✅ setzen
+- Zeilen 50-64: WBS Checkboxen aktualisieren:
+  - `CockpitLayout.tsx` → `CalculatorShell.tsx` [x]
+  - `WizardContainer` → `WizardContent` [x]
+  - `TariffSelection` → `TariffCard/TariffGrid` [x]
+  - `OptionDrawer` → Entfernt (durch inline-Konfiguration ersetzt)
+  - `globals.css` → `index.css` [x]
+  - `tokens.ts` → Existiert [x]
 
 ---
 
-## HINWEISE FÜR ZUKÜNFTIGE ENTWICKLUNG
+### 2. `docs/visual_debt_ledger.md`
+**Problem:** Referenzen zu gelöschten Komponenten (FloatingActionBar, StickyPriceBar, WizardProgress).
 
-- Neue Hardware-Features → `src/margenkalkulator/ui/steps/hardware/`
-- Neue Tarif-Features → `src/margenkalkulator/ui/steps/mobile/`
-- Neue Sidebar-Widgets → `src/margenkalkulator/ui/components/`
-- Design Tokens → `src/index.css` (HSL Format)
-- Formatierung → `src/margenkalkulator/lib/formatters.ts`
+**Änderungen:**
+- Zeile 6: Status → `✅ IMPLEMENTATION COMPLETE`
+- Zeile 5: Date → `2026-02-01`
+- Zeilen 31-34: Critical Layout Components aktualisieren:
+  - `FloatingActionBar.tsx` → `MobileActionFooter.tsx`
+  - `StickyPriceBar.tsx` → Entfernen (obsolet)
+  - `WizardProgress.tsx` → Entfernen (obsolet)
+- Zeile 51: VD-2 Status → `✅ FIXED (MobileActionFooter)`
+- Zeilen 59-62: P1-Items als FIXED markieren:
+  - VD-5: ✅ (Semantic tokens)
+  - VD-6: ✅ (ModeSelector consolidation)
+  - VD-7: ✅ (TariffGrid)
+  - VD-8: ✅ (SummarySidebar sticky)
+
+---
+
+### 3. `docs/evidence/phase_12/README.md`
+**Problem:** Last Updated veraltet, After Screenshots leer.
+
+**Änderungen:**
+- Zeile 5: Last Updated → `2026-02-01`
+- Zeilen 49-51: After Screenshots Section aktualisieren mit Hinweis auf implementierte Änderungen
+
+---
+
+## Technische Details
+
+### Gelöschte Komponenten (nicht mehr referenzieren)
+| Alt | Neu/Ersatz |
+|-----|------------|
+| `FloatingActionBar.tsx` | `MobileActionFooter.tsx` |
+| `StickyPriceBar.tsx` | In `SummarySidebar.tsx` integriert |
+| `WizardProgress.tsx` | Entfernt (Phase 5C) |
+| `SmartAdvisor*.tsx` | Entfernt (Phase 5C) |
+| `AiConsultant.tsx` | Entfernt (Phase 5C) |
+
+### Aktualisierte Komponentenpfade
+| Dokumentiert | Aktuell |
+|--------------|---------|
+| `CockpitLayout.tsx` | `CalculatorShell.tsx` |
+| `WizardContainer` | `WizardContent` |
+| `globals.css` | `index.css` |
+
+---
+
+## Ausführungsreihenfolge
+1. `docs/ux/phase_12_plan.md` - Status + WBS
+2. `docs/visual_debt_ledger.md` - Komponenten + Status
+3. `docs/evidence/phase_12/README.md` - Datum + Sections
+
+**Geschätzte Änderungen:** ~80 Zeilen über 3 Dateien

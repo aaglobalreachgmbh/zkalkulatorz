@@ -62,10 +62,10 @@ export const getProfitabilityStatus = (marginPerContract: number): Profitability
  * Get status colors for Tailwind classes
  */
 export const getStatusColors = (status: ProfitabilityStatus) => ({
-  bg: status === "positive" ? "bg-emerald-500/10" : status === "warning" ? "bg-amber-500/10" : "bg-red-500/10",
-  text: status === "positive" ? "text-emerald-600" : status === "warning" ? "text-amber-600" : "text-red-600",
-  border: status === "positive" ? "border-emerald-500/30" : status === "warning" ? "border-amber-500/30" : "border-red-500/30",
-  ring: status === "positive" ? "ring-emerald-500/20" : status === "warning" ? "ring-amber-500/20" : "ring-red-500/20",
+  bg: status === "positive" ? "bg-[hsl(var(--status-success)/0.1)]" : status === "warning" ? "bg-[hsl(var(--status-warning)/0.1)]" : "bg-[hsl(var(--status-error)/0.1)]",
+  text: status === "positive" ? "text-[hsl(var(--status-success))]" : status === "warning" ? "text-[hsl(var(--status-warning))]" : "text-[hsl(var(--status-error))]",
+  border: status === "positive" ? "border-[hsl(var(--status-success)/0.3)]" : status === "warning" ? "border-[hsl(var(--status-warning)/0.3)]" : "border-[hsl(var(--status-error)/0.3)]",
+  ring: status === "positive" ? "ring-[hsl(var(--status-success)/0.2)]" : status === "warning" ? "ring-[hsl(var(--status-warning)/0.2)]" : "ring-[hsl(var(--status-error)/0.2)]",
 });
 
 /**

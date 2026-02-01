@@ -1,9 +1,9 @@
 // ============================================
-// Summary Sidebar - Context-Driven
-// Phase 5A: Refactored to use useCalculator()
+// Summary Sidebar - Hero KPI Pattern
+// Phase 5B.3: Refactored for minimal footprint
 // ============================================
 
-import { Smartphone, Signal, Wifi, Check, Tag, FileText, Calendar, LayoutGrid, Plus, ShoppingBag, AlertCircle } from "lucide-react";
+import { Plus, Check, ShoppingBag, LayoutGrid, FileText, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -15,16 +15,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { getMobileTariffFromCatalog } from "../../engine/catalogResolver";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
 import { useOfferBasket } from "../../contexts/OfferBasketContext";
 import { useCalculator } from "../../context/CalculatorContext";
 import { PdfDownloadButton } from "./PdfDownloadButton";
 import { CreateCalendarEventModal } from "./CreateCalendarEventModal";
-import { MarginBadge } from "./MarginBadge";
+import { CompactConfigSummary } from "./CompactConfigSummary";
+import { MarginProgressBar } from "./MarginProgressBar";
 import { AnimatedCurrency } from "./AnimatedCurrency";
 import { cn } from "@/lib/utils";
-import { getProfitabilityStatus, calculateMarginPercent } from "../../lib/formatters";
 import { toast } from "sonner";
 import { fireConfetti } from "@/lib/confetti";
 import { useMemo, useCallback } from "react";
@@ -34,11 +33,7 @@ interface SummarySidebarProps {
   className?: string;
 }
 
-export function SummarySidebar({
-  onResetForNewTariff,
-  className
-}: SummarySidebarProps) {
-  // === ALL HOOKS AT TOP (Before any returns) ===
+export function SummarySidebar({ onResetForNewTariff, className }: SummarySidebarProps) {
   const {
     option1: option,
     result1: result,
@@ -50,20 +45,16 @@ export function SummarySidebar({
   const visibility = useSensitiveFieldsVisible(effectiveViewMode);
   const { addItem, items } = useOfferBasket();
 
-  // Generate a descriptive name for this tariff
+  // Generate tariff name for basket
   const tariffName = useMemo(() => {
     if (!result) return "";
-    const tariffBreakdown = result.breakdown.find(b => b.ruleId === "base");
-    const baseName = tariffBreakdown?.label?.replace(" Grundpreis", "") || option.mobile.tariffId;
-
-    const parts = [baseName];
+    const parts = [option.mobile.tariffId?.replace(/_/g, " ") || "Tarif"];
     if (option.mobile.quantity > 1) parts.push(`(×${option.mobile.quantity})`);
     if (option.hardware.ekNet > 0) parts.push(`+ ${option.hardware.name}`);
-
     return parts.join(" ");
   }, [option, result]);
 
-  // Check if already added
+  // Check if already in basket
   const isAlreadyAdded = useMemo(() => items.some(
     item =>
       item.option.mobile.tariffId === option.mobile.tariffId &&
@@ -76,20 +67,12 @@ export function SummarySidebar({
     addItem(tariffName, option, result);
     toast.success(`"${tariffName}" zum Angebot hinzugefügt`, { duration: 2000 });
     fireConfetti({ duration: 1000, quick: true });
-
-    if (onResetForNewTariff) {
-      setTimeout(() => onResetForNewTariff(), 500);
-    }
+    if (onResetForNewTariff) setTimeout(() => onResetForNewTariff(), 500);
   }, [addItem, tariffName, option, result, onResetForNewTariff]);
 
-  const handleGoToCheckout = useCallback(() => {
-    goToSection("compare");
-  }, [goToSection]);
+  const handleGoToCheckout = useCallback(() => goToSection("compare"), [goToSection]);
 
-  // === DERIVED VALUES ===
-  const showDealerEconomics = visibility.showDealerEconomics;
-
-  // Early return AFTER all hooks
+  // Early return for no result
   if (!result) {
     return (
       <div className={cn("bg-card border border-border rounded-xl p-6 text-center", className)}>
@@ -100,252 +83,91 @@ export function SummarySidebar({
 
   const margin = result.dealer.margin + quantityBonus;
   const avgMonthly = result.totals.avgTermNet;
-  const provision = result.dealer.provisionBase;
-
-  const hasHardware = option.hardware.ekNet > 0;
   const hasTariff = !!option.mobile.tariffId;
-  const hasFixedNet = option.fixedNet.enabled;
-
-  // Check if GigaKombi is eligible
-  const isGigaKombiEligible = hasFixedNet &&
-    option.mobile.tariffId.toLowerCase().includes("prime");
-
-  // TeamDeal check
-  const quantity = option.mobile.quantity;
-  const teamDealActive = quantity >= 3;
-  const teamDealPercentage = quantity >= 5 ? 10 : quantity >= 3 ? 5 : 0;
-
-  // Profitability status
-  const marginPerContract = margin / quantity;
-  const profitabilityStatus = getProfitabilityStatus(marginPerContract);
-  const marginPercent = calculateMarginPercent(margin, result.totals.sumTermNet);
 
   return (
-    <div className={cn(
-      "bg-card border border-border rounded-xl sticky top-4 overflow-hidden",
-      className
-    )}>
-      {/* Header */}
-      <div className="p-4 border-b border-border">
-        <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-base">Übersicht</h3>
-          {hasTariff && (
-            <Badge variant="secondary" className="text-xs">
-              {option.mobile.quantity}x
-            </Badge>
-          )}
-        </div>
-        {/* Quick KPI */}
-        <div className="mt-2 text-right">
-          {hasTariff && result.totals.avgTermNet < (getMobileTariffFromCatalog(option.meta.datasetVersion, option.mobile.tariffId)?.baseNet ?? 0) && (
-            <div className="flex items-center justify-end gap-2 mb-0.5">
-              <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Regulär:</span>
-              <span className="text-xs text-muted-foreground line-through decoration-amber-500/50">
-                <AnimatedCurrency value={getMobileTariffFromCatalog(option.meta.datasetVersion, option.mobile.tariffId)?.baseNet ?? 0} decimals={2} /> €
-              </span>
-            </div>
-          )}
-          <p className="text-2xl font-bold">
-            <AnimatedCurrency value={avgMonthly} decimals={2} />
-          </p>
-          <p className="text-xs text-muted-foreground">Ø Monat (Effektiv)</p>
-        </div>
+    <div className={cn("bg-card border border-border rounded-xl sticky top-4 overflow-hidden flex flex-col", className)}>
+      {/* Hero KPI Header */}
+      <div className="p-5 text-center border-b border-border">
+        <p className="text-4xl font-bold tracking-tight">
+          <AnimatedCurrency value={avgMonthly} decimals={2} />
+        </p>
+        <p className="text-xs text-muted-foreground mt-1">Ø monatlich netto</p>
       </div>
 
-      {/* Content */}
-      <div className="p-4 space-y-4">
-        {/* Components List */}
-        <div className="space-y-3">
-          {/* Hardware - Boxed */}
-          <div className="p-3 rounded-lg border border-border/50 bg-muted/20 flex items-start gap-3">
-            <div className={cn(
-              "w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 border border-border/30",
-              hasHardware ? "bg-primary/20 text-primary" : "bg-background text-muted-foreground/30"
-            )}>
-              <Smartphone className="w-4 h-4" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-0.5">Hardware</p>
-              <p className="font-medium text-sm truncate leading-tight">
-                {option.hardware.name || "SIM Only"}
-              </p>
-              {showDealerEconomics && hasHardware && (
-                <p className="text-xs text-muted-foreground/70 mt-1">
-                  EK: <AnimatedCurrency value={option.hardware.ekNet} decimals={2} className="text-xs" />
-                </p>
-              )}
-            </div>
-          </div>
+      {/* Compact Config Summary */}
+      <div className="p-4 border-b border-border">
+        <CompactConfigSummary />
+      </div>
 
-          {/* Mobile Tariff - Boxed */}
-          <div className="p-3 rounded-lg border border-border/50 bg-muted/20 flex items-start gap-3">
-            <div className={cn(
-              "w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 border border-border/30",
-              hasTariff ? "bg-primary/20 text-primary" : "bg-background text-muted-foreground/30"
-            )}>
-              <Signal className="w-4 h-4" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-0.5">Mobilfunk</p>
-              <p className="font-medium text-sm truncate leading-tight">
-                {option.mobile.tariffId
-                  ? option.mobile.tariffId.replace(/_/g, " ")
-                  : "Kein Tarif"}
-              </p>
-              {hasTariff && (
-                <div className="flex items-center gap-2 mt-1.5">
-                  <Badge variant="outline" className="text-[10px] h-4 px-1 bg-background">
-                    {option.mobile.contractType === "new" ? "Neu" : "VVL"}
-                  </Badge>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Fixed Net - Boxed */}
-          <div className="p-3 rounded-lg border border-border/50 bg-muted/20 flex items-start gap-3">
-            <div className={cn(
-              "w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 border border-border/30",
-              hasFixedNet ? "bg-primary/20 text-primary" : "bg-background text-muted-foreground/30"
-            )}>
-              <Wifi className="w-4 h-4" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-0.5">Festnetz</p>
-              <p className="font-medium text-sm leading-tight">
-                {hasFixedNet ? "Aktiviert" : "Nicht aktiv"}
-              </p>
-              {hasFixedNet && option.fixedNet.productId && (
-                <p className="text-xs text-muted-foreground/70 truncate mt-0.5">
-                  {option.fixedNet.productId.replace(/_/g, " ")}
-                </p>
-              )}
-            </div>
-          </div>
+      {/* Dealer Economics (Secured) */}
+      {visibility.showDealerEconomics && (
+        <div className="p-4 border-b border-border">
+          <MarginProgressBar margin={margin} />
         </div>
+      )}
 
-        {/* GigaKombi Status */}
-        {isGigaKombiEligible && (
-          <div className="p-2.5 bg-[hsl(var(--status-success)/0.1)] border border-[hsl(var(--status-success)/0.3)] rounded-lg">
-            <div className="flex items-center gap-2">
-              <Check className="w-3.5 h-3.5 text-[hsl(var(--status-success))]" />
-              <span className="text-sm font-medium text-[hsl(var(--status-success))]">
-                GigaKombi aktiv
-              </span>
-            </div>
-          </div>
-        )}
-
-        {/* Active Discounts Section */}
-        {(teamDealActive || isGigaKombiEligible) && (
-          <div className="space-y-1.5 pt-2 border-t border-border">
-            <p className="text-xs text-muted-foreground/70 font-medium flex items-center gap-1">
-              <Tag className="w-3 h-3" />
-              Aktive Rabatte
-            </p>
-            {teamDealActive && (
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground/70">TeamDeal ({quantity}x)</span>
-                <span className="text-[hsl(var(--status-success))] font-medium">-{teamDealPercentage}%</span>
+      {/* Actions Dropdown */}
+      <div className="p-4 border-b border-border">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="w-full gap-2 text-muted-foreground">
+              <LayoutGrid className="w-4 h-4" />
+              Export & Aktionen
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>Dokumente</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <div className="w-full p-0">
+                <PdfDownloadButton
+                  option={option}
+                  result={result}
+                  variant="outline"
+                  size="sm"
+                  type="customer"
+                  viewMode={effectiveViewMode}
+                  className="w-full justify-start px-2 py-1.5 h-auto font-normal"
+                />
               </div>
-            )}
-            {isGigaKombiEligible && (
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground/70">GigaKombi</span>
-                <span className="text-[hsl(var(--status-success))] font-medium">-5€/Monat</span>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Dealer Economics - STRICT SECURITY GATE */}
-        {showDealerEconomics ? (
-          <div className="space-y-2 pt-3 border-t border-border">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground/70">Provision</span>
-              <span className="font-medium text-[hsl(var(--status-success))]">
-                <AnimatedCurrency value={provision} variant="positive" decimals={0} />
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="font-semibold text-sm">Marge</span>
-              <MarginBadge margin={margin} marginPercentage={marginPercent} size="md" />
-            </div>
-            <p className="text-xs text-muted-foreground/70">
-              {profitabilityStatus === "critical" && "⚠️ Verlustrisiko!"}
-              {profitabilityStatus === "warning" && "💡 Optimierungspotenzial"}
-              {profitabilityStatus === "positive" && "✅ Gute Marge"}
-            </p>
-          </div>
-        ) : null}
-
-        {/* Secondary Actions (Actions Dropdown) */}
-        <div className="space-y-2 pt-3 border-t border-border">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="w-full gap-2 text-muted-foreground/70 hover:text-foreground">
-                <LayoutGrid className="w-4 h-4" />
-                Export & Aktionen
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>Dokumente</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-
+            </DropdownMenuItem>
+            {visibility.showDealerEconomics && (
               <DropdownMenuItem asChild>
-                <div className="w-full cursor-pointer focus:bg-accent focus:text-accent-foreground p-0">
+                <div className="w-full p-0">
                   <PdfDownloadButton
                     option={option}
                     result={result}
                     variant="outline"
                     size="sm"
-                    type="customer"
+                    type="dealer"
                     viewMode={effectiveViewMode}
                     className="w-full justify-start px-2 py-1.5 h-auto font-normal"
                   />
                 </div>
               </DropdownMenuItem>
-
-              {/* Dealer PDF - Strictly Guarded */}
-              {showDealerEconomics ? (
-                <DropdownMenuItem asChild>
-                  <div className="w-full cursor-pointer focus:bg-accent focus:text-accent-foreground p-0">
-                    <PdfDownloadButton
-                      option={option}
-                      result={result}
-                      variant="outline"
-                      size="sm"
-                      type="dealer"
-                      viewMode={effectiveViewMode}
-                      className="w-full justify-start px-2 py-1.5 h-auto font-normal"
-                    />
-                  </div>
-                </DropdownMenuItem>
-              ) : null}
-
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel>Tools</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-
-              <DropdownMenuItem asChild onSelect={(e) => e.preventDefault()}>
-                <div className="w-full p-0">
-                  <CreateCalendarEventModal
-                    trigger={
-                      <button className="w-full flex items-center justify-start gap-2 px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground rounded-sm transition-colors text-left">
-                        <Calendar className="w-4 h-4" />
-                        Termin erstellen
-                      </button>
-                    }
-                  />
-                </div>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel>Tools</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild onSelect={(e) => e.preventDefault()}>
+              <div className="w-full p-0">
+                <CreateCalendarEventModal
+                  trigger={
+                    <button className="w-full flex items-center gap-2 px-2 py-1.5 text-sm hover:bg-accent rounded-sm">
+                      <Calendar className="w-4 h-4" />
+                      Termin erstellen
+                    </button>
+                  }
+                />
+              </div>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
-      {/* === PRIMARY CTA FOOTER (Always Visible) === */}
-      <div className="p-4 border-t border-border bg-muted/40 sticky bottom-0 z-10">
+      {/* Primary CTA Footer */}
+      <div className="p-4 mt-auto bg-muted/30">
         {hasTariff ? (
           isAlreadyAdded ? (
             <div className="space-y-2">
@@ -363,45 +185,30 @@ export function SummarySidebar({
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (window.confirm("Möchtest du wirklich einen weiteren Tarif konfigurieren?")) {
-                      onResetForNewTariff();
-                    }
-                  }}
+                  onClick={(e) => { e.stopPropagation(); onResetForNewTariff(); }}
                   className="w-full gap-2"
                 >
                   <Plus className="w-4 h-4" />
-                  Weiteren Tarif hinzufügen
+                  Weiteren Tarif
                 </Button>
               )}
             </div>
           ) : (
             <Button
               size="lg"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleAddToOffer();
-              }}
-              className="w-full bg-amber-500 hover:bg-amber-600 text-white gap-2 font-semibold shadow-lg shadow-amber-500/20"
+              onClick={(e) => { e.stopPropagation(); handleAddToOffer(); }}
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground gap-2 font-semibold shadow-lg"
             >
               <Plus className="w-5 h-5" />
-              Zum Angebot hinzufügen
+              Zum Angebot
             </Button>
           )
         ) : (
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="block">
-                <Button
-                  size="lg"
-                  disabled
-                  className="w-full opacity-50 cursor-not-allowed gap-2"
-                >
-                  <AlertCircle className="w-5 h-5" />
-                  Zum Angebot hinzufügen
-                </Button>
-              </span>
+              <Button size="lg" disabled className="w-full opacity-50 gap-2">
+                Zum Angebot
+              </Button>
             </TooltipTrigger>
             <TooltipContent>
               <p>Bitte zuerst einen Tarif wählen</p>
@@ -409,22 +216,16 @@ export function SummarySidebar({
           </Tooltip>
         )}
 
-        {/* Checkout / Finish Button - Only visible if items in basket */}
         {items.length > 0 && (
-          <div className="pt-3 mt-3 border-t border-border">
-            <Button
-              size="lg"
-              variant="default"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleGoToCheckout();
-              }}
-              className="w-full gap-2 bg-[hsl(var(--status-success))] hover:bg-[hsl(var(--status-success)/0.9)] text-white shadow-md font-semibold"
-            >
-              <FileText className="w-5 h-5" />
-              Zum Gesamtangebot ({items.length})
-            </Button>
-          </div>
+          <Button
+            size="lg"
+            variant="default"
+            onClick={(e) => { e.stopPropagation(); handleGoToCheckout(); }}
+            className="w-full mt-3 gap-2 bg-[hsl(var(--status-success))] hover:bg-[hsl(var(--status-success)/0.9)] text-white"
+          >
+            <FileText className="w-5 h-5" />
+            Gesamtangebot ({items.length})
+          </Button>
         )}
       </div>
     </div>

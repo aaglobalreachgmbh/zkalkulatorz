@@ -1,8 +1,16 @@
 
 # PHASE 5-7: ENTERPRISE UX COMPLETE OVERHAUL
 
-## Status: UMFASSENDE ANALYSE ABGESCHLOSSEN
+## Status: ✅ PHASE 5A + 5B (Tokens) ABGESCHLOSSEN
 ## Datum: 2026-02-01
+
+### Fortschritt:
+- [x] Phase 5A: SummarySidebar & MobileActionFooter auf Context umgestellt
+- [x] Phase 5B (Teil 1): Semantic Design Tokens in index.css hinzugefügt
+- [ ] Phase 5B (Teil 2): Header-Reduzierung & Sidebar-Redesign
+- [ ] Phase 5C: Komponenten-Bereinigung
+- [ ] Phase 6: Step-Modularisierung
+- [ ] Phase 7: Polish & Accessibility
 
 ---
 

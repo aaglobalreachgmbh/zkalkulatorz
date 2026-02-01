@@ -59,6 +59,25 @@
     --warning: 38 92% 50%;
     --info: 217 91% 60%;
 
+    /* === SEMANTIC STATUS TOKENS (Phase 5B) === */
+    --status-success: 142 71% 45%;
+    --status-warning: 38 92% 50%;
+    --status-error: 0 84% 60%;
+    
+    /* Margin-specific aliases */
+    --margin-positive: 142 71% 45%;
+    --margin-neutral: 38 92% 50%;
+    --margin-negative: 0 84% 60%;
+    
+    /* Surface hierarchy */
+    --surface-base: var(--background);
+    --surface-elevated: var(--card);
+    
+    /* Text hierarchy */
+    --text-display: var(--foreground);
+    --text-body: var(--muted-foreground);
+    --text-subtle: 220 9% 60%;
+
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 222 47% 11%;
     --sidebar-primary: 222 47% 11%;
@@ -101,9 +120,29 @@
     --input: 222 30% 20%;
     --ring: 210 40% 98%;
 
+
     --panel-dark: 222 47% 6%;
     --panel-dark-foreground: 0 0% 98%;
     --panel-dark-muted: 220 9% 50%;
+
+    /* === SEMANTIC STATUS TOKENS (Phase 5B) - Dark Mode === */
+    --status-success: 142 71% 50%;
+    --status-warning: 38 92% 55%;
+    --status-error: 0 84% 55%;
+    
+    /* Margin-specific aliases - Dark Mode */
+    --margin-positive: 142 71% 50%;
+    --margin-neutral: 38 92% 55%;
+    --margin-negative: 0 84% 55%;
+    
+    /* Surface hierarchy - Dark Mode */
+    --surface-base: var(--background);
+    --surface-elevated: var(--card);
+    
+    /* Text hierarchy - Dark Mode */
+    --text-display: var(--foreground);
+    --text-body: var(--muted-foreground);
+    --text-subtle: 220 9% 50%;
 
     --sidebar-background: 222 47% 11%;
     --sidebar-foreground: 0 0% 96%;
@@ -285,4 +324,29 @@
 /* Ticker animation optimization */
 .animate-marquee {
   will-change: transform;
+}
+
+/* ============================================================================
+   SEMANTIC TOKEN UTILITIES (Phase 5B)
+   Use these instead of hardcoded colors like emerald-500, amber-500, red-500
+   ============================================================================ */
+@layer utilities {
+  /* Margin/Status text colors */
+  .text-margin-positive { color: hsl(var(--margin-positive)); }
+  .text-margin-neutral { color: hsl(var(--margin-neutral)); }
+  .text-margin-negative { color: hsl(var(--margin-negative)); }
+  
+  .text-status-success { color: hsl(var(--status-success)); }
+  .text-status-warning { color: hsl(var(--status-warning)); }
+  .text-status-error { color: hsl(var(--status-error)); }
+  
+  /* Status backgrounds (with 10% opacity) */
+  .bg-status-success { background-color: hsl(var(--status-success) / 0.1); }
+  .bg-status-warning { background-color: hsl(var(--status-warning) / 0.1); }
+  .bg-status-error { background-color: hsl(var(--status-error) / 0.1); }
+  
+  /* Border colors */
+  .border-status-success { border-color: hsl(var(--status-success) / 0.3); }
+  .border-status-warning { border-color: hsl(var(--status-warning) / 0.3); }
+  .border-status-error { border-color: hsl(var(--status-error) / 0.3); }
 }

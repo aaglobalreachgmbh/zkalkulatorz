@@ -469,25 +469,12 @@ function WizardContent() {
         }
         sidebar={
           <div className="p-4 space-y-4">
-            <SummarySidebar
-              option={option1}
-              result={result1}
-              viewMode={effectiveViewMode}
-              quantityBonus={quantityBonusForOption1}
-              onResetForNewTariff={resetForNewTariff}
-              onGoToCheckout={() => goToSection("compare")}
-            />
+            <SummarySidebar onResetForNewTariff={resetForNewTariff} />
             <OfferBasketPanel />
           </div>
         }
         mobileFooter={
-          <MobileActionFooter
-            option={option1}
-            result={result1}
-            viewMode={effectiveViewMode}
-            quantityBonus={quantityBonusForOption1}
-            onResetForNewTariff={resetForNewTariff}
-          />
+          <MobileActionFooter onResetForNewTariff={resetForNewTariff} />
         }
       >
         {/* Accordion Sections */}

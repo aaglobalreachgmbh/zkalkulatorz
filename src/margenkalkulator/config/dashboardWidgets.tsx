@@ -22,7 +22,6 @@ import {
 } from "lucide-react";
 
 // Lazy load all widget components
-const WelcomeWidget = lazy(() => import("@/margenkalkulator/ui/components/WelcomeWidget").then(m => ({ default: m.WelcomeWidget })));
 const WelcomeBanner = lazy(() => import("@/margenkalkulator/ui/components/widgets/WelcomeBanner").then(m => ({ default: m.WelcomeBanner })));
 const HeadlineWidget = lazy(() => import("@/margenkalkulator/ui/components/widgets/HeadlineWidget").then(m => ({ default: m.HeadlineWidget })));
 const QuickActionsWidget = lazy(() => import("@/margenkalkulator/ui/components/widgets/QuickActionsWidget").then(m => ({ default: m.QuickActionsWidget })));
@@ -96,16 +95,6 @@ export const DASHBOARD_WIDGETS: Record<string, WidgetDefinition> = {
     category: "general",
     requiresAuth: true,
     isNew: true,
-  },
-  "welcome": {
-    id: "welcome",
-    name: "Willkommen (kompakt)",
-    description: "Kompakte Begrüßung und Schnellstart",
-    component: WelcomeWidget,
-    icon: Sparkles,
-    defaultSize: { w: 4, h: 1 },
-    minSize: { w: 2, h: 1 },
-    category: "general",
   },
   "tasks": {
     id: "tasks",

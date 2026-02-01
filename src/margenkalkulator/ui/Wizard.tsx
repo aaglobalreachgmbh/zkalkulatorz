@@ -43,8 +43,7 @@ import { MobileStep } from "./steps/MobileStep";
 import { FixedNetStep } from "./steps/FixedNetStep";
 import { ValidationWarning } from "./components/ValidationWarning";
 import { ActionMenu } from "./components/ActionMenu";
-import { ViewModeToggle } from "./components/ViewModeToggle";
-import { CustomerSessionToggle } from "./components/CustomerSessionToggle";
+import { ModeSelector } from "./components/ModeSelector";
 import { getStepSummary } from "./components/LiveCalculationBar";
 import { SummarySidebar } from "./components/SummarySidebar";
 import { MobileActionFooter } from "./components/MobileActionFooter";
@@ -410,27 +409,17 @@ function WizardContent() {
         title="Kalkulator"
         headerActions={
           <>
-            {/* Session Badge */}
-            {customerSession.isActive && (
-              <Badge
-                variant="secondary"
-                className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 gap-1"
-              >
-                <Lock className="w-3 h-3" />
-                Kundensitzung
-              </Badge>
-            )}
-
             <div className="flex-1" />
 
-            {/* Controls */}
-            {policy.showCustomerSessionToggle && <CustomerSessionToggle />}
-            <ViewModeToggle
+            {/* Consolidated Mode Selector */}
+            <ModeSelector
               value={effectiveViewMode}
               onChange={handleViewModeChange}
               allowCustomerMode={policy.allowCustomerMode}
-              disabled={isCustomerSafeMode}
+              showSessionToggle={policy.showCustomerSessionToggle}
             />
+            
+            {/* Actions Menu (non-POS only) */}
             {!isPOSMode && (
               <ActionMenu config={activeState} avgMonthly={avgMonthlyNet} onLoadConfig={handleLoadConfig} />
             )}

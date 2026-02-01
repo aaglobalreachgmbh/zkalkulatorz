@@ -1,40 +1,180 @@
-
-# PHASE 5: CONTEXT-FINALISIERUNG + UI/UX NEUGESTALTUNG
+# PHASE 5 & 6: KOMPLETTE UI/UX NEUGESTALTUNG
 
 ## Status: GEPLANT
+## Datum: 2026-02-01
 
 ---
 
-## 🎯 Vision
+## 🚨 KOMPLETT-AUDIT: AKTUELLE PROBLEME
 
-**Phase 5 = 2 Sub-Phasen:**
+### Quantitative Analyse
 
-1. **5A: Context-Finalisierung** — SummarySidebar & MobileActionFooter konsumieren Context direkt (Props eliminieren)
-2. **5B: UI/UX Komplett-Neugestaltung** — "Wolkenkratzer 2.0" mit sauberem, professionellem Enterprise-Design
+| Metrik | IST | SOLL | Aktion |
+|--------|-----|------|--------|
+| `Wizard.tsx` | 700 LOC | < 350 | Halbieren |
+| `SummarySidebar.tsx` | 419 LOC | < 150 | Komplett neu |
+| `HardwareStep.tsx` | 621 LOC | < 300 | Aufteilen |
+| `MobileStep.tsx` | 495 LOC | < 250 | Aufteilen |
+| Components in `/ui/components/` | **103** | < 40 | 63 löschen/konsolidieren |
+| Direkte Farbwerte im Code | ~50 | 0 | Alle durch Tokens ersetzen |
+
+### Qualitative Probleme
+
+| Problem | Schwere | Ort | Beschreibung |
+|---------|---------|-----|--------------|
+| **103 Komponenten** | 🔴 Kritisch | `/ui/components/` | Unmöglich zu navigieren |
+| **Überladener Header** | 🔴 Kritisch | Wizard.tsx:428-468 | 8+ UI-Elemente (Progress, Badge, Toggle, Menu, Density...) |
+| **Redundante CTAs** | 🔴 Kritisch | Sidebar + Footer | "Zum Angebot" 2x sichtbar |
+| **3 große Boxen** | 🟠 Hoch | SummarySidebar:154-218 | Hardware/Tarif/Festnetz als separate Karten |
+| **Veralteter Kommentar** | 🟠 Hoch | SummarySidebar:11 | "Actions moved to FloatingActionBar" (existiert nicht) |
+| **Farb-Chaos** | 🟠 Hoch | Überall | `emerald-500`, `amber-500`, `orange-600` direkt |
+| **Accordion in Accordion** | 🟡 Mittel | Steps | Verschachtelte Accordions verwirrend |
+| **Unklare Hierarchie** | 🟡 Mittel | Global | Was ist die EINE wichtigste Aktion? |
 
 ---
 
-## IST-ZUSTAND ANALYSE
+## 🎯 NEUES DESIGN-PRINZIP
 
-### Architektur (✅ Gut nach Phase 4)
 ```
-CalculatorContext → result1, result2 (KOMPLETT mit Bonussen)
-Wizard → WizardContent (Reiner UI-Orchestrator)
-CalculatorShell → Grid-Layout (Zero-Scroll)
+╔═══════════════════════════════════════════════════════════════╗
+║                     "BRUTAL SIMPEL"                           ║
+╠═══════════════════════════════════════════════════════════════╣
+║  1. EIN Preis groß sichtbar (Hero KPI)                       ║
+║  2. EIN primärer CTA (Zum Angebot)                           ║
+║  3. DREI Schritte (Hardware → Tarif → Festnetz)              ║
+║  4. KEINE verschachtelten Accordions                         ║
+║  5. NUR Semantic Tokens für Farben                           ║
+║  6. < 40 Komponenten total                                   ║
+╚═══════════════════════════════════════════════════════════════╝
 ```
 
-### UI-Schulden (❌ Kritisch)
+---
 
-| Problem | Ort | Ursache |
-|---------|-----|---------|
-| **Visuelles Chaos** | SummarySidebar | Zu viele Boxen, inkonsistente Abstände |
-| **Farb-Wildwuchs** | Überall | Direkte Farben statt Tokens (`emerald-500`, `amber-500`) |
-| **Props-Drilling** | Sidebar/Footer | Redundante Props, Context nicht genutzt |
-| **Veraltete Kommentare** | SummarySidebar | Referenziert `FloatingActionBar` (gelöscht) |
-| **Accordion-Chaos** | Steps | Überladene Accordions, schlechte Hierarchie |
-| **Header-Wildwuchs** | CalculatorShell | Zu viele Elemente, unklare Priorität |
-| **Mobile UX** | MobileActionFooter | Zu komprimiert, schlechte Hierarchie |
-| **Inkonsistente Typografie** | Global | Keine klare Scale |
+## 🗑️ ZU LÖSCHENDE KOMPONENTEN (Phase 5A)
+
+### Definitiv Löschen
+
+| Komponente | Zeilen | Grund |
+|------------|--------|-------|
+| `WizardProgress.tsx` | 89 | Overengineered, verwirrt |
+| `QuickStartDialog.tsx` | 156 | Nice-to-have, nicht MVP |
+| `SavingsBreakdown.tsx` | 112 | Kunden-Feature, nicht Kern |
+| `PricePeriodBreakdown.tsx` | 98 | Nice-to-have |
+| `PriceTimeline.tsx` | 134 | Nice-to-have |
+| `LiveCalculationBar.tsx` | 87 | Ersetzt durch Sidebar |
+| `SmartAdvisor.tsx` | 245 | Nie fertig |
+| `SmartAdvisorBadge.tsx` | 34 | Nie fertig |
+| `DensityToggle.tsx` | 45 | Overengineering |
+| `CustomerSessionToggle.tsx` | 67 | In ViewModeToggle integrieren |
+| `AiRecommendationsPanel.tsx` | 189 | Nie fertig |
+| `UpsellRecommendationsPanel.tsx` | 156 | Nie fertig |
+
+**Geschätzte Reduktion: ~1,400 LOC**
+
+### Konsolidieren
+
+| Aktuelle Komponenten | Neue Komponente | Ersparnis |
+|---------------------|-----------------|-----------|
+| `AnimatedCurrency.tsx` + `MarginBadge.tsx` | `PriceDisplay.tsx` | ~80 LOC |
+| `ConfigurableDashboard.tsx` + 6 Widgets | `SimpleDashboard.tsx` | ~400 LOC |
+
+---
+
+## 📐 NEUE ARCHITEKTUR
+
+### Layout (Desktop ≥1024px)
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│  HEADER (48px)                                                          │
+│  ┌───────────────────────────────────────────────────────────────────┐ │
+│  │  🧮 Kalkulator                    [Kunde|Händler]  [⋮ Menü]      │ │
+│  └───────────────────────────────────────────────────────────────────┘ │
+├───────────────────────────────────────────────┬─────────────────────────┤
+│                                               │                         │
+│              HAUPTBEREICH                     │      SIDEBAR (360px)    │
+│              (flex-1, scroll-y)               │      (sticky, no-scroll)│
+│                                               │                         │
+│  ┌─────────────────────────────────────────┐ │  ┌───────────────────┐  │
+│  │ 📱 HARDWARE                             │ │  │                   │  │
+│  │ [SIM Only] [iPhone] [Samsung] [Xiaomi]  │ │  │  49,99 €/Monat    │  │
+│  │                                          │ │  │  ────────────────│  │
+│  └─────────────────────────────────────────┘ │  │  📱 iPhone 16     │  │
+│                                               │  │  📶 Prime XL (3×) │  │
+│  ┌─────────────────────────────────────────┐ │  │  ────────────────│  │
+│  │ 📶 MOBILFUNK                            │ │  │                   │  │
+│  │ [Neu ○ VVL] [Menge: 3 ▼]                │ │  │  Marge: +127€ ✓  │  │
+│  │ ┌───────┐ ┌───────┐ ┌───────┐ ┌───────┐│ │  │                   │  │
+│  │ │Prime S│ │Prime M│ │Prime L│ │PrimeXL││ │  ├───────────────────┤  │
+│  │ │ 29,99 │ │ 42,49 │ │ 49,99 │ │ 59,99 ││ │  │                   │  │
+│  │ └───────┘ └───────┘ └───────┘ └───────┘│ │  │ [ HINZUFÜGEN ]    │  │
+│  └─────────────────────────────────────────┘ │  │                   │  │
+│                                               │  └───────────────────┘  │
+│  ┌─────────────────────────────────────────┐ │                         │
+│  │ 🌐 FESTNETZ (Optional)                  │ │                         │
+│  │ [✓] Festnetz hinzufügen                 │ │                         │
+│  │ Cable 1000 Mbit/s - 44,99€/Monat        │ │                         │
+│  └─────────────────────────────────────────┘ │                         │
+│                                               │                         │
+└───────────────────────────────────────────────┴─────────────────────────┘
+```
+
+### Layout (Mobile <1024px)
+
+```
+┌───────────────────────────────────┐
+│  Kalkulator          [👤] [⋮]    │  48px Header
+├───────────────────────────────────┤
+│                                   │
+│  (Scrollbarer Hauptbereich)       │
+│                                   │
+│  ┌───────────────────────────────┐│
+│  │ Hardware                      ││
+│  │ [SIM Only] [iPhone ▼]         ││
+│  └───────────────────────────────┘│
+│                                   │
+│  ┌───────────────────────────────┐│
+│  │ Tarif: Prime XL               ││
+│  │ Menge: [- 3 +]                ││
+│  └───────────────────────────────┘│
+│                                   │
+│  padding-bottom: 80px             │
+│                                   │
+├───────────────────────────────────┤
+│  49,99€   +127€  [ HINZUFÜGEN ]  │  64px Fixed Footer
+└───────────────────────────────────┘
+```
+
+### Komponenten-Hierarchie
+
+```
+App
+└── MainLayout
+    └── Index (Calculator Route)
+        └── CalculatorProvider          ← Context für alles
+            └── WizardContent
+                └── CalculatorShell     ← Grid-Layout
+                    ├── CalculatorHeader   (48px, fixed)
+                    │   ├── Title
+                    │   ├── ViewModeToggle
+                    │   └── ActionMenu
+                    │
+                    ├── MainStage          (scroll-y)
+                    │   ├── HardwareSection
+                    │   ├── MobileSection  
+                    │   └── FixedNetSection
+                    │
+                    ├── SummarySidebar     (sticky, desktop only)
+                    │   ├── PriceHero
+                    │   ├── ConfigList
+                    │   ├── MarginDisplay (dealer only)
+                    │   └── AddToOfferButton
+                    │
+                    └── MobileFooter       (fixed bottom, mobile only)
+                        ├── PriceSummary
+                        ├── MarginBadge (dealer only)
+                        └── AddButton
+```
 
 ---
 

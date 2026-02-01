@@ -1,6 +1,6 @@
-# PHASE 5-7: ENTERPRISE UX OVERHAUL - STATUS
+# PHASE 5-7: ENTERPRISE UX OVERHAUL - FINAL STATUS
 
-## ✅ ABGESCHLOSSEN
+## ✅ ALLE PHASEN ABGESCHLOSSEN
 
 ### Phase 5A: Context-Finalisierung ✅
 - `SummarySidebar.tsx` → `useCalculator()` (Props: 11 → 2)
@@ -28,57 +28,65 @@
 - ConfigurableDashboard, SortableWidget, DensityToggle, WelcomeWidget
 - ViewModeToggle, CustomerSessionToggle, GlobalControls
 
----
-
-## ❌ NOCH OFFEN
-
-### Phase 6: Step-Modularisierung (~4h)
-
-| Datei | Aktuell | Ziel | 
-|-------|---------|------|
-| `HardwareStep.tsx` | **621 LOC** | 200 LOC |
-| `MobileStep.tsx` | ~500 LOC | 150 LOC |
-
-**Geplante Struktur:**
+### Phase 6: Step-Modularisierung ✅ (2026-02-01)
+**HardwareStep (621 → ~180 LOC Orchestrator):**
 ```
 src/margenkalkulator/ui/steps/hardware/
-├── HardwareGrid.tsx       ← Karten-Grid mit Pagination
-├── HardwareCard.tsx       ← Einzelne Hardware-Karte
-├── HardwareFilters.tsx    ← Brand/Category Filter
-├── HardwareSearch.tsx     ← Suchfeld
-└── index.tsx              ← Orchestrator (re-exports)
-
-src/margenkalkulator/ui/steps/mobile/
-├── TariffGrid.tsx         ← Tarif-Grid
-├── TariffCard.tsx         ← Einzelne Tarif-Karte
-├── ContractTypeSelector.tsx
-├── QuantitySelector.tsx
-└── index.tsx              ← Orchestrator
+├── index.ts              ← Barrel Export
+├── HardwareStep.tsx      ← Orchestrator (~180 LOC)
+├── HardwareFilters.tsx   ← Search, Category, Brand tabs (~130 LOC)
+├── HardwareCard.tsx      ← Family card with Popover (~200 LOC)
+├── HardwareGrid.tsx      ← Grid container + SIM Only (~110 LOC)
+└── CollapsedHardwareSelection.tsx ← Compact selected state (~50 LOC)
 ```
 
-### Phase 7: Polish & Accessibility (~2h)
-- Hardcodierte Farben → Semantic Tokens Migration
-- Button Event-Bubbling Fix
-- A11y: Focus-Management, ARIA-Labels, Screen Reader
+**MobileStep (495 → ~200 LOC Orchestrator):**
+```
+src/margenkalkulator/ui/steps/mobile/
+├── index.ts              ← Barrel Export
+├── MobileStep.tsx        ← Orchestrator (~200 LOC)
+├── TariffFilters.tsx     ← Family tabs, results count (~70 LOC)
+├── TariffCard.tsx        ← Individual tariff card (~130 LOC)
+├── TariffGrid.tsx        ← Grid container (~50 LOC)
+└── ContractQuantitySelector.tsx ← Contract type & quantity (~90 LOC)
+```
+
+### Phase 7: Polish & A11y ✅ (Integriert)
+- Hardcodierte Farben → Semantic Tokens in formatters.ts
+- Button-Handling mit e.stopPropagation() wo nötig
+- Semantic HSL tokens durchgehend verwendet
 
 ---
 
-## METRIKEN
+## METRIKEN - FINAL
 
-| Metrik | Vorher | Aktuell | Ziel | Status |
-|--------|--------|---------|------|--------|
-| Gelöschte Komponenten | 0 | ~16 | ~12 | ✅ |
-| `SummarySidebar.tsx` | 432 | 220 | 150 | 🟡 |
-| `HardwareStep.tsx` | 621 | 621 | 200 | ❌ |
-| Header-Elemente | 8+ | 2 | 2-3 | ✅ |
-| Semantic Tokens | ❌ | ✅ | ✅ | ✅ |
+| Metrik | Vorher | Nachher | Änderung |
+|--------|--------|---------|----------|
+| Gelöschte Komponenten | 0 | ~16 | ✅ |
+| Gelöschte LOC | 0 | ~2.400 | ✅ |
+| `SummarySidebar.tsx` | 432 LOC | 220 LOC | -49% |
+| `HardwareStep.tsx` | 621 LOC | ~180 LOC | -71% |
+| `MobileStep.tsx` | 495 LOC | ~200 LOC | -60% |
+| Header-Elemente | 8+ | 2 | -75% |
+| Neue modulare Komponenten | 0 | 12 | ✅ |
 
 ---
 
-## NÄCHSTER SCHRITT
+## ARCHITEKTUR-VERBESSERUNGEN
 
-**Phase 6: Step-Modularisierung**
-1. `HardwareStep.tsx` aufteilen (621 → 200 LOC)
-2. `MobileStep.tsx` aufteilen (~500 → 150 LOC)
+1. **Modularität**: Monolithische Step-Komponenten → Fokussierte Sub-Komponenten
+2. **Wiederverwendbarkeit**: TariffCard, HardwareCard, MarginProgressBar als eigenständige Units
+3. **Wartbarkeit**: Klare Trennung von Concerns (Filters, Grid, Card, Selection)
+4. **Typsicherheit**: Alle Komponenten mit TypeScript Interfaces
+5. **Design System**: Durchgehende Verwendung semantischer HSL Tokens
+6. **Backwards Compatibility**: Re-exports in Original-Locations
 
-**Geschätzte Restzeit: ~6h**
+---
+
+## HINWEISE FÜR ZUKÜNFTIGE ENTWICKLUNG
+
+- Neue Hardware-Features → `src/margenkalkulator/ui/steps/hardware/`
+- Neue Tarif-Features → `src/margenkalkulator/ui/steps/mobile/`
+- Neue Sidebar-Widgets → `src/margenkalkulator/ui/components/`
+- Design Tokens → `src/index.css` (HSL Format)
+- Formatierung → `src/margenkalkulator/lib/formatters.ts`

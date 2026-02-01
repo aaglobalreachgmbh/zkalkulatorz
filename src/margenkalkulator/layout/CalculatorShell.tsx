@@ -60,7 +60,8 @@ export function CalculatorShell({
   className,
 }: CalculatorShellProps) {
   return (
-    <div className={cn("flex flex-col h-full w-full bg-background", className)}>
+    // Phase 12.3: Enforced height - flex-1 fills parent, no min-h
+    <div className={cn("flex flex-col h-full w-full bg-background overflow-hidden", className)}>
       {/* 1. Header (Fixed, 64px) */}
       <header className="flex-none h-16 bg-card border-b border-border px-4 lg:px-6 flex items-center justify-between z-30">
         <h1 className="text-lg lg:text-xl font-semibold text-foreground">

@@ -100,8 +100,6 @@ const Home = () => {
               isEditMode={isEditMode}
               onToggleEditMode={() => setEditMode(!isEditMode)}
               onResetToDefault={resetToDefault}
-              onAddWidget={addWidget}
-              currentLayout={layout}
               isAuthenticated={!!user}
             />
 

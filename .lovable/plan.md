@@ -1,81 +1,114 @@
 
-# Plan: Dokumentations-Synchronisierung Phase 12
+# Plan: Dashboard-Wiederherstellung mit Widget-System
 
 ## Zusammenfassung
-Drei Dokumentationsdateien sind veraltet und referenzieren gelöschte Komponenten oder haben falsche Status-Angaben. Diese werden mit dem aktuellen Code-Stand synchronisiert.
+Die Home-Seite wird auf das konfigurierbare Widget-Dashboard umgestellt. Das komplette Widget-System (Registry, Hook, Persistence) existiert bereits - nur die Rendering-Logik in `Home.tsx` fehlt.
+
+---
+
+## Bestandsaufnahme (Vorhanden)
+
+| Komponente | Pfad | Status |
+|------------|------|--------|
+| Widget-Registry | `src/margenkalkulator/config/dashboardWidgets.tsx` | ✅ 14 Widgets |
+| Config-Hook | `src/margenkalkulator/hooks/useDashboardConfig.ts` | ✅ add/remove/move |
+| Add-Panel | `src/margenkalkulator/ui/components/AddWidgetPanel.tsx` | ✅ Dialog |
+| DB-Persistenz | `user_dashboard_config` Tabelle | ✅ Vorhanden |
 
 ---
 
 ## Änderungen
 
-### 1. `docs/ux/phase_12_plan.md`
-**Problem:** Status zeigt "PLANNING (Checkpoint 12.1)" obwohl alle Phasen abgeschlossen sind.
+### 1. `src/pages/Home.tsx` - Komplette Umstellung
 
-**Änderungen:**
-- Zeile 4: Status → `✅ COMPLETE`
-- Zeile 5: Date → `2026-02-01`
-- Zeilen 20-43: Alle Checkpoints auf ✅ setzen
-- Zeilen 50-64: WBS Checkboxen aktualisieren:
-  - `CockpitLayout.tsx` → `CalculatorShell.tsx` [x]
-  - `WizardContainer` → `WizardContent` [x]
-  - `TariffSelection` → `TariffCard/TariffGrid` [x]
-  - `OptionDrawer` → Entfernt (durch inline-Konfiguration ersetzt)
-  - `globals.css` → `index.css` [x]
-  - `tokens.ts` → Existiert [x]
+**Aktuelle Struktur (wird ersetzt):**
+- Zwei statische Karten (Individuelle Konfiguration / Bundles)
+- Kein Widget-System
+
+**Neue Struktur:**
+```text
+┌─────────────────────────────────────────────────┐
+│ HEADER: Edit-Mode Toggle + "Widget hinzufügen"  │
+├─────────────────────────────────────────────────┤
+│                                                 │
+│  [WelcomeBanner Widget]                         │
+│  [HeadlineWidget]                               │
+│  [QuickActionsWidget]                           │
+│  [TodayTasksWidget]                             │
+│  [DashboardWidgets (KPIs)]                      │
+│  [AverageMarginWidget]                          │
+│  ...weitere konfigurierte Widgets...            │
+│                                                 │
+│  [+ Widget hinzufügen] (Edit-Mode)              │
+│                                                 │
+└─────────────────────────────────────────────────┘
+```
+
+**Implementierung:**
+1. Import `useDashboardConfig` Hook
+2. Import `DASHBOARD_WIDGETS` Registry
+3. Import `AddWidgetPanel` Komponente
+4. Render-Loop über `layout.filter(w => w.visible)`
+5. Edit-Mode mit Entfernen-Button pro Widget
+6. Drag-and-Drop via `@dnd-kit/sortable` (bereits installiert)
 
 ---
 
-### 2. `docs/visual_debt_ledger.md`
-**Problem:** Referenzen zu gelöschten Komponenten (FloatingActionBar, StickyPriceBar, WizardProgress).
+### 2. Widget-Rendering-Komponente (Neu)
 
-**Änderungen:**
-- Zeile 6: Status → `✅ IMPLEMENTATION COMPLETE`
-- Zeile 5: Date → `2026-02-01`
-- Zeilen 31-34: Critical Layout Components aktualisieren:
-  - `FloatingActionBar.tsx` → `MobileActionFooter.tsx`
-  - `StickyPriceBar.tsx` → Entfernen (obsolet)
-  - `WizardProgress.tsx` → Entfernen (obsolet)
-- Zeile 51: VD-2 Status → `✅ FIXED (MobileActionFooter)`
-- Zeilen 59-62: P1-Items als FIXED markieren:
-  - VD-5: ✅ (Semantic tokens)
-  - VD-6: ✅ (ModeSelector consolidation)
-  - VD-7: ✅ (TariffGrid)
-  - VD-8: ✅ (SummarySidebar sticky)
+**Datei:** `src/margenkalkulator/ui/components/DashboardWidgetRenderer.tsx`
+
+```typescript
+interface Props {
+  widgetId: string;
+  isEditMode: boolean;
+  onRemove: () => void;
+}
+```
+
+- Suspense-Wrapper für Lazy-Loading
+- Edit-Mode: X-Button zum Entfernen
+- Fehler-Boundary für robustes Rendering
 
 ---
 
-### 3. `docs/evidence/phase_12/README.md`
-**Problem:** Last Updated veraltet, After Screenshots leer.
+### 3. Edit-Mode Header (Neu)
 
-**Änderungen:**
-- Zeile 5: Last Updated → `2026-02-01`
-- Zeilen 49-51: After Screenshots Section aktualisieren mit Hinweis auf implementierte Änderungen
+**Datei:** `src/margenkalkulator/ui/components/DashboardEditHeader.tsx`
+
+- Toggle "Bearbeiten" / "Fertig"
+- "Zurücksetzen auf Standard" Button
+- Sichtbar nur für eingeloggte User
 
 ---
 
 ## Technische Details
 
-### Gelöschte Komponenten (nicht mehr referenzieren)
-| Alt | Neu/Ersatz |
-|-----|------------|
-| `FloatingActionBar.tsx` | `MobileActionFooter.tsx` |
-| `StickyPriceBar.tsx` | In `SummarySidebar.tsx` integriert |
-| `WizardProgress.tsx` | Entfernt (Phase 5C) |
-| `SmartAdvisor*.tsx` | Entfernt (Phase 5C) |
-| `AiConsultant.tsx` | Entfernt (Phase 5C) |
+### Drag-and-Drop (Optional, Phase 2)
+```typescript
+import { DndContext, closestCenter } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+```
 
-### Aktualisierte Komponentenpfade
-| Dokumentiert | Aktuell |
-|--------------|---------|
-| `CockpitLayout.tsx` | `CalculatorShell.tsx` |
-| `WizardContainer` | `WizardContent` |
-| `globals.css` | `index.css` |
+Bereits in `package.json`: `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities`
+
+### Widget-Lifecycle
+1. `useDashboardConfig()` lädt Layout aus DB oder Default
+2. `layout.filter(w => w.visible)` filtert sichtbare Widgets
+3. `DASHBOARD_WIDGETS[id].component` rendert Lazy-Component
+4. `addWidget()` / `removeWidget()` mutiert & persistiert
 
 ---
 
 ## Ausführungsreihenfolge
-1. `docs/ux/phase_12_plan.md` - Status + WBS
-2. `docs/visual_debt_ledger.md` - Komponenten + Status
-3. `docs/evidence/phase_12/README.md` - Datum + Sections
 
-**Geschätzte Änderungen:** ~80 Zeilen über 3 Dateien
+1. `DashboardWidgetRenderer.tsx` erstellen (Suspense + Edit-UI)
+2. `DashboardEditHeader.tsx` erstellen (Toggle + Reset)
+3. `Home.tsx` refaktorieren (Widget-Loop statt statische Karten)
+4. Test: Widget hinzufügen/entfernen, Seite neu laden
+
+---
+
+## Scope-Abgrenzung
+
+Wie angefordert: **Nur Dashboard-Seite (Home.tsx)** - keine Änderungen am Kalkulator (`/calculator`).

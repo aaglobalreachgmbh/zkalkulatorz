@@ -134,240 +134,295 @@ export function MobileActionFooter({ onResetForNewTariff }: MobileActionFooterPr
 
 ---
 
-## PHASE 5B: UI/UX KOMPLETT-NEUGESTALTUNG
+## PHASE 5B: UI/UX KOMPLETT-NEUGESTALTUNG (RESET)
 
-### Design-Prinzipien
+### ❌ AKTUELLE PROBLEME (Audit)
 
-```
-┌────────────────────────────────────────────────────────────┐
-│                    "WOLKENKRATZER 2.0"                     │
-├────────────────────────────────────────────────────────────┤
-│ 1. KONTRAST: Dunkel vs. Hell für Hierarchie                │
-│ 2. WEISSRAUM: Großzügig, aber strukturiert                 │
-│ 3. TYPOGRAFIE: 3-Stufen-Skala (Display/Body/Caption)       │
-│ 4. FARBEN: Nur Semantic Tokens, keine direkten Werte       │
-│ 5. INTERAKTION: Subtile Hover, keine Animationsorgien      │
-│ 6. FOKUS: CTA immer sichtbar, Rest unterstützt             │
-└────────────────────────────────────────────────────────────┘
-```
+| Problem | Ort | Auswirkung |
+|---------|-----|------------|
+| **Zu viele Boxen** | SummarySidebar | 3 große Boxen für Hardware/Tarif/Festnetz → visuelles Chaos |
+| **Redundante CTAs** | Sidebar + Footer | "Zum Angebot" erscheint 2x (Desktop + Mobile) |
+| **Überladener Header** | Wizard.tsx | 8+ Elemente: Progress, Badge, Toggle, Menu, DensityToggle... |
+| **Accordion-Overkill** | Steps | Accordions in Accordions → verwirrend |
+| **Farb-Wildwuchs** | Überall | `emerald-500`, `amber-500`, `orange-600` direkt im Code |
+| **700+ LOC Wizard** | Wizard.tsx | Unmöglich zu warten |
+| **620+ LOC HardwareStep** | HardwareStep.tsx | Monolith, nicht testbar |
+| **Veraltete Kommentare** | SummarySidebar | "Actions moved to FloatingActionBar" (existiert nicht mehr) |
+| **Unklarer Fokus** | Überall | Was ist die EINE wichtigste Aktion? |
 
-### 5B.1: Design Token System
+---
 
-**Neue Tokens in `index.css`:**
-
-```css
-:root {
-  /* === SURFACE HIERARCHY === */
-  --surface-base: var(--background);
-  --surface-raised: var(--card);
-  --surface-elevated: 0 0% 100%; /* Pure white panels */
-  --surface-sunken: 220 14% 94%; /* Input wells */
-  
-  /* === SEMANTIC ACTIONS === */
-  --action-primary: var(--primary);
-  --action-success: 142 71% 45%;
-  --action-warning: 38 92% 50%;
-  --action-danger: 0 84% 60%;
-  
-  /* === TEXT HIERARCHY === */
-  --text-primary: var(--foreground);
-  --text-secondary: 220 9% 46%;
-  --text-muted: 220 9% 60%;
-  --text-disabled: 220 9% 75%;
-  
-  /* === TYPOGRAPHY SCALE === */
-  --text-display: 1.5rem;    /* 24px - Headlines */
-  --text-title: 1.125rem;    /* 18px - Section titles */
-  --text-body: 0.875rem;     /* 14px - Default text */
-  --text-caption: 0.75rem;   /* 12px - Labels, hints */
-  --text-micro: 0.625rem;    /* 10px - Badges */
-  
-  /* === SPACING SCALE === */
-  --space-xs: 0.25rem;   /* 4px */
-  --space-sm: 0.5rem;    /* 8px */
-  --space-md: 1rem;      /* 16px */
-  --space-lg: 1.5rem;    /* 24px */
-  --space-xl: 2rem;      /* 32px */
-  --space-2xl: 3rem;     /* 48px */
-}
-```
-
-### 5B.2: CalculatorShell 2.0
-
-**Neues Layout:**
+### 🎯 NEUES DESIGN-PRINZIP: "BRUTAL SIMPEL"
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    COMPACT HEADER (56px)                        │
-│  [Logo]  ─────── Kalkulator ──────  [ViewMode] [•••] [User]    │
-├─────────────────────────────────────────────────┬───────────────┤
-│                                                 │               │
-│              STAGE (Scrollable)                 │   SUMMARY     │
-│                                                 │   (Fixed)     │
-│  ┌──────────────────────────────────────────┐  │               │
-│  │  HARDWARE ACCORDION                       │  │  ┌─────────┐ │
-│  └──────────────────────────────────────────┘  │  │   KPIs   │ │
-│                                                 │  └─────────┘ │
-│  ┌──────────────────────────────────────────┐  │               │
-│  │  MOBILFUNK ACCORDION                      │  │  ┌─────────┐ │
-│  └──────────────────────────────────────────┘  │  │ ÜBERSICHT│ │
-│                                                 │  └─────────┘ │
-│  ┌──────────────────────────────────────────┐  │               │
-│  │  FESTNETZ ACCORDION (Optional)            │  │  ┌─────────┐ │
-│  └──────────────────────────────────────────┘  │  │ DEALER   │ │
-│                                                 │  │ (cond.)  │ │
-│                                                 │  └─────────┘ │
-│                                                 │               │
-│                                                 │  ═══════════ │
-│                                                 │  [  CTA   ]  │
-│                                                 │  ═══════════ │
-└─────────────────────────────────────────────────┴───────────────┘
+│                                                                 │
+│   1. EIN Preis groß sichtbar (Hero KPI)                        │
+│   2. EIN primärer CTA (Zum Angebot)                            │
+│   3. DREI Konfigurationsschritte (Hardware → Tarif → Festnetz) │
+│   4. KEINE verschachtelten Accordions                          │
+│   5. KEINE direkten Farbwerte im Code                          │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-**Code-Änderungen:**
+---
+
+### 5B.1: NEUES LAYOUT (Desktop)
+
+```
+┌───────────────────────────────────────────────────────────────────────┐
+│  HEADER (48px) - MINIMAL                                              │
+│  Kalkulator              [Kunde/Händler] [⋮]                         │
+├───────────────────────────────────────────────┬───────────────────────┤
+│                                               │                       │
+│              HAUPTBEREICH                     │     SIDEBAR           │
+│              (Scrollbar)                      │     (Fixed 360px)     │
+│                                               │                       │
+│  ┌─────────────────────────────────────────┐ │  ╔═══════════════════╗│
+│  │ SCHRITT 1: HARDWARE                     │ │  ║  49,99 €/Monat   ║│
+│  │ [Ohne Gerät] [iPhone 16] [Galaxy S25]   │ │  ║  ────────────────║│
+│  │                                          │ │  ║  iPhone 16 Pro   ║│
+│  └─────────────────────────────────────────┘ │  ║  Prime XL (3×)   ║│
+│                                               │  ║  ────────────────║│
+│  ┌─────────────────────────────────────────┐ │  ║  Marge: +127€ ✓  ║│
+│  │ SCHRITT 2: MOBILFUNK                    │ │  ╠═══════════════════╣│
+│  │ [Neu/VVL] [Menge: 1]                    │ │  ║                   ║│
+│  │ ┌───────┐ ┌───────┐ ┌───────┐          │ │  ║  [ HINZUFÜGEN ]   ║│
+│  │ │Prime S│ │Prime M│ │Prime L│          │ │  ║                   ║│
+│  │ │  29€  │ │  42€  │ │  49€  │          │ │  ╚═══════════════════╝│
+│  │ └───────┘ └───────┘ └───────┘          │ │                       │
+│  └─────────────────────────────────────────┘ │                       │
+│                                               │                       │
+│  ┌─────────────────────────────────────────┐ │                       │
+│  │ SCHRITT 3: FESTNETZ (Optional)          │ │                       │
+│  │ [  ] Festnetz hinzufügen                │ │                       │
+│  └─────────────────────────────────────────┘ │                       │
+│                                               │                       │
+└───────────────────────────────────────────────┴───────────────────────┘
+```
+
+---
+
+### 5B.2: NEUES LAYOUT (Mobile)
+
+```
+┌─────────────────────────────────────┐
+│  HEADER (48px)                      │
+│  Kalkulator         [👤] [⋮]       │
+├─────────────────────────────────────┤
+│                                     │
+│  HAUPTBEREICH (Scrollbar)           │
+│                                     │
+│  ┌─────────────────────────────────┐│
+│  │ Hardware                        ││
+│  │ [Ohne Gerät] [Mit Gerät ▼]      ││
+│  └─────────────────────────────────┘│
+│                                     │
+│  ┌─────────────────────────────────┐│
+│  │ Tarif auswählen                 ││
+│  │ ┌─────┐ ┌─────┐ ┌─────┐        ││
+│  │ │S 29€│ │M 42€│ │L 49€│        ││
+│  │ └─────┘ └─────┘ └─────┘        ││
+│  └─────────────────────────────────┘│
+│                                     │
+│  (... scroll ...)                   │
+│                                     │
+├─────────────────────────────────────┤
+│  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓│
+│  49,99€  +127€   [ HINZUFÜGEN ]    │
+│  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓│
+└─────────────────────────────────────┘
+```
+
+---
+
+### 5B.3: KOMPONENTEN-RESET
+
+**LÖSCHEN:**
+- `WizardProgress.tsx` — unnötige Komplexität
+- `SavingsBreakdown.tsx` — Kunden-Feature, nicht Kern
+- `PricePeriodBreakdown.tsx` — Nice-to-have, nicht MVP
+- `PriceTimeline.tsx` — Nice-to-have
+- `QuickStartDialog.tsx` — Verwirrt mehr als hilft
+- `DensityToggle.tsx` — Overengineering
+- `CustomerSessionToggle.tsx` — Kann in ViewModeToggle integriert werden
+
+**BEHALTEN & VEREINFACHEN:**
+- `SummarySidebar.tsx` → Komplett neu (< 150 LOC)
+- `MobileActionFooter.tsx` → Komplett neu (< 80 LOC)
+- `ViewModeToggle.tsx` → Vereinfachen
+- `ActionMenu.tsx` → Vereinfachen
+
+**NEU ERSTELLEN:**
+- `CalculatorHeader.tsx` — Minimaler Header (< 60 LOC)
+- `ConfigSummary.tsx` — Zeigt aktuelle Auswahl (< 50 LOC)
+- `PriceDisplay.tsx` — Hero-Preis-Komponente (< 40 LOC)
+
+---
+
+### 5B.4: DESIGN TOKENS (Vereinfacht)
+
+```css
+/* index.css - NUR diese Tokens verwenden */
+:root {
+  /* Status */
+  --status-success: 142 71% 45%;
+  --status-warning: 38 92% 50%;
+  --status-error: 0 84% 60%;
+  
+  /* Marge-Farben */
+  --margin-positive: var(--status-success);
+  --margin-warning: var(--status-warning);
+  --margin-negative: var(--status-error);
+}
+```
+
+**VERBOT:** Keine `emerald-500`, `amber-500`, `orange-600` etc. im Code!
+
+---
+
+### 5B.5: SIDEBAR NEU (< 150 LOC)
 
 ```typescript
-// CalculatorShell.tsx - Neue Struktur
-export function CalculatorShell({ children, className }: { children: ReactNode; className?: string }) {
+// SummarySidebar.tsx - KOMPLETT NEU
+export function SummarySidebar() {
+  const { option1, result1, effectiveViewMode, quantityBonusForOption1 } = useCalculator();
+  const { addItem, items } = useOfferBasket();
+  const visibility = useSensitiveFieldsVisible(effectiveViewMode);
+  
+  const hasTariff = !!option1.mobile.tariffId;
+  const avgMonthly = result1?.totals.avgTermNet ?? 0;
+  const margin = (result1?.dealer.margin ?? 0) + quantityBonusForOption1;
+  
   return (
-    <div className={cn("flex flex-col h-full w-full bg-surface-base", className)}>
-      {/* COMPACT HEADER */}
-      <CalculatorHeader />
-      
-      {/* MAIN GRID */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_380px] overflow-hidden">
-        {/* LEFT: Stage */}
-        <Stage>{children}</Stage>
-        
-        {/* RIGHT: Summary (Desktop) */}
-        <aside className="hidden lg:block">
-          <SummarySidebar />
-        </aside>
+    <div className="h-full flex flex-col bg-card border-l border-border">
+      {/* HERO PREIS */}
+      <div className="p-6 text-center border-b border-border">
+        <p className="text-sm text-muted-foreground mb-1">Ø Monatlich</p>
+        <p className="text-4xl font-bold tabular-nums">
+          {avgMonthly.toFixed(2)} €
+        </p>
       </div>
       
-      {/* MOBILE FOOTER */}
-      <div className="lg:hidden fixed bottom-0 inset-x-0 z-50">
-        <MobileActionFooter />
+      {/* KONFIGURATION */}
+      <div className="flex-1 p-4 space-y-2 overflow-y-auto">
+        <ConfigLine icon={Smartphone} label={option1.hardware.name || "SIM Only"} />
+        <ConfigLine icon={Signal} label={option1.mobile.tariffId || "Kein Tarif"} />
+        {option1.fixedNet.enabled && (
+          <ConfigLine icon={Wifi} label="Festnetz aktiv" />
+        )}
+      </div>
+      
+      {/* DEALER SECTION (Conditional) */}
+      {visibility.showDealerEconomics && (
+        <div className="p-4 border-t border-border bg-muted/30">
+          <div className="flex justify-between items-center">
+            <span className="text-sm">Marge</span>
+            <MarginBadge margin={margin} />
+          </div>
+        </div>
+      )}
+      
+      {/* CTA (Always visible) */}
+      <div className="p-4 border-t border-border">
+        <Button
+          size="lg"
+          onClick={() => handleAdd()}
+          disabled={!hasTariff}
+          className="w-full"
+        >
+          <Plus className="w-5 h-5 mr-2" />
+          Zum Angebot
+        </Button>
       </div>
     </div>
   );
 }
 ```
 
-### 5B.3: SummarySidebar 2.0
+---
 
-**Komplette Neugestaltung:**
-
-```
-┌─────────────────────────────────────┐
-│  Ø Monat                            │
-│  ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀ │
-│  49,99 €                            │ ← HERO KPI
-│  ──────────────────────────────────│
-│                                     │
-│  📱 iPhone 16 Pro                   │ ← Kompakte Zeile
-│  📶 Business Prime XL (3x)          │
-│  🌐 Festnetz aktiv                  │
-│                                     │
-│  ──────────────────────────────────│
-│  🏷️ TeamDeal          -5%          │ ← Rabatt-Zeilen
-│  🔗 GigaKombi         -5€          │
-│  ──────────────────────────────────│
-│                                     │
-│ ┌─ DEALER SECTION (wenn sichtbar) ┐│
-│ │  Provision    +320,00 €         ││
-│ │  ───────────────────────        ││
-│ │  MARGE        +127,50 €  ✅     ││
-│ └─────────────────────────────────┘│
-│                                     │
-├─────────────────────────────────────┤
-│  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ │
-│  [     ZUM ANGEBOT HINZUFÜGEN    ] │ ← STICKY CTA
-│  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ │
-└─────────────────────────────────────┘
-```
-
-**Key-Änderungen:**
-- Boxen entfernt → Einfache Zeilen mit Icons
-- Farben nur aus Tokens
-- CTA immer sichtbar (sticky)
-- Dealer-Section als optionaler Block
-
-### 5B.4: MobileActionFooter 2.0
-
-**Neues Design:**
-
-```
-┌────────────────────────────────────────────────────────┐
-│  49,99 €/M   │  +127€ ✅  │  [ HINZUFÜGEN ]          │
-│  ────────────┴────────────┴─────────────────────────── │
-│  effektiv       Marge(D)      PRIMARY CTA             │
-└────────────────────────────────────────────────────────┘
-```
-
-**Charakteristiken:**
-- 60px Höhe (Touch-optimiert)
-- 3-Spalten-Grid
-- Marge nur wenn `canShowDealerData`
-- CTA mit voller Breite wenn kein Dealer-Mode
-
-### 5B.5: Step-Components Refactor
-
-**Aktuelle Probleme:**
-- `HardwareStep.tsx` (621 Zeilen) — zu lang
-- `MobileStep.tsx` (495 Zeilen) — zu lang
-- Inkonsistente Card-Styles
-
-**Strategie: Komponentenextraktion**
-
-```
-src/margenkalkulator/ui/steps/
-├── HardwareStep/
-│   ├── index.tsx           (Orchestrator, ~100 LOC)
-│   ├── HardwareCard.tsx    (Single Card, ~80 LOC)
-│   ├── HardwareGrid.tsx    (Grid Layout, ~50 LOC)
-│   ├── HardwareSearch.tsx  (Search/Filter, ~60 LOC)
-│   └── SIMOnlyCard.tsx     (Special Card, ~40 LOC)
-│
-├── MobileStep/
-│   ├── index.tsx           (Orchestrator, ~80 LOC)
-│   ├── TariffCard.tsx      (Single Card, ~100 LOC)
-│   ├── TariffGrid.tsx      (Grid Layout, ~50 LOC)
-│   ├── ContractToggle.tsx  (Neu/VVL Toggle, ~30 LOC)
-│   └── QuantitySelector.tsx (Quantity Input, ~40 LOC)
-│
-└── FixedNetStep/
-    └── index.tsx           (Bleibt kompakt)
-```
-
-### 5B.6: Header 2.0 (CalculatorHeader)
-
-**Neue Komponente:**
+### 5B.6: MOBILE FOOTER NEU (< 80 LOC)
 
 ```typescript
-// src/margenkalkulator/ui/components/CalculatorHeader.tsx
-
-export function CalculatorHeader() {
-  const { viewMode, setViewMode, effectiveViewMode, canShowDealerData } = useCalculator();
-  const { session: customerSession } = useCustomerSession();
+// MobileActionFooter.tsx - KOMPLETT NEU
+export function MobileActionFooter() {
+  const { option1, result1, effectiveViewMode, quantityBonusForOption1 } = useCalculator();
+  const { addItem } = useOfferBasket();
+  const visibility = useSensitiveFieldsVisible(effectiveViewMode);
+  
+  const hasTariff = !!option1.mobile.tariffId;
+  const avgMonthly = result1?.totals.avgTermNet ?? 0;
+  const margin = (result1?.dealer.margin ?? 0) + quantityBonusForOption1;
+  
+  if (!hasTariff) return null;
   
   return (
-    <header className="flex-none h-14 bg-card border-b border-border px-4 flex items-center justify-between">
-      {/* Left: Title */}
-      <div className="flex items-center gap-3">
-        <h1 className="text-lg font-semibold">Kalkulator</h1>
-        {customerSession.isActive && (
-          <Badge variant="destructive" className="text-xs">
-            <Lock className="w-3 h-3 mr-1" />
-            Kunden-Modus
-          </Badge>
-        )}
+    <div className="h-16 bg-card border-t border-border px-4 flex items-center gap-4">
+      {/* Preis */}
+      <div className="flex-1">
+        <p className="text-lg font-bold tabular-nums">{avgMonthly.toFixed(2)} €</p>
+        <p className="text-xs text-muted-foreground">Ø/Monat</p>
       </div>
       
-      {/* Right: Actions */}
+      {/* Marge (Conditional) */}
+      {visibility.showDealerEconomics && (
+        <MarginBadge margin={margin} size="sm" />
+      )}
+      
+      {/* CTA */}
+      <Button size="default" onClick={() => handleAdd()}>
+        <Plus className="w-4 h-4 mr-1" />
+        Hinzufügen
+      </Button>
+    </div>
+  );
+}
+```
+
+---
+
+### 5B.7: WIZARD NEU (< 400 LOC)
+
+**Aktuelle Wizard.tsx: 700 LOC → Ziel: < 400 LOC**
+
+**Entfernen:**
+- QuickStartDialog Integration
+- WizardRestoreDialog Integration  
+- OnboardingTour Integration
+- DensityToggle
+- WizardProgress (8+ Props)
+- CustomerSessionToggle
+- Demo-Mode Banner
+- GigaKombi Toast Logic
+
+**Behalten:**
+- CalculatorProvider Wrapper
+- CalculatorShell Layout
+- Accordion Steps
+- SummarySidebar (Context-basiert)
+- MobileActionFooter (Context-basiert)
+
+---
+
+### 5B.8: HEADER NEU (< 60 LOC)
+
+```typescript
+// CalculatorHeader.tsx - MINIMAL
+export function CalculatorHeader() {
+  const { effectiveViewMode, setViewMode } = useCalculator();
+  
+  return (
+    <header className="h-12 bg-card border-b border-border px-4 flex items-center justify-between">
+      <h1 className="text-lg font-semibold">Kalkulator</h1>
+      
       <div className="flex items-center gap-2">
-        <ViewModeToggle compact />
-        <ActionMenu compact />
+        <ViewModeToggle 
+          value={effectiveViewMode} 
+          onChange={setViewMode}
+        />
+        <ActionMenu />
       </div>
     </header>
   );

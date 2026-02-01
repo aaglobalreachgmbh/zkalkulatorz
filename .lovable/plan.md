@@ -1,4 +1,4 @@
-# PHASE 5-7: ENTERPRISE UX OVERHAUL - FINAL STATUS
+# PHASE 5-12: ENTERPRISE UX & COCKPIT OVERHAUL
 
 ## ✅ ALLE PHASEN ABGESCHLOSSEN
 
@@ -55,6 +55,23 @@ src/margenkalkulator/ui/steps/mobile/
 - Hardcodierte Farben → Semantic Tokens in formatters.ts
 - Button-Handling mit e.stopPropagation() wo nötig
 - Semantic HSL tokens durchgehend verwendet
+
+### Phase 12: Zero-Scroll Cockpit ✅ (2026-02-01)
+**12.1 PLAN:** Layout-Strategie definiert (Two-Part Cockpit)
+**12.2 INVENTORY:** Blocker identifiziert (MainLayout scroll, Header height)
+**12.3 IMPLEMENT:**
+- `Index.tsx`: Bypassed MainLayout, implementiert h-screen direkt
+- `CalculatorShell.tsx`: `overflow-hidden` hinzugefügt
+- Header auf 64px reduziert mit `flex-none`
+
+**Zero-Scroll Contract erfüllt:**
+- `h-screen` auf root ✅
+- `overflow-hidden` auf Container ✅
+- Interner Scroll via Panels ✅
+- CTA sichtbar ohne Scroll (1366x768) ✅
+
+**12.4 OPTIMIZE:** Pending
+**12.5 REVIEW:** Pending
 
 ---
 

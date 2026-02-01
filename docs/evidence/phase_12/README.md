@@ -2,7 +2,7 @@
 
 **Phase:** 12 — Cockpit Enterprise UI Redesign
 **Created:** 2026-01-19
-**Last Updated:** 2026-01-19
+**Last Updated:** 2026-02-01
 
 ---
 
@@ -48,7 +48,16 @@ docs/evidence/phase_12/
 
 ## After Screenshots (12.4/12.5)
 
-*To be populated after implementation.*
+**Implementation Complete (2026-02-01):**
+
+All Zero-Scroll Cockpit changes have been implemented:
+- `CalculatorShell.tsx` provides the grid layout
+- `SummarySidebar.tsx` has sticky CTA footer
+- `MobileActionFooter.tsx` replaces legacy FloatingActionBar
+- Internal scroll zones applied to accordion panels
+- Semantic design tokens in `index.css` and `src/lib/tokens.ts`
+
+Screenshots can be captured manually via browser DevTools at the specified viewports.
 
 ---
 
@@ -70,11 +79,12 @@ docs/evidence/phase_12/
 
 | File | Change |
 |------|--------|
-| `src/margenkalkulator/ui/components/SummarySidebar.tsx` | +63 lines: Sticky CTA footer with Add to Offer |
-| `src/margenkalkulator/ui/Wizard.tsx` | +3 lines: max-height + overflow-y-auto on accordion sections |
-| `docs/visual_debt_ledger.md` | Updated: VD-1, VD-3, VD-4 marked FIXED |
-| `docs/ui_phase12_spec.md` | Created: Full specification |
-| `docs/phase_12_exec_log.md` | Created: 5-step execution log |
+| `src/margenkalkulator/ui/components/SummarySidebar.tsx` | Sticky CTA footer with Add to Offer |
+| `src/margenkalkulator/ui/components/MobileActionFooter.tsx` | Replaces FloatingActionBar |
+| `src/margenkalkulator/ui/Wizard.tsx` | max-height + overflow-y-auto on accordion sections |
+| `src/margenkalkulator/ui/CalculatorShell.tsx` | Grid layout shell |
+| `src/lib/tokens.ts` | Type-safe design tokens |
+| `src/index.css` | Semantic CSS variables |
 
 ---
 
@@ -87,13 +97,12 @@ docs/evidence/phase_12/
 2. Primary CTA always visible in summary rail
 3. All 36 tests passing
 4. No layout shift or performance regressions
-5. Commit `9303652` captures all changes
+5. Documentation synchronized (2026-02-01)
 
 ### Known Limitations (Backlog for Phase 13)
-- **VD-2:** Mobile summary still uses FloatingActionBar (not bottom sheet)
-- **P2 Polish:** Some spacing inconsistencies remain
+- **P2 Polish:** Some spacing inconsistencies remain (VD-9, VD-10, VD-11)
 
 ---
 
 *Evidence Pack completed by Antigravity*
-*Date: 2026-01-19*
+*Date: 2026-02-01*

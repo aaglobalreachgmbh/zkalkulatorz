@@ -1,8 +1,8 @@
 # 🔍 Visual Debt Ledger (Phase 12)
 
-**Version:** 2.1
-**Date:** 2026-01-19
-**Status:** INVENTORY COMPLETE
+**Version:** 3.0
+**Date:** 2026-02-01
+**Status:** ✅ IMPLEMENTATION COMPLETE
 
 ---
 
@@ -27,10 +27,8 @@
 ### Critical Layout Components
 | Path | Lines | Purpose |
 |------|-------|---------|
-| `src/margenkalkulator/ui/components/SummarySidebar.tsx` | 12KB | Right rail summary |
-| `src/margenkalkulator/ui/components/FloatingActionBar.tsx` | 7KB | Mobile bottom bar |
-| `src/margenkalkulator/ui/components/StickyPriceBar.tsx` | 9KB | Mini-summary when scrolling |
-| `src/margenkalkulator/ui/components/WizardProgress.tsx` | 3KB | Step indicator |
+| `src/margenkalkulator/ui/components/SummarySidebar.tsx` | 12KB | Right rail summary (with sticky CTA) |
+| `src/margenkalkulator/ui/components/MobileActionFooter.tsx` | 4KB | Mobile bottom bar |
 | `src/margenkalkulator/ui/components/LiveCalculationBar.tsx` | 12KB | Live totals |
 
 ### View Mode Guards
@@ -48,18 +46,18 @@
 | ID | Issue | Location | Root Cause | Status |
 |----|-------|----------|------------|--------|
 | **VD-1** | ~~Page scrolls on 1366×768~~ | `Wizard.tsx:636,680,729` | Accordion expands → pushes content | ✅ **FIXED** (max-h + overflow-y-auto) |
-| **VD-2** | Summary hidden on mobile | `Wizard.tsx:779-790` | `hidden lg:block` class | ⚠️ Open (FloatingActionBar used) |
+| **VD-2** | ~~Summary hidden on mobile~~ | `MobileActionFooter.tsx` | `hidden lg:block` class | ✅ **FIXED** (MobileActionFooter) |
 | **VD-3** | ~~CTA not always visible~~ | `SummarySidebar.tsx:347-410` | Only on mobile, not in rail | ✅ **FIXED** (Sticky footer added) |
 | **VD-4** | ~~Accordion sections too tall~~ | `Wizard.tsx:636,680,729` | Full content expanded | ✅ **FIXED** (max-height applied) |
 
 ### P1 — Important (UX Degradation)
 
-| ID | Issue | Location | Root Cause | Fix Strategy |
-|----|-------|----------|------------|--------------|
-| **VD-5** | Weak visual hierarchy | Multiple | Inconsistent font sizes | Apply typography scale |
-| **VD-6** | Too many controls in header | `Wizard.tsx:515-565` | All modes shown | Group into dropdown |
-| **VD-7** | Tariff list causes scroll | `MobileStep.tsx` | Vertical card stack | Grid or compact list |
-| **VD-8** | No sticky totals during scroll | — | StickyPriceBar only on tariff select | Always show in rail |
+| ID | Issue | Location | Root Cause | Status |
+|----|-------|----------|------------|--------|
+| **VD-5** | ~~Weak visual hierarchy~~ | Multiple | Inconsistent font sizes | ✅ **FIXED** (Semantic tokens in index.css) |
+| **VD-6** | ~~Too many controls in header~~ | `Wizard.tsx:515-565` | All modes shown | ✅ **FIXED** (ModeSelector consolidation) |
+| **VD-7** | ~~Tariff list causes scroll~~ | `MobileStep.tsx` | Vertical card stack | ✅ **FIXED** (TariffGrid component) |
+| **VD-8** | ~~No sticky totals during scroll~~ | — | StickyPriceBar only on tariff select | ✅ **FIXED** (SummarySidebar sticky) |
 
 ### P2 — Polish (Nice to Have)
 
@@ -71,6 +69,17 @@
 
 ---
 
+## Deleted Components (Phase 5C Cleanup)
+
+The following legacy components have been removed:
+- `FloatingActionBar.tsx` → Replaced by `MobileActionFooter.tsx`
+- `StickyPriceBar.tsx` → Integrated into `SummarySidebar.tsx`
+- `WizardProgress.tsx` → Removed (redundant)
+- `SmartAdvisor*.tsx` → Removed (feature cut)
+- `AiConsultant.tsx` → Removed (feature cut)
+
+---
+
 ## Baseline Scroll Analysis (Manual)
 
 Based on `Wizard.tsx` structure at 1366×768:
@@ -79,18 +88,16 @@ Based on `Wizard.tsx` structure at 1366×768:
 |------|-------------|--------|--------|
 | Header | 64px | 64px | ✅ |
 | Sub-header | 48px | 48px | ✅ |
-| Wizard Progress | 40px | — | ⚠️ Extra |
-| StickyPriceBar | 80px | — | ⚠️ Extra |
-| Accordion (expanded) | **600px+** | 500px | ❌ OVERFLOW |
+| Accordion (expanded) | **max-h-[500px]** | 500px | ✅ FIXED |
 | Summary Sidebar | 400px | 500px | ✅ |
 
-**Root Cause of Scroll:** Accordion content (HardwareStep + MobileStep) exceeds available height when expanded.
+**Root Cause of Scroll:** RESOLVED — Internal scroll zones applied to accordion panels.
 
 ---
 
-## Recommended Layout Changes
+## Applied Layout Changes
 
-### 1. Structural Fix
+### 1. Structural Fix ✅
 ```diff
 - Accordion type="single" collapsible
 + Internal scroll zones within each accordion panel
@@ -98,20 +105,20 @@ Based on `Wizard.tsx` structure at 1366×768:
 + overflow-y: auto
 ```
 
-### 2. Summary Rail Fix
+### 2. Summary Rail Fix ✅
 ```diff
 + SummarySidebar gets sticky footer with primary CTA
 + Always-visible totals at top of rail
 + Compact mode for 768px height
 ```
 
-### 3. Mobile Adaptation
+### 3. Mobile Adaptation ✅
 ```diff
 - FloatingActionBar only
-+ Bottom sheet with expandable summary
++ MobileActionFooter with expandable summary
 + Sticky CTA bar (60px)
 ```
 
 ---
 
-*Ledger created by Antigravity (Phase 12.2 INVENTORY)*
+*Ledger completed by Antigravity (Phase 12 COMPLETE)*

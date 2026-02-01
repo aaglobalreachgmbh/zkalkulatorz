@@ -31,17 +31,11 @@
 
 ## ❌ NOCH OFFEN
 
-### Phase 5B Teil 2: Header-Reduzierung (~1h)
-**Aktueller Zustand (Wizard.tsx Zeile 411-436):**
-```text
-Header: [Session Badge] [flex-spacer] [CustomerSessionToggle] [ViewModeToggle] [ActionMenu]
-```
-**Ziel:** `[Modus ▾] [⋮]` (2 Elemente)
-
-**Offene Aufgaben:**
-1. `CustomerSessionToggle` in ActionMenu verschieben
-2. `ViewModeToggle` als kompakten Dropdown "Modus" gestalten
-3. Session Badge nur bei aktiver Session anzeigen (bereits so)
+### Phase 5B Teil 2: Header-Reduzierung ✅
+**Status:** ABGESCHLOSSEN
+- ✅ `ModeSelector.tsx` erstellt (kombiniert ViewMode + CustomerSession)
+- ✅ Header reduziert auf `[Modus ▾] [⋮]` (2 Elemente)
+- ✅ Session-Badge in ModeSelector integriert
 
 ### Phase 5B Teil 3: Sidebar Redesign (~2h)
 **Aktueller Zustand:**
@@ -56,16 +50,16 @@ Header: [Session Badge] [flex-spacer] [CustomerSessionToggle] [ViewModeToggle] [
    - Marge mit Progress Bar
    - Primärer CTA
 
-### Phase 5C Teil 2: Verbleibende Löschungen (~30min)
+### Phase 5C Teil 2: Verbleibende Löschungen ✅
 | Komponente | LOC | Status |
 |------------|-----|--------|
-| `WelcomeWidget.tsx` | 272 | ❌ Noch vorhanden, ungenutzt |
+| `WelcomeWidget.tsx` | 272 | ✅ GELÖSCHT |
 
-### Phase 5C Teil 3: Konsolidierung (~1h)
+### Phase 5C Teil 3: Konsolidierung 🟡
 | Von | Nach | Status |
 |-----|------|--------|
 | `AnimatedCurrency.tsx` + `MarginBadge.tsx` | `PriceDisplay.tsx` | ❌ Ausstehend |
-| `ViewModeToggle.tsx` + `CustomerSessionToggle.tsx` | `ModeSelector.tsx` | ❌ Ausstehend |
+| `ViewModeToggle.tsx` + `CustomerSessionToggle.tsx` | `ModeSelector.tsx` | ✅ `ModeSelector.tsx` erstellt, alte Komponenten bleiben für Rückwärtskompatibilität |
 
 ### Phase 6: Step-Modularisierung (~4h)
 | Datei | Aktuell | Ziel | Status |
@@ -101,20 +95,20 @@ src/margenkalkulator/ui/steps/mobile/
 
 | Metrik | Vorher | Aktuell | Ziel | Status |
 |--------|--------|---------|------|--------|
-| Gelöschte Komponenten | 0 | ~12 | ~12 | ✅ |
+| Gelöschte Komponenten | 0 | ~13 | ~12 | ✅ |
 | `SummarySidebar.tsx` LOC | 419 | 432 | 150 | ❌ |
 | `HardwareStep.tsx` LOC | 621 | 621 | 200 | ❌ |
-| Header-Elemente | 8+ | 4 | 3 | 🟡 |
+| Header-Elemente | 8+ | 2 | 3 | ✅ |
 | Semantic Tokens | ❌ | ✅ | ✅ | ✅ |
 
 ---
 
 ## EMPFOHLENE REIHENFOLGE
 
-1. **Phase 5B Teil 2**: Header-Reduzierung (Quick Win)
-2. **Phase 5C Teil 2+3**: WelcomeWidget löschen + Konsolidierung
-3. **Phase 5B Teil 3**: Sidebar Redesign
+1. ~~**Phase 5B Teil 2**: Header-Reduzierung (Quick Win)~~ ✅
+2. ~~**Phase 5C Teil 2+3**: WelcomeWidget löschen + Konsolidierung~~ ✅
+3. **Phase 5B Teil 3**: Sidebar Redesign ← NÄCHSTER SCHRITT
 4. **Phase 6**: Step-Modularisierung (größter Aufwand)
 5. **Phase 7**: Polish & A11y
 
-**Geschätzte Restzeit:** ~10h
+**Geschätzte Restzeit:** ~8h

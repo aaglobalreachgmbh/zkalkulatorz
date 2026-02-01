@@ -1,80 +1,73 @@
 
-# PHASE 5-7: STATUS-REPORT & NÄCHSTE SCHRITTE
 
-## ✅ ABGESCHLOSSEN
+# PHASE 5-7: AKTUELLER STATUS & NÄCHSTE SCHRITTE
+
+## ✅ ABGESCHLOSSEN (Verifiziert)
 
 ### Phase 5A: Context-Finalisierung ✅
-| Komponente | Status | Details |
-|------------|--------|---------|
-| `SummarySidebar.tsx` | ✅ DONE | Verwendet `useCalculator()`, Props: 11 → 2 |
-| `MobileActionFooter.tsx` | ✅ DONE | Verwendet `useCalculator()`, Props: 5 → 1 |
-| `Wizard.tsx` | ✅ DONE | Vereinfachte Prop-Übergabe |
+| Komponente | Status | Verifiziert |
+|------------|--------|-------------|
+| `SummarySidebar.tsx` | ✅ | Verwendet `useCalculator()`, Props reduziert |
+| `MobileActionFooter.tsx` | ✅ | Verwendet `useCalculator()` |
+| `Wizard.tsx` | ✅ | Vereinfachte Prop-Übergabe |
 
 ### Phase 5B Teil 1: Semantic Design Tokens ✅
-| Element | Status |
-|---------|--------|
-| `--status-success/warning/error` | ✅ In index.css |
-| `--margin-positive/neutral/negative` | ✅ In index.css |
-| Utility-Klassen (`.text-margin-positive`, etc.) | ✅ In index.css |
+- `--status-success/warning/error` in index.css ✅
+- `--margin-positive/neutral/negative` in index.css ✅
+- Utility-Klassen vorhanden ✅
 
-### Phase 5C Teil 1: Komponenten-Löschung ✅
-**11 Komponenten gelöscht (~1.800 LOC entfernt):**
-- ✅ `WizardProgress.tsx`
-- ✅ `QuickStartDialog.tsx`
-- ✅ `SmartAdvisor.tsx` & `SmartAdvisorBadge.tsx`
-- ✅ `AiConsultant.tsx` & `AiRecommendationsPanel.tsx`
-- ✅ `PriceTimeline.tsx` & `SavingsBreakdown.tsx`
-- ✅ `ConfigurableDashboard.tsx` & `SortableWidget.tsx`
-- ✅ `DensityToggle.tsx`
+### Phase 5B Teil 2: Header-Reduzierung ✅
+- `ModeSelector.tsx` erstellt (154 LOC) ✅
+- Kombiniert ViewMode + CustomerSession in einem Dropdown ✅
+- Header auf `[Modus ▾] [⋮]` reduziert ✅
+
+### Phase 5C Teil 1+2: Komponenten-Löschung ✅
+**~13 Komponenten gelöscht (~2.100 LOC entfernt):**
+- ✅ WizardProgress, QuickStartDialog, SmartAdvisor, SmartAdvisorBadge
+- ✅ AiConsultant, AiRecommendationsPanel, PriceTimeline, SavingsBreakdown
+- ✅ ConfigurableDashboard, SortableWidget, DensityToggle, WelcomeWidget
 
 ---
 
 ## ❌ NOCH OFFEN
 
-### Phase 5B Teil 2: Header-Reduzierung ✅
-**Status:** ABGESCHLOSSEN
-- ✅ `ModeSelector.tsx` erstellt (kombiniert ViewMode + CustomerSession)
-- ✅ Header reduziert auf `[Modus ▾] [⋮]` (2 Elemente)
-- ✅ Session-Badge in ModeSelector integriert
-
 ### Phase 5B Teil 3: Sidebar Redesign (~2h)
 **Aktueller Zustand:**
-- `SummarySidebar.tsx`: **432 LOC** (Ziel: ~150)
-- Komplexe Struktur mit 3 Boxed-Cards + Discounts + Actions
+```text
+SummarySidebar.tsx: 432 LOC (Ziel: ~150 LOC)
+```
+
+**Problem:** Zu viele Elemente, 3 separate Boxed-Cards für Hardware/Mobilfunk/Festnetz
 
 **Offene Aufgaben:**
 1. `CompactConfigSummary.tsx` erstellen (Hero KPI Pattern)
-2. Sidebar auf Kern-Elemente reduzieren:
-   - Hero-Preis (48px)
+2. Sidebar auf Kern-Elemente komprimieren:
+   - Hero-Preis (48px Font)
    - Kompakte Konfig-Zusammenfassung (1 Zeile)
    - Marge mit Progress Bar
    - Primärer CTA
 
-### Phase 5C Teil 2: Verbleibende Löschungen ✅
-| Komponente | LOC | Status |
-|------------|-----|--------|
-| `WelcomeWidget.tsx` | 272 | ✅ GELÖSCHT |
-
-### Phase 5C Teil 3: Konsolidierung 🟡
+### Phase 5C Teil 3: Konsolidierung (~30min)
 | Von | Nach | Status |
 |-----|------|--------|
 | `AnimatedCurrency.tsx` + `MarginBadge.tsx` | `PriceDisplay.tsx` | ❌ Ausstehend |
-| `ViewModeToggle.tsx` + `CustomerSessionToggle.tsx` | `ModeSelector.tsx` | ✅ `ModeSelector.tsx` erstellt, alte Komponenten bleiben für Rückwärtskompatibilität |
+| `ViewModeToggle.tsx` | Kann entfernt werden | 🟡 Noch von GlobalControls.tsx verwendet |
+| `CustomerSessionToggle.tsx` | Kann entfernt werden | 🟡 Noch vorhanden |
 
 ### Phase 6: Step-Modularisierung (~4h)
 | Datei | Aktuell | Ziel | Status |
 |-------|---------|------|--------|
-| `HardwareStep.tsx` | **621 LOC** | 200 LOC | ❌ Nicht modularisiert |
-| `MobileStep.tsx` | ~495 LOC | 150 LOC | ❌ Nicht modularisiert |
+| `HardwareStep.tsx` | **621 LOC** | 200 LOC | ❌ Monolithisch |
+| `MobileStep.tsx` | ~500 LOC | 150 LOC | ❌ Monolithisch |
 
 **Geplante Struktur:**
 ```text
 src/margenkalkulator/ui/steps/hardware/
-├── HardwareGrid.tsx
-├── HardwareCard.tsx
-├── HardwareFilters.tsx
-├── HardwareSearch.tsx
-└── index.tsx
+├── HardwareGrid.tsx       ← Karten-Grid
+├── HardwareCard.tsx       ← Einzelne Karte
+├── HardwareFilters.tsx    ← Brand/Category Filter
+├── HardwareSearch.tsx     ← Suchfeld
+└── index.tsx              ← Orchestrator
 
 src/margenkalkulator/ui/steps/mobile/
 ├── TariffGrid.tsx
@@ -85,9 +78,9 @@ src/margenkalkulator/ui/steps/mobile/
 ```
 
 ### Phase 7: Polish & Accessibility (~2h)
-- ❌ Hardcodierte Farben migrieren (z.B. `text-amber-500` → `text-[hsl(var(--status-warning))]`)
+- ❌ Hardcodierte Farben migrieren (`text-amber-500` → semantic tokens)
 - ❌ Button Event-Bubbling systematisch prüfen
-- ❌ A11y: Focus-Management, ARIA-Labels, Screen Reader Support
+- ❌ A11y: Focus-Management, ARIA-Labels
 
 ---
 
@@ -98,17 +91,39 @@ src/margenkalkulator/ui/steps/mobile/
 | Gelöschte Komponenten | 0 | ~13 | ~12 | ✅ |
 | `SummarySidebar.tsx` LOC | 419 | 432 | 150 | ❌ |
 | `HardwareStep.tsx` LOC | 621 | 621 | 200 | ❌ |
-| Header-Elemente | 8+ | 2 | 3 | ✅ |
+| Header-Elemente | 8+ | 2 | 2-3 | ✅ |
 | Semantic Tokens | ❌ | ✅ | ✅ | ✅ |
 
 ---
 
-## EMPFOHLENE REIHENFOLGE
+## EMPFOHLENE NÄCHSTE SCHRITTE
 
-1. ~~**Phase 5B Teil 2**: Header-Reduzierung (Quick Win)~~ ✅
-2. ~~**Phase 5C Teil 2+3**: WelcomeWidget löschen + Konsolidierung~~ ✅
-3. **Phase 5B Teil 3**: Sidebar Redesign ← NÄCHSTER SCHRITT
-4. **Phase 6**: Step-Modularisierung (größter Aufwand)
-5. **Phase 7**: Polish & A11y
+### Option A: Sidebar-First (Visueller Impact)
+1. **Phase 5B Teil 3**: Sidebar Redesign (~2h)
+   - CompactConfigSummary.tsx erstellen
+   - SummarySidebar.tsx von 432 → ~150 LOC reduzieren
+2. **Phase 5C Teil 3**: Konsolidierung (~30min)
+   - AnimatedCurrency + MarginBadge → PriceDisplay
+3. **Phase 6**: Step-Modularisierung (~4h)
+4. **Phase 7**: Polish (~2h)
 
-**Geschätzte Restzeit:** ~8h
+### Option B: Modularisierung-First (Technische Schulden)
+1. **Phase 6**: Step-Modularisierung (~4h)
+   - HardwareStep aufteilen
+   - MobileStep aufteilen
+2. **Phase 5B Teil 3**: Sidebar Redesign (~2h)
+3. **Phase 5C Teil 3**: Konsolidierung (~30min)
+4. **Phase 7**: Polish (~2h)
+
+---
+
+## GESCHÄTZTE RESTZEIT
+
+| Phase | Aufwand |
+|-------|---------|
+| 5B Teil 3 (Sidebar) | ~2h |
+| 5C Teil 3 (Konsolidierung) | ~30min |
+| 6 (Modularisierung) | ~4h |
+| 7 (Polish & A11y) | ~2h |
+| **TOTAL** | **~8.5h** |
+

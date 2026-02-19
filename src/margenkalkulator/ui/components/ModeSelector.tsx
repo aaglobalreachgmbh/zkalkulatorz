@@ -1,6 +1,6 @@
 // ============================================
-// Mode Selector - Consolidated View/Session Control
-// Phase 5B: Combines ViewModeToggle + CustomerSession
+// Mode Selector - Redesign: Slim Dropdown
+// Same functionality, cleaner visuals
 // ============================================
 
 import { Eye, Calculator, Lock, Unlock, ChevronDown, ShieldCheck } from "lucide-react";
@@ -26,84 +26,75 @@ interface ModeSelectorProps {
   showSessionToggle?: boolean;
 }
 
-export function ModeSelector({ 
-  value, 
-  onChange, 
+export function ModeSelector({
+  value,
+  onChange,
   allowCustomerMode = true,
-  showSessionToggle = true 
+  showSessionToggle = true,
 }: ModeSelectorProps) {
   const { session, toggleSession } = useCustomerSession();
   const { hasAdminFullVisibility } = useSensitiveFieldsVisible(value);
-  
+
   const isCustomerMode = value === "customer";
   const isDealerMode = value === "dealer";
   const isSessionActive = session.isActive;
-  
-  // Determine display label
-  const currentLabel = isCustomerMode ? "Kunde" : "Händler";
-  const CurrentIcon = isCustomerMode ? Eye : Calculator;
-  
+
+  const currentLabel = isSessionActive ? "Gesichert" : isCustomerMode ? "Kunde" : "Händler";
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button 
-          variant="outline" 
-          size="sm" 
+        <Button
+          variant="outline"
+          size="sm"
           className={cn(
-            "gap-2 min-w-[100px]",
-            isSessionActive && "border-amber-500 bg-amber-500/10"
+            "gap-2 min-w-[100px] text-sm font-medium",
+            isSessionActive && "border-amber-400 bg-amber-50 text-amber-700"
           )}
         >
           {isSessionActive ? (
-            <Lock className="w-4 h-4 text-amber-600" />
+            <Lock className="w-3.5 h-3.5" />
+          ) : isDealerMode ? (
+            <Calculator className="w-3.5 h-3.5" />
           ) : (
-            <CurrentIcon className="w-4 h-4" />
+            <Eye className="w-3.5 h-3.5" />
           )}
-          <span>{isSessionActive ? "Gesichert" : currentLabel}</span>
+          {currentLabel}
           <ChevronDown className="w-3 h-3 opacity-50" />
         </Button>
       </DropdownMenuTrigger>
-      
+
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="text-xs text-muted-foreground">
+        <DropdownMenuLabel className="text-xs text-gray-500">
           Ansichtsmodus
         </DropdownMenuLabel>
-        
-        {/* Customer Mode */}
-        <DropdownMenuItem 
+
+        <DropdownMenuItem
           onClick={() => onChange("customer")}
           disabled={!allowCustomerMode || isSessionActive}
-          className={cn(
-            "gap-3 cursor-pointer",
-            isCustomerMode && "bg-accent"
-          )}
+          className={cn("gap-3 cursor-pointer", isCustomerMode && "bg-gray-100")}
         >
           <Eye className="w-4 h-4" />
           <div className="flex-1">
-            <p className="font-medium">Kundenansicht</p>
-            <p className="text-xs text-muted-foreground">Nur Kundenpreise sichtbar</p>
+            <p className="font-medium text-sm">Kundenansicht</p>
+            <p className="text-xs text-gray-500">Nur Kundenpreise</p>
           </div>
-          {isCustomerMode && <Badge variant="secondary" className="text-xs">Aktiv</Badge>}
+          {isCustomerMode && <Badge variant="secondary" className="text-[10px]">Aktiv</Badge>}
         </DropdownMenuItem>
-        
-        {/* Dealer Mode */}
-        <DropdownMenuItem 
+
+        <DropdownMenuItem
           onClick={() => onChange("dealer")}
           disabled={isSessionActive}
-          className={cn(
-            "gap-3 cursor-pointer",
-            isDealerMode && "bg-accent"
-          )}
+          className={cn("gap-3 cursor-pointer", isDealerMode && "bg-gray-100")}
         >
           <Calculator className="w-4 h-4" />
           <div className="flex-1">
-            <p className="font-medium">Händleransicht</p>
-            <p className="text-xs text-muted-foreground">EK, Provisionen, Marge</p>
+            <p className="font-medium text-sm">Händleransicht</p>
+            <p className="text-xs text-gray-500">EK, Provisionen, Marge</p>
           </div>
-          {isDealerMode && <Badge variant="secondary" className="text-xs">Aktiv</Badge>}
+          {isDealerMode && <Badge variant="secondary" className="text-[10px]">Aktiv</Badge>}
         </DropdownMenuItem>
-        
-        {/* Admin indicator */}
+
         {hasAdminFullVisibility && isCustomerMode && !isSessionActive && (
           <>
             <DropdownMenuSeparator />
@@ -113,35 +104,34 @@ export function ModeSelector({
             </div>
           </>
         )}
-        
-        {/* Session Toggle */}
+
         {showSessionToggle && (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuLabel className="text-xs text-muted-foreground">
+            <DropdownMenuLabel className="text-xs text-gray-500">
               Sicherheit
             </DropdownMenuLabel>
-            <DropdownMenuItem 
+            <DropdownMenuItem
               onClick={toggleSession}
               className={cn(
                 "gap-3 cursor-pointer",
-                isSessionActive && "bg-amber-500/10 text-amber-700 dark:text-amber-300"
+                isSessionActive && "bg-amber-50 text-amber-700"
               )}
             >
               {isSessionActive ? (
                 <>
                   <Lock className="w-4 h-4" />
                   <div className="flex-1">
-                    <p className="font-medium">Kundensitzung beenden</p>
-                    <p className="text-xs opacity-70">Händlerdaten wieder freigeben</p>
+                    <p className="font-medium text-sm">Kundensitzung beenden</p>
+                    <p className="text-xs opacity-70">Händlerdaten freigeben</p>
                   </div>
                 </>
               ) : (
                 <>
                   <Unlock className="w-4 h-4" />
                   <div className="flex-1">
-                    <p className="font-medium">Kundensitzung starten</p>
-                    <p className="text-xs opacity-70">Alle Händlerdaten sperren</p>
+                    <p className="font-medium text-sm">Kundensitzung starten</p>
+                    <p className="text-xs opacity-70">Händlerdaten sperren</p>
                   </div>
                 </>
               )}

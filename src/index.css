@@ -3,10 +3,13 @@
 @tailwind utilities;
 
 @layer base {
-  /* Zero-Scroll Enforcement - Application Shell */
+  /* Zero-Scroll: nur für den Kalkulator aktiv (via .kalkulator-root Klasse) */
   html, body, #root {
     height: 100%;
     width: 100%;
+  }
+
+  .kalkulator-root {
     overflow: hidden;
     overscroll-behavior: none;
   }

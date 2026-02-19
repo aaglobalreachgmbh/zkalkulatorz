@@ -1,90 +1,124 @@
 
 
-# Plan: Kompletter visueller Neuaufbau /wizard nach Screenshot-Vorlage
-
-## Analyse: Was stimmt nicht?
-
-Das aktuelle Layout hat zwar die richtige Grundstruktur (Shell + Sidebar + Steps), aber die visuelle Ausfuehrung weicht stark vom Screenshot-Design ab. Das gesamte Styling muss von Grund auf neu geschrieben werden - nicht angepasst, sondern ersetzt.
+# Plan: Hardware-Seite (Step 1) komplett neu gestalten
 
 ## Design-Referenz (aus Screenshots)
 
-### Screenshot 1 (screen-3.png):
-- Weisse, grossflaechige Produktkarten mit Bild LINKS (ca. 150px) und Details RECHTS
-- Gruppierung: "Smartphones" / "Tablets" als grosse Ueberschriften
-- Badges: Gruener "Stock Available", grauer "24 Month Contract"
-- Preise: "MONTHLY 79.99 EUR" links, "ONE-TIME 1.00 EUR" rechts
-- Roter "Add to Offer" Button volle Breite unter jedem Produkt
-- Rechte Sidebar: Zwei getrennte weisse Boxen (Customer Totals + Dealer Margins)
-- Step-Bar: Einfacher Text "Step 1: Hardware Selection - Step 1 Alt"
+Das neue Design zeigt zwei Varianten, die wir kombinieren:
 
-### Screenshot 2 (screen-4.png):
-- Kompaktere Karten: Bild links (80px), Name + Specs + Monthly + "Add to Offer" Button rechts
-- Gruppierung nach Marke: Apple, Samsung, SIM-Only
-- Step-Indicator als dunkler Pill-Button
-- Sidebar: "DEALER MODE OVERVIEW" mit Lock-Icon, "INTERNAL ONLY"
-- "Proceed to Step 2" roter Button unten rechts
+### Screenshot 1 (screen-5.png) - Hauptreferenz:
+- **Gruppierung nach Marke**: "Apple", "Samsung", "SIM-Only" als grosse, fette Ueberschriften
+- **Horizontale Produkt-Karten**: Bild LINKS (ca. 100-120px), Details RECHTS
+- **Karten-Layout**: 2 Karten pro Zeile, weisser Hintergrund, hellgrauer Rand, abgerundete Ecken
+- **Karten-Inhalt**: Produktname (bold), Specs-Zeile (Farbe, Speicher, Datenvolumen), "Monthly" Label + Preis (bold), roter "Add to Offer" Button rechts unten
+- **Suchfeld**: Oben rechts neben Step-Indicator, schlicht mit Lupe-Icon
+- **Titel**: "Hardware Selection" gross, darunter "Configure customer devices and SIMs."
+- **Step-Bar**: Dunkler Pill-Button "Step 1: Hardware Selection - Step 1 Alt"
 
-## Dateien die komplett neu geschrieben werden
+### Screenshot 2 (screen-6.png) - Ergaenzung:
+- **Gruppierung nach Kategorie**: "Smartphones", "Tablets" als Ueberschriften
+- **Groessere Karten**: Bild links (ca. 150px hoch), Produktname rechts, Specs in Rot/Orange
+- **Badges**: Gruener "Stock Available", grauer "24 Month Contract"
+- **Zwei Preise**: "MONTHLY 79.99 EUR" links, "ONE-TIME 1.00 EUR" rechts
+- **Voller roter "Add to Offer" Button** unter jedem Produkt
 
-| Nr | Datei | Aenderung |
-|----|-------|-----------|
-| 1 | `CalculatorShell.tsx` | Komplett neues Layout mit Top-Navigation-Bar im Vodafone-Stil |
-| 2 | `SummarySidebar.tsx` | Exakt nach Screenshot: Customer Totals Box + Dealer Margins Box + PDF Buttons |
-| 3 | `OfferBasketPanel.tsx` | Schlanker, weniger dominant |
-| 4 | `Wizard.tsx` | Nur der JSX-Return - Step-Content mit neuem Card-Layout |
-| 5 | `ModeSelector.tsx` | Minimale visuelle Anpassung |
-| 6 | `MobileActionFooter.tsx` | An neues System angepasst |
+## Was wird neu geschrieben
 
-## Dateien die NICHT geaendert werden (Black Box)
+| Datei | Aenderung |
+|-------|-----------|
+| `HardwareStep.tsx` | Komplett neuer JSX - Gruppierung nach Brand statt Grid |
+| `HardwareGrid.tsx` | Wird NICHT mehr verwendet - ersetzt durch inline-Rendering |
+| `HardwareCard.tsx` | Wird NICHT mehr verwendet - ersetzt durch neue horizontale Karte |
+| `HardwareFilters.tsx` | Wird entfernt/vereinfacht - Suchfeld wird in den Wizard-Header integriert |
+| `CollapsedHardwareSelection.tsx` | Bleibt, wird visuell angepasst |
 
-- `CalculatorContext.tsx`
-- `OfferBasketContext.tsx`
-- `engine/*`
-- `steps/hardware/*` (Sub-Komponenten)
-- `steps/mobile/*` (Sub-Komponenten)
-- `FixedNetStep.tsx`
-- `ActionMenu.tsx`
-- `PdfDownloadButton.tsx`
-- `AnimatedCurrency.tsx`
+## Was NICHT geaendert wird (Black Box)
 
-## Technische Details
+- `hardwareGrouping.ts` (Gruppierungs-Logik)
+- `catalogResolver.ts` (Hardware-Katalog)
+- `useHardwareImages.ts` (Bild-Hook)
+- `CalculatorContext.tsx` (State)
+- `Wizard.tsx` (nur minimale Anpassung der Props)
 
-### Phase 1: CalculatorShell.tsx
-Neues Layout-Grid exakt nach Screenshot:
-- Header 64px: Logo-Bereich links, Nav-Links mitte (Dashboard, New Offer, Configuration, Basket), Icons rechts
-- Step-Bar darunter: Dunkler Pill "Step 1: Hardware Selection" links, Search-Input rechts
-- Content Grid: `grid-cols-[1fr_340px]` - Main scrollbar, Sidebar fixed
-- Kein border-radius auf dem Hauptcontainer, clean flat design
+## Neues Hardware-Layout
 
-### Phase 2: SummarySidebar.tsx
-Exakt nach Screenshot aufgebaut:
-- Box 1 "CUSTOMER TOTALS": Caps-Titel, drei Zeilen (Avg. Monthly / One-Time Costs / 24-Month Total), Werte rechts, 24-Month Total in Rot und groesser, Fussnote
-- Box 2 "DEALER MARGINS": Lock-Icon + "INTERNAL ONLY" Badge rot oben rechts, Total Margin + Total Provision
-- PDF Buttons: Roter "Kundenangebot PDF" Button, Outline "Haendler-Uebersicht PDF"
-- Help-Link: "Need help calculating margins?"
+```text
+Hardware Selection
+Configure customer devices and SIMs.
 
-### Phase 3: Wizard.tsx JSX-Neuschrieb
-- Step-Content ohne Card-Wrapper (die Steps selbst liefern ihre Karten)
-- "Proceed to Step 2" Button am Ende, rot, rechtsbuendig
-- PricePeriodBreakdown und ValidationWarning bleiben
+Apple
++---------------------------+  +---------------------------+
+| [Bild]  iPhone 16 Pro     |  | [Bild]  iPhone 16        |
+|         Black, 128GB, 5G  |  |         Blue, 128GB, 5G  |
+|         Monthly           |  |         Monthly           |
+|         79.99 EUR  [Add]  |  |         59.99 EUR  [Add] |
++---------------------------+  +---------------------------+
 
-### Phase 4: Build-Fehler beheben
-- Die Test-Dateien `AdminGuard.test.tsx` und `ViewModeGuards.test.tsx` haben Import-Fehler (`screen` aus `@testing-library/react`). Diese werden geloescht oder der Import korrigiert.
+Samsung
++---------------------------+  +---------------------------+
+| [Bild]  Galaxy S24 Ultra  |  | [Bild]  Galaxy A55       |
+|         256GB, 5G         |  |         128GB, LTE       |
+|         Monthly           |  |         Monthly           |
+|         84.99 EUR  [Add]  |  |         39.99 EUR  [Add] |
++---------------------------+  +---------------------------+
 
-### Phase 5: Anti-Lazy Knowledge Update
-- `.lovable/rules.md` wird aktualisiert mit dem V2 Protokoll
+SIM-Only
++---------------------------+  +---------------------------+
+| [SIM]   Smart Business S  |  | [SIM]   Business Data L  |
+|         10GB, EU Roaming  |  |         Unlimited, 5G    |
+|         Monthly           |  |         Monthly           |
+|         19.99 EUR  [Add]  |  |         49.99 EUR  [Add] |
++---------------------------+  +---------------------------+
+```
 
-## Ausfuehrungsreihenfolge
+## Technische Umsetzung
 
-1. `CalculatorShell.tsx` - Layout-Grundgeruest
-2. `SummarySidebar.tsx` - Rechte Sidebar
-3. `OfferBasketPanel.tsx` - Korb-Widget
-4. `Wizard.tsx` - Hauptdatei JSX
-5. `MobileActionFooter.tsx` - Mobile Footer
-6. Test-Dateien Build-Fehler beheben
-7. `.lovable/rules.md` - Knowledge Update
+### Phase 1: Neue `HardwareProductCard` Komponente erstellen
+
+Neue Datei: `src/margenkalkulator/ui/steps/hardware/HardwareProductCard.tsx`
+
+- Horizontale Karte: Bild links (100px), Details rechts
+- Produktname bold, Specs-Zeile (Storage, Connectivity) darunter
+- "Monthly" Label + Preis links unten
+- Roter "Add to Offer" Button rechts unten
+- Ausgewaehlter Zustand: Gruener Checkmark-Badge, leichter gruener Rand
+- Props: `config: HardwareConfig`, `brand: string`, `familyName: string`, `imageUrl: string`, `isSelected: boolean`, `onSelect: () => void`
+
+### Phase 2: `HardwareStep.tsx` komplett neu schreiben
+
+- Header: "Hardware Selection" als h1, "Configure customer devices and SIMs." als Subtext
+- Gruppierung: Items nach `family.brand` gruppieren, jede Brand-Gruppe als Sektion mit fetter Ueberschrift
+- Grid pro Brand: `grid-cols-1 md:grid-cols-2` mit den neuen horizontalen Karten
+- SIM-Only Sektion: Eigene Gruppe am Ende mit SIM-Karten-Icon
+- Suchfeld bleibt als einfaches Input oben
+- Keine Popover/Accordion mehr fuer Varianten-Auswahl - stattdessen wird jede Konfiguration als eigene Karte angezeigt (flach, wie im Screenshot)
+- Filter-Tabs (Alle/Smartphones/Tablets) als einfache Buttons ueber dem Content
+- Brand-Filter als Chips unter den Tabs
+
+### Phase 3: `CollapsedHardwareSelection.tsx` visuell anpassen
+
+- Gleiche horizontale Karten-Aesthetik
+- Gruener Hintergrund-Akzent statt Primary-Farbe
+- "Andere Hardware" Button bleibt
+
+### Phase 4: Aufraeum-Arbeiten
+
+- `HardwareGrid.tsx` und `HardwareCard.tsx` bleiben als Dateien bestehen (fuer potenzielle Rueckwaertskompatibilitaet), werden aber nicht mehr von HardwareStep importiert
+- `HardwareFilters.tsx` wird vereinfacht oder durch inline-Filter im neuen HardwareStep ersetzt
+
+## Wichtige Design-Details
+
+- **Karten-Styling**: `bg-white border border-gray-200 rounded-xl p-4 hover:border-red-300 hover:shadow-sm transition-all`
+- **Bild-Container**: `w-24 h-24 flex-shrink-0 bg-gray-50 rounded-lg flex items-center justify-center`
+- **Brand-Ueberschrift**: `text-xl font-bold text-gray-900 mb-4`
+- **Produktname**: `text-base font-semibold text-gray-900`
+- **Specs**: `text-sm text-gray-500`
+- **Monthly-Label**: `text-xs text-gray-400 uppercase tracking-wide`
+- **Preis**: `text-lg font-bold text-gray-900`
+- **Add-Button**: `bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 rounded-lg`
+- **Selected-State**: `border-green-400 bg-green-50` mit gruener Checkmark
 
 ## Ergebnis
 
-Die /wizard Seite wird visuell komplett dem Screenshot-Design entsprechen: Clean, flat, weiss-dominiert, mit prominenten Produktkarten und einer klaren rechten Sidebar fuer Preise und Margen. Das alte Design wird nicht mehr erkennbar sein.
+Die Hardware-Seite wird exakt dem Screenshot-Design entsprechen: Horizontale Karten gruppiert nach Marke, mit Bild links, Details rechts, und rotem "Add to Offer" Button. Keine Popovers, keine Akkordeons, keine verschachtelten Auswahl-Dialoge - jede Variante ist direkt sichtbar und mit einem Klick waehlbar.
 

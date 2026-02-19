@@ -1,6 +1,6 @@
 // ============================================
-// MobileStep - Orchestrator Component
-// Phase 6: Refactored from 495 LOC to ~200 LOC
+// MobileStep - Komplett-Neuaufbau nach Screenshot-Vorlage
+// Tab-basiert mit 3-Spalten Konfig-Box
 // ============================================
 
 import { useState, useMemo } from "react";
@@ -19,19 +19,27 @@ import {
   listPromos,
   getMobileTariffFromCatalog,
 } from "@/margenkalkulator";
-import { Signal, AlertTriangle, Ban } from "lucide-react";
+import { Briefcase, Smartphone, Wifi, AlertTriangle, Ban } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { InlineTariffConfig } from "../../components/InlineTariffConfig";
 import { useEmployeeSettings, isTariffBlocked } from "../../../hooks/useEmployeeSettings";
 import { useDensity } from "@/contexts/DensityContext";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
-import { PortfolioSelector } from "../../components/PortfolioSelector";
 import { LeadTimeInput } from "../../components/LeadTimeInput";
 import { OfferOptionMeta } from "@/margenkalkulator";
+import { cn } from "@/lib/utils";
 
 import { ContractQuantitySelector } from "./ContractQuantitySelector";
-// TariffFilters removed - PortfolioSelector handles family filtering
 import { TariffGrid } from "./TariffGrid";
+
+// Portfolio tabs config
+const PORTFOLIO_TABS = [
+  { id: "business" as const, label: "Business Prime", icon: Briefcase, families: ["prime", "teamdeal"] as TariffFamily[] },
+  { id: "smart" as const, label: "Business Smart", icon: Smartphone, families: ["business_smart", "smart_business"] as TariffFamily[] },
+  { id: "consumer" as const, label: "GigaMobil", icon: Wifi, families: ["gigamobil", "consumer_smart"] as TariffFamily[] },
+];
+
+type PortfolioTab = typeof PORTFOLIO_TABS[number]["id"];
 
 interface MobileStepProps {
   value: MobileState;
@@ -60,9 +68,16 @@ export function MobileStep({
   onConfigComplete,
   onMetaUpdate,
 }: MobileStepProps) {
-  const [selectedFamily, setSelectedFamily] = useState<TariffFamily | "all">("all");
   const currentPortfolio = fullOption?.meta.portfolio || "business";
   const currentLeadTime = fullOption?.meta.leadTimeMonths || 0;
+
+  // Map portfolio to tab
+  const getTabFromPortfolio = (p: string): PortfolioTab => {
+    if (p === "business") return "business";
+    if (p === "consumer") return "consumer";
+    return "business";
+  };
+  const [activeTab, setActiveTab] = useState<PortfolioTab>(getTabFromPortfolio(currentPortfolio));
 
   const updateField = <K extends keyof MobileState>(field: K, fieldValue: MobileState[K]) => {
     onChange({ ...value, [field]: fieldValue });
@@ -74,131 +89,130 @@ export function MobileStep({
   const isTeamDeal = selectedTariff?.family === "teamdeal";
   const showTeamDealWarning = isTeamDeal && !value.primeOnAccount;
 
-  const families = useMemo(() => {
-    const uniqueFamilies = new Set(mobileTariffs.map(t => t.family).filter(Boolean));
-    return Array.from(uniqueFamilies) as TariffFamily[];
-  }, [mobileTariffs]);
-
   const { settings: employeeSettings } = useEmployeeSettings();
   const { density } = useDensity();
   const isCompact = density === "compact";
 
+  const activeTabConfig = PORTFOLIO_TABS.find(t => t.id === activeTab) || PORTFOLIO_TABS[0];
+
   const filteredTariffs = useMemo(() => {
     if (!mobileTariffs || mobileTariffs.length === 0) return [];
-    let tariffs = selectedFamily === "all" ? mobileTariffs : mobileTariffs.filter(t => t.family === selectedFamily);
+    let tariffs = mobileTariffs.filter(t => activeTabConfig.families.includes(t.family as TariffFamily));
     if (employeeSettings?.blockedTariffs && employeeSettings.blockedTariffs.length > 0) {
       tariffs = tariffs.filter(t => !isTariffBlocked(t.id, employeeSettings));
     }
     return tariffs;
-  }, [mobileTariffs, selectedFamily, employeeSettings]);
+  }, [mobileTariffs, activeTabConfig, employeeSettings]);
 
   const blockedCount = useMemo(() => {
     if (!employeeSettings?.blockedTariffs || employeeSettings.blockedTariffs.length === 0) return 0;
     if (!mobileTariffs || mobileTariffs.length === 0) return 0;
-    const allTariffs = selectedFamily === "all" ? mobileTariffs : mobileTariffs.filter(t => t.family === selectedFamily);
+    const allTariffs = mobileTariffs.filter(t => activeTabConfig.families.includes(t.family as TariffFamily));
     return allTariffs.filter(t => isTariffBlocked(t.id, employeeSettings)).length;
-  }, [mobileTariffs, selectedFamily, employeeSettings]);
+  }, [mobileTariffs, activeTabConfig, employeeSettings]);
+
+  const handleTabChange = (tab: PortfolioTab) => {
+    setActiveTab(tab);
+    const portfolio = tab === "consumer" ? "consumer_gigamobil" as const : "business" as const;
+    const newLeadTime = tab !== "consumer" ? currentLeadTime : 0;
+    onMetaUpdate?.({ portfolio, leadTimeMonths: newLeadTime });
+  };
 
   return (
-    <div className="space-y-8">
-      {/* Portfolio Selector */}
-      <PortfolioSelector
-        value={currentPortfolio}
-        onChange={(p) => {
-          const newLeadTime = p === "business" ? currentLeadTime : 0;
-          onMetaUpdate?.({ portfolio: p, leadTimeMonths: newLeadTime });
-          setSelectedFamily("all");
-        }}
-      />
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h2 className="text-2xl font-bold text-foreground">Tarifkonfiguration</h2>
+        <p className="text-sm text-muted-foreground mt-1">Konfigurieren Sie Sprach- und Datentarife.</p>
+      </div>
+
+      {/* Portfolio Tabs */}
+      <div className="flex border-b border-border">
+        {PORTFOLIO_TABS.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => handleTabChange(tab.id)}
+              className={cn(
+                "flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px",
+                isActive
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+              )}
+            >
+              <Icon className="w-4 h-4" />
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
 
       {/* Lead Time Input (Business Only) */}
-      {currentPortfolio === "business" && (
+      {activeTab !== "consumer" && (
         <LeadTimeInput
           value={currentLeadTime}
           onChange={(v) => onMetaUpdate?.({ leadTimeMonths: v })}
         />
       )}
 
-      {/* Contract Type & Quantity */}
+      {/* 3-Spalten Konfigurations-Box */}
       <ContractQuantitySelector
         contractType={value.contractType}
         quantity={value.quantity}
         maxQuantity={isTeamDeal ? 10 : 100}
+        promos={promos}
+        selectedPromoId={value.promoId}
         onContractTypeChange={(type) => updateField("contractType", type)}
         onQuantityChange={(qty) => updateField("quantity", qty)}
+        onPromoChange={(promoId) => updateField("promoId", promoId)}
       />
 
-      {/* Tariff Selection */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Signal className="w-5 h-5 text-muted-foreground" />
-          <h3 className="text-lg font-semibold">Tarif wählen</h3>
-        </div>
-
-        {/* Results Count */}
-        <div className="flex items-center gap-3 text-sm text-muted-foreground">
-          <span>{filteredTariffs.length} Tarif{filteredTariffs.length !== 1 ? "e" : ""} verfügbar</span>
-          {blockedCount > 0 && (
-            <Badge variant="secondary" className="gap-1 text-xs">
-              <Ban className="w-3 h-3" />
-              {blockedCount} gesperrt
-            </Badge>
-          )}
-        </div>
-
-        <TariffGrid
-          tariffs={filteredTariffs}
-          selectedTariffId={value.tariffId}
-          isCompact={isCompact}
-          onSelect={(id) => updateField("tariffId", id)}
-        />
-
-        {/* Inline Tariff Config */}
-        {selectedTariff && fullOption && result && !isTeamDeal && (
-          <InlineTariffConfig
-            tariff={selectedTariff}
-            mobileState={value}
-            allPromos={promos}
-            fullOption={fullOption}
-            result={result}
-            viewMode={viewMode}
-            quantityBonus={quantityBonus}
-            asOfISO={fullOption.meta.asOfISO}
-            hardwareName={hardwareName}
-            onPromoChange={(promoId) => updateField("promoId", promoId)}
-            onSubVariantChange={(id) => updateField("subVariantId", id)}
-            onOmoChange={(rate) => {
-              if (rate > 0 && value.promoId !== "NONE") {
-                onChange({ ...value, omoRate: rate, promoId: "NONE" });
-              } else {
-                updateField("omoRate", rate);
-              }
-            }}
-            onFHPartnerChange={(checked) => updateField("isFHPartner", checked)}
-            onAddedToOffer={onConfigComplete}
-          />
-        )}
-
-        {/* TeamDeal Inline Config */}
-        {selectedTariff && fullOption && result && isTeamDeal && (
-          <InlineTariffConfig
-            tariff={selectedTariff}
-            mobileState={value}
-            allPromos={promos}
-            fullOption={fullOption}
-            result={result}
-            viewMode={viewMode}
-            quantityBonus={quantityBonus}
-            asOfISO={fullOption.meta.asOfISO}
-            hardwareName={hardwareName}
-            onPromoChange={(promoId) => updateField("promoId", promoId)}
-            onSubVariantChange={(id) => updateField("subVariantId", id)}
-            onOmoChange={(rate) => updateField("omoRate", rate)}
-            onFHPartnerChange={(checked) => updateField("isFHPartner", checked)}
-            onAddedToOffer={onConfigComplete}
-          />
+      {/* Tariff Count + Blocked */}
+      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+        <span>{filteredTariffs.length} Tarif{filteredTariffs.length !== 1 ? "e" : ""} verfügbar</span>
+        {blockedCount > 0 && (
+          <Badge variant="secondary" className="gap-1 text-xs">
+            <Ban className="w-3 h-3" />
+            {blockedCount} gesperrt
+          </Badge>
         )}
       </div>
+
+      {/* Tariff Grid */}
+      <TariffGrid
+        tariffs={filteredTariffs}
+        selectedTariffId={value.tariffId}
+        isCompact={isCompact}
+        onSelect={(id) => updateField("tariffId", id)}
+      />
+
+      {/* Inline Tariff Config */}
+      {selectedTariff && fullOption && result && (
+        <InlineTariffConfig
+          tariff={selectedTariff}
+          mobileState={value}
+          allPromos={promos}
+          fullOption={fullOption}
+          result={result}
+          viewMode={viewMode}
+          quantityBonus={quantityBonus}
+          asOfISO={fullOption.meta.asOfISO}
+          hardwareName={hardwareName}
+          onPromoChange={(promoId) => updateField("promoId", promoId)}
+          onSubVariantChange={(id) => updateField("subVariantId", id)}
+          onOmoChange={(rate) => {
+            if (!isTeamDeal && rate > 0 && value.promoId !== "NONE") {
+              onChange({ ...value, omoRate: rate, promoId: "NONE" });
+            } else {
+              updateField("omoRate", rate);
+            }
+          }}
+          onFHPartnerChange={(checked) => updateField("isFHPartner", checked)}
+          onAddedToOffer={onConfigComplete}
+        />
+      )}
 
       {/* TeamDeal Prime Requirement */}
       {isTeamDeal && (

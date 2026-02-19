@@ -1,145 +1,95 @@
 
-# Plan: Step 2 Mobilfunk - Komplett-Neuaufbau nach Screenshot-Vorlage
 
-## Design-Referenz (aus Screenshots + HTML)
+# Plan: Step 2 Mobilfunk - Kompakt-Optimierung
 
-### Screenshot screen-10.png (Hauptreferenz):
-- **Titel**: "Tariff Configuration" gross, darunter "Configure customer voice and data plans."
-- **Tarif-Familie als Tabs**: "Business Prime" | "Business Smart" | "GigaMobil" als horizontale Tab-Leiste mit Icons, aktiver Tab hat rote Unterstreichung
-- **Konfigurations-Box**: Weisser Container mit 3 Spalten:
-  - **Spalte 1**: "Number of SIMs" mit Slider + Zahl-Input, Hilfstext "Drag to adjust quantity for volume discounts."
-  - **Spalte 2**: "Contract Type" mit Radio-Buttons (New Contract + "High Margin" Badge gruen, Contract Renewal VVL, Porting DC Change)
-  - **Spalte 3**: "Apply Promotion" mit Dropdown-Select + Tag-Icon, Hilfstext "Select applicable campaign code."
-- **Tarif-Karten** darunter: "Available Plans" als Ueberschrift, dann 3 Karten nebeneinander:
-  - Tarif-Name gross + bold, Daten-Badge rechts oben (z.B. "5GB Data", "Unlimited")
-  - Subtitle ("For basic connectivity", "The all-rounder", "Maximum performance")
-  - Feature-Liste mit gruenen Checkmarks und grauen X
-  - "Monthly" Label + grosser Preis (29.99 EUR) + roter "Add to Offer" Button
-  - Bestseller-Badge (roter Pill oben rechts) fuer hervorgehobenen Tarif mit rotem Border
+## Problem
 
-### Screenshot screen-9.png (Alternative Variante):
-- Drei separate Karten fuer Business Prime / Smart / GigaMobil nebeneinander
-- Jede Karte hat: SIM-Only/Smartphone SUB Radio-Toggle, Quantity Slider, Promos Dropdown
-- Feature-Liste unten in jeder Karte
+Die Seite ist zu lang. Der Ablauf "Tarif auswaehlen -> unten scrollen -> Konfiguration -> wieder hoch" ist umstaendlich. Die InlineTariffConfig-Box erscheint ganz unten und macht die Seite unnoetig lang.
 
-## Kombination beider Designs
+## Loesung: Zwei-Phasen-Ansicht
 
-Wir implementieren das **screen-10.png Layout** als primaere Struktur (Tabs + Konfig-Box + Tarif-Karten), da es besser zum bestehenden Wizard-Flow passt.
-
-## Dateien die komplett neu geschrieben werden
-
-| Nr | Datei | Was passiert |
-|----|-------|-------------|
-| 1 | `MobileStep.tsx` | Komplett neuer JSX mit Tab-Layout, Konfig-Box, und Tarif-Karten |
-| 2 | `TariffCard.tsx` | Komplett neu als vertikale Feature-Karte nach Screenshot |
-| 3 | `TariffGrid.tsx` | Vereinfacht als 3-Spalten Grid fuer die neuen Karten |
-| 4 | `ContractQuantitySelector.tsx` | Komplett neu als 3-Spalten Inline-Layout (SIMs + Contract Type + Promo) |
-
-## Dateien die NICHT geaendert werden (Black Box)
-
-- `CalculatorContext.tsx` (State)
-- `InlineTariffConfig.tsx` (wird weiterhin nach Tarif-Auswahl angezeigt)
-- `PortfolioSelector.tsx` (wird durch inline Tab-Leiste ERSETZT, nicht mehr importiert)
-- `LeadTimeInput.tsx` (wird bei Business weiterhin angezeigt)
-- `engine/*` (Berechnungslogik)
-- `Wizard.tsx` (Orchestrator - keine Aenderung)
-
-## Neues Layout
+Wenn ein Tarif per "Zum Angebot" ausgewaehlt wird, ERSETZT die Konfigurations-Box (SUB-Klasse, OMO, Rabatte, Preis) das Tarif-Grid. Der User sieht dann NUR die Konfiguration fuer den gewaehlten Tarif. Nach Klick auf "Hinzufuegen" kehrt er zurueck zum Grid oder kann zur naechsten Phase wechseln.
 
 ```text
+PHASE A: Tarif-Auswahl (kompakt)
+================================
 Tarifkonfiguration
 Konfigurieren Sie Sprach- und Datentarife.
 
-[Business Prime]  [Business Smart]  [GigaMobil]     <- Tabs
-=========================================================
-| Anzahl SIMs      | Vertragsart          | Aktion     |
-| [====]  25       | (o) Neuvertrag       | [Spring..] |
-|                   |     High Margin      |            |
-| Drag to adjust   | ( ) VVL              | Kampagnen- |
-|                   | ( ) Portierung       | code       |
-=========================================================
+[Business Prime] [Business Smart] [GigaMobil]
+[Anzahl SIMs: 25] [Neuvertrag] [Aktion: Keine]
 
-Verfuegbare Tarife
-+-------------------+  +-------------------+  +-------------------+
-| Business Prime Go |  | Business Prime    |  | Business Prime    |
-|          [5GB]    |  |   Pro  [Unlim.]   |  |   Max [Unlim.+]   |
-| Basis-Konnektivit.|  | Der Allrounder    |  | Maximum Leistung  |
-|                   |  |     BESTSELLER    |  |                   |
-| v 5G Enabled      |  | v Unlimited 5G    |  | v Unlimited Max   |
-| v EU Roaming      |  | v EU & US Roaming |  | v Global Roaming  |
-| x MultiSIM        |  | v 1x MultiSIM    |  | v 3x MultiSIM    |
-|                   |  |                   |  |                   |
-| Monatlich         |  | Monatlich         |  | Monatlich         |
-| 29.99 EUR [Add]   |  | 49.99 EUR [Add]   |  | 79.99 EUR [Add]   |
-+-------------------+  +-------------------+  +-------------------+
+Verfuegbare Tarife (3 Tarife)
+[Prime Go 29.99] [Prime Pro 49.99] [Prime Max 79.99]
+      [Zum Angebot]  [Zum Angebot]    [Zum Angebot]
 
-[InlineTariffConfig erscheint hier wenn Tarif ausgewaehlt]
+
+PHASE B: Tarif-Konfiguration (ersetzt Grid)
+============================================
+Tarifkonfiguration
+Konfigurieren Sie Sprach- und Datentarife.
+
+[Business Prime] [Business Smart] [GigaMobil]
+[Anzahl SIMs: 25] [Neuvertrag] [Aktion: Keine]
+
++--------------------------------------------------+
+| < Zurueck zur Tarifauswahl                       |
+|                                                  |
+| Business Prime Pro ausgewaehlt          49.99 EUR|
+|                                                  |
+| Geraeteklasse (SUB): [SIM-Only] [Premium] [...]  |
+| Rabatt: [Kein] [-20%] [3M gratis]                |
+| OMO-Rate: [0%] [5%] [10%] [15%]                 |
+|                                                  |
+| Oe Monatspreis: 42.50 EUR    Marge: +120 EUR     |
+|                                                  |
+| [====== Zum Angebot hinzufuegen ======]          |
++--------------------------------------------------+
 ```
 
 ## Technische Umsetzung
 
-### Phase 1: `ContractQuantitySelector.tsx` komplett neu
+### Phase 1: `MobileStep.tsx` - Zwei-Phasen-State einfuehren
 
-Neues 3-Spalten Layout exakt nach Screenshot:
-- Spalte 1: "Anzahl SIMs" mit `input[type=range]` (roter Thumb) + Number-Input rechts
-- Spalte 2: "Vertragsart" mit 3 Radio-Buttons (Neuvertrag + gruener "High Margin" Badge, VVL, Portierung/DC Change)
-- Spalte 3: "Aktion waehlen" mit Select-Dropdown + Tag-Icon, bekommt `promos` als neue Prop
-- Props erweitert um: `promos`, `selectedPromoId`, `onPromoChange`
+- Neuer State: `configPhase: "select" | "configure"`
+- Wenn `configPhase === "select"`: Tabs + Konfig-Box + TariffGrid anzeigen (wie jetzt)
+- Wenn `configPhase === "configure"`: Tabs + Konfig-Box + InlineTariffConfig anzeigen (Grid wird NICHT gerendert)
+- Klick auf "Zum Angebot" in TariffCard setzt `configPhase = "configure"` und waehlt den Tarif
+- "Zurueck zur Tarifauswahl" Button setzt `configPhase = "select"` zurueck
+- Nach erfolgreichem Hinzufuegen: `configPhase = "select"` zuruecksetzen
 
-### Phase 2: `TariffCard.tsx` komplett neu
+### Phase 2: `TariffCard.tsx` - Kompakter machen
 
-Vertikale Feature-Karte nach Screenshot:
-- Header: Tarif-Name (bold, gross) + Daten-Badge rechts oben (z.B. "5GB Data")
-- Subtitle: Kurzbeschreibung
-- Feature-Liste: 3 Zeilen mit gruenen Check-Icons oder grauen X-Icons
-- Footer: "Monatlich" Label + grosser Preis + roter "Zum Angebot" Button
-- Optional: "Bestseller" Badge (roter Pill oben rechts, border-2 border-primary/20)
-- Selected State: Gruener Border + Checkmark
+- Padding und Margins reduzieren (p-4 statt p-5)
+- Feature-Liste auf 2 Zeilen begrenzen statt 3
+- Preis und CTA-Button in eine Zeile (nebeneinander statt uebereinander)
+- Gesamthoehe der Karte deutlich reduziert
 
-### Phase 3: `TariffGrid.tsx` vereinfacht
+### Phase 3: `TariffGrid.tsx` - Kompakter
 
-- Einfaches `grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6`
-- Ueberschrift "Verfuegbare Tarife" davor
-- Loading/Empty States beibehalten
+- Gap von 6 auf 4 reduzieren
+- Ueberschrift kleiner (text-base statt text-lg)
 
-### Phase 4: `MobileStep.tsx` komplett neu
+### Phase 4: `ContractQuantitySelector.tsx` - Kompakter
 
-Gesamtstruktur:
-1. **Header**: "Tarifkonfiguration" (h1) + "Konfigurieren Sie Sprach- und Datentarife." (p)
-2. **Portfolio-Tabs**: Eigene Tab-Leiste inline (ersetzt PortfolioSelector-Import), 3 Tabs mit Icons:
-   - Business Prime (Briefcase Icon)
-   - Business Smart (Smartphone Icon)
-   - GigaMobil (Wifi Icon)
-   - Aktiver Tab: `border-b-2 border-primary text-primary bg-white`
-3. **Konfigurations-Box**: Weisser Container mit neuem ContractQuantitySelector (3-Spalten)
-4. **LeadTimeInput**: Nur bei Business sichtbar (bestehendes Verhalten)
-5. **TariffGrid**: Gefilterte Tarife als neue vertikale Karten
-6. **InlineTariffConfig**: Erscheint weiterhin nach Tarif-Auswahl (unveraendert)
-7. **TeamDeal-Warnung**: Bestehendes Verhalten beibehalten
+- Padding reduzieren (p-4 statt p-6, gap-6 statt gap-8)
+- Hilfstexte entfernen (weniger Platz)
 
-### Phase 5: Sprache komplett Deutsch
+## Dateien die geaendert werden
 
-Alle Texte auf Deutsch:
-- "Tariff Configuration" -> "Tarifkonfiguration"
-- "Configure customer voice and data plans." -> "Konfigurieren Sie Sprach- und Datentarife."
-- "Number of SIMs" -> "Anzahl SIMs"
-- "Contract Type" -> "Vertragsart"
-- "New Contract" -> "Neuvertrag"
-- "Contract Renewal (VVL)" -> "Vertragsverlaengerung (VVL)"
-- "Porting (DC Change)" -> "Portierung (DC Change)"
-- "Apply Promotion" -> "Aktion waehlen"
-- "Available Plans" -> "Verfuegbare Tarife"
-- "Add to Offer" -> "Zum Angebot"
-- "Monthly" -> "Monatlich"
-- "Bestseller" bleibt (internationaler Begriff)
+| Datei | Aenderung |
+|-------|-----------|
+| `MobileStep.tsx` | configPhase State, bedingte Anzeige Grid vs. Config |
+| `TariffCard.tsx` | Kompakteres Layout, weniger Padding |
+| `TariffGrid.tsx` | Kleinerer Gap und Ueberschrift |
+| `ContractQuantitySelector.tsx` | Weniger Padding und Hilfstexte |
 
-## Ausfuehrungsreihenfolge
+## Dateien die NICHT geaendert werden
 
-1. `ContractQuantitySelector.tsx` - Neues 3-Spalten Layout mit Promo-Integration
-2. `TariffCard.tsx` - Vertikale Feature-Karte
-3. `TariffGrid.tsx` - Vereinfachtes Grid
-4. `MobileStep.tsx` - Komplett neuer Orchestrator mit Tabs
+- `InlineTariffConfig.tsx` (Black Box - wird weiterhin als Ganzes gerendert)
+- Engine, Context, Wizard (Black Box)
 
 ## Ergebnis
 
-Step 2 wird komplett nach Screenshot-Vorlage aufgebaut: Tab-basierte Portfolio-Auswahl, 3-Spalten Konfigurations-Box (SIMs + Vertragsart + Aktion), und vertikale Tarif-Karten mit Feature-Listen und rotem CTA-Button. Das alte Design ist nicht mehr erkennbar.
+Die Seite passt auf einen Bildschirm ohne Scrollen. Der Ablauf ist: Tarif waehlen -> Konfiguration erscheint AN GLEICHER STELLE -> Hinzufuegen -> Fertig. Keine lange Seite mehr.
+

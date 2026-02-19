@@ -15,9 +15,11 @@ import {
   type ViewMode,
   type OfferOptionState,
   type CalculationResult,
+  type SubVariantId,
   listMobileTariffs,
   listPromos,
   getMobileTariffFromCatalog,
+  listSubVariants,
 } from "@/margenkalkulator";
 import { Briefcase, Smartphone, Wifi, AlertTriangle, Ban, ArrowLeft, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +29,7 @@ import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { OfferOptionMeta } from "@/margenkalkulator";
 import { cn } from "@/lib/utils";
 import { TariffGrid } from "./TariffGrid";
+import { toast } from "sonner";
 
 const PORTFOLIO_TABS = [
   { id: "business" as const, label: "Business Prime", icon: Briefcase, families: ["prime", "teamdeal"] as TariffFamily[] },
@@ -82,6 +85,7 @@ export function MobileStep({
 
   const mobileTariffs = listMobileTariffs(datasetVersion);
   const promos = listPromos(datasetVersion);
+  const allSubVariants = useMemo(() => listSubVariants(datasetVersion), [datasetVersion]);
   const selectedTariff = getMobileTariffFromCatalog(datasetVersion, value.tariffId);
   const isTeamDeal = selectedTariff?.family === "teamdeal";
   const showTeamDealWarning = isTeamDeal && !value.primeOnAccount;
@@ -89,6 +93,27 @@ export function MobileStep({
   const { settings: employeeSettings } = useEmployeeSettings();
 
   const activeTabConfig = PORTFOLIO_TABS.find(t => t.id === activeTab) || PORTFOLIO_TABS[0];
+
+  // Tab-abhängige erlaubte SUB-Stufen
+  const tabAllowedSubVariants = useMemo((): SubVariantId[] => {
+    if (activeTab === "consumer") return [];
+    if (activeTab === "smart") return ["SIM_ONLY", "BASIC_PHONE", "SMARTPHONE"];
+    return ["SIM_ONLY", "BASIC_PHONE", "SMARTPHONE", "PREMIUM_SMARTPHONE", "SPECIAL_PREMIUM_SMARTPHONE"];
+  }, [activeTab]);
+
+  // SUB-Varianten die im Header angezeigt werden (nur bei business/smart)
+  const headerSubVariants = useMemo(() => {
+    return allSubVariants.filter(sv => tabAllowedSubVariants.includes(sv.id as SubVariantId));
+  }, [allSubVariants, tabAllowedSubVariants]);
+
+  // Kurze Labels für den Header
+  const subLabelMap: Record<string, string> = {
+    SIM_ONLY: "SIM",
+    BASIC_PHONE: "Basic",
+    SMARTPHONE: "Smart",
+    PREMIUM_SMARTPHONE: "Premium",
+    SPECIAL_PREMIUM_SMARTPHONE: "Spec.",
+  };
 
   const filteredTariffs = useMemo(() => {
     if (!mobileTariffs || mobileTariffs.length === 0) return [];
@@ -127,10 +152,25 @@ export function MobileStep({
     const portfolio = tab === "consumer" ? "consumer_gigamobil" as const : "business" as const;
     const newLeadTime = tab !== "consumer" ? currentLeadTime : 0;
     onMetaUpdate?.({ portfolio, leadTimeMonths: newLeadTime });
+
+    // SUB-Reset beim Tab-Wechsel: Smart erlaubt kein Premium
+    if (tab === "smart" && ["PREMIUM_SMARTPHONE", "SPECIAL_PREMIUM_SMARTPHONE"].includes(value.subVariantId)) {
+      onChange({ ...value, subVariantId: "SMARTPHONE" });
+    }
   };
 
   const handleTariffSelect = (tariffId: string) => {
-    updateField("tariffId", tariffId);
+    const tariff = getMobileTariffFromCatalog(datasetVersion, tariffId);
+    const allowed = tariff?.allowedSubVariants;
+    if (allowed && allowed.length > 0 && !allowed.includes(value.subVariantId as SubVariantId)) {
+      // Fallback auf höchste erlaubte Stufe
+      const bestAllowed = allowed[allowed.length - 1];
+      onChange({ ...value, tariffId, subVariantId: bestAllowed });
+      const subLabel = allSubVariants.find(s => s.id === bestAllowed)?.label ?? bestAllowed;
+      toast.info(`Geräteklasse auf "${subLabel}" angepasst`, { duration: 2500 });
+    } else {
+      updateField("tariffId", tariffId);
+    }
     setConfigPhase("configure");
   };
 
@@ -249,6 +289,29 @@ export function MobileStep({
               </button>
             ))}
           </div>
+
+          {/* ─── SUB-Stufe Selector (nur für business/smart) ─── */}
+          {activeTab !== "consumer" && headerSubVariants.length > 0 && (
+            <div className="flex border border-border rounded-lg overflow-hidden">
+              {headerSubVariants.map((sv) => (
+                <button
+                  key={sv.id}
+                  onClick={() => {
+                    updateField("subVariantId", sv.id);
+                  }}
+                  title={sv.label}
+                  className={cn(
+                    "px-2.5 py-1.5 text-xs font-semibold transition-colors",
+                    value.subVariantId === sv.id
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  )}
+                >
+                  {subLabelMap[sv.id] ?? sv.id}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Promo (only in select phase to keep it visible) */}
           <select

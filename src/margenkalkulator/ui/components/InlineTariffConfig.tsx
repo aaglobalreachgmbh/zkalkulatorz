@@ -14,17 +14,16 @@
 // ============================================
 
 import { useMemo, useState } from "react";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Label } from "@/components/ui/label";
 import {
   Plus, Check, Tag, Sparkles, TrendingDown, AlertTriangle,
   ChevronDown, Calendar, Info, Euro, Smartphone, Settings2, Percent
 } from "lucide-react";
 import { AnimatedCurrency } from "./AnimatedCurrency";
-import { SubVariantSelector } from "./SubVariantSelector";
 import { OMORateSelectorEnhanced, type OMORate } from "./OMORateSelectorEnhanced";
 import { FHPartnerToggle } from "./FHPartnerToggle";
 import { useOfferBasket } from "../../contexts/OfferBasketContext";
@@ -236,27 +235,14 @@ export function InlineTariffConfig({
         </Alert>
       )}
 
-      {/* SUB Variant Selection - INLINE */}
-      {onSubVariantChange && tariff.family !== "teamdeal" && (
-        <div className="mb-5 p-4 bg-card rounded-lg border border-border">
-          <div className="flex items-center gap-2 mb-3">
-            <Smartphone className="w-4 h-4 text-muted-foreground" />
-            <Label className="text-sm font-medium text-muted-foreground">
-              Geräteklasse (SUB)
-            </Label>
-            <HelpTooltip content="Optionen" />
-          </div>
-          <SubVariantSelector
-            value={mobileState.subVariantId}
-            onChange={onSubVariantChange}
-            hardwareName={hardwareName}
-            allowedSubVariants={tariff.allowedSubVariants}
-            subVariants={subVariants}
-          />
+      {/* SUB Variant — compact read-only confirmation (selection happens in header) */}
+      {tariff.family !== "teamdeal" && selectedSubVariant && (
+        <div className="mb-4 flex items-center gap-2 px-3 py-2 bg-muted/40 rounded-lg border border-border/50">
+          <Smartphone className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+          <span className="text-xs text-muted-foreground">Geräteklasse:</span>
+          <span className="text-xs font-medium text-foreground">{selectedSubVariant.label}</span>
           {subVariantAddOn > 0 && (
-            <p className="text-xs text-muted-foreground mt-2">
-              → Aufpreis: +{subVariantAddOn}€/mtl. = Effektiv: {formatCurrency(effectiveBasePrice)}/mtl.
-            </p>
+            <span className="text-xs text-muted-foreground ml-auto">+{subVariantAddOn}€/mtl.</span>
           )}
         </div>
       )}

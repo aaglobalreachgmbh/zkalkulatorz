@@ -41,10 +41,10 @@ export function HardwareProductCard({
   ].filter(Boolean);
   const specsLine = specsParts.join(" | ");
 
-  // Determine badges based on category context
+  // Badges auf Deutsch
   const badges = [
-    { label: "Stock Available", variant: "success" as const },
-    { label: "24 Month Contract", variant: "neutral" as const },
+    { label: "Verfügbar", variant: "success" as const },
+    { label: "24 Mon. Vertrag", variant: "neutral" as const },
   ];
 
   return (
@@ -122,11 +122,11 @@ export function HardwareProductCard({
             ))}
           </div>
 
-          {/* Prices row: MONTHLY + ONE-TIME */}
+          {/* Preise: EINMALIG (EK) + MONATLICH */}
           <div className="flex items-end gap-6 mt-3">
             <div>
               <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-                MONTHLY
+                EINMALIG
               </span>
               <p className="text-xl font-bold text-foreground">
                 {showEk ? `${config.ekNet.toFixed(2)} €` : "—"}
@@ -134,10 +134,10 @@ export function HardwareProductCard({
             </div>
             <div>
               <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-                ONE-TIME
+                MONATLICH
               </span>
               <p className="text-xl font-bold text-foreground">
-                0.00 €
+                0,00 €
               </p>
             </div>
           </div>
@@ -158,7 +158,7 @@ export function HardwareProductCard({
               : "bg-primary hover:bg-primary/90 text-primary-foreground"
           )}
         >
-          {isSelected ? "Selected ✓" : "Add to Offer"}
+          {isSelected ? "Ausgewählt ✓" : "Zum Angebot"}
         </button>
       </div>
     </div>

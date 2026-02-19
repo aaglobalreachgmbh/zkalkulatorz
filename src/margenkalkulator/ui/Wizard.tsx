@@ -1,10 +1,7 @@
 // ============================================
 // Wizard - Margenkalkulator Orchestrator
-// Phase 4: Clean UI Orchestrator
-// ============================================
-//
-// Business logic (bonuses, calculations) now lives in CalculatorContext.
-// WizardContent is a pure UI orchestrator - rendering only.
+// Redesign: Step-based pages (no accordion)
+// Business logic untouched - only UI rewrite
 // ============================================
 
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
@@ -14,18 +11,12 @@ import {
   Smartphone,
   Signal,
   Router,
-  Lock,
   Zap,
+  ChevronRight,
 } from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePOSMode } from "@/contexts/POSModeContext";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import {
   type OfferOptionState,
   type OfferOptionMeta,
@@ -44,7 +35,6 @@ import { FixedNetStep } from "./steps/FixedNetStep";
 import { ValidationWarning } from "./components/ValidationWarning";
 import { ActionMenu } from "./components/ActionMenu";
 import { ModeSelector } from "./components/ModeSelector";
-import { getStepSummary } from "./components/LiveCalculationBar";
 import { SummarySidebar } from "./components/SummarySidebar";
 import { MobileActionFooter } from "./components/MobileActionFooter";
 import { OfferBasketPanel } from "./components/OfferBasketPanel";
@@ -60,9 +50,68 @@ import { useWizardAutoSave } from "@/hooks/useWizardAutoSave";
 import { OnboardingTour, OnboardingPrompt } from "@/components/OnboardingTour";
 import { WizardRestoreDialog } from "@/components/WizardRestoreDialog";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 import { CalculatorProvider, useCalculator } from "../context/CalculatorContext";
 import { CalculatorShell } from "../layout/CalculatorShell";
+
+// ============================================
+// STEP CONFIGURATION
+// ============================================
+
+const STEPS: { id: WizardStep; label: string; icon: typeof Smartphone }[] = [
+  { id: "hardware", label: "Hardware", icon: Smartphone },
+  { id: "mobile", label: "Mobilfunk", icon: Signal },
+  { id: "fixedNet", label: "Festnetz", icon: Router },
+];
+
+// ============================================
+// STEP INDICATOR COMPONENT
+// ============================================
+
+function StepIndicator({
+  activeStep,
+  onStepClick,
+  fixedNetEnabled,
+}: {
+  activeStep: WizardStep;
+  onStepClick: (step: WizardStep) => void;
+  fixedNetEnabled: boolean;
+}) {
+  const visibleSteps = fixedNetEnabled ? STEPS : STEPS.filter(s => s.id !== "fixedNet");
+  const activeIndex = visibleSteps.findIndex(s => s.id === activeStep);
+
+  return (
+    <div className="flex items-center gap-1">
+      {visibleSteps.map((step, idx) => {
+        const isActive = step.id === activeStep;
+        const isPast = idx < activeIndex;
+        const Icon = step.icon;
+
+        return (
+          <div key={step.id} className="flex items-center">
+            <button
+              onClick={() => onStepClick(step.id)}
+              className={cn(
+                "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
+                isActive && "bg-red-50 text-red-700 border border-red-200",
+                isPast && "text-green-700 hover:bg-green-50",
+                !isActive && !isPast && "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+              )}
+            >
+              <Icon className="w-4 h-4" />
+              <span className="hidden sm:inline">
+                Step {idx + 1}: {step.label}
+              </span>
+              <span className="sm:hidden">{idx + 1}</span>
+            </button>
+            {idx < visibleSteps.length - 1 && (
+              <ChevronRight className="w-4 h-4 text-gray-300 mx-1" />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 // ============================================
 // WIZARD CONTENT (Inside Provider)
@@ -76,7 +125,7 @@ function WizardContent() {
   const isMobile = useIsMobile();
   const { isPOSMode } = usePOSMode();
 
-  // === CALCULATOR CONTEXT (ALL State & Business Logic) ===
+  // === CALCULATOR CONTEXT ===
   const {
     activeSection,
     goToSection,
@@ -96,13 +145,12 @@ function WizardContent() {
     setShowQuickStart,
     showRestoreDialog,
     setShowRestoreDialog,
-    // Phase 4: Results now come from context (with all bonuses)
     result1,
     result2,
     quantityBonusForOption1,
   } = useCalculator();
 
-  // === BASKET (Only for injection to provider + UI) ===
+  // === BASKET ===
   const { items: basketItems } = useOfferBasket();
 
   // === UI-ONLY HOOKS ===
@@ -245,7 +293,7 @@ function WizardContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Demo Mode - Load via URL
+  // Demo Mode
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     if (searchParams.get("demo") === "true") {
@@ -312,7 +360,7 @@ function WizardContent() {
     [viewMode, policy, customerSession.isActive, toggleSession, setViewMode]
   );
 
-  // Reset wizard for new tariff (keeps basket)
+  // Reset wizard for new tariff
   const resetForNewTariff = useCallback(() => {
     const freshState = createDefaultOptionState();
     setOption1(freshState);
@@ -324,12 +372,7 @@ function WizardContent() {
     });
   }, [setOption1, setOption2, setActiveOption, goToSection]);
 
-  // Get selected tariff
-  const selectedTariff = useMemo(() => {
-    return getMobileTariffFromCatalog(option1.meta.datasetVersion, option1.mobile.tariffId);
-  }, [option1.meta.datasetVersion, option1.mobile.tariffId]);
-
-  // GigaKombi eligibility check
+  // GigaKombi eligibility
   const isGigaKombiEligible = option1.fixedNet.enabled && option1.mobile.tariffId.toLowerCase().includes("prime");
 
   // GigaKombi Toast
@@ -350,6 +393,30 @@ function WizardContent() {
   const usingFallbackCatalog =
     isSupabaseAuth && !isSuperAdmin && !isLoadingTenantData && (!tenantDataStatus || !tenantDataStatus.isComplete);
 
+  // Navigate to next step
+  const goToNextStep = useCallback(() => {
+    const stepOrder: WizardStep[] = fixedNetModuleEnabled
+      ? ["hardware", "mobile", "fixedNet"]
+      : ["hardware", "mobile"];
+    const currentIdx = stepOrder.indexOf(activeSection);
+    if (currentIdx < stepOrder.length - 1) {
+      goToSection(stepOrder[currentIdx + 1]);
+    }
+  }, [activeSection, fixedNetModuleEnabled, goToSection]);
+
+  // Get next step label
+  const nextStepLabel = useMemo(() => {
+    const stepOrder: WizardStep[] = fixedNetModuleEnabled
+      ? ["hardware", "mobile", "fixedNet"]
+      : ["hardware", "mobile"];
+    const currentIdx = stepOrder.indexOf(activeSection);
+    if (currentIdx < stepOrder.length - 1) {
+      const next = STEPS.find(s => s.id === stepOrder[currentIdx + 1]);
+      return next ? `Weiter zu ${next.label}` : null;
+    }
+    return null;
+  }, [activeSection, fixedNetModuleEnabled]);
+
   // === RENDER ===
   return (
     <div
@@ -365,7 +432,6 @@ function WizardContent() {
         onRestore={handleRestoreDraft}
         onDiscard={handleDiscardDraft}
       />
-
 
       {/* Onboarding Tour */}
       <OnboardingTour
@@ -386,9 +452,9 @@ function WizardContent() {
 
       {/* Demo Mode Banner */}
       {usingFallbackCatalog && (
-        <div className="bg-muted/50 border-b border-border px-4 py-1 flex-none">
+        <div className="bg-amber-50 border-b border-amber-200 px-4 py-1.5 flex-none">
           <div className="flex items-center justify-between gap-2 text-sm">
-            <div className="flex items-center gap-2 text-muted-foreground">
+            <div className="flex items-center gap-2 text-amber-800">
               <Zap className="w-4 h-4" />
               <span>
                 <strong>Demo-Modus:</strong> Es werden Beispieldaten verwendet.
@@ -396,7 +462,7 @@ function WizardContent() {
             </div>
             <Link
               to="/daten"
-              className="text-amber-700 dark:text-amber-300 underline hover:no-underline text-xs"
+              className="text-amber-700 underline hover:no-underline text-xs font-medium"
             >
               Eigene Daten hinterlegen →
             </Link>
@@ -407,19 +473,21 @@ function WizardContent() {
       {/* Main Shell Layout */}
       <CalculatorShell
         title="Kalkulator"
+        stepIndicator={
+          <StepIndicator
+            activeStep={activeSection}
+            onStepClick={goToSection}
+            fixedNetEnabled={fixedNetModuleEnabled}
+          />
+        }
         headerActions={
           <>
-            <div className="flex-1" />
-
-            {/* Consolidated Mode Selector */}
             <ModeSelector
               value={effectiveViewMode}
               onChange={handleViewModeChange}
               allowCustomerMode={policy.allowCustomerMode}
               showSessionToggle={policy.showCustomerSessionToggle}
             />
-            
-            {/* Actions Menu (non-POS only) */}
             {!isPOSMode && (
               <ActionMenu config={activeState} avgMonthly={avgMonthlyNet} onLoadConfig={handleLoadConfig} />
             )}
@@ -435,97 +503,23 @@ function WizardContent() {
           <MobileActionFooter onResetForNewTariff={resetForNewTariff} />
         }
       >
-        {/* Accordion Sections */}
-        <Accordion
-          type="single"
-          collapsible
-          value={activeSection}
-          onValueChange={(val) => goToSection(val as WizardStep)}
-          className="space-y-2"
-        >
-          {/* Hardware Section */}
-          <AccordionItem
-            value="hardware"
-            className={cn(
-              "bg-card border border-border rounded-xl overflow-hidden transition-all duration-200 shadow-sm",
-              activeSection === "hardware" && "ring-1 ring-primary/20 border-primary/40 shadow-md",
-              activeSection !== "hardware" && "hover:border-primary/20"
-            )}
-          >
-            <AccordionTrigger className="px-4 py-2.5 hover:no-underline hover:bg-muted/30 [&[data-state=open]]:bg-muted/20">
-              <div className="flex items-center gap-3 flex-1">
-                <div
-                  className={cn(
-                    "w-8 h-8 rounded-lg flex items-center justify-center",
-                    option1.hardware.ekNet > 0 || option1.hardware.name === "KEINE HARDWARE"
-                      ? "bg-primary/10"
-                      : "bg-muted/50"
-                  )}
-                >
-                  <Smartphone
-                    className={cn(
-                      "w-4 h-4",
-                      option1.hardware.ekNet > 0 || option1.hardware.name === "KEINE HARDWARE"
-                        ? "text-primary"
-                        : "text-muted-foreground/50"
-                    )}
-                  />
-                </div>
-                <div className="text-left">
-                  <p className="font-medium">Hardware</p>
-                  <p className="text-xs text-muted-foreground/70">
-                    {getStepSummary("hardware", { hardware: option1.hardware })}
-                  </p>
-                </div>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-4 pb-4 pt-2 max-h-[calc(100vh-280px)] overflow-y-auto scrollbar-thin">
+        {/* Step Content - Full Page Render */}
+        <div className="space-y-6">
+          {/* Hardware Step */}
+          {activeSection === "hardware" && (
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 lg:p-6">
               <HardwareStep
                 value={activeState.hardware}
                 onChange={(hardware) => setActiveState({ ...activeState, hardware })}
                 onHardwareSelected={() => goToSection("mobile")}
                 viewMode={effectiveViewMode}
               />
-            </AccordionContent>
-          </AccordionItem>
+            </div>
+          )}
 
-          {/* Mobile Section */}
-          <AccordionItem
-            value="mobile"
-            className={cn(
-              "bg-card border border-border rounded-xl overflow-hidden transition-all duration-200 shadow-sm",
-              activeSection === "mobile" && "ring-1 ring-primary/20 border-primary/40 shadow-md",
-              activeSection !== "mobile" && "hover:border-primary/20"
-            )}
-          >
-            <AccordionTrigger className="px-4 py-2.5 hover:no-underline hover:bg-muted/30 [&[data-state=open]]:bg-muted/20">
-              <div className="flex items-center gap-3 flex-1">
-                <div
-                  className={cn(
-                    "w-8 h-8 rounded-lg flex items-center justify-center",
-                    option1.mobile.tariffId ? "bg-primary/10" : "bg-muted/50"
-                  )}
-                >
-                  <Signal
-                    className={cn("w-4 h-4", option1.mobile.tariffId ? "text-primary" : "text-muted-foreground/50")}
-                  />
-                </div>
-                <div className="text-left flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium">Mobilfunk</p>
-                    {option1.mobile.quantity > 1 && (
-                      <Badge variant="secondary" className="text-xs">
-                        {option1.mobile.quantity}x
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground/70">
-                    {getStepSummary("mobile", { mobile: option1.mobile })}
-                  </p>
-                </div>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-4 pb-4 pt-2 max-h-[450px] overflow-y-auto scrollbar-thin">
+          {/* Mobile Step */}
+          {activeSection === "mobile" && (
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 lg:p-6">
               <MobileStep
                 value={activeState.mobile}
                 onChange={(mobile) => setActiveState({ ...activeState, mobile })}
@@ -539,83 +533,56 @@ function WizardContent() {
                 onConfigComplete={resetForNewTariff}
                 onMetaUpdate={handleMetaUpdate}
               />
-            </AccordionContent>
-          </AccordionItem>
-
-          {/* Fixed Net Section */}
-          {fixedNetModuleEnabled && (
-            <AccordionItem
-              value="fixedNet"
-              className={cn(
-                "bg-card border border-border rounded-xl overflow-hidden transition-all duration-200 shadow-sm",
-                activeSection === "fixedNet" && "ring-1 ring-emerald-500/20 border-emerald-500/40 shadow-md",
-                activeSection !== "fixedNet" && "hover:border-emerald-500/20"
-              )}
-            >
-              <AccordionTrigger className="px-4 py-2.5 hover:no-underline hover:bg-muted/30 [&[data-state=open]]:bg-muted/20">
-                <div className="flex items-center gap-3 flex-1">
-                  <div
-                    className={cn(
-                      "w-8 h-8 rounded-lg flex items-center justify-center",
-                      option1.fixedNet.enabled ? "bg-emerald-500/10" : "bg-muted/50"
-                    )}
-                  >
-                    <Router
-                      className={cn(
-                        "w-4 h-4",
-                        option1.fixedNet.enabled ? "text-emerald-600" : "text-muted-foreground/50"
-                      )}
-                    />
-                  </div>
-                  <div className="text-left">
-                    <p className="font-medium">Festnetz</p>
-                    <p className="text-xs text-muted-foreground/70">
-                      {getStepSummary("fixedNet", { fixedNet: option1.fixedNet })}
-                    </p>
-                  </div>
-                  {option1.fixedNet.enabled && (
-                    <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-200">GigaKombi</Badge>
-                  )}
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="px-4 pb-4 pt-2 max-h-[350px] overflow-y-auto scrollbar-thin">
-                <FixedNetStep
-                  value={activeState.fixedNet}
-                  onChange={(fixedNet) => setActiveState({ ...activeState, fixedNet })}
-                  datasetVersion={activeState.meta.datasetVersion}
-                />
-              </AccordionContent>
-            </AccordionItem>
+            </div>
           )}
-        </Accordion>
 
-        {/* Price Period Breakdown */}
-        {result1 && result1.periods.length > 1 && (
-          <div className="mt-4">
+          {/* FixedNet Step */}
+          {activeSection === "fixedNet" && fixedNetModuleEnabled && (
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 lg:p-6">
+              <FixedNetStep
+                value={activeState.fixedNet}
+                onChange={(fixedNet) => setActiveState({ ...activeState, fixedNet })}
+                datasetVersion={activeState.meta.datasetVersion}
+              />
+            </div>
+          )}
+
+          {/* Price Period Breakdown */}
+          {result1 && result1.periods.length > 1 && (
             <PricePeriodBreakdown result={result1} termMonths={option1.meta.termMonths} />
-          </div>
-        )}
+          )}
 
-        {/* Validation Warnings */}
-        {!validation.steps.mobile.valid && (
-          <div className="mt-4">
+          {/* Validation Warnings */}
+          {!validation.steps.mobile.valid && (
             <ValidationWarning validation={validation.steps.mobile} />
-          </div>
-        )}
+          )}
+
+          {/* Proceed to Next Step Button */}
+          {nextStepLabel && (
+            <div className="flex justify-end pt-2">
+              <Button
+                onClick={goToNextStep}
+                size="lg"
+                className="bg-red-600 hover:bg-red-700 text-white gap-2 font-semibold shadow-md px-8"
+              >
+                {nextStepLabel}
+                <ChevronRight className="w-5 h-5" />
+              </Button>
+            </div>
+          )}
+        </div>
       </CalculatorShell>
     </div>
   );
 }
 
 // ============================================
-// WIZARD ROOT EXPORT (With Basket Injection)
+// WIZARD ROOT EXPORT
 // ============================================
 
 export function Wizard() {
-  // Get basket items for quantity bonus injection
   const { items: basketItems } = useOfferBasket();
-  
-  // Calculate total quantity in basket for bonus calculation
+
   const basketQuantity = useMemo(() => {
     return basketItems.reduce((sum, item) => sum + (item.option.mobile.quantity || 1), 0);
   }, [basketItems]);

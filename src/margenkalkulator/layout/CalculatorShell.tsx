@@ -1,100 +1,64 @@
 // ============================================
-// CalculatorShell - Zero-Scroll Layout Grid
-// Phase 2: Architecture Implementation
+// CalculatorShell - Clean Layout Grid
+// Redesign: Step-based layout with fixed sidebar
 // ============================================
 
 import { type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 interface CalculatorShellProps {
-  /** Main content (Wizard steps) - renders in left panel */
   children: ReactNode;
-  /** Summary sidebar content - renders in right panel (desktop) */
   sidebar: ReactNode;
-  /** Optional header actions (ViewMode toggle, etc.) */
   headerActions?: ReactNode;
-  /** Optional mobile footer content */
   mobileFooter?: ReactNode;
-  /** Custom title (default: "Kalkulator") */
+  stepIndicator?: ReactNode;
   title?: string;
-  /** Additional className for root container */
   className?: string;
 }
 
-/**
- * CalculatorShell implements the "Zero-Scroll" layout contract:
- * - Root container fills 100vh, no browser scrollbars
- * - Left panel: Scrollable main content area
- * - Right panel: Fixed sidebar with summary (desktop only)
- * - Mobile footer: Fixed bottom bar for mobile CTAs
- * 
- * Layout Grid (Desktop lg+):
- * ┌────────────────────────────────────────────┐
- * │ HEADER (h-16, flex-none)                   │
- * ├─────────────────────────┬──────────────────┤
- * │ LEFT: Main Stage        │ RIGHT: Sidebar   │
- * │ (flex-1, scroll-y)      │ (w-[400px])      │
- * │                         │                  │
- * │ • Hardware Step         │ • Price Summary  │
- * │ • Mobile Step           │ • Breakdown      │
- * │ • FixedNet Step         │ ───────────────  │
- * │                         │ [ACTION FOOTER]  │
- * └─────────────────────────┴──────────────────┘
- * 
- * Layout (Mobile <lg):
- * ┌────────────────────────────────────────────┐
- * │ HEADER                                     │
- * ├────────────────────────────────────────────┤
- * │ MAIN CONTENT (scrollable)                  │
- * │                                            │
- * ├────────────────────────────────────────────┤
- * │ MOBILE FOOTER (fixed bottom)               │
- * └────────────────────────────────────────────┘
- */
 export function CalculatorShell({
   children,
   sidebar,
   headerActions,
   mobileFooter,
+  stepIndicator,
   title = "Kalkulator",
   className,
 }: CalculatorShellProps) {
   return (
-    // Phase 12.3: Enforced height - flex-1 fills parent, no min-h
-    <div className={cn("flex flex-col h-full w-full bg-background overflow-hidden", className)}>
-      {/* 1. Header (Fixed, 64px) */}
-      <header className="flex-none h-16 bg-card border-b border-border px-4 lg:px-6 flex items-center justify-between z-30">
-        <h1 className="text-lg lg:text-xl font-semibold text-foreground">
-          {title}
-        </h1>
-        {/* Header Actions Slot (ViewMode Toggle, etc.) */}
-        <div className="flex items-center gap-2 lg:gap-4">
+    <div className={cn("flex flex-col h-full w-full overflow-hidden", className)}>
+      {/* Header - Slim 56px */}
+      <header className="flex-none h-14 bg-white border-b border-gray-200 px-4 lg:px-6 flex items-center justify-between z-30">
+        <h1 className="text-lg font-bold text-gray-900">{title}</h1>
+        <div className="flex items-center gap-2 lg:gap-3">
           {headerActions}
         </div>
       </header>
 
-      {/* 2. Main Grid (Zero-Scroll Area) */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_400px] overflow-hidden relative">
-        {/* Left Panel: Scrollable Content */}
-        <main className="h-full overflow-y-auto p-4 lg:p-6 xl:p-8 scroll-smooth pb-32 lg:pb-8 custom-scrollbar">
+      {/* Step Indicator Bar */}
+      {stepIndicator && (
+        <div className="flex-none bg-white border-b border-gray-100 px-4 lg:px-6 py-2">
+          {stepIndicator}
+        </div>
+      )}
+
+      {/* Main Grid */}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_380px] overflow-hidden bg-gray-50">
+        {/* Left: Scrollable Content */}
+        <main className="h-full overflow-y-auto p-4 lg:p-6 pb-32 lg:pb-6">
           <div className="max-w-5xl mx-auto">{children}</div>
         </main>
 
-        {/* Right Panel: Sidebar (Desktop only) */}
-        <aside className="hidden lg:flex flex-col h-full border-l border-border bg-card shadow-lg z-20 overflow-hidden">
-          {/* Scrollable Sidebar Content */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar">
+        {/* Right: Fixed Sidebar */}
+        <aside className="hidden lg:flex flex-col h-full border-l border-gray-200 bg-white overflow-hidden">
+          <div className="flex-1 overflow-y-auto">
             {sidebar}
           </div>
-          {/* 
-           * Footer Space for 'Zum Angebot' Button (Desktop)
-           * This is injected via the sidebar prop, not as a separate slot
-           */}
         </aside>
 
-        {/* Mobile Rescue Footer (Fixed Bottom, < lg only) */}
+        {/* Mobile Footer */}
         {mobileFooter && (
-          <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 z-50 shadow-[0_-4px_12px_rgba(0,0,0,0.08)]">
+          <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 z-50 shadow-[0_-4px_12px_rgba(0,0,0,0.08)]">
             {mobileFooter}
           </div>
         )}
@@ -103,13 +67,7 @@ export function CalculatorShell({
   );
 }
 
-// ============================================
-// SUB-COMPONENTS (For Future Use)
-// ============================================
-
-/**
- * Wrapper for sidebar action footer
- */
+// Sub-components kept for backwards compat
 export function SidebarActionFooter({
   children,
   className,
@@ -118,20 +76,12 @@ export function SidebarActionFooter({
   className?: string;
 }) {
   return (
-    <div
-      className={cn(
-        "flex-none p-4 border-t border-border bg-muted/30",
-        className
-      )}
-    >
+    <div className={cn("flex-none p-4 border-t border-gray-200 bg-gray-50/50", className)}>
       {children}
     </div>
   );
 }
 
-/**
- * Wrapper for mobile summary display
- */
 export function MobileSummaryBar({
   children,
   className,

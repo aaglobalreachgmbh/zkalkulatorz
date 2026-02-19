@@ -1,124 +1,164 @@
 
+# Plan: Step 1 Hardware - Ultra-Kompakt Redesign (CPQ-Pattern)
 
-# Plan: Step 2 Mobilfunk - Ultra-Kompakt Redesign
+## Problem-Analyse
+
+Der aktuelle Hardware Step hat folgende kritische Probleme:
+
+1. **Zu viele vertikale Ebenen**: Dealer-Options Row + 2-spaltige Produktkarten + Amortisierungs-Box = zu lang
+2. **Karten zu groß**: `HardwareProductCard` ist 140px × 140px Bild + Details + CTA = ~200px pro Karte
+3. **Kein Zwei-Phasen-Flow**: Auswählen und "Konfigurieren" (amortize/Monatsbetrag) sind nicht getrennt
+4. **Kein visueller Hersteller-Kontext**: Schwierig auf einen Blick zu sehen welches Gerät von welchem Hersteller stammt
+5. **CollapsedHardwareSelection blendet Grid aus** — aber es gibt keine echte "Configure"-Phase wie im MobileStep
 
 ## Ziel
 
-Die Mobilfunk-Seite wird radikal komprimiert, damit der gesamte Workflow (Tarif suchen, auswaehlen, konfigurieren, hinzufuegen) auf einem Bildschirm ohne Scrollen funktioniert. Eigene Verbesserungsvorschlaege aus Enterprise-SaaS-Kalkulatoren (Salesforce CPQ, DealHub, PandaDoc) fliessen ein.
+Identisches Zwei-Phasen-Pattern wie der MobileStep: Kompakter Header + horizontale Geräte-Zeilen (statt große Karten) → bei Auswahl erscheint Konfig-Box AN GLEICHER STELLE → "Hinzufügen" schliesst die Phase.
 
-## Aktueller Zustand
+---
 
-Die Zwei-Phasen-Logik (select/configure) existiert bereits. Probleme:
-- TariffCards sind zu hoch (Features, Badges, Padding)
-- ContractQuantitySelector nutzt zu viel vertikalen Platz
-- InlineTariffConfig ist 500+ Zeilen und belegt den gesamten Bildschirm
-- Header + Tabs + Config-Box + Grid = zu viele vertikale Ebenen
-
-## Neue Architektur: "Rapid Config" Pattern
-
-Inspiration aus Enterprise CPQ-Tools:
+## Neue Architektur: "Device Rapid Select" Pattern
 
 ```text
-+------------------------------------------------------------------+
-| Tarifkonfiguration                                                |
-| [Business Prime] [Business Smart] [GigaMobil]   [1x SIM] [NV|VVL]|
-+------------------------------------------------------------------+
-| Prime Go    5GB   29.99  [Waehlen]                                |
-| Prime Pro   Unlim 49.99  [Waehlen]  <- Bestseller                 |
-| Prime Max   Unlim 79.99  [Waehlen]                                |
-+------------------------------------------------------------------+
+PHASE A: Gerät wählen (kompakt, alles auf einen Blick)
+=========================================================
+Hardware-Auswahl                          [Im Monatspreis ○] [Hardware-Manager]
+[Smartphones] [Tablets] [SIM-Only]          [Suche: iPhone...]
+──────────────────────────────────────────────────────────
+[●] Apple iPhone 16 Pro Max    256GB  5G    779.00 €  [Wählen]
+    Apple iPhone 16 Pro Max    512GB  5G    879.00 €  [Wählen]
+    Apple iPhone 16 Pro        256GB  5G    689.00 €  [Wählen]
+──────────────────────────────────────────────────────────
+[●] Samsung Galaxy S25 Ultra   256GB  5G    699.00 €  [Wählen]
+──────────────────────────────────────────────────────────
+[○] Google Pixel 9 Pro         128GB  5G    499.00 €  [Wählen]
+──────────────────────────────────────────────────────────
+    Samsung Galaxy Tab S9       128GB  WiFi  499.00 €  [Wählen]
 
-Nach Klick auf "Waehlen":
 
-+------------------------------------------------------------------+
-| Tarifkonfiguration                                                |
-| [Business Prime] [Business Smart] [GigaMobil]   [1x SIM] [NV|VVL]|
-+------------------------------------------------------------------+
-| < Zurueck | Prime Pro ausgewaehlt           Basis: 49.99 EUR/mtl. |
-|------------------------------------------------------------------|
-| SUB: [SIM-Only] [Standard] [Premium]    Aktion: [Keine v]        |
-| OMO: [0%] [5%] [10%] [15%]             FH-Partner: [ ]           |
-|------------------------------------------------------------------|
-| Oe Monatspreis: 42.50 EUR    Marge: +120 EUR    [Hinzufuegen ->] |
-+------------------------------------------------------------------+
+PHASE B: Hardware konfigurieren (ersetzt die Liste)
+=========================================================
+Hardware-Auswahl                          [Im Monatspreis ●] [Hardware-Manager]
+[Smartphones] [Tablets] [SIM-Only]
+
+< Zurück zur Geräteauswahl
+
+┌─────────────────────────────────────────────────────────┐
+│ ✓ Apple iPhone 16 Pro Max 256GB                         │
+│   EK: 779.00 €  ·  Hardware-Klasse: Premium             │
+│─────────────────────────────────────────────────────────│
+│ Amortisation: [○ Einmalig] [● Im Monatspreis]           │
+│ Laufzeit: [24 Monate ▾]                                 │
+│─────────────────────────────────────────────────────────│
+│ Monatlicher Anteil: +32.46 €/Monat (über 24 Monate)    │
+│                                                         │
+│ [══════════════ Hardware übernehmen ══════════════]     │
+└─────────────────────────────────────────────────────────┘
 ```
 
-## Aenderungen im Detail
+---
 
-### Phase 1: `MobileStep.tsx` - Inline Header-Bar
+## Neue UI-Features (Enterprise Best Practices)
 
-Tabs und Konfigurations-Controls (SIM-Anzahl, Vertragsart) werden in EINE horizontale Leiste zusammengefasst statt als separate Bloecke:
+1. **Brand-Grouping mit Hersteller-Badge**: Jede Gerätzeile zeigt einen kleinen Hersteller-Chip (Apple / Samsung / Google) — auf einen Blick erkennbar welcher Hersteller
+2. **Horizontale Tabellenzeilen** statt großer Produktkarten: `[Brand-Badge] Modell | Speicher | 5G | Preis | [Wählen]`
+3. **Kategorie-Tabs**: `[Smartphones] [Tablets] [SIM Only]` als kompakte Toggle-Buttons oben — kein 2x24px Kategorie-Header mehr
+4. **Inlinesuch-Input**: Kompakt im Header-Bereich, spart eine ganze Zeile
+5. **Zwei-Phasen-Flow** (identisch zu MobileStep): Phase A = Auswahl-Liste, Phase B = Konfig-Box
+6. **Konfig-Box in Phase B**: Zeigt Amortisierungs-Toggle, Laufzeit-Selector, monatlichen Betrag — kompakt und final bevor man bestätigt
+7. **Keyboard-Shortcut Hint**: Kleine Hilfe-Anzeige wie beim MobileStep
 
-- Portfolio-Tabs links
-- SIM-Anzahl (kompakt: nur Number-Input, kein Slider) + Vertragsart (Segmented Control statt Radio-Buttons) rechts
-- Aktions-Dropdown nur in der Configure-Phase sichtbar (nicht im Grid)
-- LeadTimeInput nur als kleines Inline-Badge sichtbar
-- Spart ca. 80px vertikalen Platz
+---
 
-### Phase 2: `TariffCard.tsx` - Horizontale Zeile statt Karte
+## Dateien die geändert werden
 
-Enterprise-CPQ-Pattern: Tarife als kompakte Tabellenzeilen statt als grosse Karten:
+| Datei | Änderung |
+|-------|----------|
+| `HardwareStep.tsx` | Komplett neu: Header-Bar mit Category-Tabs + Suche, Zwei-Phasen-State, horizontale Geräteliste |
+| `HardwareProductCard.tsx` | Wird zur kompakten horizontalen Zeile: `[Brand] Modell | Specs | Preis | [Wählen]` |
+| Neue Komponente direkt in HardwareStep | `HardwareConfigBox` inline: Amortisierungs-Panel für Phase B |
 
-- EINE Zeile pro Tarif: Name | Datenvolumen | Preis | CTA-Button
-- Kein Feature-Listing, keine Subtitles (diese Infos kommen erst in der Configure-Phase)
-- Bestseller-Badge als kleiner Dot/Pill inline
-- Hoehe pro Tarif: ca. 48px statt 180px
-- Gesamthoehe fuer 5 Tarife: ~250px statt ~600px
+## Dateien die NICHT geändert werden
 
-### Phase 3: `TariffGrid.tsx` - Tabellen-Layout
+- `HardwareCard.tsx` (Popover-Karte, nicht mehr direkt genutzt aber bleibt)
+- `HardwareGrid.tsx` (bleibt als Fallback)
+- `CollapsedHardwareSelection.tsx` (wird nicht mehr genutzt, bleibt aber)
+- `hardwareGrouping.ts` (Black Box)
+- `catalogResolver.ts`, `types.ts` (Black Box)
+- `CalculatorContext`, `OfferBasketContext` (Black Box)
 
-- Von Card-Grid zu kompakter Tabelle/Liste
-- Keine grid-cols, sondern vertikale Liste mit Trennlinien
-- Optional: Kompakter Header mit Spaltennamen (Tarif | Daten | Preis)
+---
 
-### Phase 4: `ContractQuantitySelector.tsx` - Wird aufgeloest
+## Technische Umsetzung im Detail
 
-Die 3-Spalten-Box wird abgeschafft. Stattdessen werden die Controls direkt in den MobileStep-Header integriert:
-- SIM-Anzahl: Kompakter Number-Stepper (- [1] +) inline
-- Vertragsart: Zwei kleine Segment-Buttons (NV | VVL) inline
-- Aktion: Dropdown nur in Configure-Phase
+### Phase 1: `HardwareStep.tsx` komplett neu
 
-### Phase 5: Eigene Verbesserungen (Enterprise Best Practices)
+Neuer State:
+```typescript
+const [configPhase, setConfigPhase] = useState<"select" | "configure">("select");
+const [activeCategory, setActiveCategory] = useState<"smartphone" | "tablet" | "simonly">("smartphone");
+const [searchQuery, setSearchQuery] = useState("");
+```
 
-1. **Keyboard Shortcuts**: Zifferntasten 1-5 zum schnellen Tarif-Auswaehlen (wie Salesforce CPQ)
-2. **Hover-Preview**: Beim Hovern ueber einen Tarif zeigt ein Tooltip die Features + geschaetzte Marge
-3. **Quick-Add**: Doppelklick auf Tarif fuegt direkt mit Default-Einstellungen hinzu (fuer Power-User)
-4. **Visueller Fortschritt**: Kleine Anzahl-Badge neben "Tarifkonfiguration" zeigt bereits hinzugefuegte Tarife
-5. **Auto-Scroll-to-Top**: Nach Hinzufuegen automatisch zurueck zur Auswahl ohne manuellen Klick
-
-## Dateien die geaendert werden
-
-| Datei | Aenderung |
-|-------|-----------|
-| `MobileStep.tsx` | Komplett neu: Inline-Header-Bar, schlankere Struktur |
-| `TariffCard.tsx` | Von vertikaler Karte zu horizontaler Zeile |
-| `TariffGrid.tsx` | Von Grid zu Tabellen-Liste |
-| `ContractQuantitySelector.tsx` | Wird stark vereinfacht oder inline aufgeloest |
-
-## Dateien die NICHT geaendert werden
-
-- `InlineTariffConfig.tsx` (Black Box - wird weiterhin in Configure-Phase gerendert)
-- Engine, Context, Wizard, OfferBasket (Black Box)
-
-## Technische Details
-
-### TariffCard als Zeile:
+Layout-Struktur:
 ```text
-[Signal-Icon] Business Prime Pro    [Unlimited Badge]    49.99 EUR/mtl.    [Waehlen ->]
+<div className="space-y-3">
+  {/* HEADER: Titel + Amortize Toggle + Hardware-Manager Button */}
+  {/* CATEGORY TABS + Suche in einer Zeile */}
+  {/* PHASE A: Horizontale Geräteliste */}
+  {/* PHASE B: HardwareConfigBox (ersetzt die Liste) */}
+</div>
 ```
 
-### Header-Bar Layout:
+### Phase 2: `HardwareProductCard.tsx` → Horizontale Zeile
+
+Von:
 ```text
-[Briefcase] Business Prime | [Phone] Smart | [Wifi] GigaMobil    [-] 1 [+] SIM    [NV|VVL]
+Großes Bild 140x140 + Details Block + volle-Breite Button (ca. 200px hoch)
 ```
 
-### Vertragsart als Segmented Control:
-Zwei nebeneinanderliegende Buttons mit Toggle-Verhalten statt Radio-Buttons. Der aktive Button ist rot hinterlegt.
+Zu:
+```text
+[Brand-Pill] Modell + Specs      [5G] [128GB]     779.00 €    [Wählen →]
+(ca. 44px hoch pro Zeile)
+```
+
+Props bleiben identisch, nur JSX wird radikal vereinfacht.
+
+### Phase 3: `HardwareConfigBox` (inline in HardwareStep, kein extra File)
+
+Erscheint in Phase B und zeigt:
+- Gerätename + EK (groß)
+- Amortize Toggle (Einmalig / Im Monatspreis)
+- Laufzeit Selector (12 / 24 / 36 Monate) — nur sichtbar wenn Amortize aktiv
+- Monatlicher Betrag berechnet
+- CTA-Button "Hardware übernehmen" → ruft `onChange` auf und setzt `configPhase = "select"`
+
+### Phase 4: Kategorie-Tabs im Header
+
+```text
+[Smartphones (23)] [Tablets (4)] [SIM Only]    [🔍 Suche...]
+```
+
+Tabs steuern den `activeCategory` State und filtern die Geräteliste.
+
+### Grouping: Hersteller-Abschnitte
+
+Innerhalb der Kategorie werden Geräte nach Marke gruppiert mit einem kleinen Hersteller-Trennbalken:
+```text
+── Apple ─────────────────────────
+  iPhone 16 Pro Max  256GB  5G   779€  [Wählen]
+  iPhone 16 Pro Max  512GB  5G   879€  [Wählen]
+── Samsung ───────────────────────
+  Galaxy S25 Ultra   256GB  5G   699€  [Wählen]
+```
+
+---
 
 ## Ergebnis
 
-- Gesamthoehe der Select-Phase: ca. 350px (vorher 600+)
-- Kein Scrollen noetig auf 1366x768
-- Schnellerer Workflow: 2 Klicks statt 4 zum Hinzufuegen
-- Enterprise-Grade UX mit Keyboard-Shortcuts und Hover-Previews
-
+- Gesamthöhe Phase A: ca. 300-350px (vorher 600px+)
+- Auf einen Blick erkennbar: Hersteller, Modell, Speicher, Preis
+- Kein Scrollen nötig auf 1366x768
+- Workflow: Gerät wählen (1 Klick) → Amortisierung konfigurieren (Phase B, kompakt) → Übernehmen → Fertig
+- Enterprise-Grade: Keyboard-Hint, Brand-Grouping, Category-Tabs, Inline-Search

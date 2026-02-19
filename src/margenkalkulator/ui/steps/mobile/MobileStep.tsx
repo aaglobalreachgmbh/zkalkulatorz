@@ -19,7 +19,8 @@ import {
   listPromos,
   getMobileTariffFromCatalog,
 } from "@/margenkalkulator";
-import { Signal, AlertTriangle } from "lucide-react";
+import { Signal, AlertTriangle, Ban } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { InlineTariffConfig } from "../../components/InlineTariffConfig";
 import { useEmployeeSettings, isTariffBlocked } from "../../../hooks/useEmployeeSettings";
 import { useDensity } from "@/contexts/DensityContext";
@@ -29,7 +30,7 @@ import { LeadTimeInput } from "../../components/LeadTimeInput";
 import { OfferOptionMeta } from "@/margenkalkulator";
 
 import { ContractQuantitySelector } from "./ContractQuantitySelector";
-import { TariffFilters } from "./TariffFilters";
+// TariffFilters removed - PortfolioSelector handles family filtering
 import { TariffGrid } from "./TariffGrid";
 
 interface MobileStepProps {
@@ -134,13 +135,16 @@ export function MobileStep({
           <h3 className="text-lg font-semibold">Tarif wählen</h3>
         </div>
 
-        <TariffFilters
-          selectedFamily={selectedFamily}
-          onFamilyChange={setSelectedFamily}
-          families={families}
-          filteredCount={filteredTariffs.length}
-          blockedCount={blockedCount}
-        />
+        {/* Results Count */}
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+          <span>{filteredTariffs.length} Tarif{filteredTariffs.length !== 1 ? "e" : ""} verfügbar</span>
+          {blockedCount > 0 && (
+            <Badge variant="secondary" className="gap-1 text-xs">
+              <Ban className="w-3 h-3" />
+              {blockedCount} gesperrt
+            </Badge>
+          )}
+        </div>
 
         <TariffGrid
           tariffs={filteredTariffs}

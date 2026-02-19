@@ -1,6 +1,6 @@
 // ============================================
-// TariffGrid - Grid container for tariff cards
-// Phase 6: Extracted from MobileStep
+// TariffGrid - Vereinfachtes Grid mit Überschrift
+// Komplett-Neuaufbau nach Screenshot-Vorlage
 // ============================================
 
 import { Signal } from "lucide-react";
@@ -25,10 +25,13 @@ export function TariffGrid({
 }: TariffGridProps) {
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-        {[...Array(8)].map((_, i) => (
-          <SkeletonCard key={i} className="h-full" />
-        ))}
+      <div className="space-y-4">
+        <h3 className="text-lg font-bold text-foreground">Verfügbare Tarife</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
+            <SkeletonCard key={i} className="h-72" />
+          ))}
+        </div>
       </div>
     );
   }
@@ -42,17 +45,24 @@ export function TariffGrid({
     );
   }
 
+  // Mark middle tariff as bestseller if 3+ tariffs
+  const bestsellerIndex = tariffs.length >= 3 ? Math.floor(tariffs.length / 2) : -1;
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-      {tariffs.map((tariff) => (
-        <TariffCard
-          key={tariff.id}
-          tariff={tariff}
-          isSelected={selectedTariffId === tariff.id}
-          isCompact={isCompact}
-          onSelect={() => onSelect(tariff.id)}
-        />
-      ))}
+    <div className="space-y-4">
+      <h3 className="text-lg font-bold text-foreground">Verfügbare Tarife</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {tariffs.map((tariff, idx) => (
+          <TariffCard
+            key={tariff.id}
+            tariff={tariff}
+            isSelected={selectedTariffId === tariff.id}
+            isCompact={isCompact}
+            isBestseller={idx === bestsellerIndex}
+            onSelect={() => onSelect(tariff.id)}
+          />
+        ))}
+      </div>
     </div>
   );
 }

@@ -1,9 +1,9 @@
 // ============================================
-// MobileStep - Zwei-Phasen-Ansicht (Select / Configure)
-// Kompakt-Optimierung: Grid wird durch Config ersetzt
+// MobileStep - Ultra-Kompakt "Rapid Config" Pattern
+// Enterprise CPQ-inspired: inline header, horizontal rows, two-phase
 // ============================================
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -19,17 +19,13 @@ import {
   listPromos,
   getMobileTariffFromCatalog,
 } from "@/margenkalkulator";
-import { Briefcase, Smartphone, Wifi, AlertTriangle, Ban, ArrowLeft } from "lucide-react";
+import { Briefcase, Smartphone, Wifi, AlertTriangle, Ban, ArrowLeft, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { InlineTariffConfig } from "../../components/InlineTariffConfig";
 import { useEmployeeSettings, isTariffBlocked } from "../../../hooks/useEmployeeSettings";
-import { useDensity } from "@/contexts/DensityContext";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
-import { LeadTimeInput } from "../../components/LeadTimeInput";
 import { OfferOptionMeta } from "@/margenkalkulator";
 import { cn } from "@/lib/utils";
-
-import { ContractQuantitySelector } from "./ContractQuantitySelector";
 import { TariffGrid } from "./TariffGrid";
 
 const PORTFOLIO_TABS = [
@@ -76,6 +72,7 @@ export function MobileStep({
     if (p === "consumer") return "consumer";
     return "business";
   };
+
   const [activeTab, setActiveTab] = useState<PortfolioTab>(getTabFromPortfolio(currentPortfolio));
   const [configPhase, setConfigPhase] = useState<ConfigPhase>("select");
 
@@ -90,8 +87,6 @@ export function MobileStep({
   const showTeamDealWarning = isTeamDeal && !value.primeOnAccount;
 
   const { settings: employeeSettings } = useEmployeeSettings();
-  const { density } = useDensity();
-  const isCompact = density === "compact";
 
   const activeTabConfig = PORTFOLIO_TABS.find(t => t.id === activeTab) || PORTFOLIO_TABS[0];
 
@@ -111,6 +106,21 @@ export function MobileStep({
     return allTariffs.filter(t => isTariffBlocked(t.id, employeeSettings)).length;
   }, [mobileTariffs, activeTabConfig, employeeSettings]);
 
+  // Keyboard shortcuts: 1-9 selects tariff by index
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (configPhase !== "select") return;
+    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
+    const num = parseInt(e.key);
+    if (num >= 1 && num <= 9 && num <= filteredTariffs.length) {
+      handleTariffSelect(filteredTariffs[num - 1].id);
+    }
+  }, [configPhase, filteredTariffs]);
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
+
   const handleTabChange = (tab: PortfolioTab) => {
     setActiveTab(tab);
     setConfigPhase("select");
@@ -124,94 +134,166 @@ export function MobileStep({
     setConfigPhase("configure");
   };
 
-  const handleBackToSelect = () => {
-    setConfigPhase("select");
-  };
+  const handleBackToSelect = () => setConfigPhase("select");
 
   const handleAddedToOffer = () => {
     setConfigPhase("select");
     onConfigComplete?.();
   };
 
+  // Increment/decrement for SIM quantity
+  const adjustQty = (delta: number) => {
+    const max = isTeamDeal ? 10 : 100;
+    const newQty = Math.max(1, Math.min(max, value.quantity + delta));
+    updateField("quantity", newQty);
+  };
+
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div>
-        <h2 className="text-xl font-bold text-foreground">Tarifkonfiguration</h2>
-        <p className="text-xs text-muted-foreground mt-0.5">Sprach- und Datentarife konfigurieren.</p>
-      </div>
+    <div className="space-y-3">
+      {/* ─── HEADER BAR ─── */}
+      <div className="flex flex-col gap-2">
+        {/* Row 1: Title */}
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-bold text-foreground">Tarifkonfiguration</h2>
+          {activeTab !== "consumer" && currentLeadTime > 0 && (
+            <span className="flex items-center gap-1 text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+              <Clock className="w-2.5 h-2.5" />
+              {currentLeadTime} Mon. Vorlauf
+            </span>
+          )}
+        </div>
 
-      {/* Portfolio Tabs */}
-      <div className="flex border-b border-border">
-        {PORTFOLIO_TABS.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
+        {/* Row 2: Portfolio Tabs + Controls on same line */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Portfolio Tabs */}
+          <div className="flex border border-border rounded-lg overflow-hidden">
+            {PORTFOLIO_TABS.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => handleTabChange(tab.id)}
+                  className={cn(
+                    "flex items-center gap-1 px-3 py-1.5 text-xs font-medium transition-colors",
+                    isActive
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  )}
+                >
+                  <Icon className="w-3 h-3" />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Spacer */}
+          <div className="flex-1" />
+
+          {/* Lead Time quick-toggle (business only) */}
+          {activeTab !== "consumer" && (
+            <div className="flex items-center gap-1">
+              <Clock className="w-3 h-3 text-muted-foreground" />
+              <span className="text-[10px] text-muted-foreground">Vorlauf</span>
+              <select
+                value={currentLeadTime}
+                onChange={(e) => onMetaUpdate?.({ leadTimeMonths: Number(e.target.value) })}
+                className="h-7 px-1 text-xs border border-border rounded bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30"
+              >
+                {[0, 1, 2, 3, 6, 12].map(m => (
+                  <option key={m} value={m}>{m === 0 ? "Kein" : `${m} Mon.`}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* SIM Stepper */}
+          <div className="flex items-center gap-1 border border-border rounded-lg overflow-hidden">
             <button
-              key={tab.id}
-              onClick={() => handleTabChange(tab.id)}
-              className={cn(
-                "flex items-center gap-1.5 px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px",
-                isActive
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
-              )}
-            >
-              <Icon className="w-3.5 h-3.5" />
-              {tab.label}
-            </button>
-          );
-        })}
+              onClick={() => adjustQty(-1)}
+              className="w-7 h-7 flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors text-sm font-bold"
+            >−</button>
+            <input
+              type="number"
+              min={1}
+              max={isTeamDeal ? 10 : 100}
+              value={value.quantity}
+              onChange={(e) => {
+                const max = isTeamDeal ? 10 : 100;
+                updateField("quantity", Math.max(1, Math.min(max, Number(e.target.value) || 1)));
+              }}
+              className="w-10 h-7 text-center text-xs font-bold bg-card text-foreground border-x border-border focus:outline-none"
+            />
+            <button
+              onClick={() => adjustQty(1)}
+              className="w-7 h-7 flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors text-sm font-bold"
+            >+</button>
+          </div>
+          <span className="text-[10px] text-muted-foreground">SIM</span>
+
+          {/* NV | VVL Segmented Control */}
+          <div className="flex border border-border rounded-lg overflow-hidden">
+            {(["new", "renewal"] as ContractType[]).map((type) => (
+              <button
+                key={type}
+                onClick={() => updateField("contractType", type)}
+                className={cn(
+                  "px-3 py-1.5 text-xs font-semibold transition-colors",
+                  value.contractType === type
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                )}
+              >
+                {type === "new" ? "Neuvertrag" : "VVL"}
+              </button>
+            ))}
+          </div>
+
+          {/* Promo (only in select phase to keep it visible) */}
+          <select
+            value={value.promoId || "NONE"}
+            onChange={(e) => updateField("promoId", e.target.value)}
+            className="h-7 px-2 text-xs border border-border rounded-lg bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30"
+          >
+            <option value="NONE">Keine Aktion</option>
+            {promos.filter(p => p.id !== "NONE").map((promo) => (
+              <option key={promo.id} value={promo.id}>{promo.label}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
-      {/* Lead Time (Business Only) */}
-      {activeTab !== "consumer" && (
-        <LeadTimeInput
-          value={currentLeadTime}
-          onChange={(v) => onMetaUpdate?.({ leadTimeMonths: v })}
+      {/* ─── TARIFF COUNT / BLOCKED BADGE ─── */}
+      {configPhase === "select" && (
+        <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+          <span>{filteredTariffs.length} Tarif{filteredTariffs.length !== 1 ? "e" : ""}</span>
+          {blockedCount > 0 && (
+            <Badge variant="secondary" className="gap-1 text-[10px] py-0">
+              <Ban className="w-2.5 h-2.5" />
+              {blockedCount} gesperrt
+            </Badge>
+          )}
+          <span className="ml-auto text-[10px] text-muted-foreground/60">Tipp: Zifferntasten 1-{Math.min(9, filteredTariffs.length)} zum Schnellwählen</span>
+        </div>
+      )}
+
+      {/* ─── PHASE A: Tariff Selection List ─── */}
+      {configPhase === "select" && (
+        <TariffGrid
+          tariffs={filteredTariffs}
+          selectedTariffId={value.tariffId}
+          onSelect={handleTariffSelect}
         />
       )}
 
-      {/* Config Box */}
-      <ContractQuantitySelector
-        contractType={value.contractType}
-        quantity={value.quantity}
-        maxQuantity={isTeamDeal ? 10 : 100}
-        promos={promos}
-        selectedPromoId={value.promoId}
-        onContractTypeChange={(type) => updateField("contractType", type)}
-        onQuantityChange={(qty) => updateField("quantity", qty)}
-        onPromoChange={(promoId) => updateField("promoId", promoId)}
-      />
-
-      {/* PHASE A: Tarif-Auswahl */}
-      {configPhase === "select" && (
-        <>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span>{filteredTariffs.length} Tarif{filteredTariffs.length !== 1 ? "e" : ""}</span>
-            {blockedCount > 0 && (
-              <Badge variant="secondary" className="gap-1 text-[10px] py-0">
-                <Ban className="w-2.5 h-2.5" />
-                {blockedCount} gesperrt
-              </Badge>
-            )}
-          </div>
-
-          <TariffGrid
-            tariffs={filteredTariffs}
-            selectedTariffId={value.tariffId}
-            isCompact={isCompact}
-            onSelect={handleTariffSelect}
-          />
-        </>
-      )}
-
-      {/* PHASE B: Tarif-Konfiguration (ersetzt Grid) */}
+      {/* ─── PHASE B: Inline Configuration (replaces grid) ─── */}
       {configPhase === "configure" && selectedTariff && fullOption && result && (
-        <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="space-y-3 animate-in fade-in slide-in-from-top-1 duration-150">
+          {/* Back button */}
           <button
             onClick={handleBackToSelect}
-            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             Zurück zur Tarifauswahl
@@ -242,7 +324,7 @@ export function MobileStep({
         </div>
       )}
 
-      {/* TeamDeal Warning */}
+      {/* ─── TeamDeal Warning (always visible if relevant) ─── */}
       {isTeamDeal && (
         <div className="space-y-2">
           <div className="flex items-center justify-between p-3 bg-[hsl(var(--status-warning)/0.1)] rounded-lg border border-[hsl(var(--status-warning)/0.3)]">
@@ -252,20 +334,18 @@ export function MobileStep({
                 checked={value.primeOnAccount ?? false}
                 onCheckedChange={(checked) => updateField("primeOnAccount", !!checked)}
               />
-              <Label htmlFor="primeOnAccount" className="text-sm font-normal cursor-pointer">
+              <Label htmlFor="primeOnAccount" className="text-xs font-normal cursor-pointer">
                 Business Prime aktiv auf gleichem Kundenkonto
               </Label>
             </div>
             <HelpTooltip content="TeamDeal" />
           </div>
           {showTeamDealWarning && (
-            <Alert variant="destructive" className="border-[hsl(var(--status-warning)/0.5)] bg-[hsl(var(--status-warning)/0.1)]">
-              <AlertTriangle className="h-4 w-4 text-[hsl(var(--status-warning))]" />
-              <AlertDescription className="text-[hsl(var(--status-warning))] text-sm">
+            <Alert variant="destructive" className="border-[hsl(var(--status-warning)/0.5)] bg-[hsl(var(--status-warning)/0.1)] py-2">
+              <AlertTriangle className="h-3.5 w-3.5 text-[hsl(var(--status-warning))]" />
+              <AlertDescription className="text-[hsl(var(--status-warning))] text-xs">
                 <p className="font-medium">TeamDeal ohne Prime aktiv</p>
-                <p className="text-xs mt-1">
-                  Statt TeamDeal wird <strong>Smart Business Plus (13€/mtl., 1 GB)</strong> aktiviert.
-                </p>
+                <p className="text-[10px] mt-0.5">Statt TeamDeal wird <strong>Smart Business Plus (13€/mtl., 1 GB)</strong> aktiviert.</p>
               </AlertDescription>
             </Alert>
           )}

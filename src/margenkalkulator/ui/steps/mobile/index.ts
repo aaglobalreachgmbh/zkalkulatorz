@@ -6,5 +6,5 @@
 export { MobileStep } from "./MobileStep";
 export { TariffGrid } from "./TariffGrid";
 export { TariffCard } from "./TariffCard";
-export { ContractQuantitySelector } from "./ContractQuantitySelector";
+// ContractQuantitySelector dissolved into MobileStep header bar
 export { TariffFilters } from "./TariffFilters";

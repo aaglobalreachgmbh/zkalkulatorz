@@ -1,212 +1,90 @@
 
 
-# Plan: Kompletter UI/UX-Neuaufbau der /wizard Seite
+# Plan: Kompletter visueller Neuaufbau /wizard nach Screenshot-Vorlage
 
-## Zusammenfassung
+## Analyse: Was stimmt nicht?
 
-Die gesamte UI-Schicht der Kalkulator-Seite wird von Grund auf neu geschrieben, orientiert am hochgeladenen Design (clean product cards mit Bild, "Add to Offer" Buttons, Step-Navigation oben, rechte Sidebar mit Customer Totals + Dealer Margins + PDF-Buttons). Die Business-Logik (CalculatorContext, Engine, Hooks) bleibt komplett unangetastet.
+Das aktuelle Layout hat zwar die richtige Grundstruktur (Shell + Sidebar + Steps), aber die visuelle Ausfuehrung weicht stark vom Screenshot-Design ab. Das gesamte Styling muss von Grund auf neu geschrieben werden - nicht angepasst, sondern ersetzt.
 
----
+## Design-Referenz (aus Screenshots)
 
-## Design-Ziel (aus den Screenshots)
+### Screenshot 1 (screen-3.png):
+- Weisse, grossflaechige Produktkarten mit Bild LINKS (ca. 150px) und Details RECHTS
+- Gruppierung: "Smartphones" / "Tablets" als grosse Ueberschriften
+- Badges: Gruener "Stock Available", grauer "24 Month Contract"
+- Preise: "MONTHLY 79.99 EUR" links, "ONE-TIME 1.00 EUR" rechts
+- Roter "Add to Offer" Button volle Breite unter jedem Produkt
+- Rechte Sidebar: Zwei getrennte weisse Boxen (Customer Totals + Dealer Margins)
+- Step-Bar: Einfacher Text "Step 1: Hardware Selection - Step 1 Alt"
 
-```text
-+------------------------------------------------------------------+
-| NAVBAR: Vodafone Logo | MargenKalkulator | Dashboard | New Offer  |
-|        | Configuration | Basket | [Bell] [Avatar]                |
-+------------------------------------------------------------------+
-| Step 1: Hardware Selection  -  Step 1 Alt        [Search...]      |
-+------------------------------------------------------------------+
-|                                    |                              |
-|  Smartphones                       |  CUSTOMER TOTALS             |
-|  ┌────────────┐ ┌────────────┐    |  Avg. Monthly:    0.00 EUR   |
-|  │  [Image]   │ │  [Image]   │    |  One-Time Costs:  0.00 EUR   |
-|  │ iPhone 14  │ │ Galaxy S23 │    |  24-Month Total:  0.00 EUR   |
-|  │ Specs...   │ │ Specs...   │    |  *Includes all discounts     |
-|  │ MONTHLY    │ │ MONTHLY    │    |                              |
-|  │ 79.99 EUR  │ │ 59.99 EUR  │    |  INTERNAL ONLY               |
-|  │[Add to Off]│ │[Add to Off]│    |  DEALER MARGINS              |
-|  └────────────┘ └────────────┘    |  Total Margin:    0.00 EUR   |
-|                                    |  Total Provision: 0.00 EUR   |
-|  Tablets                           |                              |
-|  ┌────────────┐                    |  [Kundenangebot PDF]  (red)  |
-|  │  [Image]   │                    |  [Haendler-Uebersicht PDF]   |
-|  │ iPad Pro   │                    |                              |
-|  │ 89.99 EUR  │                    |  Need help calculating?      |
-|  │[Add to Off]│                    |                              |
-|  └────────────┘                    |                              |
-|                                    |                              |
-|                  [Proceed to Step 2]                              |
-+------------------------------------------------------------------+
-```
+### Screenshot 2 (screen-4.png):
+- Kompaktere Karten: Bild links (80px), Name + Specs + Monthly + "Add to Offer" Button rechts
+- Gruppierung nach Marke: Apple, Samsung, SIM-Only
+- Step-Indicator als dunkler Pill-Button
+- Sidebar: "DEALER MODE OVERVIEW" mit Lock-Icon, "INTERNAL ONLY"
+- "Proceed to Step 2" roter Button unten rechts
 
-### Kern-Design-Prinzipien (aus Screenshot):
-- **Weisser Hintergrund** mit `bg-gray-50` fuer den Content-Bereich
-- **Grosse Produkt-Karten** mit Bild links, Details rechts, roter "Add to Offer" Button
-- **Gruppierung nach Kategorie** (Smartphones, Tablets, SIM-Only) statt Brand
-- **Step-Indikator** oben links als einfacher Text (kein Stepper-Widget)
-- **Suchfeld** oben rechts im Content-Bereich
-- **Rechte Sidebar** mit zwei getrennten Boxen:
-  1. "CUSTOMER TOTALS" (weiss, sauber)
-  2. "DEALER MARGINS" (mit "INTERNAL ONLY" Badge rot)
-- **PDF-Buttons** direkt in der Sidebar (rot fuer Kunde, outline fuer Haendler)
-- **"Proceed to Step 2"** als roter Button unten rechts
-- **Kein Akkordeon** - Steps sind volle Seiten mit Navigation
+## Dateien die komplett neu geschrieben werden
 
----
+| Nr | Datei | Aenderung |
+|----|-------|-----------|
+| 1 | `CalculatorShell.tsx` | Komplett neues Layout mit Top-Navigation-Bar im Vodafone-Stil |
+| 2 | `SummarySidebar.tsx` | Exakt nach Screenshot: Customer Totals Box + Dealer Margins Box + PDF Buttons |
+| 3 | `OfferBasketPanel.tsx` | Schlanker, weniger dominant |
+| 4 | `Wizard.tsx` | Nur der JSX-Return - Step-Content mit neuem Card-Layout |
+| 5 | `ModeSelector.tsx` | Minimale visuelle Anpassung |
+| 6 | `MobileActionFooter.tsx` | An neues System angepasst |
 
-## Architektur-Entscheidung
+## Dateien die NICHT geaendert werden (Black Box)
 
-```text
-BLEIBT UNANGETASTET (Black Box):
-  - CalculatorContext.tsx (State + Business Logic)
-  - OfferBasketContext.tsx (Basket-State)
-  - engine/* (Berechnungen, Katalog)
-  - hooks/* (useEmployeeSettings, usePushProvisions, etc.)
-  - steps/hardware/HardwareStep.tsx + Sub-Komponenten
-  - steps/mobile/MobileStep.tsx + Sub-Komponenten
-  - steps/FixedNetStep.tsx
+- `CalculatorContext.tsx`
+- `OfferBasketContext.tsx`
+- `engine/*`
+- `steps/hardware/*` (Sub-Komponenten)
+- `steps/mobile/*` (Sub-Komponenten)
+- `FixedNetStep.tsx`
+- `ActionMenu.tsx`
+- `PdfDownloadButton.tsx`
+- `AnimatedCurrency.tsx`
 
-WIRD VON GRUND AUF NEU GESCHRIEBEN:
-  1. CalculatorShell.tsx (Layout)
-  2. SummarySidebar.tsx (Rechte Seite: Totals + Margins + PDFs)
-  3. OfferBasketPanel.tsx (Korb-Widget in Sidebar)
-  4. ModeSelector.tsx (Header-Dropdown vereinfacht)
-  5. Wizard.tsx (Hauptdatei - Step-basiert statt Akkordeon)
-  6. MobileActionFooter.tsx (Mobile Footer vereinfacht)
-```
+## Technische Details
 
----
+### Phase 1: CalculatorShell.tsx
+Neues Layout-Grid exakt nach Screenshot:
+- Header 64px: Logo-Bereich links, Nav-Links mitte (Dashboard, New Offer, Configuration, Basket), Icons rechts
+- Step-Bar darunter: Dunkler Pill "Step 1: Hardware Selection" links, Search-Input rechts
+- Content Grid: `grid-cols-[1fr_340px]` - Main scrollbar, Sidebar fixed
+- Kein border-radius auf dem Hauptcontainer, clean flat design
 
-## Phase 1: CalculatorShell.tsx - Neues Layout
+### Phase 2: SummarySidebar.tsx
+Exakt nach Screenshot aufgebaut:
+- Box 1 "CUSTOMER TOTALS": Caps-Titel, drei Zeilen (Avg. Monthly / One-Time Costs / 24-Month Total), Werte rechts, 24-Month Total in Rot und groesser, Fussnote
+- Box 2 "DEALER MARGINS": Lock-Icon + "INTERNAL ONLY" Badge rot oben rechts, Total Margin + Total Provision
+- PDF Buttons: Roter "Kundenangebot PDF" Button, Outline "Haendler-Uebersicht PDF"
+- Help-Link: "Need help calculating margins?"
 
-**Aenderung:** Kompletter Neuschrieb
+### Phase 3: Wizard.tsx JSX-Neuschrieb
+- Step-Content ohne Card-Wrapper (die Steps selbst liefern ihre Karten)
+- "Proceed to Step 2" Button am Ende, rot, rechtsbuendig
+- PricePeriodBreakdown und ValidationWarning bleiben
 
-Neues Layout:
-- Header: Nur Titel "Kalkulator" links, Actions rechts (flacher, 56px statt 64px)
-- Content-Area: `bg-gray-50`, breiterer Main-Bereich
-- Sidebar: `380px`, `bg-white`, mit eigenem internen Scroll
-- Kein Akkordeon-Zwang mehr - Children werden direkt gerendert
-- Step-Indikator als einfache Text-Zeile unter dem Header
+### Phase 4: Build-Fehler beheben
+- Die Test-Dateien `AdminGuard.test.tsx` und `ViewModeGuards.test.tsx` haben Import-Fehler (`screen` aus `@testing-library/react`). Diese werden geloescht oder der Import korrigiert.
 
----
-
-## Phase 2: SummarySidebar.tsx - Kompletter Neuaufbau
-
-**Design aus Screenshot:**
-
-Box 1 - "CUSTOMER TOTALS":
-- Titel in Caps, bold
-- Drei Zeilen: "Avg. Monthly" / "One-Time Costs" / "24-Month Total"
-- Werte rechtsbuendig, grau wenn 0, schwarz/rot wenn aktiv
-- Fussnote: "*Includes all discounts and taxes"
-
-Box 2 - "DEALER MARGINS" (mit "INTERNAL ONLY" Badge):
-- Nur sichtbar wenn `showDealerEconomics`
-- "Total Margin" und "Total Provision"
-- Roter Badge "INTERNAL ONLY" oben rechts
-
-Box 3 - PDF Buttons:
-- "Kundenangebot PDF" - Volle Breite, roter Button
-- "Haendler-Uebersicht PDF" - Volle Breite, Outline-Button
-- "Need help calculating margins?" Link unten
-
----
-
-## Phase 3: OfferBasketPanel.tsx - Vereinfacht
-
-- Amber-Header bleibt (funktioniert gut)
-- Schlichter gestaltet, weniger Animation
-- Direkt unter der SummarySidebar in der rechten Spalte
-
----
-
-## Phase 4: Wizard.tsx - Von Akkordeon zu Step-Pages
-
-**Groesste Aenderung:** Statt Akkordeon werden Steps als volle Seiten gerendert.
-
-```typescript
-// Statt Accordion mit allen Steps gleichzeitig:
-{activeSection === "hardware" && <HardwareStep ... />}
-{activeSection === "mobile" && <MobileStep ... />}
-{activeSection === "fixedNet" && <FixedNetStep ... />}
-```
-
-- Step-Indikator oben: `Step 1: Hardware Selection - Step 1 Alt`
-- Suchfeld rechts neben Step-Indikator (fuer Hardware)
-- "Proceed to Step 2" Button am Ende jeder Sektion (rot, prominent)
-- Alle bestehenden Hooks und Callbacks bleiben identisch
-- Nur der JSX-Return wird komplett neu geschrieben
-
----
-
-## Phase 5: ModeSelector.tsx - Vereinfacht
-
-- Einfacherer Dropdown-Style
-- Gleiche Funktionalitaet (Haendler/Kunde/Kundensitzung)
-- Visuell schlanker
-
----
-
-## Phase 6: MobileActionFooter.tsx - Anpassung an neues Design
-
-- Angepasst an das neue visuelle System
-- Gleiche Funktionalitaet
-
----
-
-## Phase 7: Knowledge-Update
-
-Neuer Text fuer `.lovable/rules.md`:
-
-```
-# ANTI-LAZY DEVELOPMENT PROTOCOL V2
-
-## Grundprinzip
-Jede Code-Aenderung wird mit maximaler Praezision durchgefuehrt.
-Keine Abkuerzungen, keine "// ... keep existing code" wenn der Code
-tatsaechlich geaendert werden muss, keine TODO-Kommentare.
-
-## Regeln
-1. STOP-ON-FAIL: Bei Build-Fehlern sofort stoppen und beheben
-2. NO-TOUCH-LOGIC: Engine/Berechnungen/Context sind eine Black Box
-3. VOLLSTAENDIGKEIT: Jeder Plan wird zu 100% abgearbeitet
-4. INKREMENTELL: Kleine Schritte, Build-Check nach jedem Schritt
-5. PIXEL-GENAU: UI muss dem Referenz-Design entsprechen
-6. IMPORT-CHECK: Jeder Import wird auf Existenz geprueft
-7. PROP-CHECK: Jeder Prop wird gegen das Interface validiert
-8. KEIN HALLUZINIEREN: Keine erfundenen Komponenten oder Props
-9. ANTI-LAZY: Lieber 3 praezise Nachrichten als 1 schlampige
-10. FEHLER-FREI: Jede Datei muss fehlerfrei kompilieren
-```
-
----
+### Phase 5: Anti-Lazy Knowledge Update
+- `.lovable/rules.md` wird aktualisiert mit dem V2 Protokoll
 
 ## Ausfuehrungsreihenfolge
 
-| Schritt | Datei | Beschreibung |
-|---------|-------|-------------|
-| 1 | `CalculatorShell.tsx` | Neues Layout-Grid |
-| 2 | `SummarySidebar.tsx` | Customer Totals + Dealer Margins + PDFs |
-| 3 | `OfferBasketPanel.tsx` | Vereinfachter Korb |
-| 4 | `ModeSelector.tsx` | Schlanker Dropdown |
-| 5 | `MobileActionFooter.tsx` | Angepasster Footer |
-| 6 | `Wizard.tsx` | Step-Pages statt Akkordeon |
-| 7 | `.lovable/rules.md` | Anti-Lazy Protocol V2 |
+1. `CalculatorShell.tsx` - Layout-Grundgeruest
+2. `SummarySidebar.tsx` - Rechte Sidebar
+3. `OfferBasketPanel.tsx` - Korb-Widget
+4. `Wizard.tsx` - Hauptdatei JSX
+5. `MobileActionFooter.tsx` - Mobile Footer
+6. Test-Dateien Build-Fehler beheben
+7. `.lovable/rules.md` - Knowledge Update
 
----
+## Ergebnis
 
-## Scope-Abgrenzung
-
-- NUR die /wizard Route wird umgebaut
-- KEINE Aenderungen an CalculatorContext, Engine, Hooks
-- KEINE Aenderungen an HardwareStep/MobileStep/FixedNetStep Sub-Komponenten
-- Die Sub-Komponenten (HardwareGrid, TariffGrid, etc.) werden als Black Box eingebunden
-- Mehrere Nachrichten noetig - Phase 1-3 zuerst, dann 4-7
-
----
-
-## Hinweis
-
-Da dies ein umfangreicher Neuaufbau ist, wird die Implementierung ueber **mehrere aufeinanderfolgende Nachrichten** erfolgen. Jede Nachricht behandelt 2-3 Dateien mit Build-Validierung. Das ist der Anti-Lazy-Ansatz.
+Die /wizard Seite wird visuell komplett dem Screenshot-Design entsprechen: Clean, flat, weiss-dominiert, mit prominenten Produktkarten und einer klaren rechten Sidebar fuer Preise und Margen. Das alte Design wird nicht mehr erkennbar sein.
 

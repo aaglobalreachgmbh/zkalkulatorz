@@ -1,9 +1,9 @@
 // ============================================
-// SummarySidebar - Customer Totals + Dealer Margins + PDFs
-// Redesign: Clean two-box layout from screenshot
+// SummarySidebar - Screenshot-based Rebuild
+// Two boxes: Customer Totals + Dealer Margins
 // ============================================
 
-import { Plus, Check, ShoppingBag, FileText } from "lucide-react";
+import { Plus, Check, ShoppingBag, FileText, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -68,52 +68,51 @@ export function SummarySidebar({ onResetForNewTariff, className }: SummarySideba
   const hasTariff = !!option.mobile.tariffId;
 
   return (
-    <div className={cn("space-y-4", className)}>
-      {/* Box 1: Customer Totals */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-        <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">
+    <div className={cn("space-y-3", className)}>
+      {/* Box 1: CUSTOMER TOTALS */}
+      <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-4">
           Customer Totals
         </h3>
-        <div className="space-y-3">
-          <TotalRow label="Avg. Monthly" value={avgMonthly} />
-          <TotalRow label="One-Time Costs" value={oneTimeCosts} />
-          <div className="border-t border-gray-100 pt-3">
-            <TotalRow label="24-Month Total" value={total24M} bold />
+
+        <div className="space-y-2.5">
+          <SidebarRow label="Avg. Monthly" value={avgMonthly} />
+          <SidebarRow label="One-Time Costs" value={oneTimeCosts} />
+          <div className="border-t border-gray-100 pt-2.5 mt-2.5">
+            <SidebarRow label="24-Month Total" value={total24M} highlight />
           </div>
         </div>
-        <p className="text-[10px] text-gray-400 mt-3">
+
+        <p className="text-[10px] text-gray-400 mt-3 leading-tight">
           *Includes all discounts and taxes
         </p>
       </div>
 
-      {/* Box 2: Dealer Margins (Internal Only) */}
+      {/* Box 2: DEALER MARGINS */}
       {visibility.showDealerEconomics && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-              Dealer Margins
-            </h3>
-            <Badge className="bg-red-100 text-red-700 border-red-200 text-[10px] font-semibold">
-              INTERNAL ONLY
-            </Badge>
+            <div className="flex items-center gap-1.5">
+              <Lock className="w-3 h-3 text-gray-400" />
+              <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                Dealer Margins
+              </h3>
+            </div>
+            <span className="text-[9px] font-bold uppercase tracking-wider bg-red-100 text-red-600 px-2 py-0.5 rounded">
+              Internal Only
+            </span>
           </div>
-          <div className="space-y-3">
-            <TotalRow
-              label="Total Margin"
-              value={margin}
-              colorize
-            />
-            <TotalRow
-              label="Total Provision"
-              value={provision}
-            />
+
+          <div className="space-y-2.5">
+            <SidebarRow label="Total Margin" value={margin} colorize />
+            <SidebarRow label="Total Provision" value={provision} />
           </div>
         </div>
       )}
 
-      {/* Box 3: PDF Export Buttons */}
+      {/* Box 3: PDF Export */}
       {result && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-3">
+        <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-2">
           <PdfDownloadButton
             option={option}
             result={result}
@@ -121,7 +120,7 @@ export function SummarySidebar({ onResetForNewTariff, className }: SummarySideba
             size="default"
             type="customer"
             viewMode={effectiveViewMode}
-            className="w-full bg-red-600 hover:bg-red-700 text-white gap-2 font-medium"
+            className="w-full bg-red-600 hover:bg-red-700 text-white gap-2 text-sm font-medium"
           />
           {visibility.showDealerEconomics && (
             <PdfDownloadButton
@@ -131,21 +130,21 @@ export function SummarySidebar({ onResetForNewTariff, className }: SummarySideba
               size="default"
               type="dealer"
               viewMode={effectiveViewMode}
-              className="w-full gap-2 font-medium"
+              className="w-full gap-2 text-sm font-medium"
             />
           )}
-          <p className="text-[11px] text-gray-400 text-center pt-1">
+          <p className="text-[10px] text-gray-400 text-center pt-1">
             Need help calculating margins?
           </p>
         </div>
       )}
 
-      {/* Box 4: Primary CTA */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+      {/* Box 4: CTA */}
+      <div className="bg-white rounded-lg border border-gray-200 p-4">
         {hasTariff ? (
           isAlreadyAdded ? (
             <div className="space-y-2">
-              <div className="flex items-center justify-center gap-2 py-2.5 px-3 bg-green-50 rounded-lg border border-green-200">
+              <div className="flex items-center justify-center gap-2 py-2 px-3 bg-green-50 rounded border border-green-200">
                 <Check className="w-4 h-4 text-green-600" />
                 <span className="text-sm font-medium text-green-700">Im Angebot</span>
                 {items.length > 0 && (
@@ -160,7 +159,7 @@ export function SummarySidebar({ onResetForNewTariff, className }: SummarySideba
                   size="sm"
                   variant="outline"
                   onClick={(e) => { e.stopPropagation(); onResetForNewTariff(); }}
-                  className="w-full gap-2"
+                  className="w-full gap-2 text-sm"
                 >
                   <Plus className="w-4 h-4" />
                   Weiteren Tarif
@@ -171,7 +170,7 @@ export function SummarySidebar({ onResetForNewTariff, className }: SummarySideba
             <Button
               size="lg"
               onClick={(e) => { e.stopPropagation(); handleAddToOffer(); }}
-              className="w-full bg-red-600 hover:bg-red-700 text-white gap-2 font-semibold shadow-md"
+              className="w-full bg-red-600 hover:bg-red-700 text-white gap-2 font-semibold"
             >
               <Plus className="w-5 h-5" />
               Zum Angebot
@@ -195,7 +194,7 @@ export function SummarySidebar({ onResetForNewTariff, className }: SummarySideba
             size="lg"
             variant="default"
             onClick={(e) => { e.stopPropagation(); handleGoToCheckout(); }}
-            className="w-full mt-3 gap-2 bg-green-600 hover:bg-green-700 text-white"
+            className="w-full mt-2 gap-2 bg-green-600 hover:bg-green-700 text-white"
           >
             <FileText className="w-5 h-5" />
             Gesamtangebot ({items.length})
@@ -206,16 +205,16 @@ export function SummarySidebar({ onResetForNewTariff, className }: SummarySideba
   );
 }
 
-// --- Helper: Total Row ---
-function TotalRow({
+// --- Helper ---
+function SidebarRow({
   label,
   value,
-  bold = false,
+  highlight = false,
   colorize = false,
 }: {
   label: string;
   value: number;
-  bold?: boolean;
+  highlight?: boolean;
   colorize?: boolean;
 }) {
   const isZero = Math.abs(value) < 0.01;
@@ -223,14 +222,18 @@ function TotalRow({
 
   return (
     <div className="flex items-center justify-between">
-      <span className={cn("text-sm", bold ? "font-semibold text-gray-900" : "text-gray-600")}>
+      <span className={cn(
+        "text-sm",
+        highlight ? "font-semibold text-gray-900" : "text-gray-500"
+      )}>
         {label}
       </span>
       <span
         className={cn(
-          "text-sm tabular-nums font-medium",
-          isZero && "text-gray-400",
-          !isZero && !colorize && (bold ? "text-gray-900 font-semibold" : "text-gray-900"),
+          "tabular-nums font-medium",
+          highlight ? "text-base font-bold text-red-600" : "text-sm",
+          isZero && !highlight && "text-gray-400",
+          !isZero && !colorize && !highlight && "text-gray-900",
           colorize && !isZero && (isNegative ? "text-red-600 font-semibold" : "text-green-600 font-semibold")
         )}
       >

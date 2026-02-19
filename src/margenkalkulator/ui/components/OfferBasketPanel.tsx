@@ -1,10 +1,10 @@
 // ============================================
-// Offer Basket Panel - Redesign
-// Clean amber-header basket widget
+// Offer Basket Panel - Screenshot Rebuild
+// Minimal, flat design
 // ============================================
 
 import { useState } from "react";
-import { ChevronDown, X, Plus, FileText, ShoppingCart } from "lucide-react";
+import { ChevronDown, X, Plus, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -20,75 +20,51 @@ export function OfferBasketPanel() {
   const [isOpen, setIsOpen] = useState(items.length > 0);
 
   return (
-    <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200">
-      {/* Amber Header */}
-      <div className="bg-amber-400 px-4 py-3 flex items-center justify-between">
-        <h3 className="text-white font-bold text-sm flex items-center gap-2">
-          <FileText className="w-4 h-4" />
-          Angebots-Korb
-        </h3>
+    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      {/* Header */}
+      <div className="bg-gray-900 px-4 py-2.5 flex items-center justify-between">
+        <span className="text-white font-semibold text-xs flex items-center gap-2 uppercase tracking-wider">
+          <ShoppingCart className="w-3.5 h-3.5" />
+          Basket
+        </span>
         {itemCount > 0 && (
-          <span className="bg-white text-amber-600 text-xs font-bold px-2 py-0.5 rounded-full">
+          <span className="bg-red-600 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
             {itemCount}
           </span>
         )}
       </div>
 
       {/* Content */}
-      <div className="p-4">
+      <div className="p-3">
         <Collapsible open={isOpen} onOpenChange={setIsOpen}>
           <CollapsibleTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full justify-between border-gray-200 hover:bg-gray-50 text-sm"
-            >
-              <span className="flex items-center gap-2">
-                {itemCount > 0 && <span className="text-amber-600">✓</span>}
-                {itemCount} {itemCount === 1 ? "Tarif" : "Tarife"} gesammelt
-              </span>
-              <ChevronDown
-                className={cn(
-                  "w-4 h-4 transition-transform text-gray-400",
-                  isOpen && "rotate-180"
-                )}
-              />
-            </Button>
+            <button className="w-full flex items-center justify-between text-xs text-gray-500 hover:text-gray-700 py-1.5 px-2 rounded hover:bg-gray-50 transition-colors">
+              <span>{itemCount} {itemCount === 1 ? "Tarif" : "Tarife"} gesammelt</span>
+              <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", isOpen && "rotate-180")} />
+            </button>
           </CollapsibleTrigger>
 
-          <CollapsibleContent className="mt-2">
+          <CollapsibleContent className="mt-1.5">
             {items.length === 0 ? (
-              <div className="py-4 px-3 bg-gray-50 rounded-lg text-center">
-                <ShoppingCart className="w-6 h-6 mx-auto text-gray-300 mb-2" />
-                <p className="text-xs font-medium text-gray-500">Warenkorb ist leer</p>
-                <p className="text-[11px] text-gray-400 mt-1">
-                  Konfiguriere einen Tarif und füge ihn hinzu
-                </p>
+              <div className="py-3 text-center">
+                <p className="text-[11px] text-gray-400">Noch keine Tarife hinzugefügt</p>
               </div>
             ) : (
-              <ul className="space-y-1 bg-gray-50 rounded-lg p-2">
+              <ul className="space-y-0.5">
                 {items.map((item) => (
                   <li
                     key={item.id}
-                    className="flex items-center justify-between text-sm py-1.5 px-2 rounded hover:bg-white group"
+                    className="flex items-center justify-between text-xs py-1.5 px-2 rounded hover:bg-gray-50 group"
                   >
                     <div className="flex-1 min-w-0">
-                      <span className="truncate block font-medium text-gray-900 text-xs">
-                        {item.name}
-                      </span>
-                      <span className="text-[11px] text-gray-500">
-                        {formatMonthlyPrice(item.result.totals.avgTermNet)}
-                      </span>
+                      <span className="truncate block font-medium text-gray-800">{item.name}</span>
+                      <span className="text-[10px] text-gray-400">{formatMonthlyPrice(item.result.totals.avgTermNet)}</span>
                     </div>
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeItem(item.id);
-                      }}
-                      className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 transition-opacity p-1 ml-2"
-                      title="Entfernen"
+                      onClick={(e) => { e.stopPropagation(); removeItem(item.id); }}
+                      className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-opacity p-0.5 ml-2"
                     >
-                      <X className="w-3.5 h-3.5" />
+                      <X className="w-3 h-3" />
                     </button>
                   </li>
                 ))}
@@ -97,22 +73,15 @@ export function OfferBasketPanel() {
           </CollapsibleContent>
         </Collapsible>
 
-        {/* Create Offer Button */}
         <Button
           onClick={openModal}
           disabled={itemCount === 0}
           size="sm"
-          className="w-full mt-3 bg-amber-400 hover:bg-amber-500 text-white font-semibold"
+          className="w-full mt-2 bg-gray-900 hover:bg-gray-800 text-white text-xs font-semibold"
         >
-          <Plus className="w-4 h-4 mr-1.5" />
+          <Plus className="w-3.5 h-3.5 mr-1" />
           Angebot erstellen
         </Button>
-
-        {itemCount === 0 && (
-          <p className="text-[11px] text-gray-400 mt-2 text-center">
-            Konfiguriere einen Tarif und klicke auf "Zum Angebot"
-          </p>
-        )}
       </div>
     </div>
   );

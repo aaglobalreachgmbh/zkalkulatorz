@@ -1,6 +1,6 @@
 // ============================================
-// CalculatorShell - Clean Layout Grid
-// Redesign: Step-based layout with fixed sidebar
+// CalculatorShell - Complete Visual Rebuild
+// Design: Screenshot-based flat layout
 // ============================================
 
 import { type ReactNode } from "react";
@@ -26,32 +26,34 @@ export function CalculatorShell({
   className,
 }: CalculatorShellProps) {
   return (
-    <div className={cn("flex flex-col h-full w-full overflow-hidden", className)}>
-      {/* Header - Slim 56px */}
-      <header className="flex-none h-14 bg-white border-b border-gray-200 px-4 lg:px-6 flex items-center justify-between z-30">
-        <h1 className="text-lg font-bold text-gray-900">{title}</h1>
-        <div className="flex items-center gap-2 lg:gap-3">
+    <div className={cn("flex flex-col h-full w-full overflow-hidden bg-white", className)}>
+      {/* Top Bar - 48px flat nav */}
+      <header className="flex-none h-12 bg-gray-900 px-4 lg:px-6 flex items-center justify-between z-30">
+        <div className="flex items-center gap-6">
+          <span className="text-white font-bold text-base tracking-tight">{title}</span>
+        </div>
+        <div className="flex items-center gap-2">
           {headerActions}
         </div>
       </header>
 
-      {/* Step Indicator Bar */}
+      {/* Step Navigation Bar - 44px */}
       {stepIndicator && (
-        <div className="flex-none bg-white border-b border-gray-100 px-4 lg:px-6 py-2">
+        <div className="flex-none h-11 bg-gray-50 border-b border-gray-200 px-4 lg:px-6 flex items-center">
           {stepIndicator}
         </div>
       )}
 
-      {/* Main Grid */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_380px] overflow-hidden bg-gray-50">
-        {/* Left: Scrollable Content */}
-        <main className="h-full overflow-y-auto p-4 lg:p-6 pb-32 lg:pb-6">
-          <div className="max-w-5xl mx-auto">{children}</div>
+      {/* Content Grid */}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_340px] overflow-hidden">
+        {/* Left: Scrollable Content Area */}
+        <main className="h-full overflow-y-auto bg-gray-50 p-4 lg:p-6 pb-32 lg:pb-6">
+          <div className="max-w-4xl mx-auto">{children}</div>
         </main>
 
         {/* Right: Fixed Sidebar */}
-        <aside className="hidden lg:flex flex-col h-full border-l border-gray-200 bg-white overflow-hidden">
-          <div className="flex-1 overflow-y-auto">
+        <aside className="hidden lg:flex flex-col h-full border-l border-gray-200 bg-gray-50 overflow-hidden">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {sidebar}
           </div>
         </aside>

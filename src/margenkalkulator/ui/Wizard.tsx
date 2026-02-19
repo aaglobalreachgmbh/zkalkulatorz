@@ -494,10 +494,10 @@ function WizardContent() {
           </>
         }
         sidebar={
-          <div className="p-4 space-y-4">
+          <>
             <SummarySidebar onResetForNewTariff={resetForNewTariff} />
             <OfferBasketPanel />
-          </div>
+          </>
         }
         mobileFooter={
           <MobileActionFooter onResetForNewTariff={resetForNewTariff} />
@@ -507,7 +507,7 @@ function WizardContent() {
         <div className="space-y-6">
           {/* Hardware Step */}
           {activeSection === "hardware" && (
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 lg:p-6">
+            <div>
               <HardwareStep
                 value={activeState.hardware}
                 onChange={(hardware) => setActiveState({ ...activeState, hardware })}
@@ -519,7 +519,7 @@ function WizardContent() {
 
           {/* Mobile Step */}
           {activeSection === "mobile" && (
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 lg:p-6">
+            <div>
               <MobileStep
                 value={activeState.mobile}
                 onChange={(mobile) => setActiveState({ ...activeState, mobile })}
@@ -538,7 +538,7 @@ function WizardContent() {
 
           {/* FixedNet Step */}
           {activeSection === "fixedNet" && fixedNetModuleEnabled && (
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 lg:p-6">
+            <div>
               <FixedNetStep
                 value={activeState.fixedNet}
                 onChange={(fixedNet) => setActiveState({ ...activeState, fixedNet })}

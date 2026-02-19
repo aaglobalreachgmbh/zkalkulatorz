@@ -1,6 +1,8 @@
 // ============================================
-// HardwareProductCard - Horizontal product card
-// New design: image left, details right, red CTA
+// HardwareProductCard - Large product card
+// Design: screen-7.png reference (1:1)
+// Image left, specs in primary, badges, 
+// MONTHLY + ONE-TIME prices, full-width red CTA
 // ============================================
 
 import { Check, Smartphone } from "lucide-react";
@@ -32,100 +34,132 @@ export function HardwareProductCard({
     ? `${familyName} ${subModelName}`
     : familyName;
 
-  const specsLine = [
+  // Build specs line like "Unlimited 5G Data | 128GB Space Black"
+  const specsParts = [
+    config.connectivity || "5G",
     config.storage !== "Standard" ? config.storage : null,
-    config.connectivity,
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  ].filter(Boolean);
+  const specsLine = specsParts.join(" | ");
+
+  // Determine badges based on category context
+  const badges = [
+    { label: "Stock Available", variant: "success" as const },
+    { label: "24 Month Contract", variant: "neutral" as const },
+  ];
 
   return (
     <div
       className={cn(
-        "relative flex items-stretch gap-4 rounded-xl border p-4 transition-all duration-200 cursor-pointer",
-        "bg-card hover:border-primary/40 hover:shadow-sm",
+        "relative flex flex-col rounded-xl border bg-card transition-all duration-200 cursor-pointer overflow-hidden",
+        "hover:shadow-md hover:border-primary/30",
         isSelected
-          ? "border-[hsl(var(--status-success))] bg-[hsl(var(--status-success)/0.05)] ring-1 ring-[hsl(var(--status-success)/0.2)]"
+          ? "border-[hsl(var(--status-success))] ring-2 ring-[hsl(var(--status-success)/0.2)]"
           : "border-border"
       )}
       onClick={onSelect}
     >
       {/* Selected badge */}
       {isSelected && (
-        <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-[hsl(var(--status-success))] flex items-center justify-center shadow-sm">
-          <Check className="w-3.5 h-3.5 text-white" />
+        <div className="absolute top-3 right-3 z-10 w-7 h-7 rounded-full bg-[hsl(var(--status-success))] flex items-center justify-center shadow-md">
+          <Check className="w-4 h-4 text-white" />
         </div>
       )}
 
-      {/* Image */}
-      <div className="w-24 h-24 flex-shrink-0 bg-muted/30 rounded-lg flex items-center justify-center overflow-hidden">
-        {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={displayName}
-            className="w-full h-full object-contain mix-blend-multiply p-1"
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = "none";
-              (e.target as HTMLImageElement).nextElementSibling?.classList.remove("hidden");
-            }}
+      {/* Main content: Image + Details side by side */}
+      <div className="flex items-stretch p-4 gap-4">
+        {/* Image */}
+        <div className="w-[140px] h-[140px] flex-shrink-0 bg-muted/20 rounded-lg flex items-center justify-center overflow-hidden relative">
+          {/* HARDWARE label overlay */}
+          <div className="absolute top-2 left-2 bg-foreground/80 text-background text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded">
+            HARDWARE
+          </div>
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={displayName}
+              className="w-full h-full object-contain mix-blend-multiply p-2"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = "none";
+                (e.target as HTMLImageElement).nextElementSibling?.classList.remove("hidden");
+              }}
+            />
+          ) : null}
+          <Smartphone
+            className={cn(
+              "w-12 h-12 text-muted-foreground/30",
+              imageUrl ? "hidden" : ""
+            )}
           />
-        ) : null}
-        <Smartphone
-          className={cn(
-            "w-10 h-10 text-muted-foreground/30",
-            imageUrl ? "hidden" : ""
-          )}
-        />
+        </div>
+
+        {/* Details */}
+        <div className="flex-1 min-w-0 flex flex-col justify-between">
+          {/* Name */}
+          <div>
+            <h4 className="text-lg font-bold text-foreground leading-tight">
+              {brand} {displayName}
+            </h4>
+            {/* Specs in primary/red color */}
+            {specsLine && (
+              <p className="text-sm text-primary font-medium mt-1">{specsLine}</p>
+            )}
+          </div>
+
+          {/* Badges */}
+          <div className="flex items-center gap-2 mt-3">
+            {badges.map((badge) => (
+              <span
+                key={badge.label}
+                className={cn(
+                  "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border",
+                  badge.variant === "success"
+                    ? "border-[hsl(var(--status-success))] text-[hsl(var(--status-success))] bg-[hsl(var(--status-success)/0.05)]"
+                    : "border-border text-muted-foreground bg-muted/30"
+                )}
+              >
+                {badge.label}
+              </span>
+            ))}
+          </div>
+
+          {/* Prices row: MONTHLY + ONE-TIME */}
+          <div className="flex items-end gap-6 mt-3">
+            <div>
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+                MONTHLY
+              </span>
+              <p className="text-xl font-bold text-foreground">
+                {showEk ? `${config.ekNet.toFixed(2)} €` : "—"}
+              </p>
+            </div>
+            <div>
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+                ONE-TIME
+              </span>
+              <p className="text-xl font-bold text-foreground">
+                0.00 €
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Details */}
-      <div className="flex-1 min-w-0 flex flex-col justify-between">
-        <div>
-          <p className="text-sm font-semibold text-foreground leading-tight truncate">
-            {displayName}
-          </p>
-          {specsLine && (
-            <p className="text-xs text-muted-foreground mt-0.5">{specsLine}</p>
+      {/* Full-width CTA button */}
+      <div className="px-4 pb-4">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelect();
+          }}
+          className={cn(
+            "w-full py-3 rounded-lg text-sm font-semibold transition-colors",
+            isSelected
+              ? "bg-[hsl(var(--status-success))] hover:bg-[hsl(var(--status-success)/0.9)] text-white"
+              : "bg-primary hover:bg-primary/90 text-primary-foreground"
           )}
-          <div className="flex items-center gap-2 mt-1.5">
-            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-[hsl(var(--status-success)/0.1)] text-[hsl(var(--status-success))]">
-              Verfügbar
-            </span>
-            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground">
-              24 Mon. Vertrag
-            </span>
-          </div>
-        </div>
-
-        <div className="flex items-end justify-between mt-2">
-          <div>
-            {showEk && (
-              <>
-                <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                  EK Netto
-                </span>
-                <p className="text-base font-bold text-foreground font-mono">
-                  {config.ekNet.toFixed(2)} €
-                </p>
-              </>
-            )}
-          </div>
-
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onSelect();
-            }}
-            className={cn(
-              "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
-              isSelected
-                ? "bg-[hsl(var(--status-success))] text-white"
-                : "bg-primary hover:bg-primary/90 text-primary-foreground"
-            )}
-          >
-            {isSelected ? "Ausgewählt ✓" : "Zum Angebot"}
-          </button>
-        </div>
+        >
+          {isSelected ? "Selected ✓" : "Add to Offer"}
+        </button>
       </div>
     </div>
   );

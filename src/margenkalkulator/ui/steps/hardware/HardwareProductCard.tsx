@@ -1,11 +1,10 @@
 // ============================================
-// HardwareProductCard - Large product card
-// Design: screen-7.png reference (1:1)
-// Image left, specs in primary, badges, 
-// MONTHLY + ONE-TIME prices, full-width red CTA
+// HardwareProductCard - Kompakte 44px Tabellenzeile
+// Enterprise CPQ Style: identisch zu TariffCard
+// Brand-Pill | Modell | Specs | Preis | Wählen
 // ============================================
 
-import { Check, Smartphone } from "lucide-react";
+import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { HardwareConfig } from "../../../lib/hardwareGrouping";
 
@@ -18,6 +17,26 @@ interface HardwareProductCardProps {
   isSelected: boolean;
   showEk: boolean;
   onSelect: () => void;
+  index?: number;
+  isCurrent?: boolean; // visually pre-selected (came back from phase B)
+}
+
+// Brand-Farben für Brand-Pills
+const BRAND_COLORS: Record<string, string> = {
+  Apple: "bg-slate-800 text-slate-100",
+  Samsung: "bg-blue-700 text-blue-50",
+  Google: "bg-green-700 text-green-50",
+  Xiaomi: "bg-orange-600 text-orange-50",
+  OnePlus: "bg-red-700 text-red-50",
+  Motorola: "bg-indigo-700 text-indigo-50",
+  Nokia: "bg-sky-700 text-sky-50",
+  Sony: "bg-zinc-700 text-zinc-50",
+  Oppo: "bg-teal-700 text-teal-50",
+  Huawei: "bg-pink-700 text-pink-50",
+};
+
+function getBrandColor(brand: string): string {
+  return BRAND_COLORS[brand] || "bg-muted text-muted-foreground";
 }
 
 export function HardwareProductCard({
@@ -25,142 +44,101 @@ export function HardwareProductCard({
   brand,
   familyName,
   subModelName,
-  imageUrl,
   isSelected,
   showEk,
   onSelect,
+  index,
+  isCurrent = false,
 }: HardwareProductCardProps) {
-  const displayName = subModelName
-    ? `${familyName} ${subModelName}`
-    : familyName;
+  const displayModel = subModelName ? `${familyName} ${subModelName}` : familyName;
 
-  // Build specs line like "Unlimited 5G Data | 128GB Space Black"
-  const specsParts = [
-    config.connectivity || "5G",
+  // Specs: Storage + Connectivity
+  const specParts = [
     config.storage !== "Standard" ? config.storage : null,
+    config.connectivity || null,
   ].filter(Boolean);
-  const specsLine = specsParts.join(" | ");
-
-  // Badges auf Deutsch
-  const badges = [
-    { label: "Verfügbar", variant: "success" as const },
-    { label: "24 Mon. Vertrag", variant: "neutral" as const },
-  ];
+  const specsLabel = specParts.join(" · ");
 
   return (
     <div
       className={cn(
-        "relative flex flex-col rounded-xl border bg-card transition-all duration-200 cursor-pointer overflow-hidden",
-        "hover:shadow-md hover:border-primary/30",
+        "flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors group min-h-[44px]",
         isSelected
-          ? "border-[hsl(var(--status-success))] ring-2 ring-[hsl(var(--status-success)/0.2)]"
-          : "border-border"
+          ? "bg-[hsl(var(--status-success)/0.08)] hover:bg-[hsl(var(--status-success)/0.12)]"
+          : isCurrent
+          ? "bg-primary/5 hover:bg-primary/10"
+          : "hover:bg-muted/40"
       )}
       onClick={onSelect}
+      title={`${brand} ${displayModel}${showEk ? ` — EK: ${config.ekNet.toFixed(2)} €` : ""}`}
     >
-      {/* Selected badge */}
-      {isSelected && (
-        <div className="absolute top-3 right-3 z-10 w-7 h-7 rounded-full bg-[hsl(var(--status-success))] flex items-center justify-center shadow-md">
-          <Check className="w-4 h-4 text-white" />
-        </div>
+      {/* Selected indicator OR index number */}
+      <div className="w-5 h-5 flex-shrink-0 flex items-center justify-center">
+        {isSelected ? (
+          <div className="w-4.5 h-4.5 rounded-full bg-[hsl(var(--status-success))] flex items-center justify-center">
+            <Check className="w-2.5 h-2.5 text-white" />
+          </div>
+        ) : index !== undefined && index < 9 ? (
+          <span className="text-[10px] text-muted-foreground/40 group-hover:text-muted-foreground/60 font-mono">
+            {index + 1}
+          </span>
+        ) : null}
+      </div>
+
+      {/* Model name */}
+      <span className={cn(
+        "flex-1 text-sm font-medium truncate",
+        isSelected ? "text-[hsl(var(--status-success))]" : "text-foreground"
+      )}>
+        {displayModel}
+      </span>
+
+      {/* Specs badge */}
+      {specsLabel && (
+        <span className="text-[11px] text-muted-foreground w-24 text-center shrink-0 hidden sm:block">
+          {specsLabel}
+        </span>
       )}
 
-      {/* Main content: Image + Details side by side */}
-      <div className="flex items-stretch p-4 gap-4">
-        {/* Image */}
-        <div className="w-[140px] h-[140px] flex-shrink-0 bg-muted/20 rounded-lg flex items-center justify-center overflow-hidden relative">
-          {/* HARDWARE label overlay */}
-          <div className="absolute top-2 left-2 bg-foreground/80 text-background text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded">
-            HARDWARE
-          </div>
-          {imageUrl ? (
-            <img
-              src={imageUrl}
-              alt={displayName}
-              className="w-full h-full object-contain mix-blend-multiply p-2"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = "none";
-                (e.target as HTMLImageElement).nextElementSibling?.classList.remove("hidden");
-              }}
-            />
-          ) : null}
-          <Smartphone
-            className={cn(
-              "w-12 h-12 text-muted-foreground/30",
-              imageUrl ? "hidden" : ""
-            )}
-          />
-        </div>
+      {/* Price */}
+      <span className={cn(
+        "text-sm font-bold w-20 text-right shrink-0 tabular-nums",
+        isSelected ? "text-[hsl(var(--status-success))]" : "text-foreground"
+      )}>
+        {showEk ? `${config.ekNet.toFixed(2)} €` : "—"}
+      </span>
 
-        {/* Details */}
-        <div className="flex-1 min-w-0 flex flex-col justify-between">
-          {/* Name */}
-          <div>
-            <h4 className="text-lg font-bold text-foreground leading-tight">
-              {brand} {displayName}
-            </h4>
-            {/* Specs in primary/red color */}
-            {specsLine && (
-              <p className="text-sm text-primary font-medium mt-1">{specsLine}</p>
-            )}
-          </div>
-
-          {/* Badges */}
-          <div className="flex items-center gap-2 mt-3">
-            {badges.map((badge) => (
-              <span
-                key={badge.label}
-                className={cn(
-                  "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border",
-                  badge.variant === "success"
-                    ? "border-[hsl(var(--status-success))] text-[hsl(var(--status-success))] bg-[hsl(var(--status-success)/0.05)]"
-                    : "border-border text-muted-foreground bg-muted/30"
-                )}
-              >
-                {badge.label}
-              </span>
-            ))}
-          </div>
-
-          {/* Preise: EINMALIG (EK) + MONATLICH */}
-          <div className="flex items-end gap-6 mt-3">
-            <div>
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-                EINMALIG
-              </span>
-              <p className="text-xl font-bold text-foreground">
-                {showEk ? `${config.ekNet.toFixed(2)} €` : "—"}
-              </p>
-            </div>
-            <div>
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-                MONATLICH
-              </span>
-              <p className="text-xl font-bold text-foreground">
-                0,00 €
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Full-width CTA button */}
-      <div className="px-4 pb-4">
+      {/* Action button */}
+      <div className="w-[68px] flex justify-center shrink-0">
         <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onSelect();
-          }}
+          onClick={(e) => { e.stopPropagation(); onSelect(); }}
           className={cn(
-            "w-full py-3 rounded-lg text-sm font-semibold transition-colors",
+            "px-2.5 py-1 text-[11px] font-semibold rounded-md transition-colors",
             isSelected
-              ? "bg-[hsl(var(--status-success))] hover:bg-[hsl(var(--status-success)/0.9)] text-white"
-              : "bg-primary hover:bg-primary/90 text-primary-foreground"
+              ? "bg-[hsl(var(--status-success))] text-white"
+              : "bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground"
           )}
         >
-          {isSelected ? "Ausgewählt ✓" : "Zum Angebot"}
+          {isSelected ? "✓" : "Wählen"}
         </button>
       </div>
+    </div>
+  );
+}
+
+// ============================================
+// BrandGroupHeader - Trennbalken mit Brand-Pill
+// ============================================
+export function BrandGroupHeader({ brand }: { brand: string }) {
+  return (
+    <div className="flex items-center gap-2 px-4 py-1.5 bg-muted/30 border-b border-t border-border">
+      <span className={cn(
+        "inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider",
+        getBrandColor(brand)
+      )}>
+        {brand}
+      </span>
+      <div className="flex-1 h-px bg-border" />
     </div>
   );
 }

@@ -1,146 +1,177 @@
 
-# Plan: Step 1 Hardware - Ultra-Kompakt CPQ-Redesign (identisch zu MobileStep)
+# Plan: FixedNetStep — Enterprise CPQ Redesign
 
-## Ist-Zustand
+## Analyse der Referenz-Screenshots
 
-`HardwareStep.tsx` verwendet noch das **alte Design** mit großen 200px-Karten (`HardwareProductCard`). Die Zwei-Phasen-Logik existiert nicht — es gibt nur ein "Collapsed"-State das das Grid ausblendet. Das widerspricht dem bereits implementierten MobileStep-Pattern.
+Die zwei HTML-Mockups zeigen ein **zweistufiges Enterprise-Pattern**:
 
-Konkretes Problem:
-- `HardwareProductCard` = 140x140px Bild + Badges + 2 Preise + voller CTA-Button → ~200px hoch
-- 30+ Geräte × 200px = 6.000px Scrollhöhe
-- Keine Kategorie-Tabs, keine echte Configure-Phase
-- Amortisierungs-Toggle sitzt verloren oben rechts ohne Kontext
-- Kein Brand-Grouping das auf einen Blick erkennbar macht, welcher Hersteller
+**Screen 1 (code-2.html / screen-13.png):**
+- Schritt 1: Adressformular mit "Verfügbarkeit prüfen" Button
+- Schritt 2-4: Gesperrt (lock-Icon), werden nach Prüfung freigeschaltet
+- Rechte Sidebar: Live-Übersicht mit Standort, Tarif, Kosten
 
-## Ziel: Identisches Pattern wie MobileStep
+**Screen 2 (code-3.html / screen-14.png):**
+- Ergebnisseite nach Verfügbarkeitsprüfung
+- Technologie-Wahl (Kabel / Glasfaser / DSL) als 3 Karten nebeneinander
+- Tarif-Auswahl als Karten mit Preis, Speed, Telefonie
+- Router & Hardware als Radio-Liste
+- Rechte Sidebar: Zusammenfassung mit "Zum Angebot hinzufügen"
+
+## Wie es in den bestehenden Kalkulator passt
+
+Der `FixedNetStep.tsx` ist ein **Sub-Component** innerhalb des Wizard-Steps. Er hat:
+- `value: FixedNetState` (enabled, accessType, productId, fixedIpEnabled, etc.)
+- `onChange: (value: FixedNetState) => void`
+- `datasetVersion: DatasetVersion`
+- `onFixedNetEnabled?: () => void`
+
+Das Ziel ist: Den gesamten Inhalt von `FixedNetStep.tsx` neu zu gestalten nach dem Referenz-Design — ohne die Props oder Engine-Logik zu ändern.
+
+## Neue UX-Architektur: Drei-Phasen-Flow
 
 ```text
-PHASE A — Gerät wählen (kompakt, ~300px gesamt)
-══════════════════════════════════════════════════════
-Hardware-Auswahl           [Smartphones][Tablets][SIM Only]  [🔍 Suche]
-──────────────────────────────────────────────────────────────────────
- Apple         iPhone 16 Pro Max │ 256GB  5G │ 779,00 €  │ [Wählen]
-               iPhone 16 Pro Max │ 512GB  5G │ 879,00 €  │ [Wählen]
-               iPhone 16 Pro     │ 256GB  5G │ 689,00 €  │ [Wählen]
-──────────────────────────────────────────────────────────────────────
- Samsung       Galaxy S25 Ultra  │ 256GB  5G │ 699,00 €  │ [Wählen]
-══════════════════════════════════════════════════════
+PHASE 0: Toggle deaktiviert
+════════════════════════════════════════════
+[Router Icon] Festnetz & Internet    [Toggle OFF]
+Für GigaKombi Vorteil aktivieren
 
-PHASE B — Hardware konfigurieren (ersetzt Liste)
-══════════════════════════════════════════════════════
-← Zurück zur Geräteauswahl
+PHASE A: Adresseingabe (nach Toggle)
+════════════════════════════════════════════
+[1] Installationsadresse         [In Bearbeitung]
+    Straße + Nr. | PLZ | Ort
+    [Adresse speichern ☐]       [✓ Verfügbarkeit prüfen]
 
-┌────────────────────────────────────────────────────┐
-│ ✓ Apple iPhone 16 Pro Max 256GB      EK: 779,00 €  │
-├────────────────────────────────────────────────────┤
-│ Amortisation  [○ Einmalig] [● Im Monatspreis]       │
-│ Laufzeit      [24 Monate ▾]   (nur wenn Amortize)  │
-│ Monatsrate    +32,46 €/Monat über 24 Monate        │
-├────────────────────────────────────────────────────┤
-│        [══ Hardware übernehmen ══]                  │
-└────────────────────────────────────────────────────┘
-══════════════════════════════════════════════════
+[2] Technologie                  [🔒 gesperrt]
+[3] Tarifdetails                 [🔒 gesperrt]
+
+PHASE B: Auswahl (nach "Verfügbarkeit prüfen")
+════════════════════════════════════════════
+[1] Installationsadresse         [✓ Musterstr. 1, 12345 Berlin]
+
+[2] Technologie wählen
+    [● Kabel] [○ Glasfaser] [○ DSL]
+
+[3] Tarif auswählen (Kabel)
+    [EMPFOHLEN]  [Standard]  [Basic]
+    Produkt 1     Produkt 2   Produkt 3
+    49,99€        39,99€      34,99€
+    1000 Mbit     500 Mbit    250 Mbit
+    [Ausgewählt]  [Wählen]    [Wählen]
+
+[4] Router & Hardware
+    [●] FRITZ!Box 6690    +6,99€/mtl.
+    [○] Vodafone Station  +0,00€ inkl.
+    [○] Kein Router       0,00€
+
+[Festnetz zum Angebot hinzufügen →]
+════════════════════════════════════════════
 ```
 
-## Technische Architektur
+## Technische Umsetzung
 
-### Neue State-Struktur in `HardwareStep.tsx`
+### Neuer State in `FixedNetStep.tsx`
 
 ```typescript
-type ConfigPhase = "select" | "configure";
-type ActiveCategory = "smartphone" | "tablet" | "simonly";
+type FixedNetPhase = "disabled" | "address" | "selection";
 
-const [configPhase, setConfigPhase] = useState<ConfigPhase>("select");
-const [activeCategory, setActiveCategory] = useState<ActiveCategory>("smartphone");
-const [searchQuery, setSearchQuery] = useState("");
-const [pendingConfig, setPendingConfig] = useState<{config: HardwareConfig; brand: string} | null>(null);
+const [phase, setPhase] = useState<FixedNetPhase>(
+  value.enabled ? "selection" : "disabled"
+);
+const [address, setAddress] = useState({
+  street: "", houseNumber: "", zip: "", city: ""
+});
+const [checkedAddress, setCheckedAddress] = useState(
+  value.enabled ? "Musterstraße 1, Berlin" : "" // wenn schon aktiv, simulieren
+);
+const [selectedRouterId, setSelectedRouterId] = useState<"premium" | "standard" | "none">("standard");
 ```
 
-`pendingConfig` hält das gewählte Gerät bis der User in Phase B auf "Hardware übernehmen" klickt — dann erst wird `onChange` aufgerufen. Das entspricht exakt dem MobileStep-Pattern wo die `InlineTariffConfig` der letzte Schritt vor `onConfigComplete` ist.
+### Phase 0 — Toggle Karte (value.enabled === false)
+- Identisch zum aktuellen Design (Toggle OFF)
+- Bei Aktivierung: Übergang zu Phase A
 
-### Neue `HardwareProductCard.tsx` — Horizontale Zeile (44px)
+### Phase A — Adress-Formular
+Inspiriert von code-2.html:
+- Nummerierter Step-Header (1, 2, 3) — Step 2/3/4 gesperrt mit lock-Icon
+- Step 1 aktiv: Grid-Formular mit Straße, Nr., PLZ, Ort
+- Checkbox "Adresse im Adressbuch speichern"
+- CTA Button "Verfügbarkeit prüfen" → setzt Phase auf "selection"
+- Note: Da echte Verfügbarkeits-API nicht vorhanden, simulieren wir Erfolg (alle 3 Technologien verfügbar)
 
-Von (200px Karte):
-```text
-[Bild 140x140] [Name] [Specs] [Badges] [Preis] [CTA Button]
+### Phase B — Auswahl-Flow
+Inspiriert von code-3.html, angepasst an bestehende Daten:
+
+**Technologie-Karten (3 nebeneinander):**
+```typescript
+const ACCESS_TYPES = [
+  { id: "CABLE", label: "Kabel", icon: Router, maxSpeed: "1000 Mbit/s", available: true },
+  { id: "FIBER", label: "Glasfaser", icon: Zap, maxSpeed: "1000 Mbit/s", available: true },
+  { id: "DSL",   label: "DSL",      icon: Phone, maxSpeed: "250 Mbit/s",  available: false },
+]
 ```
+DSL als "Nicht verfügbar" simuliert (greyed out, wie im Screenshot) — aber technisch kann man es doch wählen wenn die anderen nicht passen. Wir zeigen DSL als "eingeschränkt verfügbar" statt komplett gesperrt, da die Daten es haben.
 
-Zu (44px Zeile — identisch zur TariffCard):
-```text
-[Brand-Pill] Modell-Name     │ Specs (Storage/5G) │ EK-Preis │ [Wählen]
+**Tarif-Karten:**
+- Produkte aus `productsForAccessType` (echte Katalogdaten)
+- Erste 3 nebeneinander als Karten (wie im Screenshot)
+- Erste Karte = "Empfohlen" Badge
+- Preis + Speed + includesPhone (Telefonie Flatrate) als Specs
+- Button: "Ausgewählt" (primary) / "Auswählen" (secondary)
+
+**Router & Hardware Radio-Liste:**
+```typescript
+const routerOptions = [
+  {
+    id: "premium",
+    name: "FRITZ!Box 6690 Cable",
+    description: "Premium WLAN AX, 2x Telefon, 4x LAN",
+    monthlyExtra: 6.99,
+    label: "mtl. Miete"
+  },
+  {
+    id: "standard", 
+    name: "Vodafone Station",
+    description: "Standard WLAN AC, 2x Telefon",
+    monthlyExtra: 0,
+    label: "Inklusive"
+  },
+  {
+    id: "none",
+    name: "Kein Router (Eigene Hardware)",
+    description: "Kundeneigenes Gerät verwenden",
+    monthlyExtra: 0,
+    label: ""
+  }
+]
 ```
+Router-Wahl wird als optionales State gespeichert (beeinflusst nicht `FixedNetState` Engine-seitig, da die Engine den Router auto-assigned — aber für die UI-Zusammenfassung und spätere Erweiterbarkeit sinnvoll).
 
-Props bleiben identisch (rückwärtskompatibel), nur JSX wird ersetzt.
+**CTA am Ende:**
+- Roter "Festnetz zum Angebot hinzufügen" Button
+- Ruft `onChange({...value, enabled: true, accessType, productId})` auf
+- Ruft `onFixedNetEnabled()` auf
 
-### Brand-Grouping in der Liste
-
-Die flache Liste wird in Hersteller-Abschnitte unterteilt — visuell klar ohne extra Scroll:
-
-```text
-SPALTEN-HEADER: Gerät | Specs | Preis | Aktion
-
-── Apple ──────────────────────────────────────
-  iPhone 16 Pro Max  │ 256GB  5G │ 779€ │ [Wählen]
-  iPhone 16 Pro Max  │ 512GB  5G │ 879€ │ [Wählen]
-── Samsung ────────────────────────────────────
-  Galaxy S25 Ultra   │ 256GB  5G │ 699€ │ [Wählen]
-```
-
-### `HardwareConfigBox` (inline in `HardwareStep.tsx`)
-
-Kein eigenes File — direkt als JSX-Block in Phase B gerendert:
-
-- Gerätename + EK gross dargestellt
-- Amortisierungs-Segmented-Control: `[Einmalig] [Im Monatspreis]`
-- Laufzeit-Dropdown (nur sichtbar wenn Amortize aktiv): 12 / 24 / 36 Monate
-- Live-Berechnung: `+32,46 €/Monat über 24 Monate`
-- Primär-Button `Hardware übernehmen` → ruft `onChange` + `onHardwareSelected` auf, setzt Phase zurück auf "select"
-
-### Kategorie-Tabs + Suche (Header Row 2)
-
-```text
-[Smartphones (23)] [Tablets (4)] [SIM Only]     [🔍 iPhone...]
-```
-
-Kategorie-Tabs + Inline-Suche in einer Zeile — exakt wie MobileStep's Tab+Controls-Zeile.
-
-### SIM-Only-Karte
-
-Wenn `activeCategory === "simonly"`:
-- Keine Liste, stattdessen direkt ein Confirm-Button
-- "Kein Gerät — nur Tarif" → sofort `onChange({ name: "KEINE HARDWARE", ekNet: 0 })` und `onHardwareSelected()`
-- Kein Configure-Phase nötig (keine Amortisierung bei 0€)
-
-## Enterprise-Verbesserungen
-
-1. **Keyboard-Shortcut Hint**: Kleine Info-Zeile wie bei MobileStep: `Tipp: Zifferntasten 1-9 zum Schnellwählen`
-2. **Hover-Preview** (via `title`-Attr): Beim Hovern über eine Zeile zeigt Browser-Tooltip den vollen Modellnamen + EK
-3. **Sofort-Preis-Feedback**: In Phase B wird der monatliche EK-Anteil sofort live berechnet beim Ändern der Laufzeit
-4. **Kompakter "Bereits gewählt"-Hinweis**: Wenn User in Phase B auf "Zurück" geht, bleibt das Gerät in der Liste als vorausgewählt sichtbar (grüner Ring)
-5. **Hardware-Manager Link** bleibt als kleiner Button oben rechts (nur für Dealer-Mode)
+### GigaKombi-Info-Box
+Kompakte grüne Info am Ende der Auswahl:
+- "GigaKombi Business: -5€/mtl. auf Mobilfunk + Unlimited für bis zu 10 SIMs"
 
 ## Dateien die geändert werden
 
 | Datei | Änderung |
 |-------|----------|
-| `HardwareStep.tsx` | Komplett neu: Zwei-Phasen-State, Kategorie-Tabs, Brand-Gruppierung, HardwareConfigBox inline |
-| `HardwareProductCard.tsx` | Von 200px-Karte zu 44px horizontaler Zeile (Props bleiben identisch) |
+| `src/margenkalkulator/ui/steps/FixedNetStep.tsx` | Komplett neu: Drei-Phasen-Flow, Adressformular, Technologie-Karten, Tarif-Karten, Router-Liste, CTA |
 
 ## Dateien die NICHT geändert werden
 
-| Datei | Grund |
-|-------|-------|
-| `HardwareCard.tsx` | Black Box, nicht genutzt aber bleibt |
-| `HardwareGrid.tsx` | Black Box, nicht genutzt aber bleibt |
-| `CollapsedHardwareSelection.tsx` | Black Box, wird nicht mehr benötigt aber bleibt |
-| `hardwareGrouping.ts` | Black Box — Daten-Logik unverändert |
-| `catalogResolver.ts` | Black Box |
-| Engine, Context, Basket | Black Box |
+- Engine (`catalogResolver.ts`, `types.ts`, `benefitsEngine.ts`) — Black Box
+- `CalculatorContext` — Black Box
+- Andere Steps — unverändert
 
 ## Ergebnis
 
-- Gesamthöhe Phase A bei 10 Geräten: ~330px (vorher 2.000px+)
-- Kein Scrollen nötig auf 1366x768
-- Hersteller auf einen Blick erkennbar durch Brand-Gruppen-Trennbalken
-- Workflow: Gerät wählen (1 Klick) → Amortisierung bestätigen (Phase B) → Übernehmen → fertig
-- Identisches Bedienkonzept wie Step 2 Mobilfunk (Zero Learning Curve)
+- Professioneller Enterprise-Look (identisch zu den Screenshots)
+- Klarer 3-Phasen-Flow: Toggle → Adresse → Auswahl
+- Tarife als visuelle Karten (nicht mehr Dropdown)
+- Router-Auswahl als Radio-Liste (nicht mehr implizit)
+- GigaKombi-Vorteil prominent kommuniziert
+- Kompakt und kein unnötiges Scrollen (Karten statt langer Liste)

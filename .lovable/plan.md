@@ -1,124 +1,145 @@
 
+# Plan: Step 2 Mobilfunk - Komplett-Neuaufbau nach Screenshot-Vorlage
 
-# Plan: Hardware-Seite (Step 1) komplett neu gestalten
+## Design-Referenz (aus Screenshots + HTML)
 
-## Design-Referenz (aus Screenshots)
+### Screenshot screen-10.png (Hauptreferenz):
+- **Titel**: "Tariff Configuration" gross, darunter "Configure customer voice and data plans."
+- **Tarif-Familie als Tabs**: "Business Prime" | "Business Smart" | "GigaMobil" als horizontale Tab-Leiste mit Icons, aktiver Tab hat rote Unterstreichung
+- **Konfigurations-Box**: Weisser Container mit 3 Spalten:
+  - **Spalte 1**: "Number of SIMs" mit Slider + Zahl-Input, Hilfstext "Drag to adjust quantity for volume discounts."
+  - **Spalte 2**: "Contract Type" mit Radio-Buttons (New Contract + "High Margin" Badge gruen, Contract Renewal VVL, Porting DC Change)
+  - **Spalte 3**: "Apply Promotion" mit Dropdown-Select + Tag-Icon, Hilfstext "Select applicable campaign code."
+- **Tarif-Karten** darunter: "Available Plans" als Ueberschrift, dann 3 Karten nebeneinander:
+  - Tarif-Name gross + bold, Daten-Badge rechts oben (z.B. "5GB Data", "Unlimited")
+  - Subtitle ("For basic connectivity", "The all-rounder", "Maximum performance")
+  - Feature-Liste mit gruenen Checkmarks und grauen X
+  - "Monthly" Label + grosser Preis (29.99 EUR) + roter "Add to Offer" Button
+  - Bestseller-Badge (roter Pill oben rechts) fuer hervorgehobenen Tarif mit rotem Border
 
-Das neue Design zeigt zwei Varianten, die wir kombinieren:
+### Screenshot screen-9.png (Alternative Variante):
+- Drei separate Karten fuer Business Prime / Smart / GigaMobil nebeneinander
+- Jede Karte hat: SIM-Only/Smartphone SUB Radio-Toggle, Quantity Slider, Promos Dropdown
+- Feature-Liste unten in jeder Karte
 
-### Screenshot 1 (screen-5.png) - Hauptreferenz:
-- **Gruppierung nach Marke**: "Apple", "Samsung", "SIM-Only" als grosse, fette Ueberschriften
-- **Horizontale Produkt-Karten**: Bild LINKS (ca. 100-120px), Details RECHTS
-- **Karten-Layout**: 2 Karten pro Zeile, weisser Hintergrund, hellgrauer Rand, abgerundete Ecken
-- **Karten-Inhalt**: Produktname (bold), Specs-Zeile (Farbe, Speicher, Datenvolumen), "Monthly" Label + Preis (bold), roter "Add to Offer" Button rechts unten
-- **Suchfeld**: Oben rechts neben Step-Indicator, schlicht mit Lupe-Icon
-- **Titel**: "Hardware Selection" gross, darunter "Configure customer devices and SIMs."
-- **Step-Bar**: Dunkler Pill-Button "Step 1: Hardware Selection - Step 1 Alt"
+## Kombination beider Designs
 
-### Screenshot 2 (screen-6.png) - Ergaenzung:
-- **Gruppierung nach Kategorie**: "Smartphones", "Tablets" als Ueberschriften
-- **Groessere Karten**: Bild links (ca. 150px hoch), Produktname rechts, Specs in Rot/Orange
-- **Badges**: Gruener "Stock Available", grauer "24 Month Contract"
-- **Zwei Preise**: "MONTHLY 79.99 EUR" links, "ONE-TIME 1.00 EUR" rechts
-- **Voller roter "Add to Offer" Button** unter jedem Produkt
+Wir implementieren das **screen-10.png Layout** als primaere Struktur (Tabs + Konfig-Box + Tarif-Karten), da es besser zum bestehenden Wizard-Flow passt.
 
-## Was wird neu geschrieben
+## Dateien die komplett neu geschrieben werden
 
-| Datei | Aenderung |
-|-------|-----------|
-| `HardwareStep.tsx` | Komplett neuer JSX - Gruppierung nach Brand statt Grid |
-| `HardwareGrid.tsx` | Wird NICHT mehr verwendet - ersetzt durch inline-Rendering |
-| `HardwareCard.tsx` | Wird NICHT mehr verwendet - ersetzt durch neue horizontale Karte |
-| `HardwareFilters.tsx` | Wird entfernt/vereinfacht - Suchfeld wird in den Wizard-Header integriert |
-| `CollapsedHardwareSelection.tsx` | Bleibt, wird visuell angepasst |
+| Nr | Datei | Was passiert |
+|----|-------|-------------|
+| 1 | `MobileStep.tsx` | Komplett neuer JSX mit Tab-Layout, Konfig-Box, und Tarif-Karten |
+| 2 | `TariffCard.tsx` | Komplett neu als vertikale Feature-Karte nach Screenshot |
+| 3 | `TariffGrid.tsx` | Vereinfacht als 3-Spalten Grid fuer die neuen Karten |
+| 4 | `ContractQuantitySelector.tsx` | Komplett neu als 3-Spalten Inline-Layout (SIMs + Contract Type + Promo) |
 
-## Was NICHT geaendert wird (Black Box)
+## Dateien die NICHT geaendert werden (Black Box)
 
-- `hardwareGrouping.ts` (Gruppierungs-Logik)
-- `catalogResolver.ts` (Hardware-Katalog)
-- `useHardwareImages.ts` (Bild-Hook)
 - `CalculatorContext.tsx` (State)
-- `Wizard.tsx` (nur minimale Anpassung der Props)
+- `InlineTariffConfig.tsx` (wird weiterhin nach Tarif-Auswahl angezeigt)
+- `PortfolioSelector.tsx` (wird durch inline Tab-Leiste ERSETZT, nicht mehr importiert)
+- `LeadTimeInput.tsx` (wird bei Business weiterhin angezeigt)
+- `engine/*` (Berechnungslogik)
+- `Wizard.tsx` (Orchestrator - keine Aenderung)
 
-## Neues Hardware-Layout
+## Neues Layout
 
 ```text
-Hardware Selection
-Configure customer devices and SIMs.
+Tarifkonfiguration
+Konfigurieren Sie Sprach- und Datentarife.
 
-Apple
-+---------------------------+  +---------------------------+
-| [Bild]  iPhone 16 Pro     |  | [Bild]  iPhone 16        |
-|         Black, 128GB, 5G  |  |         Blue, 128GB, 5G  |
-|         Monthly           |  |         Monthly           |
-|         79.99 EUR  [Add]  |  |         59.99 EUR  [Add] |
-+---------------------------+  +---------------------------+
+[Business Prime]  [Business Smart]  [GigaMobil]     <- Tabs
+=========================================================
+| Anzahl SIMs      | Vertragsart          | Aktion     |
+| [====]  25       | (o) Neuvertrag       | [Spring..] |
+|                   |     High Margin      |            |
+| Drag to adjust   | ( ) VVL              | Kampagnen- |
+|                   | ( ) Portierung       | code       |
+=========================================================
 
-Samsung
-+---------------------------+  +---------------------------+
-| [Bild]  Galaxy S24 Ultra  |  | [Bild]  Galaxy A55       |
-|         256GB, 5G         |  |         128GB, LTE       |
-|         Monthly           |  |         Monthly           |
-|         84.99 EUR  [Add]  |  |         39.99 EUR  [Add] |
-+---------------------------+  +---------------------------+
+Verfuegbare Tarife
++-------------------+  +-------------------+  +-------------------+
+| Business Prime Go |  | Business Prime    |  | Business Prime    |
+|          [5GB]    |  |   Pro  [Unlim.]   |  |   Max [Unlim.+]   |
+| Basis-Konnektivit.|  | Der Allrounder    |  | Maximum Leistung  |
+|                   |  |     BESTSELLER    |  |                   |
+| v 5G Enabled      |  | v Unlimited 5G    |  | v Unlimited Max   |
+| v EU Roaming      |  | v EU & US Roaming |  | v Global Roaming  |
+| x MultiSIM        |  | v 1x MultiSIM    |  | v 3x MultiSIM    |
+|                   |  |                   |  |                   |
+| Monatlich         |  | Monatlich         |  | Monatlich         |
+| 29.99 EUR [Add]   |  | 49.99 EUR [Add]   |  | 79.99 EUR [Add]   |
++-------------------+  +-------------------+  +-------------------+
 
-SIM-Only
-+---------------------------+  +---------------------------+
-| [SIM]   Smart Business S  |  | [SIM]   Business Data L  |
-|         10GB, EU Roaming  |  |         Unlimited, 5G    |
-|         Monthly           |  |         Monthly           |
-|         19.99 EUR  [Add]  |  |         49.99 EUR  [Add] |
-+---------------------------+  +---------------------------+
+[InlineTariffConfig erscheint hier wenn Tarif ausgewaehlt]
 ```
 
 ## Technische Umsetzung
 
-### Phase 1: Neue `HardwareProductCard` Komponente erstellen
+### Phase 1: `ContractQuantitySelector.tsx` komplett neu
 
-Neue Datei: `src/margenkalkulator/ui/steps/hardware/HardwareProductCard.tsx`
+Neues 3-Spalten Layout exakt nach Screenshot:
+- Spalte 1: "Anzahl SIMs" mit `input[type=range]` (roter Thumb) + Number-Input rechts
+- Spalte 2: "Vertragsart" mit 3 Radio-Buttons (Neuvertrag + gruener "High Margin" Badge, VVL, Portierung/DC Change)
+- Spalte 3: "Aktion waehlen" mit Select-Dropdown + Tag-Icon, bekommt `promos` als neue Prop
+- Props erweitert um: `promos`, `selectedPromoId`, `onPromoChange`
 
-- Horizontale Karte: Bild links (100px), Details rechts
-- Produktname bold, Specs-Zeile (Storage, Connectivity) darunter
-- "Monthly" Label + Preis links unten
-- Roter "Add to Offer" Button rechts unten
-- Ausgewaehlter Zustand: Gruener Checkmark-Badge, leichter gruener Rand
-- Props: `config: HardwareConfig`, `brand: string`, `familyName: string`, `imageUrl: string`, `isSelected: boolean`, `onSelect: () => void`
+### Phase 2: `TariffCard.tsx` komplett neu
 
-### Phase 2: `HardwareStep.tsx` komplett neu schreiben
+Vertikale Feature-Karte nach Screenshot:
+- Header: Tarif-Name (bold, gross) + Daten-Badge rechts oben (z.B. "5GB Data")
+- Subtitle: Kurzbeschreibung
+- Feature-Liste: 3 Zeilen mit gruenen Check-Icons oder grauen X-Icons
+- Footer: "Monatlich" Label + grosser Preis + roter "Zum Angebot" Button
+- Optional: "Bestseller" Badge (roter Pill oben rechts, border-2 border-primary/20)
+- Selected State: Gruener Border + Checkmark
 
-- Header: "Hardware Selection" als h1, "Configure customer devices and SIMs." als Subtext
-- Gruppierung: Items nach `family.brand` gruppieren, jede Brand-Gruppe als Sektion mit fetter Ueberschrift
-- Grid pro Brand: `grid-cols-1 md:grid-cols-2` mit den neuen horizontalen Karten
-- SIM-Only Sektion: Eigene Gruppe am Ende mit SIM-Karten-Icon
-- Suchfeld bleibt als einfaches Input oben
-- Keine Popover/Accordion mehr fuer Varianten-Auswahl - stattdessen wird jede Konfiguration als eigene Karte angezeigt (flach, wie im Screenshot)
-- Filter-Tabs (Alle/Smartphones/Tablets) als einfache Buttons ueber dem Content
-- Brand-Filter als Chips unter den Tabs
+### Phase 3: `TariffGrid.tsx` vereinfacht
 
-### Phase 3: `CollapsedHardwareSelection.tsx` visuell anpassen
+- Einfaches `grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6`
+- Ueberschrift "Verfuegbare Tarife" davor
+- Loading/Empty States beibehalten
 
-- Gleiche horizontale Karten-Aesthetik
-- Gruener Hintergrund-Akzent statt Primary-Farbe
-- "Andere Hardware" Button bleibt
+### Phase 4: `MobileStep.tsx` komplett neu
 
-### Phase 4: Aufraeum-Arbeiten
+Gesamtstruktur:
+1. **Header**: "Tarifkonfiguration" (h1) + "Konfigurieren Sie Sprach- und Datentarife." (p)
+2. **Portfolio-Tabs**: Eigene Tab-Leiste inline (ersetzt PortfolioSelector-Import), 3 Tabs mit Icons:
+   - Business Prime (Briefcase Icon)
+   - Business Smart (Smartphone Icon)
+   - GigaMobil (Wifi Icon)
+   - Aktiver Tab: `border-b-2 border-primary text-primary bg-white`
+3. **Konfigurations-Box**: Weisser Container mit neuem ContractQuantitySelector (3-Spalten)
+4. **LeadTimeInput**: Nur bei Business sichtbar (bestehendes Verhalten)
+5. **TariffGrid**: Gefilterte Tarife als neue vertikale Karten
+6. **InlineTariffConfig**: Erscheint weiterhin nach Tarif-Auswahl (unveraendert)
+7. **TeamDeal-Warnung**: Bestehendes Verhalten beibehalten
 
-- `HardwareGrid.tsx` und `HardwareCard.tsx` bleiben als Dateien bestehen (fuer potenzielle Rueckwaertskompatibilitaet), werden aber nicht mehr von HardwareStep importiert
-- `HardwareFilters.tsx` wird vereinfacht oder durch inline-Filter im neuen HardwareStep ersetzt
+### Phase 5: Sprache komplett Deutsch
 
-## Wichtige Design-Details
+Alle Texte auf Deutsch:
+- "Tariff Configuration" -> "Tarifkonfiguration"
+- "Configure customer voice and data plans." -> "Konfigurieren Sie Sprach- und Datentarife."
+- "Number of SIMs" -> "Anzahl SIMs"
+- "Contract Type" -> "Vertragsart"
+- "New Contract" -> "Neuvertrag"
+- "Contract Renewal (VVL)" -> "Vertragsverlaengerung (VVL)"
+- "Porting (DC Change)" -> "Portierung (DC Change)"
+- "Apply Promotion" -> "Aktion waehlen"
+- "Available Plans" -> "Verfuegbare Tarife"
+- "Add to Offer" -> "Zum Angebot"
+- "Monthly" -> "Monatlich"
+- "Bestseller" bleibt (internationaler Begriff)
 
-- **Karten-Styling**: `bg-white border border-gray-200 rounded-xl p-4 hover:border-red-300 hover:shadow-sm transition-all`
-- **Bild-Container**: `w-24 h-24 flex-shrink-0 bg-gray-50 rounded-lg flex items-center justify-center`
-- **Brand-Ueberschrift**: `text-xl font-bold text-gray-900 mb-4`
-- **Produktname**: `text-base font-semibold text-gray-900`
-- **Specs**: `text-sm text-gray-500`
-- **Monthly-Label**: `text-xs text-gray-400 uppercase tracking-wide`
-- **Preis**: `text-lg font-bold text-gray-900`
-- **Add-Button**: `bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 rounded-lg`
-- **Selected-State**: `border-green-400 bg-green-50` mit gruener Checkmark
+## Ausfuehrungsreihenfolge
+
+1. `ContractQuantitySelector.tsx` - Neues 3-Spalten Layout mit Promo-Integration
+2. `TariffCard.tsx` - Vertikale Feature-Karte
+3. `TariffGrid.tsx` - Vereinfachtes Grid
+4. `MobileStep.tsx` - Komplett neuer Orchestrator mit Tabs
 
 ## Ergebnis
 
-Die Hardware-Seite wird exakt dem Screenshot-Design entsprechen: Horizontale Karten gruppiert nach Marke, mit Bild links, Details rechts, und rotem "Add to Offer" Button. Keine Popovers, keine Akkordeons, keine verschachtelten Auswahl-Dialoge - jede Variante ist direkt sichtbar und mit einem Klick waehlbar.
-
+Step 2 wird komplett nach Screenshot-Vorlage aufgebaut: Tab-basierte Portfolio-Auswahl, 3-Spalten Konfigurations-Box (SIMs + Vertragsart + Aktion), und vertikale Tarif-Karten mit Feature-Listen und rotem CTA-Button. Das alte Design ist nicht mehr erkennbar.

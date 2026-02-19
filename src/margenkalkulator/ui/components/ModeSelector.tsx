@@ -1,11 +1,10 @@
 // ============================================
-// Mode Selector - Redesign: Slim Dropdown
-// Same functionality, cleaner visuals
+// Mode Selector - Screenshot Rebuild
+// Flat, dark-themed dropdown
 // ============================================
 
 import { Eye, Calculator, Lock, Unlock, ChevronDown, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,11 +44,11 @@ export function ModeSelector({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
           className={cn(
-            "gap-2 min-w-[100px] text-sm font-medium",
-            isSessionActive && "border-amber-400 bg-amber-50 text-amber-700"
+            "gap-1.5 text-xs font-medium text-white/80 hover:text-white hover:bg-white/10",
+            isSessionActive && "text-amber-400 hover:text-amber-300"
           )}
         >
           {isSessionActive ? (
@@ -64,43 +63,39 @@ export function ModeSelector({
         </Button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="text-xs text-gray-500">
+      <DropdownMenuContent align="end" className="w-52">
+        <DropdownMenuLabel className="text-[10px] text-gray-400 uppercase tracking-wider">
           Ansichtsmodus
         </DropdownMenuLabel>
 
         <DropdownMenuItem
           onClick={() => onChange("customer")}
           disabled={!allowCustomerMode || isSessionActive}
-          className={cn("gap-3 cursor-pointer", isCustomerMode && "bg-gray-100")}
+          className={cn("gap-2.5 cursor-pointer text-sm", isCustomerMode && "bg-gray-50")}
         >
-          <Eye className="w-4 h-4" />
+          <Eye className="w-4 h-4 text-gray-400" />
           <div className="flex-1">
-            <p className="font-medium text-sm">Kundenansicht</p>
-            <p className="text-xs text-gray-500">Nur Kundenpreise</p>
+            <p className="font-medium">Kundenansicht</p>
           </div>
-          {isCustomerMode && <Badge variant="secondary" className="text-[10px]">Aktiv</Badge>}
         </DropdownMenuItem>
 
         <DropdownMenuItem
           onClick={() => onChange("dealer")}
           disabled={isSessionActive}
-          className={cn("gap-3 cursor-pointer", isDealerMode && "bg-gray-100")}
+          className={cn("gap-2.5 cursor-pointer text-sm", isDealerMode && "bg-gray-50")}
         >
-          <Calculator className="w-4 h-4" />
+          <Calculator className="w-4 h-4 text-gray-400" />
           <div className="flex-1">
-            <p className="font-medium text-sm">Händleransicht</p>
-            <p className="text-xs text-gray-500">EK, Provisionen, Marge</p>
+            <p className="font-medium">Händleransicht</p>
           </div>
-          {isDealerMode && <Badge variant="secondary" className="text-[10px]">Aktiv</Badge>}
         </DropdownMenuItem>
 
         {hasAdminFullVisibility && isCustomerMode && !isSessionActive && (
           <>
             <DropdownMenuSeparator />
-            <div className="px-2 py-1.5 flex items-center gap-2 text-amber-600">
-              <ShieldCheck className="w-4 h-4" />
-              <span className="text-xs">Admin-Vollsicht aktiv</span>
+            <div className="px-2 py-1 flex items-center gap-2 text-amber-600">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span className="text-[11px]">Admin-Vollsicht aktiv</span>
             </div>
           </>
         )}
@@ -108,33 +103,21 @@ export function ModeSelector({
         {showSessionToggle && (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuLabel className="text-xs text-gray-500">
-              Sicherheit
-            </DropdownMenuLabel>
             <DropdownMenuItem
               onClick={toggleSession}
               className={cn(
-                "gap-3 cursor-pointer",
-                isSessionActive && "bg-amber-50 text-amber-700"
+                "gap-2.5 cursor-pointer text-sm",
+                isSessionActive && "text-amber-700"
               )}
             >
               {isSessionActive ? (
-                <>
-                  <Lock className="w-4 h-4" />
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">Kundensitzung beenden</p>
-                    <p className="text-xs opacity-70">Händlerdaten freigeben</p>
-                  </div>
-                </>
+                <Lock className="w-4 h-4" />
               ) : (
-                <>
-                  <Unlock className="w-4 h-4" />
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">Kundensitzung starten</p>
-                    <p className="text-xs opacity-70">Händlerdaten sperren</p>
-                  </div>
-                </>
+                <Unlock className="w-4 h-4 text-gray-400" />
               )}
+              <span className="font-medium">
+                {isSessionActive ? "Sitzung beenden" : "Kundensitzung"}
+              </span>
             </DropdownMenuItem>
           </>
         )}

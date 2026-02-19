@@ -1,55 +1,38 @@
 /**
- * No-Leak Tests for ViewModeGuards
- * 
- * TEST CLAIMS:
- * - IF viewMode === "customer", THEN DealerOnly renders NULL/fallback
- * - IF viewMode === "dealer", THEN DealerOnly renders children
- * - NEVER render dealer content in customer mode
+ * ViewModeGuards Tests
  */
 
-import { render, screen } from "@testing-library/react";
+import { render } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { DealerOnly, CustomerOnly } from "../ViewModeGuards";
 
 describe("ViewModeGuards", () => {
     describe("DealerOnly", () => {
         it("should render children when viewMode is 'dealer'", () => {
-            render(
-                <DealerOnly viewMode="dealer">
-                    <div data-testid="dealer-secret">EK: 500€</div>
-                </DealerOnly>
+            const { getByTestId } = render(
+                <DealerOnly viewMode="dealer"><div data-testid="dealer-secret">EK: 500€</div></DealerOnly>
             );
-
-            expect(screen.getByTestId("dealer-secret")).toBeInTheDocument();
+            expect(getByTestId("dealer-secret")).toBeTruthy();
         });
 
         it("should NOT render children when viewMode is 'customer'", () => {
-            render(
-                <DealerOnly viewMode="customer">
-                    <div data-testid="dealer-secret">EK: 500€</div>
-                </DealerOnly>
+            const { queryByTestId } = render(
+                <DealerOnly viewMode="customer"><div data-testid="dealer-secret">EK: 500€</div></DealerOnly>
             );
-
-            expect(screen.queryByTestId("dealer-secret")).not.toBeInTheDocument();
+            expect(queryByTestId("dealer-secret")).toBeNull();
         });
 
         it("should render fallback when viewMode is 'customer'", () => {
-            render(
-                <DealerOnly
-                    viewMode="customer"
-                    fallback={<div data-testid="safe-message">Kundenmodus</div>}
-                >
+            const { queryByTestId, getByTestId } = render(
+                <DealerOnly viewMode="customer" fallback={<div data-testid="safe-message">Kundenmodus</div>}>
                     <div data-testid="dealer-secret">EK: 500€</div>
                 </DealerOnly>
             );
-
-            expect(screen.queryByTestId("dealer-secret")).not.toBeInTheDocument();
-            expect(screen.getByTestId("safe-message")).toBeInTheDocument();
+            expect(queryByTestId("dealer-secret")).toBeNull();
+            expect(getByTestId("safe-message")).toBeTruthy();
         });
 
         it("should NOT leak sensitive keywords in customer mode", () => {
-            const sensitiveKeywords = ["ek", "cost_price", "margin", "provision", "marge"];
-
             const { container } = render(
                 <DealerOnly viewMode="customer">
                     <div>EK: 500€</div>
@@ -57,10 +40,8 @@ describe("ViewModeGuards", () => {
                     <div>Provision: 100€</div>
                 </DealerOnly>
             );
-
             const html = container.innerHTML.toLowerCase();
-
-            sensitiveKeywords.forEach(keyword => {
+            ["ek", "cost_price", "margin", "provision", "marge"].forEach(keyword => {
                 expect(html).not.toContain(keyword);
             });
         });
@@ -68,23 +49,17 @@ describe("ViewModeGuards", () => {
 
     describe("CustomerOnly", () => {
         it("should render children when viewMode is 'customer'", () => {
-            render(
-                <CustomerOnly viewMode="customer">
-                    <div data-testid="customer-content">Kundenpreis: 100€</div>
-                </CustomerOnly>
+            const { getByTestId } = render(
+                <CustomerOnly viewMode="customer"><div data-testid="customer-content">Kundenpreis: 100€</div></CustomerOnly>
             );
-
-            expect(screen.getByTestId("customer-content")).toBeInTheDocument();
+            expect(getByTestId("customer-content")).toBeTruthy();
         });
 
         it("should NOT render children when viewMode is 'dealer'", () => {
-            render(
-                <CustomerOnly viewMode="dealer">
-                    <div data-testid="customer-content">Kundenpreis: 100€</div>
-                </CustomerOnly>
+            const { queryByTestId } = render(
+                <CustomerOnly viewMode="dealer"><div data-testid="customer-content">Kundenpreis: 100€</div></CustomerOnly>
             );
-
-            expect(screen.queryByTestId("customer-content")).not.toBeInTheDocument();
+            expect(queryByTestId("customer-content")).toBeNull();
         });
     });
 });

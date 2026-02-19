@@ -1,122 +1,146 @@
 
-# Plan: SUB-Stufe in die Filter-Leiste verschieben (Step 2: Mobilfunk)
+# Plan: Step 1 Hardware - Ultra-Kompakt CPQ-Redesign (identisch zu MobileStep)
 
-## Problem
+## Ist-Zustand
 
-Die SUB-Stufe (Geräteklasse: SIM Only, Basic Phone, Smartphone, Premium, Special Premium) erscheint aktuell erst **nach** der Tarifauswahl in Phase B (InlineTariffConfig). Das ist ein unnötiger Schritt — der User muss erst den Tarif wählen, dann wieder nach unten scrollen und die SUB-Stufe anpassen.
+`HardwareStep.tsx` verwendet noch das **alte Design** mit großen 200px-Karten (`HardwareProductCard`). Die Zwei-Phasen-Logik existiert nicht — es gibt nur ein "Collapsed"-State das das Grid ausblendet. Das widerspricht dem bereits implementierten MobileStep-Pattern.
 
-## Lösung: SUB-Stufe in die Header-Filterleiste (Phase A)
+Konkretes Problem:
+- `HardwareProductCard` = 140x140px Bild + Badges + 2 Preise + voller CTA-Button → ~200px hoch
+- 30+ Geräte × 200px = 6.000px Scrollhöhe
+- Keine Kategorie-Tabs, keine echte Configure-Phase
+- Amortisierungs-Toggle sitzt verloren oben rechts ohne Kontext
+- Kein Brand-Grouping das auf einen Blick erkennbar macht, welcher Hersteller
 
-Der User wählt die SUB-Stufe **bevor** er den Tarif wählt — direkt in der Filterleiste oben. Beim Klick auf einen Tarif ist die SUB-Stufe bereits gesetzt. Phase B (InlineTariffConfig) zeigt sie dann nur noch als **Bestätigung** (read-only oder minimal), spart also einen kompletten Interaktionsschritt.
+## Ziel: Identisches Pattern wie MobileStep
 
 ```text
-VORHER:
-[Tabs] [SIMs] [NV|VVL] [Aktion]        ← Header
-[Tarif wählen]                          ← Phase A
-[SUB-Stufe auswählen]                   ← Phase B (erst nach Tarifwahl sichtbar!)
-[Preis & Hinzufügen]                    ← Phase B
+PHASE A — Gerät wählen (kompakt, ~300px gesamt)
+══════════════════════════════════════════════════════
+Hardware-Auswahl           [Smartphones][Tablets][SIM Only]  [🔍 Suche]
+──────────────────────────────────────────────────────────────────────
+ Apple         iPhone 16 Pro Max │ 256GB  5G │ 779,00 €  │ [Wählen]
+               iPhone 16 Pro Max │ 512GB  5G │ 879,00 €  │ [Wählen]
+               iPhone 16 Pro     │ 256GB  5G │ 689,00 €  │ [Wählen]
+──────────────────────────────────────────────────────────────────────
+ Samsung       Galaxy S25 Ultra  │ 256GB  5G │ 699,00 €  │ [Wählen]
+══════════════════════════════════════════════════════
 
-NACHHER:
-[Tabs] [SIMs] [NV|VVL] [Aktion] [SUB▾] ← Header (SUB direkt hier!)
-[Tarif wählen]                          ← Phase A (SUB schon gesetzt)
-[Bestätigung + Preis & Hinzufügen]      ← Phase B (kürzer, da SUB schon bekannt)
+PHASE B — Hardware konfigurieren (ersetzt Liste)
+══════════════════════════════════════════════════════
+← Zurück zur Geräteauswahl
+
+┌────────────────────────────────────────────────────┐
+│ ✓ Apple iPhone 16 Pro Max 256GB      EK: 779,00 €  │
+├────────────────────────────────────────────────────┤
+│ Amortisation  [○ Einmalig] [● Im Monatspreis]       │
+│ Laufzeit      [24 Monate ▾]   (nur wenn Amortize)  │
+│ Monatsrate    +32,46 €/Monat über 24 Monate        │
+├────────────────────────────────────────────────────┤
+│        [══ Hardware übernehmen ══]                  │
+└────────────────────────────────────────────────────┘
+══════════════════════════════════════════════════
 ```
 
-## Herausforderung: `allowedSubVariants` ist tariff-abhängig
+## Technische Architektur
 
-Jeder Tarif hat unterschiedliche erlaubte SUB-Stufen:
-- Business Prime S/M/L/XL → alle 5 Stufen erlaubt
-- Smart Business / Smart Business Plus → nur 3 Stufen (SIM_ONLY, BASIC_PHONE, SMARTPHONE)
-- TeamDeal → keine SUB-Auswahl (wird intern anders gehandhabt)
-
-**Lösung**: Die SUB-Auswahl im Header zeigt die **gemeinsamen SUB-Stufen** aller Tarife im aktiven Portfolio-Tab. Wenn kein Tarif gewählt ist, zeigen wir alle verfügbaren Stufen des Tabs. Nach Tarifauswahl können wir ggf. die Auswahl korrigieren wenn die gewählte SUB nicht erlaubt ist.
-
-**Konkret:**
-- Bei `activeTab === "business"` (Prime + TeamDeal): alle 5 Stufen anzeigen
-- Bei `activeTab === "smart"` (Smart Business): nur 3 Stufen anzeigen (SIM_ONLY, BASIC_PHONE, SMARTPHONE)
-- Bei `activeTab === "consumer"` (GigaMobil): SUB-Selector **ausblenden** (nicht relevant)
-
-## Technische Umsetzung
-
-### Änderung 1: `MobileStep.tsx` — SUB-Selector im Header
-
-Im Header-Bereich (Row 2 mit den Controls) wird ein SUB-Dropdown direkt nach dem NV/VVL-Control eingebaut:
+### Neue State-Struktur in `HardwareStep.tsx`
 
 ```typescript
-// Berechne erlaubte SUBs für den aktiven Tab
-const tabAllowedSubVariants = useMemo(() => {
-  if (activeTab === "consumer") return []; // kein SUB bei Consumer
-  if (activeTab === "smart") return ["SIM_ONLY", "BASIC_PHONE", "SMARTPHONE"];
-  return ["SIM_ONLY", "BASIC_PHONE", "SMARTPHONE", "PREMIUM_SMARTPHONE", "SPECIAL_PREMIUM_SMARTPHONE"];
-}, [activeTab]);
+type ConfigPhase = "select" | "configure";
+type ActiveCategory = "smartphone" | "tablet" | "simonly";
+
+const [configPhase, setConfigPhase] = useState<ConfigPhase>("select");
+const [activeCategory, setActiveCategory] = useState<ActiveCategory>("smartphone");
+const [searchQuery, setSearchQuery] = useState("");
+const [pendingConfig, setPendingConfig] = useState<{config: HardwareConfig; brand: string} | null>(null);
 ```
 
-Als kompaktes Segmented-Control oder Dropdown im Header — passend zum bestehenden Stil (wie NV|VVL-Control):
+`pendingConfig` hält das gewählte Gerät bis der User in Phase B auf "Hardware übernehmen" klickt — dann erst wird `onChange` aufgerufen. Das entspricht exakt dem MobileStep-Pattern wo die `InlineTariffConfig` der letzte Schritt vor `onConfigComplete` ist.
+
+### Neue `HardwareProductCard.tsx` — Horizontale Zeile (44px)
+
+Von (200px Karte):
+```text
+[Bild 140x140] [Name] [Specs] [Badges] [Preis] [CTA Button]
+```
+
+Zu (44px Zeile — identisch zur TariffCard):
+```text
+[Brand-Pill] Modell-Name     │ Specs (Storage/5G) │ EK-Preis │ [Wählen]
+```
+
+Props bleiben identisch (rückwärtskompatibel), nur JSX wird ersetzt.
+
+### Brand-Grouping in der Liste
+
+Die flache Liste wird in Hersteller-Abschnitte unterteilt — visuell klar ohne extra Scroll:
 
 ```text
-[SIM Only] [Basic] [Smart] [Premium] [Spec.Prem.]
+SPALTEN-HEADER: Gerät | Specs | Preis | Aktion
+
+── Apple ──────────────────────────────────────
+  iPhone 16 Pro Max  │ 256GB  5G │ 779€ │ [Wählen]
+  iPhone 16 Pro Max  │ 512GB  5G │ 879€ │ [Wählen]
+── Samsung ────────────────────────────────────
+  Galaxy S25 Ultra   │ 256GB  5G │ 699€ │ [Wählen]
 ```
 
-Für Business (5 Optionen) → Dropdown wegen Platzmangel
-Für Smart (3 Optionen) → könnte auch als 3-Button-Segmented-Control dargestellt werden
+### `HardwareConfigBox` (inline in `HardwareStep.tsx`)
 
-### Änderung 2: `MobileStep.tsx` — Tab-Wechsel reset
+Kein eigenes File — direkt als JSX-Block in Phase B gerendert:
 
-Beim Tab-Wechsel wird die SUB-Auswahl auf den sinnvollen Default zurückgesetzt:
-- Business tab → `SIM_ONLY` (oder letzter gültiger Wert)
-- Smart tab → `SIM_ONLY` (Smart Business erlaubt kein Premium)
-- Consumer tab → `SIM_ONLY` (irrelevant, aber neutral)
+- Gerätename + EK gross dargestellt
+- Amortisierungs-Segmented-Control: `[Einmalig] [Im Monatspreis]`
+- Laufzeit-Dropdown (nur sichtbar wenn Amortize aktiv): 12 / 24 / 36 Monate
+- Live-Berechnung: `+32,46 €/Monat über 24 Monate`
+- Primär-Button `Hardware übernehmen` → ruft `onChange` + `onHardwareSelected` auf, setzt Phase zurück auf "select"
 
-### Änderung 3: `InlineTariffConfig.tsx` — SUB-Anzeige vereinfachen
-
-Da die SUB-Stufe nun bereits im Header gewählt wird, wird der SUB-Block in `InlineTariffConfig` auf ein **kompaktes Read-Only-Display** reduziert:
+### Kategorie-Tabs + Suche (Header Row 2)
 
 ```text
-Geräteklasse: [Smartphone +10€/mtl.]  [Ändern ↗]
+[Smartphones (23)] [Tablets (4)] [SIM Only]     [🔍 iPhone...]
 ```
 
-"Ändern" öffnet keinen Modal, sondern scrollt/fokussiert den Header-Selector. Alternativ: bleibt als kleines inline Dropdown zur schnellen Korrektur, aber **nicht mehr als dominanter Block**.
+Kategorie-Tabs + Inline-Suche in einer Zeile — exakt wie MobileStep's Tab+Controls-Zeile.
 
-Das spart ~80px in Phase B und macht den Konfig-Flow schlanker.
+### SIM-Only-Karte
 
-### Änderung 4: Auto-Korrektur bei Tarifwahl
+Wenn `activeCategory === "simonly"`:
+- Keine Liste, stattdessen direkt ein Confirm-Button
+- "Kein Gerät — nur Tarif" → sofort `onChange({ name: "KEINE HARDWARE", ekNet: 0 })` und `onHardwareSelected()`
+- Kein Configure-Phase nötig (keine Amortisierung bei 0€)
 
-Wenn der User eine SUB-Stufe gewählt hat, die der gewählte Tarif nicht erlaubt (z.B. "Premium" aber Smart Business erlaubt nur bis "Smartphone"), wird **automatisch auf das Maximum des Tarifs zurückgesetzt** — mit einem kleinen Toast-Hinweis:
+## Enterprise-Verbesserungen
 
-```typescript
-const handleTariffSelect = (tariffId: string) => {
-  const tariff = getMobileTariffFromCatalog(datasetVersion, tariffId);
-  const allowed = tariff?.allowedSubVariants;
-  if (allowed && !allowed.includes(value.subVariantId as SubVariantId)) {
-    // Fallback auf höchste erlaubte Stufe
-    const bestAllowed = allowed[allowed.length - 1];
-    onChange({ ...value, tariffId, subVariantId: bestAllowed });
-    toast.info(`SUB-Stufe auf ${bestAllowed} angepasst`);
-  } else {
-    updateField("tariffId", tariffId);
-  }
-  setConfigPhase("configure");
-};
-```
+1. **Keyboard-Shortcut Hint**: Kleine Info-Zeile wie bei MobileStep: `Tipp: Zifferntasten 1-9 zum Schnellwählen`
+2. **Hover-Preview** (via `title`-Attr): Beim Hovern über eine Zeile zeigt Browser-Tooltip den vollen Modellnamen + EK
+3. **Sofort-Preis-Feedback**: In Phase B wird der monatliche EK-Anteil sofort live berechnet beim Ändern der Laufzeit
+4. **Kompakter "Bereits gewählt"-Hinweis**: Wenn User in Phase B auf "Zurück" geht, bleibt das Gerät in der Liste als vorausgewählt sichtbar (grüner Ring)
+5. **Hardware-Manager Link** bleibt als kleiner Button oben rechts (nur für Dealer-Mode)
 
 ## Dateien die geändert werden
 
 | Datei | Änderung |
 |-------|----------|
-| `MobileStep.tsx` | SUB-Selector im Header, Tab-abhängige SUB-Optionen, Auto-Korrektur bei Tarifwahl |
-| `InlineTariffConfig.tsx` | SUB-Block auf kompaktes Read-Only/Mini-Dropdown reduzieren |
+| `HardwareStep.tsx` | Komplett neu: Zwei-Phasen-State, Kategorie-Tabs, Brand-Gruppierung, HardwareConfigBox inline |
+| `HardwareProductCard.tsx` | Von 200px-Karte zu 44px horizontaler Zeile (Props bleiben identisch) |
 
 ## Dateien die NICHT geändert werden
 
-- `TariffCard.tsx` (unverändert)
-- `TariffGrid.tsx` (unverändert)
-- `SubVariantSelector.tsx` (bleibt als Komponente, wird aber weniger prominent eingesetzt)
-- Engine, Types, Catalog-Resolver (Black Box)
+| Datei | Grund |
+|-------|-------|
+| `HardwareCard.tsx` | Black Box, nicht genutzt aber bleibt |
+| `HardwareGrid.tsx` | Black Box, nicht genutzt aber bleibt |
+| `CollapsedHardwareSelection.tsx` | Black Box, wird nicht mehr benötigt aber bleibt |
+| `hardwareGrouping.ts` | Black Box — Daten-Logik unverändert |
+| `catalogResolver.ts` | Black Box |
+| Engine, Context, Basket | Black Box |
 
 ## Ergebnis
 
-- SUB-Stufe wird **vor** der Tarifauswahl festgelegt → ein Klick weniger
-- Der Konfigurationsflow ist kürzer und klarer
-- Beim Tab-Wechsel passt sich die SUB-Auswahl automatisch an die erlaubten Stufen an
-- Phase B (InlineTariffConfig) ist schlanker, da SUB-Block entfernt/minimiert
-- Konsistentes Bedienkonzept: Alle globalen Filter oben, tarifspezifisches unten
+- Gesamthöhe Phase A bei 10 Geräten: ~330px (vorher 2.000px+)
+- Kein Scrollen nötig auf 1366x768
+- Hersteller auf einen Blick erkennbar durch Brand-Gruppen-Trennbalken
+- Workflow: Gerät wählen (1 Klick) → Amortisierung bestätigen (Phase B) → Übernehmen → fertig
+- Identisches Bedienkonzept wie Step 2 Mobilfunk (Zero Learning Curve)

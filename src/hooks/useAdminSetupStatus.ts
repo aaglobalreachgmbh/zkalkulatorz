@@ -128,7 +128,7 @@ export function useUpdateSetupStep() {
             tenant_id: identity.tenantId,
             [columnName]: completed,
             updated_at: new Date().toISOString(),
-          },
+          } as never,
           {
             onConflict: "user_id,tenant_id",
           }

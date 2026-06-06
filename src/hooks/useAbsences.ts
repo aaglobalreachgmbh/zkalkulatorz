@@ -190,7 +190,7 @@ export function useAbsences(options?: { startDate?: Date; endDate?: Date }) {
 
       const { data, error } = await supabase
         .from("absences")
-        .update(updateData)
+        .update(updateData as never)
         .eq("id", input.absenceId)
         .select()
         .single();

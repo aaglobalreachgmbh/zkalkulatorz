@@ -452,7 +452,7 @@ export function useAdminPushProvisions() {
 
       const { data, error } = await supabase
         .from("push_provisions")
-        .update(payload)
+        .update(payload as never)
         .eq("id", id)
         .select()
         .single();
@@ -644,7 +644,7 @@ export function usePushTariffGroups() {
 
       const { data, error } = await supabase
         .from("push_tariff_groups")
-        .update(payload)
+        .update(payload as never)
         .eq("id", id)
         .select()
         .single();

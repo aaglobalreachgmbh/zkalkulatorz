@@ -127,7 +127,7 @@ export function useCorporateBundles(options?: { sector?: Sector; includeInactive
 
       const { data, error } = await supabase
         .from("corporate_bundles")
-        .update(updateData)
+        .update(updateData as never)
         .eq("id", id)
         .select()
         .single();

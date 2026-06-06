@@ -235,7 +235,7 @@ export function useBonusRules(): UseBonusRulesReturn {
 
       const { error: updateError } = await supabase
         .from("bonus_rules")
-        .update(dbUpdates)
+        .update(dbUpdates as never)
         .eq("id", id);
 
       if (updateError) {

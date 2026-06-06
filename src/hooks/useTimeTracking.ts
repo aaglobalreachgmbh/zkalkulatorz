@@ -492,7 +492,7 @@ export function useTimeEntryCorrections() {
 
         const { error: entryError } = await supabase
           .from("time_entries")
-          .update(updates)
+          .update(updates as never)
           .eq("id", correction.time_entry_id);
 
         if (entryError) {

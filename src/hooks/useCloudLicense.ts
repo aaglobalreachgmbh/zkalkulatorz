@@ -149,7 +149,7 @@ export function useCloudLicense() {
 
       const { error } = await supabase
         .from("licenses")
-        .update(payload)
+        .update(payload as never)
         .eq("id", license.id);
 
       if (error) throw error;

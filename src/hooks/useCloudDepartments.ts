@@ -206,7 +206,7 @@ export function useCloudDepartments() {
 
       const { error } = await supabase
         .from("departments")
-        .update(updates)
+        .update(updates as never)
         .eq("id", id);
 
       if (error) {

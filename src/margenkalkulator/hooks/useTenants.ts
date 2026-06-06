@@ -252,7 +252,7 @@ export function useTenants() {
 
       const { error } = await supabase
         .from("licenses")
-        .update(updates)
+        .update(updates as never)
         .eq("tenant_id", tenantId);
 
       if (error) throw error;

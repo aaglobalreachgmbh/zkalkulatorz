@@ -217,7 +217,7 @@ export function useDatasetVersions() {
 
       const { data, error } = await supabase
         .from("dataset_versions")
-        .update(updateData)
+        .update(updateData as never)
         .eq("id", id)
         .select()
         .single();

@@ -133,7 +133,7 @@ export function usePermissionTemplates() {
 
       const { data, error } = await supabase
         .from("permission_templates")
-        .update(updateData)
+        .update(updateData as never)
         .eq("id", id)
         .select()
         .single();

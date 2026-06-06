@@ -404,7 +404,7 @@ export function useShifts(options?: { startDate?: Date; endDate?: Date }) {
       try {
         const { data, error } = await supabase
           .from("shift_swap_requests")
-          .update(updateData)
+          .update(updateData as never)
           .eq("id", input.id)
           .select(`*, shift:shifts(*)`)
           .single();

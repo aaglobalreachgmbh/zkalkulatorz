@@ -798,19 +798,9 @@ export function WonOfferDataCapture({
                     </div>
                   )}
 
-                  <div className="space-y-2 pt-4">
-                    <Label>Kundenpasswort (für Vodafone Portal)</Label>
-                    <Controller
-                      control={control}
-                      name="customerPassword"
-                      render={({ field }) => (
-                        <Input {...field} type="password" placeholder="••••••••" />
-                      )}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Optionales Passwort für den Vodafone Kundenportal-Zugang
-                    </p>
-                  </div>
+                  {/* Customer portal password intentionally not captured —
+                      storing end-customer credentials in plaintext is a
+                      security violation and has been removed. */}
 
                   <div className="space-y-2 pt-2">
                     <Label>Interne Notizen</Label>

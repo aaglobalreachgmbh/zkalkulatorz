@@ -368,14 +368,23 @@ const handler = async (req: Request): Promise<Response> => {
     
     const supabase = createClient(supabaseUrl, supabaseKey);
     
-    // Get user from auth header
+    // Require authenticated user — this endpoint attaches PDFs and uses the
+    // shared Resend sending domain, so it must not run for anonymous callers.
     const authHeader = req.headers.get("authorization");
-    let userId: string | null = null;
-    
-    if (authHeader) {
-      const token = authHeader.replace("Bearer ", "");
-      const { data: { user } } = await supabase.auth.getUser(token);
-      userId = user?.id || null;
+    if (!authHeader || !authHeader.toLowerCase().startsWith("bearer ")) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    const token = authHeader.replace(/^[Bb]earer\s+/, "");
+    const { data: { user } } = await supabase.auth.getUser(token);
+    const userId: string | null = user?.id ?? null;
+    if (!userId) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // Initialize Resend

@@ -1,7 +1,8 @@
 
-# Audit-Bericht — Margenkalkulator (LESEND, keine Änderungen)
+# Audit-Bericht — Margenkalkulator
 
-> Hinweis: Dies ist eine reine Bestandsaufnahme als Plan-Dokument. Es wird nichts implementiert, nichts geändert. „Implement plan" bitte NICHT klicken.
+> Rev. 2 · Stand: 2026-07-01 · Reines Referenz-/Bestandsdokument. „Implement plan" NICHT klicken.
+> Änderungen zu Rev. 1 siehe Abschnitt **10. Changelog** am Ende.
 
 ---
 
@@ -169,7 +170,7 @@ Backend ist vorhanden (siehe 0). ~80 Tabellen in `public`. Auszug der zentralen 
 
 **Edge Functions (22):** siehe Abschnitt 0; `verify_jwt`-Flag je Function in `supabase/config.toml`.
 
-**Storage-Buckets:** `hardware-images` (public), `tenant-logos` (public), `visit-photos` (privat).
+**Storage-Buckets:** `hardware-images` (public, aber `SELECT` seit Migration 20260701085420 auf `authenticated` beschränkt → keine Anon-Listing), `tenant-logos` (**privat**, tenant-scoped RLS: erste Pfad-Komponente = `get_my_tenant_id()`), `visit-photos` (privat, INSERT/SELECT/DELETE erzwingen `(storage.foldername(name))[1] = auth.uid()`).
 
 **Bemerkenswert:** `tenant_id` ist als `TEXT` modelliert (z. B. `'tenant_default'`), nicht als FK auf `tenants.id` mit UUID — funktional, aber unsauber.
 
@@ -206,8 +207,8 @@ Backend ist vorhanden (siehe 0). ~80 Tabellen in `public`. Auszug der zentralen 
 | `dataset_versions` mit Tarifen inkl. Provisionen | **Server-seitig (partiell).** Hilfsfunktion `get_dataset_catalog_safe()` schließt `provisions` und `omo_matrix` aus dem JSONB explizit aus. Verwendung dieser Safe-View flächendeckend? **zu verifizieren** — RLS auf `dataset_versions` erlaubt den vollen Datensatz für Tenant-Mitglieder. |
 | `tenant_hardware` (EK-Preise) | **Server-seitig (partiell).** `get_catalog_hardware_safe()` blendet `ek_net` aus. Vollzugriff auf `tenant_hardware` ist auf Tenant-Mitglieder beschränkt — d. h. eingeloggte Mitarbeiter sehen EK weiterhin, sofern direkt abgefragt. |
 | `can_view_economics(user_id)` | server-seitig vorhanden, prüft Admin/TenantAdmin oder `employee_settings.can_view_margins`. Tatsächlicher Einsatz in Policies aktueller Tabellen **zu verifizieren**. |
-| `shared_offers` (Kundenpfad) | **Server-seitig sicher.** RPC `get_shared_offer_public` liefert nur das vorab gespeicherte `offer_data` JSONB; was darin steht, wird beim Erzeugen vom Client bestimmt. Ob beim Speichern Margen/EK aus `offer_data` ausgefiltert werden, **zu verifizieren** (vermutlich „kundensicher" gespeichert, aber Garantie fehlt im Code dieses Audits). |
-| Edge Function `calculate-margin` | Existiert und kann Berechnungen server-seitig ausführen — aber das Frontend nutzt parallel die TS-Engine. **Zwei Berechnungswege** koexistieren. |
+| `shared_offers` (Kundenpfad) | **Kanal server-seitig sicher, Inhalt ungefiltert.** RPC `get_shared_offer_public` liefert nur das gespeicherte `offer_data`. Verifiziert in `src/margenkalkulator/hooks/useSharedOffers.ts` Zeile 97: `offer_data: JSON.parse(JSON.stringify(offerData))` — **keine EK-/Marge-Filterung beim Speichern**. Wenn der Verkäufer versehentlich das volle Offer-Objekt teilt, sieht der Kunde alles. Klare Lücke. |
+| Edge Function `calculate-margin` | **Beide Wege aktiv koexistierend, verifiziert.** `src/services/calculationService.ts:31` invoked die Edge Function; `src/margenkalkulator/engine/*` rechnet parallel im Browser. Es gibt keinen Schalter, der eindeutig festlegt, welcher Pfad die Quelle der Wahrheit ist. |
 
 **Fazit:** Echte Mandanten-/Rollen-Trennung ja, aber „Customer-Safety-Lock" ist primär **UI-Schutz**. Für ein echtes Verkäufer→Kunden-Modell ohne Margen-Leak ist das nicht ausreichend.
 
@@ -220,8 +221,8 @@ Backend ist vorhanden (siehe 0). ~80 Tabellen in `public`. Auszug der zentralen 
 | Angebot speichern | a | `saved_offers` + `useCloudOffers` |
 | Drafts (Auto-Save) | a | `offer_drafts` + `useWizardAutoSave` |
 | PDF-Erzeugung Client | a | `@react-pdf/renderer` (`src/margenkalkulator/pdf/`) |
-| PDF-Erzeugung Server | a | Edge Function `generate-pdf` (verify_jwt) — Pfad existiert; tatsächliche Nutzung neben Client-PDF **zu verifizieren** |
-| Branding/Logo im PDF | unklar | Branding-Daten existieren; Einbindung in PDF-Templates **zu verifizieren** |
+| PDF-Erzeugung Server | a | Edge Function `generate-pdf` vorhanden; primärer Nutzungspfad im Frontend ist `@react-pdf/renderer` client-seitig. Doppelpfad wie bei `calculate-margin`. |
+| Branding/Logo im PDF | **a (verifiziert)** | `TenantBranding` (Logo, `primaryColor`, `companyName`) fließt in `MultiOfferPdf.tsx`, `ProvisionForecastPdf.tsx` und `templates/types.ts` ein (`branding.logoUrl → <Image>`, `createReportStyles(branding)`). |
 | Shared-Offer Cloud-Link | a | Tabelle `shared_offers` mit `access_token`, `expires_at`, `valid_days`, `view_count`, `last_viewed_at`, `is_revoked` |
 | Zugriffsschutz Shared-Offer | a | Öffentlicher Zugriff **nur** via RPC `get_shared_offer_public(offer_id, access_token)` mit Prüfungen `NOT is_revoked AND expires_at > NOW()`; Token-Helfer in `src/lib/tokenSecurity.ts` |
 | Versand per E-Mail | a | Edge `send-offer-email` (Resend-API-Key Secret vorhanden) |
@@ -260,38 +261,63 @@ Backend ist vorhanden (siehe 0). ~80 Tabellen in `public`. Auszug der zentralen 
 
 ## 9. Bekannte Lücken / Bugs / Provisorien
 
-| # | Befund | Schwere |
-|---|---|---|
-| 1 | Produkt-Modell ist **nicht generisch** — Vodafone-Business hartkodiert; freie Produktdefinition fehlt. | hoch |
-| 2 | **Customer-Safety-Lock primär Frontend** (siehe Abschnitt 6); EK/Marge im Client erreichbar. | hoch |
-| 3 | **Zwei Tarif-Quellen** (TS-Katalog + DB) parallel → Risiko widersprüchlicher Wahrheiten. | hoch |
-| 4 | **Zwei Berechnungswege** (TS-Engine + Edge `calculate-margin`) parallel. | mittel |
-| 5 | `tenant_id` als `TEXT` mit Default `'tenant_default'`; kein FK auf `tenants.id`; bei fehlendem JWT-Claim Fallback in denselben Tenant. | hoch |
-| 6 | **Custom-Claim-Hook für `tenant_id`/`department_id`** nicht im Repo nachweisbar — Mandantentrennung effektiv nur sicher, wenn dieser Hook in Supabase konfiguriert ist. **Zu verifizieren.** | kritisch (falls fehlend) |
-| 7 | **Public Storage-Buckets** `hardware-images` und `tenant-logos`. | mittel |
-| 8 | **Kein SSO/SAML/OIDC**, nur Email/Password (+MFA). | mittel |
-| 9 | **Kein Support-/Ticket-/Impersonation-Modul.** | mittel |
-| 10 | **Keine Custom-Fields** auf Entitäten. | mittel |
-| 11 | **Kein Kunden-Feedback-/Reply-Kanal** auf Shared-Offers (read-only). | mittel |
-| 12 | Inbox/IMAP-Sync, Offline-Sync: Stabilität/Tiefe **zu verifizieren**. | unklar |
-| 13 | Konsumer-Tarifdaten im Repo vorhanden, aber Wizard-Flow für Privat-Bereich **nicht aktiviert**. | mittel |
-| 14 | Engine enthält **branchen-/mandantenfremde Hartlogik** (z. B. „DGRV"-Override). | mittel |
-| 15 | Viele Hooks nutzen `as never` / `Record<string,unknown>`-Casts gegen die Supabase-Typen (siehe vorherige Sitzung) — Indikator für gewachsene Typ-Schulden. | mittel |
-| 16 | Sehr viele parallele Meta-/Direktiv-Dokumente (`directives/`, `.lovable/`, `knowledge/`, `docs/`) — kein offensichtlich kanonischer Single Source of Truth. | niedrig |
-| 17 | Tests vorhanden, aber tatsächliche grüne Lauffähigkeit der gesamten Suite in dieser Sitzung **nicht verifiziert**. | unklar |
-| 18 | `auto_assign_tenant_admin_on_first_user`-Trigger basiert auf JWT-Claim-Tenant — selbe Abhängigkeit wie #6. | hoch |
+| # | Befund | Schwere | Status |
+|---|---|---|---|
+| 1 | Produkt-Modell ist **nicht generisch** — Vodafone-Business hartkodiert; freie Produktdefinition fehlt. | hoch | offen |
+| 2 | Customer-Safety-Lock primär Frontend; EK/Marge im Client erreichbar. Consumer-Pfad im Wizard ist inzwischen aktiv verdrahtet (`MobileStep.tsx` Tab `consumer`) — Punkt 13 damit korrigiert. | hoch | offen |
+| 3 | **Zwei Tarif-Quellen** (TS-Katalog + DB) parallel → Risiko widersprüchlicher Wahrheiten. | hoch | offen |
+| 4 | **Zwei Berechnungswege verifiziert:** `services/calculationService.ts` ruft Edge `calculate-margin`; parallel rechnet `engine/*` im Browser. Keine autoritative Quelle definiert. | mittel | offen |
+| 5 | `tenant_id` als `TEXT` mit Default `'tenant_default'`; kein FK auf `tenants.id`. | hoch | offen |
+| 6 | **JWT `tenant_id`-Claim-Hook** nicht im Repo. `get_my_tenant_id()` liest `request.jwt.claims->>tenant_id`; ohne serverseitigen Auth-Hook fallen alle Nutzer auf DB-seitigen Fallback zurück. Muss in Cloud-Auth-Konfiguration gesetzt sein. | kritisch (falls fehlend) | zu verifizieren |
+| 7 | Public Storage-Buckets. `tenant-logos` **behoben** (privat, tenant-scoped). `hardware-images` bleibt public, aber Anon-Listing seit 2026-07-01 blockiert. | mittel | teilweise behoben |
+| 8 | Kein SSO/SAML/OIDC, nur Email/Password (+MFA). | mittel | offen |
+| 9 | Kein Support-/Ticket-/Impersonation-Modul. | mittel | offen |
+| 10 | Keine Custom-Fields auf Entitäten. | mittel | offen |
+| 11 | Kein Kunden-Feedback-/Reply-Kanal auf Shared-Offers. Zusätzlich: `offer_data` wird **ungefiltert** persistiert (`useSharedOffers.ts:97`) — potentieller EK-/Marge-Leak über Cloud-Link. | hoch | offen |
+| 12 | Inbox/IMAP-Sync, Offline-Sync: Stabilität/Tiefe zu verifizieren. IONOS-Passwörter jetzt AES-GCM-verschlüsselt (`ionos-connect`, Secret `EMAIL_ENCRYPTION_KEY`). | mittel | teilweise verifiziert |
+| 13 | ~~Konsumer-Tarifdaten im Repo vorhanden, aber Wizard-Flow nicht aktiviert.~~ **Falsch:** Consumer-Tab in `MobileStep.tsx` aktiv; `CompareStep` unterscheidet Brutto/Netto; `TariffCard` rechnet Consumer-Preise. | — | korrigiert |
+| 14 | Engine enthält branchen-/mandantenfremde Hartlogik (DGRV-Override, TeamDeal, GigaKombi). | mittel | offen |
+| 15 | Viele Hooks nutzen `as never`/`Record<string,unknown>`-Casts gegen Supabase-Typen. | mittel | offen |
+| 16 | Viele parallele Meta-/Direktiv-Dokumente ohne kanonische Quelle. | niedrig | offen |
+| 17 | Test-Suite-Lauffähigkeit nicht verifiziert. | unklar | offen |
+| 18 | `auto_assign_tenant_admin_on_first_user`-Trigger basiert auf JWT-Claim-Tenant — selbe Abhängigkeit wie #6. | hoch | zu verifizieren |
+| 19 | **Sichere `_safe`-DB-Views ungenutzt.** `get_dataset_catalog_safe` / `get_catalog_hardware_safe` erscheinen nur in `supabase/types.ts` (auto-gen). Kein Frontend-Hook ruft sie auf → sensible Felder bleiben über normale Tabellen-Selects erreichbar. | hoch | offen |
+| 20 | **Edge-Function-Auth-Härtung** (2026-07-01): `calculate-margin`, `ai-data-import`, `invite-user` (cross-tenant), `send-notification-email`, `send-offer-email`, `notify-admin-registration` erzwingen jetzt Bearer-JWT + `getUser()`. | — | behoben |
+| 21 | **Kundenpasswort-Leak entfernt** (2026-07-01): `customerPassword` aus `WonOfferDataCapture` und `wonDataTypes` entfernt. | — | behoben |
+| 22 | **`SECURITY DEFINER`-EXECUTE-Rechte** auf Allowlist reduziert (`get_my_tenant_id`, `get_visible_user_ids`, `has_role`, `is_tenant_admin`) — sonst REVOKE von PUBLIC/anon/authenticated. | — | behoben |
+| 23 | `vitest` auf 4.1.8 gepatcht (GHSA-5xrq-8626-4rwp). | — | behoben |
 
 ---
 
-### Markierte Unsicherheiten (zu verifizieren, nicht geraten)
-- Setzen des `tenant_id`-Claims in JWT (Supabase Auth Hook?).
-- Tatsächliche Nutzung von `get_dataset_catalog_safe` / `get_catalog_hardware_safe` im Frontend (vs. direkter Tabellenzugriff).
-- Inhalt von `offer_data` in `shared_offers` (filtert der Client EK/Marge vor dem Speichern?).
-- Praktische Funktionsweise von Inbox-Sync, Offline-Sync, IONOS-Connect.
-- Tatsächlicher Aufruf der Edge `calculate-margin` aus dem Frontend (oder rein Frontend-Engine).
-- Branding-Übernahme in PDF-Templates.
+### Verbleibende Verifikations-Punkte (nicht geraten, nicht behoben)
+
+- **JWT `tenant_id`-Claim-Hook** in der Cloud-Auth-Konfiguration (nicht im Repo prüfbar, kritisch).
+- Praktische Reife von IMAP-Sync (`sync-emails`) und Offline-Schreib-Sync-Konfliktauflösung.
+- Grüne Lauffähigkeit der Vitest-/Playwright-Suite im aktuellen Head.
+
+### Verifizierte Punkte (in dieser Revision)
+
+- ✅ Consumer-Flow im Wizard ist aktiv (`MobileStep.tsx`, `CompareStep.tsx`, `TariffCard.tsx`).
+- ✅ Branding fließt in PDF-Templates (`MultiOfferPdf`, `ProvisionForecastPdf`, `createReportStyles(branding)`).
+- ✅ `calculate-margin` wird real gerufen (`services/calculationService.ts:31`) — Doppelpfad bestätigt.
+- ❌ `get_*_safe`-Views ungenutzt im Frontend — als Gap #19 aufgenommen.
+- ❌ `offer_data` wird ungefiltert in `shared_offers` gespeichert — Gap #11 verschärft.
+- ✅ `tenant-logos` ist privat + tenant-scoped, `visit-photos` erzwingt Ordner-Ownership, `hardware-images` blockiert Anon-Listing.
 
 ---
 
-**Zusammenfassung in einem Satz:**
-Das Projekt ist eine voll integrierte Lovable-Cloud-Anwendung (Vite/React + Supabase mit 98 Migrationen, 22 Edge Functions, ~80 RLS-Tabellen) mit weit über dem Kalkulator-Kern hinausgehendem Funktionsumfang (HR, Außendienst, KI, Security, Gamification, Distribution), aber mit drei strukturellen Schwächen: nicht-generischer Produktkatalog, zweigleisige Tarif-/Berechnungsquellen und ein überwiegend client-seitiger Customer-Safety-Lock — und einer kritischen Abhängigkeit von einem extern konfigurierten JWT-Tenant-Claim, dessen Setzung im Repo nicht nachweisbar ist.
+## 10. Changelog
+
+**Rev. 2 (2026-07-01)**
+- Security-Batch behoben: 14 Findings (Edge-Function-Auth, Cross-Tenant-Invite-Block, AES-GCM IMAP-Passwort, `customerPassword` entfernt, SECURITY DEFINER Allowlist, Storage-RLS, vitest-Patch).
+- Gaps #7, #12 teil-, #13 komplett korrigiert; #20–#23 als „behoben" neu geführt.
+- Neue Gap #19: `_safe`-Views ungenutzt.
+- Gap #11 verschärft: `offer_data`-Rohsave verifiziert.
+- Abschnitt 4, 6, 7 mit Verifikations-Belegen (Datei:Zeile) angereichert.
+
+**Rev. 1** — initiale Bestandsaufnahme.
+
+---
+
+**Zusammenfassung:**
+Voll integrierte Lovable-Cloud-Anwendung (Vite/React + Supabase, 98 Migrationen, 22 Edge Functions, ~80 RLS-Tabellen). Nach Security-Batch 2026-07-01 sind Edge-Function-Auth, IMAP-Verschlüsselung, Storage-Ownership und Definer-Funktion-EXECUTE-Rechte gehärtet. Strukturelle Restschwächen: (1) nicht-generischer Produktkatalog, (2) zweigleisige Tarif-/Berechnungsquellen, (3) client-seitiger Customer-Safety-Lock plus ungefilterte `offer_data`-Persistenz auf Shared-Offers, (4) kritische Abhängigkeit vom extern konfigurierten JWT-Tenant-Claim, (5) ungenutzte `_safe`-Views.

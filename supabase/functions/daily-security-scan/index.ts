@@ -254,7 +254,10 @@ serve(async (req) => {
     // Send email if configured
     let emailSent = false;
     if (resendApiKey && alertEmail) {
-      try {
+      const senderEmailAddress = Deno.env.get("SENDER_EMAIL_ADDRESS");
+      if (!senderEmailAddress) {
+        console.error("[daily-security-scan] SENDER_EMAIL_ADDRESS not configured — skipping report email");
+      } else try {
         const resend = new Resend(resendApiKey);
         const reportDate = new Date().toLocaleDateString("de-DE", {
           weekday: "long",
@@ -264,7 +267,7 @@ serve(async (req) => {
         });
 
         const { error: emailError } = await resend.emails.send({
-          from: "Security <security@resend.dev>",
+          from: `Security <${senderEmailAddress}>`,
           to: [alertEmail],
           subject: `🛡️ Daily Security Report - Score: ${stats.securityScore}/100`,
           html: generateEmailHtml(stats, reportDate),

@@ -232,10 +232,18 @@ serve(async (req: Request): Promise<Response> => {
 
     // Send email via Resend if configured
     if (resendApiKey) {
+      const senderEmailAddress = Deno.env.get("SENDER_EMAIL_ADDRESS");
+      if (!senderEmailAddress) {
+        console.error("[send-password-reset] SENDER_EMAIL_ADDRESS is not configured");
+        return new Response(
+          JSON.stringify({ error: "Email sender not configured. Please set SENDER_EMAIL_ADDRESS to an address on a verified domain." }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
       const resend = new Resend(resendApiKey);
-      
+
       const emailResult = await resend.emails.send({
-        from: `${branding.companyName} <noreply@resend.dev>`,
+        from: `${branding.companyName} <${senderEmailAddress}>`,
         to: [email],
         subject: `🔐 Passwort zurücksetzen – ${branding.companyName}`,
         html: htmlEmail,

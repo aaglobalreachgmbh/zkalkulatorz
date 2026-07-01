@@ -175,7 +175,10 @@ Deno.serve(async (req) => {
         // Use Resend if available
         const resendApiKey = Deno.env.get('RESEND_API_KEY');
         if (resendApiKey) {
-          try {
+          const senderEmailAddress = Deno.env.get('SENDER_EMAIL_ADDRESS');
+          if (!senderEmailAddress) {
+            console.error("[daily-security-audit] SENDER_EMAIL_ADDRESS not configured — skipping audit alert email");
+          } else try {
             const emailResponse = await fetch('https://api.resend.com/emails', {
               method: 'POST',
               headers: {
@@ -183,7 +186,7 @@ Deno.serve(async (req) => {
                 'Content-Type': 'application/json'
               },
               body: JSON.stringify({
-                from: 'Security Audit <security@resend.dev>',
+                from: `Security Audit <${senderEmailAddress}>`,
                 to: alertEmail,
                 subject: `🔴 SECURITY ALERT: ${criticalTables.length} Critical + ${highRiskTables.length} High Risk Tables`,
                 html: `

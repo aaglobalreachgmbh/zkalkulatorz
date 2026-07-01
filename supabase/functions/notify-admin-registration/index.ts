@@ -3,8 +3,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const adminEmail = Deno.env.get("SECURITY_ALERT_EMAIL");
-// Configurable sender email - set via secrets for own domain
-const senderEmailAddress = Deno.env.get("SENDER_EMAIL_ADDRESS") || "onboarding@resend.dev";
+// Configurable sender email - MUST be set to an address on a verified domain; no resend.dev fallback in prod
+const senderEmailAddress = Deno.env.get("SENDER_EMAIL_ADDRESS");
 
 // Allowed origins for CORS - restrict to production domains
 const ALLOWED_ORIGINS = [
@@ -100,6 +100,15 @@ const handler = async (req: Request): Promise<Response> => {
     // cannot inject a phishing domain via the Origin header.
     const appUrl = Deno.env.get("APP_URL") || "https://margenkalkulator.lovable.app";
     const approvalLink = `${appUrl}/admin/users?highlight=${encodeURIComponent(userId)}`;
+
+    // Guard: require a configured sender email — no resend.dev fallback in prod
+    if (!senderEmailAddress) {
+      console.error("[notify-admin-registration] SENDER_EMAIL_ADDRESS is not configured");
+      return new Response(
+        JSON.stringify({ error: "Email sender not configured. Please set SENDER_EMAIL_ADDRESS to an address on a verified domain." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Send email notification to ALL admins
     const emailPromises = ADMIN_EMAILS.map(adminEmail => {

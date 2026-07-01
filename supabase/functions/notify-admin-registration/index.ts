@@ -101,6 +101,15 @@ const handler = async (req: Request): Promise<Response> => {
     const appUrl = Deno.env.get("APP_URL") || "https://margenkalkulator.lovable.app";
     const approvalLink = `${appUrl}/admin/users?highlight=${encodeURIComponent(userId)}`;
 
+    // Guard: require a configured sender email — no resend.dev fallback in prod
+    if (!senderEmailAddress) {
+      console.error("[notify-admin-registration] SENDER_EMAIL_ADDRESS is not configured");
+      return new Response(
+        JSON.stringify({ error: "Email sender not configured. Please set SENDER_EMAIL_ADDRESS to an address on a verified domain." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Send email notification to ALL admins
     const emailPromises = ADMIN_EMAILS.map(adminEmail => {
       return fetch("https://api.resend.com/emails", {

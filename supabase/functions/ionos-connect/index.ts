@@ -13,6 +13,7 @@ const corsHeaders = {
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const EMAIL_ENCRYPTION_KEY = Deno.env.get("EMAIL_ENCRYPTION_KEY") || "";
 
 interface ConnectRequest {
   action: "test_connection" | "save_credentials" | "disconnect";
@@ -32,6 +33,36 @@ const IONOS_DEFAULTS = {
   smtpHost: "smtp.ionos.de",
   smtpPort: 587,
 };
+
+// ---------------------------------------------------------------------------
+// AES-GCM encryption helpers. The stored ciphertext format is:
+//   v1:<base64url(iv)>:<base64url(ciphertext+authTag)>
+// The key material is derived from EMAIL_ENCRYPTION_KEY via SHA-256 so the
+// secret may be any length/charset.
+// ---------------------------------------------------------------------------
+async function deriveKey(): Promise<CryptoKey> {
+  if (!EMAIL_ENCRYPTION_KEY) {
+    throw new Error("EMAIL_ENCRYPTION_KEY is not configured");
+  }
+  const enc = new TextEncoder();
+  const raw = await crypto.subtle.digest("SHA-256", enc.encode(EMAIL_ENCRYPTION_KEY));
+  return crypto.subtle.importKey("raw", raw, { name: "AES-GCM" }, false, ["encrypt", "decrypt"]);
+}
+
+function b64uEncode(bytes: Uint8Array): string {
+  let bin = "";
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+async function encryptSecret(plaintext: string): Promise<string> {
+  const key = await deriveKey();
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = new Uint8Array(
+    await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(plaintext))
+  );
+  return `v1:${b64uEncode(iv)}:${b64uEncode(ct)}`;
+}
 
 serve(async (req) => {
   // Handle CORS preflight

@@ -1,67 +1,33 @@
+## Neutrale Ist-Zustand-Lieferung — keine Bau-Empfehlungen
 
-# Fix: E-Mail-Versand schlägt fehl (Resend, unverifizierte Sender-Domain)
+**Was bereits geliefert wurde (Block 1–6):**
+Reine, unkommentierte DDL des `public`-Schemas — 1 Enum + 84 Tabellen mit Spalten, Typen, NOT-NULL, Defaults, PK/FK/UNIQUE/CHECK. Direkt aus `pg_catalog`/`information_schema` generiert. **Keine Empfehlungen, keine Bewertungen, keine „so solltest du es bauen"-Hinweise.**
 
-## Bestätigter Befund
+## Optional nachlieferbar (falls gewünscht) — ebenfalls neutral
 
-Alle 8 Edge Functions, die Mails verschicken, fallen auf Resends Shared-Test-Domain (`onboarding@resend.dev`, `noreply@resend.dev`, `security@resend.dev`) zurück. Resend erlaubt darüber nur Versand an die eigene Account-E-Mail; jeder Kunden-/Team-Empfänger bekommt 403. Für dieses Projekt ist zusätzlich **keine Sender-Domain konfiguriert** (`email_domain--check_email_domain_status` = `not_started`). Der Secret `SENDER_EMAIL_ADDRESS` existiert bereits, sein Inhalt ist im Zweifel leer oder ebenfalls `@resend.dev`.
+Jede der folgenden Nachlieferungen ist eine reine Bestandsaufnahme, keine Vorgabe. Das Zieltool darf jedes davon ignorieren, neu entwerfen oder ersetzen.
 
-## Voraussetzung (durch dich, nicht durch mich behebbar)
+**A) RLS-Policies + GRANTs**
+- `pg_policies` → `CREATE POLICY`-Statements verbatim
+- `information_schema.role_table_grants` → `GRANT`-Statements verbatim
+- Risiko-Hinweis: RLS-Klauseln enthalten Aufrufe auf `has_role()`, `get_my_tenant_id()`, `is_same_tenant()` etc. Das könnte suggerieren, dass diese Funktionen zwingend so heißen müssen. Sie sind **nicht** verpflichtend — nur eine gewachsene Konvention.
 
-Genau **einen** der beiden Wege wählen — die Code-Änderung passt für beide:
+**B) Non-PK/Non-UNIQUE-Indexe**
+- Aus `pg_indexes`, gefiltert auf reine Sekundärindexe
+- Neutral — reine Performance-Historie, keine fachliche Regel.
 
-**Weg A — bei Resend bleiben (schnellster Fix):**
-1. In deinem Resend-Dashboard eine Domain verifizieren (z. B. `mail.zkalkulatorz.de`) — DNS-Records SPF/DKIM/DMARC setzen.
-2. Im Cloud-Secret `SENDER_EMAIL_ADDRESS` eine Adresse dieser Domain hinterlegen, z. B. `noreply@mail.zkalkulatorz.de`.
-3. Sicherstellen, dass `RESEND_API_KEY` auf die verifizierte Domain berechtigt ist.
+**C) Trigger + Views + Storage-Bucket-Policies**
+- `pg_trigger` (nur triggerdef, ohne Funktionsrumpf → Funktionsrümpfe sind separat)
+- Views inkl. `_safe`-Views (nur Definitionen, ohne Nutzungs-Kommentar)
+- `storage.buckets` + `storage.objects`-Policies
 
-**Weg B — auf Lovable Emails wechseln (empfohlen mittelfristig):** Sender-Domain über die Cloud-Emails-UI provisionieren, dann alle Edge Functions von `resend.send()` auf `send-transactional-email` umbauen. Größerer Umbau — sinnvoll, aber nicht in diesem Fix.
+## Was ich **bewusst nicht** liefere (Kontaminationsrisiko)
 
-Dieser Plan setzt **Weg A** um.
+- Funktionsrümpfe (SECURITY DEFINER-Logik) — wurden bereits weiter oben im Verlauf als Ist-Stand geliefert, aber sie enthalten eingebettete Business-Logik-Annahmen. Zieltool sollte diese als **historische Referenz**, nicht als Blaupause behandeln.
+- Frontend-Konventionen (Tenant-Claim-Herkunft, JWT-Hooks, Storage-Scoping-Keys) — sind Implementation-Details, nicht Schema.
+- Migrations-Historie (98 Files) — ist Verlauf, nicht Ist-Zustand.
+- Meinungen zu „technischer Schuld", „sollte ersetzt werden", „ist Best Practice".
 
-## Code-Änderung (klein, deterministisch)
+## Empfehlung an dich
 
-Einheitliches Muster in **jeder** betroffenen Edge Function:
-
-```ts
-const SENDER = Deno.env.get("SENDER_EMAIL_ADDRESS");
-if (!SENDER) {
-  return new Response(
-    JSON.stringify({ error: "Email sender not configured" }),
-    { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-  );
-}
-```
-
-Dann `from` immer aus `SENDER` bauen (Firmennamen weiterhin als Anzeige-Prefix erlaubt: `${company} <${SENDER}>`).
-
-Betroffene Dateien und die zu ersetzenden Zeilen:
-
-| Datei | Aktuell | Neu |
-|---|---|---|
-| `supabase/functions/send-offer-email/index.ts:479` | `SENDER_EMAIL_ADDRESS \|\| "onboarding@resend.dev"` | Nur `SENDER`, Fallback → 500 |
-| `supabase/functions/send-password-reset/index.ts:238` | hartkodiert `noreply@resend.dev` | `${branding.companyName} <${SENDER}>` |
-| `supabase/functions/invite-user/index.ts:38` | Default `noreply@resend.dev` | `SENDER` |
-| `supabase/functions/send-admin-invite/index.ts:37` | Default `noreply@resend.dev` | `SENDER` |
-| `supabase/functions/notify-admin-registration/index.ts:7` | Default `onboarding@resend.dev` | `SENDER` |
-| `supabase/functions/security-log/index.ts:160` | hartkodiert `onboarding@resend.dev` | `SENDER` |
-| `supabase/functions/daily-security-scan/index.ts:267` | hartkodiert `security@resend.dev` | `SENDER` |
-| `supabase/functions/daily-security-audit/index.ts:186` | hartkodiert `security@resend.dev` | `SENDER` |
-| `supabase/functions/gdpr-cleanup/index.ts:287` | hartkodiert `noreply@resend.dev` | `SENDER` |
-
-Anschließend: `deploy_edge_functions` für alle 9 Funktionen.
-
-## Rationale für „fail loud" statt Fallback
-
-Ein stilles Fallback auf `resend.dev` war genau die Ursache — es wirkt lokal, bricht in Produktion und ist im Log als „funktioniert grundsätzlich" schwer zu erkennen. Ohne konfigurierten Sender jetzt bewusst 500 zurückgeben, damit der Fehler früh sichtbar wird.
-
-## Verifikation nach Deploy
-
-1. `SENDER_EMAIL_ADDRESS` gesetzt → Testmail über `send-offer-email` an eine Adresse **außerhalb** der Resend-Account-Owner-Mail versenden.
-2. Log der Edge Function: kein `statusCode: 403` mehr.
-3. Passwort-Reset gegen eine externe Mail testen.
-
-## Was **nicht** Teil dieses Fixes ist
-
-- Rate-Limits, Template-Umbau, GDPR-Retention.
-- Umstellung auf Lovable Emails (`send-transactional-email`).
-- DNS-Setup — muss der Domain-Inhaber im Resend-Dashboard machen.
+Gib deinem Tool die 6 DDL-Blöcke **so wie sie sind** als „reference schema, historical state". Wenn du zusätzlich A/B/C willst, sag welches — ich liefere jedes Element in derselben rohen, unkommentierten Form. Andernfalls: Audit ist abgeschlossen.

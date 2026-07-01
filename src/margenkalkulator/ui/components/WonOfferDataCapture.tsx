@@ -182,7 +182,6 @@ export function WonOfferDataCapture({
         ...DEFAULT_WON_OFFER_DATA.simOptions,
         type: (initialData?.simOptions?.type as any) ?? DEFAULT_WON_OFFER_DATA.simOptions.type,
       },
-      customerPassword: initialData?.customerPassword ?? "",
       internalNotes: initialData?.internalNotes ?? "",
     },
   });

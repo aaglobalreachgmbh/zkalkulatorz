@@ -106,7 +106,6 @@ const wonDataSchema = z.object({
     existingNumber: z.string().optional(),
     currentProvider: z.string().optional(),
   }),
-  customerPassword: z.string().optional(),
   internalNotes: z.string().optional(),
 });
 

@@ -157,9 +157,17 @@ serve(async (req) => {
 
         const tenantId = settingsData?.tenant_id || "default";
 
-        // Encrypt password before storing (TODO: Use EMAIL_ENCRYPTION_KEY)
-        // For now, we're storing it directly (NOT SECURE - implement encryption!)
-        const encryptedPassword = password; // TODO: Implement actual encryption
+        // Encrypt password with AES-GCM before storing (EMAIL_ENCRYPTION_KEY)
+        let encryptedPassword: string;
+        try {
+          encryptedPassword = await encryptSecret(password);
+        } catch (encErr) {
+          console.error("Password encryption failed:", encErr);
+          return new Response(
+            JSON.stringify({ error: "Server misconfiguration: encryption key missing" }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
 
         // Store in email_accounts
         const { data: account, error: insertError } = await supabase

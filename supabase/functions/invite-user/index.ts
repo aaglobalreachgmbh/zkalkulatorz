@@ -72,6 +72,14 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Load caller's own tenant so we can prevent cross-tenant escalation
+    const { data: callerProfile } = await supabase
+      .from("profiles")
+      .select("tenant_id")
+      .eq("id", user.id)
+      .single();
+    const callerTenantId = callerProfile?.tenant_id ?? null;
+
     // Parse request body
     const body: InviteRequest = await req.json();
     const { email, role, tenant_id } = body;
@@ -80,6 +88,18 @@ const handler = async (req: Request): Promise<Response> => {
       return new Response(
         JSON.stringify({ error: "E-Mail, Rolle und Tenant-ID erforderlich" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Cross-tenant protection: platform 'admin' may act across tenants, but a
+    // tenant_admin may ONLY invite into their own tenant.
+    if (roleData?.role === "tenant_admin" && callerTenantId !== tenant_id) {
+      console.warn(
+        `[invite-user] Cross-tenant invite blocked: user ${user.id} (tenant ${callerTenantId}) tried to invite into tenant ${tenant_id}`
+      );
+      return new Response(
+        JSON.stringify({ error: "Sie können nur Einladungen in Ihren eigenen Mandanten senden" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 

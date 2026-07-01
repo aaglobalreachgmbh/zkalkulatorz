@@ -22,9 +22,30 @@ serve(async (req) => {
         // CRITICAL: We use the SERVICE_ROLE_KEY to bypass RLS on tariffs_commercial
         const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
         const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+        const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') || ''
 
-        if (!supabaseUrl || !supabaseServiceKey) {
+        if (!supabaseUrl || !supabaseServiceKey || !supabaseAnonKey) {
             throw new Error("Server Misconfiguration: Secrets missing")
+        }
+
+        // 1a. AuthN: Require valid Supabase JWT before disclosing commercial pricing
+        const authHeader = req.headers.get("Authorization") || req.headers.get("authorization")
+        if (!authHeader || !authHeader.toLowerCase().startsWith("bearer ")) {
+            return new Response(JSON.stringify({ error: "Unauthorized" }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 401,
+            })
+        }
+        const jwt = authHeader.replace(/^[Bb]earer\s+/, "")
+        const authClient = createClient(supabaseUrl, supabaseAnonKey, {
+            global: { headers: { Authorization: `Bearer ${jwt}` } },
+        })
+        const { data: userData, error: userErr } = await authClient.auth.getUser(jwt)
+        if (userErr || !userData?.user) {
+            return new Response(JSON.stringify({ error: "Unauthorized" }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 401,
+            })
         }
 
         const supabase = createClient(supabaseUrl, supabaseServiceKey)
@@ -36,7 +57,7 @@ serve(async (req) => {
             throw new Error("Invalid Input: Product ID required, Volume must be positive")
         }
 
-        console.log(`Calculation requested for Tariff: ${productId}, Vol: ${volume}`)
+        console.log(`Calculation requested by user ${userData.user.id} for Tariff: ${productId}, Vol: ${volume}`)
 
         // 3. Fetch Data (The Vault Lookups)
         // Parallel fetch for speed

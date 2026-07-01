@@ -1,7 +1,10 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const senderEmail = Deno.env.get("SENDER_EMAIL_ADDRESS") || "noreply@margenkalkulator.app";
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
+const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") || "";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -124,8 +127,58 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Require a valid Supabase JWT — this endpoint must not be an open mail relay.
+  const authHeader = req.headers.get("Authorization") || req.headers.get("authorization");
+  if (!authHeader || !authHeader.toLowerCase().startsWith("bearer ")) {
+    return new Response(
+      JSON.stringify({ error: "Unauthorized" }),
+      { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+    );
+  }
+  let authenticatedEmail: string | null = null;
+  try {
+    const jwt = authHeader.replace(/^[Bb]earer\s+/, "");
+    const authClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: `Bearer ${jwt}` } },
+    });
+    const { data: userData, error: userErr } = await authClient.auth.getUser(jwt);
+    if (userErr || !userData?.user) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+    authenticatedEmail = userData.user.email ?? null;
+  } catch (_e) {
+    return new Response(
+      JSON.stringify({ error: "Unauthorized" }),
+      { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+    );
+  }
+
   try {
     const { type, recipientEmail, recipientName, subject, data }: NotificationEmailRequest = await req.json();
+
+    // Validate input
+    if (!type || !recipientEmail || !subject) {
+      return new Response(
+        JSON.stringify({ error: "Missing required fields: type, recipientEmail, subject" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Restrict recipients to the authenticated user's own address to prevent
+    // this endpoint from being abused as a spam relay via the app's Resend
+    // reputation. Notifications in this app are always sent to the acting user.
+    if (
+      !authenticatedEmail ||
+      recipientEmail.trim().toLowerCase() !== authenticatedEmail.trim().toLowerCase()
+    ) {
+      return new Response(
+        JSON.stringify({ error: "Recipient must match the authenticated user" }),
+        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
     // Validate input
     if (!type || !recipientEmail || !subject) {

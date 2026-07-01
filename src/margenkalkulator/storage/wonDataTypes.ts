@@ -158,8 +158,7 @@ export interface WonOfferData {
   // SIM options
   simOptions: WonSimOptions;
   
-  // Customer password (for Vodafone portal)
-  customerPassword?: string;
+  // Customer portal password removed — never store third-party credentials.
   
   // Internal notes
   internalNotes?: string;

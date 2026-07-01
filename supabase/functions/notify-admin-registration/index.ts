@@ -51,10 +51,10 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    // Verify authorization
+    // Verify authorization — must be a valid Supabase JWT
     const authHeader = req.headers.get("authorization");
-    if (!authHeader) {
-      console.error("[notify-admin-registration] No authorization header");
+    if (!authHeader || !authHeader.toLowerCase().startsWith("bearer ")) {
+      console.error("[notify-admin-registration] Missing/invalid authorization header");
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -64,7 +64,22 @@ const handler = async (req: Request): Promise<Response> => {
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Validate the JWT belongs to a real user
+    const token = authHeader.replace(/^[Bb]earer\s+/, "");
+    const authClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+    });
+    const { data: authData, error: authErr } = await authClient.auth.getUser(token);
+    if (authErr || !authData?.user) {
+      console.error("[notify-admin-registration] Invalid JWT");
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Parse request body
     const { userId, email, displayName }: RegistrationNotification = await req.json();
@@ -81,11 +96,10 @@ const handler = async (req: Request): Promise<Response> => {
       timeStyle: "medium",
     });
 
-    // Generate Approval Link (Direct to Admin Users Page)
-    // Assuming the app is hosted at the origin or we can use a known base URL
-    // For now, we'll try to use the request origin or fallback to lovable URL
-    const appUrl = origin || "https://margenkalkulator.lovable.app";
-    const approvalLink = `${appUrl}/admin/users?highlight=${userId}`;
+    // Generate Approval Link — MUST use a server-controlled URL so an attacker
+    // cannot inject a phishing domain via the Origin header.
+    const appUrl = Deno.env.get("APP_URL") || "https://margenkalkulator.lovable.app";
+    const approvalLink = `${appUrl}/admin/users?highlight=${encodeURIComponent(userId)}`;
 
     // Send email notification to ALL admins
     const emailPromises = ADMIN_EMAILS.map(adminEmail => {

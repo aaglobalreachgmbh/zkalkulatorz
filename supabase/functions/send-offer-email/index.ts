@@ -484,8 +484,15 @@ const handler = async (req: Request): Promise<Response> => {
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-    // Get configured sender email or fallback to Resend test domain
-    const senderEmailAddress = Deno.env.get("SENDER_EMAIL_ADDRESS") || "onboarding@resend.dev";
+    // Require a configured sender email — never fall back to resend.dev (Resend blocks that in prod)
+    const senderEmailAddress = Deno.env.get("SENDER_EMAIL_ADDRESS");
+    if (!senderEmailAddress) {
+      console.error("[send-offer-email] SENDER_EMAIL_ADDRESS is not configured");
+      return new Response(
+        JSON.stringify({ error: "Email sender not configured. Please set SENDER_EMAIL_ADDRESS to an address on a verified domain." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
     const senderFromLine = `${companyName} <${senderEmailAddress}>`;
     
     console.log(`[send-offer-email] Sending from ${senderFromLine} to ${body.recipientEmail}, attachment size: ${pdfBuffer.length} bytes`);

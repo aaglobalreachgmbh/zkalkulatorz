@@ -155,9 +155,14 @@ async function sendSecurityAlert(event: SecurityEvent, isBot: boolean, isPhishin
     critical: "🔴"
   };
 
+  const senderEmailAddress = Deno.env.get("SENDER_EMAIL_ADDRESS");
+  if (!senderEmailAddress) {
+    console.error("[security-log] SENDER_EMAIL_ADDRESS is not configured — skipping alert email");
+    return;
+  }
   try {
     const response = await resend.emails.send({
-      from: "Security Alert <onboarding@resend.dev>",
+      from: `Security Alert <${senderEmailAddress}>`,
       to: [alertEmail],
       subject: `${riskEmoji[event.risk_level]} [SECURITY] ${event.event_type.toUpperCase()} - ${event.risk_level.toUpperCase()}`,
       html: `

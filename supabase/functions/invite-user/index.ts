@@ -35,7 +35,14 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
-    const senderEmail = Deno.env.get("SENDER_EMAIL_ADDRESS") || "noreply@resend.dev";
+    const senderEmail = Deno.env.get("SENDER_EMAIL_ADDRESS");
+    if (resendApiKey && !senderEmail) {
+      console.error("[invite-user] SENDER_EMAIL_ADDRESS is not configured");
+      return new Response(
+        JSON.stringify({ error: "Email sender not configured. Please set SENDER_EMAIL_ADDRESS to an address on a verified domain." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     

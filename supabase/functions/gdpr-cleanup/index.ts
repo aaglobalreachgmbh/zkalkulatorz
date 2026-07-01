@@ -276,7 +276,10 @@ serve(async (req: Request) => {
       const resendApiKey = Deno.env.get("RESEND_API_KEY");
 
       if (alertEmail && resendApiKey) {
-        try {
+        const senderEmailAddress = Deno.env.get("SENDER_EMAIL_ADDRESS");
+        if (!senderEmailAddress) {
+          console.error("[gdpr-cleanup] SENDER_EMAIL_ADDRESS not configured — skipping alert email");
+        } else try {
           await fetch("https://api.resend.com/emails", {
             method: "POST",
             headers: {
@@ -284,7 +287,7 @@ serve(async (req: Request) => {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              from: "MargenKalkulator <noreply@resend.dev>",
+              from: `MargenKalkulator <${senderEmailAddress}>`,
               to: alertEmail,
               subject: `🗑️ DSGVO: ${successCount} Benutzerkonten automatisch gelöscht`,
               html: `

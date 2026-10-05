@@ -31,6 +31,7 @@ import { useWorkplaceMode } from "@/contexts/WorkplaceModeContext";
 import { Store, Briefcase } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { PUBLISHER } from "@/margenkalkulator/publisherConfig";
+import { BrandLogo } from "@/components/BrandLogo";
 import {
   Sidebar,
   SidebarContent,
@@ -188,10 +189,12 @@ export function AppSidebar() {
           collapsed && "justify-center px-2"
         )}>
         {branding.logoUrl ? (
-            <img 
-              src={branding.logoUrl} 
-              alt={branding.companyName || "Logo"}
-              className="h-12 w-auto object-contain max-w-[180px]"
+            <BrandLogo
+              src={branding.logoUrl}
+              alt={branding.companyName || "Firmenlogo"}
+              className={cn("h-12 shrink-0", collapsed ? "w-12" : "w-[7.5rem]")}
+              imageClassName={collapsed ? "object-center" : "object-left"}
+              showFallback={false}
             />
           ) : (
             <div 

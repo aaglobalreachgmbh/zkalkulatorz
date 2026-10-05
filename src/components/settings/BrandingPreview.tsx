@@ -6,6 +6,7 @@
 import { FileText } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import type { TenantBranding } from "@/hooks/useTenantBranding";
+import { BrandLogo } from "@/components/BrandLogo";
 
 interface BrandingPreviewProps {
   branding: TenantBranding;
@@ -23,13 +24,12 @@ export function BrandingPreview({ branding }: BrandingPreviewProps) {
           style={{ backgroundColor: branding.primaryColor }}
         >
           {branding.logoUrl ? (
-            <div className="h-10 w-10 rounded bg-white/10 flex items-center justify-center overflow-hidden">
-              <img 
-                src={branding.logoUrl} 
-                alt="Logo" 
-                className="max-h-full max-w-full object-contain"
-              />
-            </div>
+            <BrandLogo
+              src={branding.logoUrl}
+              alt={branding.companyName || "Firmenlogo"}
+              className="h-10 w-20 shrink-0 rounded bg-background/10 p-1"
+              fallbackClassName="text-primary-foreground"
+            />
           ) : (
             <div className="h-10 w-10 rounded bg-white/20 flex items-center justify-center">
               <FileText className="h-5 w-5 text-white" />

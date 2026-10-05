@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTenantBranding } from "@/hooks/useTenantBranding";
 import { Card } from "@/components/ui/card";
 import { Sparkles } from "lucide-react";
+import { BrandLogo } from "@/components/BrandLogo";
 
 export function WelcomeBanner() {
   const { user } = useAuth();
@@ -35,10 +36,12 @@ export function WelcomeBanner() {
                   className="absolute inset-0 blur-2xl opacity-20 scale-110"
                   style={{ backgroundColor: branding.primaryColor || 'hsl(var(--primary))' }}
                 />
-                <img
+                <BrandLogo
                   src={branding.logoUrl}
-                  alt={branding.companyName || "Logo"}
-                  className="relative h-20 md:h-28 lg:h-32 w-auto max-w-[280px] object-contain drop-shadow-lg"
+                  alt={branding.companyName || "Firmenlogo"}
+                  className="relative h-20 w-[min(70vw,17.5rem)] md:h-28 lg:h-32"
+                  imageClassName="drop-shadow-lg"
+                  showFallback={false}
                 />
               </div>
             ) : (

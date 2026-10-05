@@ -8,6 +8,13 @@
       "when": 1791194249385,
       "tag": "0000_regrant_rls_helper_functions",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791221757330,
+      "tag": "0001_restrict_badge_definitions_to_authenticated_users",
+      "breakpoints": true
     }
   ]
 }

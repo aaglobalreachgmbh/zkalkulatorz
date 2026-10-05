@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useIdentity } from "@/contexts/IdentityContext";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { BrandLogo } from "@/components/BrandLogo";
 
 interface LogoUploadProps {
   currentLogoUrl: string | null;
@@ -124,13 +125,11 @@ export function LogoUpload({ currentLogoUrl, onLogoChange, disabled }: LogoUploa
       
       {currentLogoUrl ? (
         <Card className="p-4 flex items-center gap-4">
-          <div className="h-16 w-16 rounded-lg bg-muted flex items-center justify-center overflow-hidden">
-            <img 
-              src={currentLogoUrl} 
-              alt="Logo" 
-              className="max-h-full max-w-full object-contain"
-            />
-          </div>
+          <BrandLogo
+            src={currentLogoUrl}
+            alt="Hochgeladenes Firmenlogo"
+            className="h-16 w-28 shrink-0 rounded-md border border-border bg-muted/30 p-2"
+          />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">Logo hochgeladen</p>
             <p className="text-xs text-muted-foreground">Klicke auf Löschen zum Entfernen</p>

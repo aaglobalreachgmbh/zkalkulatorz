@@ -19,6 +19,7 @@ import { VVLNotificationBanner } from "@/components/VVLNotificationBanner";
 import { FollowupReminders } from "@/margenkalkulator/ui/components/FollowupReminders";
 import { PUBLISHER } from "@/margenkalkulator/publisherConfig";
 import { cn } from "@/lib/utils";
+import { BrandLogo } from "@/components/BrandLogo";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -59,10 +60,12 @@ export function MainLayout({ children }: MainLayoutProps) {
                 
                 {/* Logo oder Firmenname darunter - größer */}
                 {branding.logoUrl ? (
-                  <img 
-                    src={branding.logoUrl} 
-                    alt={branding.companyName || "Logo"} 
-                    className="h-10 md:h-12 w-auto max-w-[200px] object-contain mt-0.5"
+                  <BrandLogo
+                    src={branding.logoUrl}
+                    alt={branding.companyName || "Firmenlogo"}
+                    className="mt-0.5 h-10 w-[clamp(7rem,18vw,12.5rem)] md:h-12"
+                    imageClassName="object-left"
+                    showFallback={false}
                   />
                 ) : (
                   <span className="text-lg md:text-xl font-bold text-foreground tracking-tight">

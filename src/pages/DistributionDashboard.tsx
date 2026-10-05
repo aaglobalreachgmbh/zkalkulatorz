@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { BrandLogo } from "@/components/BrandLogo";
 import {
   Dialog,
   DialogContent,
@@ -487,13 +488,10 @@ export default function DistributionDashboard() {
                   <div className="border rounded-lg p-4 bg-muted/30">
                     <div className="flex items-center gap-3">
                       {brandingLogoUrl ? (
-                        <img
+                        <BrandLogo
                           src={brandingLogoUrl}
-                          alt="Logo"
-                          className="h-8 object-contain"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = "none";
-                          }}
+                          alt="White-Label-Logo"
+                          className="h-10 w-32 shrink-0 rounded border border-border bg-background p-1.5"
                         />
                       ) : (
                         <div className="h-8 w-24 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">

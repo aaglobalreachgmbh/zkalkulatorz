@@ -24,6 +24,7 @@ import { VVLNotificationBanner } from "@/components/VVLNotificationBanner";
 import { FollowupReminders } from "@/margenkalkulator/ui/components/FollowupReminders";
 import { PUBLISHER } from "@/margenkalkulator/publisherConfig";
 import { cn } from "@/lib/utils";
+import { BrandLogo } from "@/components/BrandLogo";
 
 /**
  * Calculator Index Page - Zero-Scroll Cockpit Layout
@@ -74,10 +75,12 @@ const Index = () => {
                 
                 {/* Logo oder Firmenname */}
                 {branding.logoUrl ? (
-                  <img 
-                    src={branding.logoUrl} 
-                    alt={branding.companyName || "Logo"} 
-                    className="h-8 md:h-10 w-auto max-w-[180px] object-contain mt-0.5"
+                  <BrandLogo
+                    src={branding.logoUrl}
+                    alt={branding.companyName || "Firmenlogo"}
+                    className="mt-0.5 h-8 w-[clamp(6.5rem,16vw,11.25rem)] md:h-10"
+                    imageClassName="object-left"
+                    showFallback={false}
                   />
                 ) : (
                   <span className="text-base md:text-lg font-bold text-foreground tracking-tight">

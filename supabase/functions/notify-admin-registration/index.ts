@@ -51,38 +51,36 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    // Verify authorization — must be a valid Supabase JWT
-    const authHeader = req.headers.get("authorization");
-    if (!authHeader || !authHeader.toLowerCase().startsWith("bearer ")) {
-      console.error("[notify-admin-registration] Missing/invalid authorization header");
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Initialize Supabase client
+    // Called right after signUp, usually before the user has a session.
+    // Instead of requiring a user JWT, verify server-side that the userId is a
+    // real, freshly created, still-unconfirmed-or-new account.
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Validate the JWT belongs to a real user
-    const token = authHeader.replace(/^[Bb]earer\s+/, "");
-    const authClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: `Bearer ${token}` } },
-    });
-    const { data: authData, error: authErr } = await authClient.auth.getUser(token);
-    if (authErr || !authData?.user) {
-      console.error("[notify-admin-registration] Invalid JWT");
+    const body: Partial<RegistrationNotification> = await req.json().catch(() => ({}));
+    const userId = typeof body.userId === "string" ? body.userId : "";
+    if (!/^[0-9a-f-]{36}$/i.test(userId)) {
+      return new Response(JSON.stringify({ error: "Invalid request" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { data: adminData, error: adminErr } = await supabase.auth.admin.getUserById(userId);
+    const createdAt = adminData?.user?.created_at ? new Date(adminData.user.created_at).getTime() : 0;
+    if (adminErr || !adminData?.user || Date.now() - createdAt > 15 * 60 * 1000) {
+      console.error("[notify-admin-registration] Unknown or stale user");
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Parse request body
-    const { userId, email, displayName }: RegistrationNotification = await req.json();
+    // Use server-side values only; escape display name for HTML
+    const email = adminData.user.email ?? "";
+    const rawName = String(adminData.user.user_metadata?.display_name ?? body.displayName ?? "");
+    const displayName = rawName.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`).slice(0, 100);
     console.log(`[notify-admin-registration] New user: ${email}`);
 
     // Get current user count for context

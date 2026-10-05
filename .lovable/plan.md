@@ -1,31 +1,19 @@
-## Lesende Ausgabe: Edge Functions Audit
+# Eingebettete Logos sauber darstellen
 
-Reine Bestandsaufnahme, keine Änderungen. 22 Edge Functions unter `supabase/functions/*`.
+## Ziel
+Firmen- und Partnerlogos sollen in Navigation, Kopfzeilen, Branding-Vorschauen und erzeugten PDFs unabhängig vom Seitenverhältnis vollständig, scharf und ohne Layoutsprünge erscheinen.
 
-### Format je Function
-Tabellenzeile: `Name | Zweck | Eingabe | Ausgabe | Secrets/Env | Aufrufer`
-+ Kurzer Logikblock (2–5 Bullets) unter der Zeile.
+## Umsetzung
+1. Eine gemeinsame Logo-Darstellung für die Weboberfläche ergänzen:
+   - fest definierte, responsive Bildfläche
+   - `object-contain` statt Beschnitt oder Verzerrung
+   - sinnvolle Innenabstände für breite, quadratische und hochformatige Logos
+   - Lade- und Fehlerzustand mit Firmenname statt unsichtbarem/defektem Bild
+2. Die gemeinsame Darstellung in Seitenleiste, Kopfzeilen, Dashboard, Upload-Vorschau, PDF-Vorschau und White-Label-Vorschau einsetzen.
+3. Die Logo-Rahmen in allen PDF-Vorlagen auf ein einheitliches Seitenverhältnis und `contain`-Darstellung abstimmen, ohne PDF-Inhalte oder Berechnungen zu verändern.
+4. Desktop- und schmale Ansichten sowie ein fehlendes/defektes Logo visuell prüfen; anschließend die vorhandenen Prüfungen und den aktuellen Build-Status kontrollieren.
 
-### Zusätzlich für `calculate-margin` und `generate-pdf`
-Kernlogik in **detaillierten Bullets** (Datenfluss, verwendete Tabellen/RPCs, Berechnungsschritte bzw. PDF-Rendering-Schritte, Fehlerbehandlung).
-
-### Blockstruktur (je ~5 Functions pro Block)
-- **Block 1:** ai-consultant, ai-data-import, ai-offer-check, calculate-margin, create-calendar-event
-- **Block 2:** daily-security-audit, daily-security-scan, gdpr-cleanup, generate-pdf, import-tariffs
-- **Block 3:** invite-user, ionos-connect, notify-admin-registration, rate-limiter, security-log
-- **Block 4:** send-admin-invite, send-notification-email, send-offer-email, send-password-reset, sync-emails
-- **Block 5:** threat-intel, verify-turnstile — Abschluss + „AUDIT KOMPLETT"
-
-Am Ende jedes Blocks steht **WEITER** und ich warte auf dein „weiter".
-
-### Datenquellen (nur lesend)
-- `supabase/functions/*/index.ts` — echte Deno-Quellen
-- `supabase/config.toml` — verify_jwt-Overrides
-- `rg` über `src/` — Aufrufer via `functions.invoke("<name>")` bzw. `fetch(...)`
-- Request-/Response-Shapes verbatim aus Zod-Schemas oder ersten `req.json()`-Destrukturierungen, keine Nachdichtung
-- Secrets aus `Deno.env.get(...)`-Vorkommen im jeweiligen index.ts
-
-### Bewusst NICHT enthalten
-- Empfehlungen, Refactor-Vorschläge, Sicherheitsbewertungen
-- Vollständige Function-Bodies (Zieltool soll frei planen können)
-- Deployment-/Konfig-Vorschriften
+## Technische Leitplanken
+- Nur Darstellung und Robustheit der Logos ändern; keine Branding-Daten, Berechnungen oder Berechtigungen anfassen.
+- Bestehende Designfarben und Komponenten weiterverwenden.
+- Für Web-Logos eine kleine wiederverwendbare React-Komponente nutzen; PDF-Logos bleiben in den vorhandenen PDF-Komponenten.

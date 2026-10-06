@@ -14,6 +14,7 @@ import { MainLayout } from "@/components/MainLayout";
 import { LogoUpload } from "@/components/settings/LogoUpload";
 import { ColorPicker } from "@/components/settings/ColorPicker";
 import { BrandingPreview } from "@/components/settings/BrandingPreview";
+import { BrandingStatusCard } from "@/components/settings/BrandingStatusCard";
 import { useTenantBranding, DEFAULT_BRANDING, type TenantBranding } from "@/hooks/useTenantBranding";
 
 export default function BrandingSettings() {
@@ -190,6 +191,14 @@ export default function BrandingSettings() {
                 </p>
               </div>
             )}
+
+            <div className="mt-4">
+              <BrandingStatusCard
+                logoUrl={localBranding.logoUrl}
+                companyName={localBranding.companyName}
+                unsaved={localBranding.logoUrl !== branding?.logoUrl}
+              />
+            </div>
           </div>
         </div>
       </div>

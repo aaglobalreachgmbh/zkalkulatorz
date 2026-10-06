@@ -30,6 +30,12 @@ import NotFound from "./pages/NotFound";
 // Lazy loaded pages (code splitting)
 const Index = lazy(() => import("./pages/Index"));
 const Bundles = lazy(() => import("./pages/Bundles"));
+const WorkspaceSettings = lazy(() => import("./pages/WorkspaceSettings"));
+const CrossSell = lazy(() => import("./pages/CrossSell"));
+const Campaigns = lazy(() => import("./pages/Campaigns"));
+const ProvisionCheck = lazy(() => import("./pages/ProvisionCheck"));
+const PosDemo = lazy(() => import("./pages/PosDemo"));
+const FieldDay = lazy(() => import("./pages/FieldDay"));
 const DataManager = lazy(() => import("./pages/DataManager"));
 const DataHub = lazy(() => import("./pages/DataHub"));
 const HardwareManager = lazy(() => import("./pages/HardwareManager"));
@@ -419,6 +425,12 @@ const App = () => {
                         }
                       />
                       <Route path="/bundles" element={<ProtectedRoute><Bundles /></ProtectedRoute>} />
+                      <Route path="/settings/workspace" element={<ProtectedRoute><WorkspaceSettings /></ProtectedRoute>} />
+                      <Route path="/cross-sell" element={<ProtectedRoute><CrossSell /></ProtectedRoute>} />
+                      <Route path="/campaigns" element={<ProtectedRoute><Campaigns /></ProtectedRoute>} />
+                      <Route path="/provision-check" element={<ProtectedRoute><ProvisionCheck /></ProtectedRoute>} />
+                      <Route path="/pos" element={<ProtectedRoute><PosDemo /></ProtectedRoute>} />
+                      <Route path="/field-day" element={<ProtectedRoute><FieldDay /></ProtectedRoute>} />
                       <Route path="/daten" element={<ProtectedRoute><DataHub /></ProtectedRoute>} />
                       <Route path="/license" element={<ProtectedRoute><License /></ProtectedRoute>} />
 

@@ -28,6 +28,8 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
+import { RoleQuickStart } from "@/components/workspace/RoleQuickStart";
+import { useWorkspaceProfile } from "@/hooks/useWorkspaceProfile";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -42,6 +44,9 @@ const Home = () => {
     resetToDefault,
     moveWidget,
   } = useDashboardConfig();
+  const { profile } = useWorkspaceProfile();
+  const showQuickStart = !!user && profile.homeLayout !== "classic";
+  const showWidgets = profile.homeLayout !== "focus" || !profile.userType;
 
   // DnD sensors
   const sensors = useSensors(
@@ -95,6 +100,8 @@ const Home = () => {
         {/* Main Content */}
         <main className="flex-1 px-4 lg:px-6 py-6">
           <div className="max-w-5xl mx-auto w-full">
+            {showQuickStart && <div className="mb-6"><RoleQuickStart /></div>}
+            {showWidgets && (<>
             {/* Edit Header */}
             <DashboardEditHeader
               isEditMode={isEditMode}
@@ -144,6 +151,7 @@ const Home = () => {
                 </div>
               </SortableContext>
             </DndContext>
+            </>)}
 
             {/* Empty State for Guests */}
             {!user && visibleWidgets.filter(w => {

@@ -348,19 +348,19 @@ export function CompareStep({
 
       {/* KI-Kundenerklärung */}
       <div className="mt-6 flex flex-wrap justify-end gap-2">
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button variant="outline" className="gap-2"><Zap className="h-4 w-4" /> Strom & Gas ergänzen (Demo)</Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
-            <DialogHeader><DialogTitle>Gesamtübersicht inkl. Energie</DialogTitle></DialogHeader>
+        <EnergyDialogRoot>
+          <EnergyDialogTrigger asChild>
+            <EnergyButton variant="outline" className="gap-2"><EnergyIcon className="h-4 w-4" /> Strom & Gas ergänzen (Demo)</EnergyButton>
+          </EnergyDialogTrigger>
+          <EnergyDialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+            <EnergyDialogHeader><EnergyDialogTitle>Gesamtübersicht inkl. Energie</EnergyDialogTitle></EnergyDialogHeader>
             <EnergyCalculator
               telcoMonthlyNet={result1.totals?.avgTermNet ?? 0}
               telcoOneTimeNet={(result1.oneTime ?? []).reduce((s, m) => s + (m?.net ?? 0), 0)}
               termMonths={option1.meta?.termMonths ?? 24}
             />
-          </DialogContent>
-        </Dialog>
+          </EnergyDialogContent>
+        </EnergyDialogRoot>
         <OfferExplainDialog config={option1} result={result1} />
       </div>
 

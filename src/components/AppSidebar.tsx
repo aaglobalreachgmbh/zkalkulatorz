@@ -82,6 +82,7 @@ const toolItems = [
   { id: "calendar", title: "Kalender", subtitle: "Termine", url: "/calendar", icon: Calendar },
   { id: "news", title: "News & Aktionen", subtitle: "Aktuelle Infos", url: "/news", icon: Megaphone },
   { id: "bundles", title: "Bundles", subtitle: "Paket-Konfigurator", url: "/bundles", icon: Package },
+  { title: "Eigene Produkte", subtitle: "Import & Verkaufsfokus", url: "/eigene-produkte", icon: Package },
   { id: "inbox", title: "Posteingang", subtitle: "Nachrichten", url: "/inbox", icon: Inbox },
 ];
 

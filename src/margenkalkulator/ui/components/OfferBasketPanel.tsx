@@ -25,7 +25,7 @@ export function OfferBasketPanel() {
       <div className="bg-gray-900 px-4 py-2.5 flex items-center justify-between">
         <span className="text-white font-semibold text-xs flex items-center gap-2 uppercase tracking-wider">
           <ShoppingCart className="w-3.5 h-3.5" />
-          Basket
+          Angebotskorb
         </span>
         {itemCount > 0 && (
           <span className="bg-red-600 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">

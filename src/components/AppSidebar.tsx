@@ -94,7 +94,7 @@ const analyticsItems = [
 // MEIN KONTO - Persönliche Einstellungen (immer sichtbar)
 const accountItems = [
   { title: "Meine Daten", url: "/daten", icon: UserIcon },
-  { title: "Sicherheit", url: "/settings/security", icon: Shield },
+  { title: "Meine Sicherheit", url: "/settings/security", icon: Shield },
   { title: "Demo-Betrieb", url: "/demo-betrieb", icon: Sparkles },
   { title: "Lizenz", url: "/license", icon: Key },
 ];
@@ -112,6 +112,7 @@ const superAdminItems = [
   { title: "Alle Shops", subtitle: "Tenants verwalten", url: "/super-admin", icon: Building2 },
   { title: "Benutzer", subtitle: "Alle Benutzer", url: "/admin/users", icon: Users },
   { title: "Datenmanager", subtitle: "Tarifdaten", url: "/data-manager", icon: HardDrive },
+  { title: "Admin & Sicherheit", subtitle: "Prüfung und Schutz", url: "/admin/sicherheit", icon: Shield },
 ];
 
 export function AppSidebar() {
@@ -127,6 +128,7 @@ export function AppSidebar() {
   
   // Collapsible section states
   const [accountOpen, setAccountOpen] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
   const [shopAdminOpen, setShopAdminOpen] = useState(false);
   const [superAdminOpen, setSuperAdminOpen] = useState(false);
   
@@ -139,6 +141,9 @@ export function AppSidebar() {
     const path = location.pathname;
     if (accountItems.some(item => path.startsWith(item.url))) {
       setAccountOpen(true);
+    }
+    if ([...toolItems, ...analyticsItems].some(item => path.startsWith(item.url))) {
+      setToolsOpen(true);
     }
     if (shopAdminItems.some(item => path.startsWith(item.url)) || path.startsWith("/tenant-admin")) {
       setShopAdminOpen(true);
@@ -302,82 +307,36 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive("/settings/workspace")} tooltip={collapsed ? "Arbeitsplatz anpassen" : undefined}
-                  className="text-muted-foreground/70 hover:text-foreground hover:bg-muted/50">
-                  <NavLink to="/settings/workspace">
-                    <Settings className="h-4 w-4" />
-                    <span>{currentType ? "Arbeitsplatz anpassen" : "Nutzertyp wählen"}</span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Werkzeuge */}
-        {visibleToolItems.length > 0 && (
+        {/* Seltenere Werkzeuge bleiben erreichbar, ohne die Hauptnavigation zu überladen. */}
+        {(visibleToolItems.length > 0 || visibleAnalyticsItems.length > 0) && (
           <SidebarGroup>
-            <SidebarGroupLabel className="text-muted-foreground/70 uppercase text-[10px] tracking-wider">
-              Werkzeuge
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {visibleToolItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton 
-                      asChild 
-                      isActive={isActive(item.url)}
-                      tooltip={collapsed ? item.title : undefined}
-                      className={cn(
-                        "transition-all",
-                        isActive(item.url) 
-                          ? "bg-primary/10 text-primary font-medium" 
-                          : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50"
-                      )}
-                    >
-                      <NavLink to={item.url}>
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-
-        {/* Auswertungen */}
-        {visibleAnalyticsItems.length > 0 && (
-          <SidebarGroup>
-            <SidebarGroupLabel className="text-muted-foreground/70 uppercase text-[10px] tracking-wider">
-              Auswertungen
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {visibleAnalyticsItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton 
-                      asChild 
-                      isActive={isActive(item.url)}
-                      tooltip={collapsed ? item.title : undefined}
-                      className={cn(
-                        "transition-all",
-                        isActive(item.url) 
-                          ? "bg-primary/10 text-primary font-medium" 
-                          : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50"
-                      )}
-                    >
-                      <NavLink to={item.url}>
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
+            <Collapsible open={toolsOpen} onOpenChange={setToolsOpen}>
+              <CollapsibleTrigger className="w-full">
+                <SidebarGroupLabel className="flex cursor-pointer items-center justify-between uppercase text-[10px] text-muted-foreground/70 hover:text-foreground">
+                  <span>Weitere Werkzeuge</span>
+                  {!collapsed && <ChevronRight className={cn("h-3 w-3 transition-transform", toolsOpen && "rotate-90")} />}
+                </SidebarGroupLabel>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {[...visibleToolItems, ...visibleAnalyticsItems].map((item) => (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={collapsed ? item.title : undefined}
+                          className={cn("transition-all", isActive(item.url) ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50")}
+                        >
+                          <NavLink to={item.url}><item.icon className="h-4 w-4" /><span>{item.title}</span></NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </CollapsibleContent>
+            </Collapsible>
           </SidebarGroup>
         )}
 

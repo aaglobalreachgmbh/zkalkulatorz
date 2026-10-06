@@ -49,8 +49,11 @@ const Home = () => {
   } = useDashboardConfig();
   const { profile } = useWorkspaceProfile();
   const { enabled: demoEnabled } = useDemoMode();
-  const showQuickStart = (!!user || isTestModeActive()) && profile.homeLayout !== "classic";
-  const showWidgets = profile.homeLayout !== "focus" || !profile.userType;
+  const canUseWorkspace = !!user || isTestModeActive();
+  const showQuickStart = canUseWorkspace && profile.homeLayout !== "classic";
+  const showWidgets = profile.homeLayout === "classic" || !profile.userType;
+  const showToday = canUseWorkspace && profile.homeLayout === "cockpit" && demoEnabled;
+  const showDemoEntry = canUseWorkspace && profile.homeLayout !== "classic" && !demoEnabled;
 
   // DnD sensors
   const sensors = useSensors(
@@ -102,12 +105,11 @@ const Home = () => {
         )}
 
         {/* Main Content */}
-        <main className="flex-1 px-4 lg:px-6 py-6">
-          <div className="max-w-5xl mx-auto w-full">
-            {showQuickStart && <div className="mb-6"><RoleQuickStart /></div>}
-            {(!!user || isTestModeActive()) && (
-              <div className="mb-6">{demoEnabled ? <TodayOverview /> : <DemoModeToggleCard />}</div>
-            )}
+        <main className="flex-1 px-4 py-6 lg:px-6">
+          <div className="mx-auto w-full max-w-5xl space-y-6">
+            {showQuickStart && <RoleQuickStart />}
+            {showToday && <TodayOverview compact />}
+            {showDemoEntry && <DemoModeToggleCard />}
             {showWidgets && (<>
             {/* Edit Header */}
             <DashboardEditHeader
@@ -172,30 +174,6 @@ const Home = () => {
           </div>
         </main>
 
-        {/* System Status Footer */}
-        <footer className="border-t border-border py-5 shrink-0 bg-muted/30">
-          <div className="container mx-auto px-4 lg:px-6">
-            <div className="text-center">
-              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-4">
-                Aktueller Systemstatus
-              </p>
-              <div className="flex flex-wrap items-center justify-center gap-6 lg:gap-10 text-sm">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 bg-success rounded-full animate-pulse-dot" />
-                  <span className="text-muted-foreground">API Verbunden</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 bg-success rounded-full animate-pulse-dot" />
-                  <span className="text-muted-foreground">Katalog: v24.10.1</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 bg-success rounded-full animate-pulse-dot" />
-                  <span className="text-muted-foreground">AI Engine: Ready</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </footer>
       </div>
     </MainLayout>
   );

@@ -346,23 +346,26 @@ export function CompareStep({
         </div>
       </div>
 
-      {/* KI-Kundenerklärung */}
-      <div className="mt-6 flex flex-wrap justify-end gap-2">
-        <EnergyDialogRoot>
-          <EnergyDialogTrigger asChild>
-            <EnergyButton variant="outline" className="gap-2"><EnergyIcon className="h-4 w-4" /> Strom & Gas ergänzen (Demo)</EnergyButton>
-          </EnergyDialogTrigger>
-          <EnergyDialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
-            <EnergyDialogHeader><EnergyDialogTitle>Gesamtübersicht inkl. Energie</EnergyDialogTitle></EnergyDialogHeader>
-            <EnergyCalculator
-              telcoMonthlyNet={result1.totals?.avgTermNet ?? 0}
-              telcoOneTimeNet={(result1.oneTime ?? []).reduce((s, m) => s + (m?.net ?? 0), 0)}
-              termMonths={option1.meta?.termMonths ?? 24}
-            />
-          </EnergyDialogContent>
-        </EnergyDialogRoot>
-        <OfferExplainDialog config={option1} result={result1} />
-      </div>
+      {/* Sekundäre Werkzeuge bleiben gebündelt und verdrängen die Abschlussaktionen nicht. */}
+      <Card className="mt-6">
+        <CardHeader className="pb-2"><CardTitle className="text-sm">Angebot ergänzen</CardTitle></CardHeader>
+        <CardContent className="flex flex-wrap gap-2">
+          <OfferExplainDialog config={option1} result={result1} />
+          <EnergyDialogRoot>
+            <EnergyDialogTrigger asChild>
+              <EnergyButton variant="outline" className="gap-2"><EnergyIcon className="h-4 w-4" /> Strom & Gas (Demo)</EnergyButton>
+            </EnergyDialogTrigger>
+            <EnergyDialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+              <EnergyDialogHeader><EnergyDialogTitle>Gesamtübersicht inkl. Energie</EnergyDialogTitle></EnergyDialogHeader>
+              <EnergyCalculator
+                telcoMonthlyNet={result1.totals?.avgTermNet ?? 0}
+                telcoOneTimeNet={(result1.oneTime ?? []).reduce((s, m) => s + (m?.net ?? 0), 0)}
+                termMonths={option1.meta?.termMonths ?? 24}
+              />
+            </EnergyDialogContent>
+          </EnergyDialogRoot>
+        </CardContent>
+      </Card>
 
       {/* KI-Angebots-Check - prominente Integration */}
       <div className="mt-6">

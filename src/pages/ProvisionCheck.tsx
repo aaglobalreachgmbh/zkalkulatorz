@@ -11,8 +11,7 @@ const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", curren
 
 export default function ProvisionCheck() {
   const [loaded, setLoaded] = useState(false);
-  const visible = useSensitiveFieldsVisible();
-  const showSensitive = typeof visible === "boolean" ? visible : true;
+  const { showDealerEconomics: showSensitive } = useSensitiveFieldsVisible("dealer");
   const expected = DEMO_PROVISIONS.reduce((s, r) => s + r.expected, 0);
   const received = DEMO_PROVISIONS.reduce((s, r) => s + r.received, 0);
 

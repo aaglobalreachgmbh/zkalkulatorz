@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Minus, Plus } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { DemoPageShell } from "@/components/workspace/DemoPageShell";
 import { DEMO_ACCESSORIES } from "@/margenkalkulator/workspace/demoData";
 
@@ -50,7 +51,7 @@ export default function PosDemo() {
             <CardHeader><CardTitle className="text-base">Beleg</CardTitle></CardHeader>
             <CardContent className="space-y-2 text-sm">
               <label className="flex items-center gap-2">
-                <input type="checkbox" checked={withContract} onChange={(e) => setWithContract(e.target.checked)} />
+                <Checkbox checked={withContract} onCheckedChange={(v) => setWithContract(v === true)} />
                 Vertrag aus aktuellem Angebot anhängen
               </label>
               {lines.map((p) => (

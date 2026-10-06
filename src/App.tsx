@@ -32,6 +32,8 @@ const Index = lazy(() => import("./pages/Index"));
 const Bundles = lazy(() => import("./pages/Bundles"));
 const WorkspaceSettings = lazy(() => import("./pages/WorkspaceSettings"));
 const CrossSell = lazy(() => import("./pages/CrossSell"));
+const DemoBetrieb = lazy(() => import("./pages/DemoBetrieb"));
+const SecurityHub = lazy(() => import("./pages/SecurityHub"));
 const Campaigns = lazy(() => import("./pages/Campaigns"));
 const ProvisionCheck = lazy(() => import("./pages/ProvisionCheck"));
 const PosDemo = lazy(() => import("./pages/PosDemo"));
@@ -427,6 +429,8 @@ const App = () => {
                       <Route path="/bundles" element={<ProtectedRoute><Bundles /></ProtectedRoute>} />
                       <Route path="/settings/workspace" element={<ProtectedRoute><WorkspaceSettings /></ProtectedRoute>} />
                       <Route path="/cross-sell" element={<ProtectedRoute><CrossSell /></ProtectedRoute>} />
+                      <Route path="/demo-betrieb" element={<ProtectedRoute><DemoBetrieb /></ProtectedRoute>} />
+                      <Route path="/admin/sicherheit" element={<ProtectedRoute><SecurityHub /></ProtectedRoute>} />
                       <Route path="/campaigns" element={<ProtectedRoute><Campaigns /></ProtectedRoute>} />
                       <Route path="/provision-check" element={<ProtectedRoute><ProvisionCheck /></ProtectedRoute>} />
                       <Route path="/pos" element={<ProtectedRoute><PosDemo /></ProtectedRoute>} />

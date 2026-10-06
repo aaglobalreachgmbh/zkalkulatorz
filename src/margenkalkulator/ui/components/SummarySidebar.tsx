@@ -72,19 +72,19 @@ export function SummarySidebar({ onResetForNewTariff, className }: SummarySideba
       {/* Box 1: CUSTOMER TOTALS */}
       <div className="bg-white rounded-lg border border-gray-200 p-4">
         <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-4">
-          Customer Totals
+          Kundenpreis
         </h3>
 
         <div className="space-y-2.5">
-          <SidebarRow label="Avg. Monthly" value={avgMonthly} />
-          <SidebarRow label="One-Time Costs" value={oneTimeCosts} />
+          <SidebarRow label="Ø monatlich" value={avgMonthly} />
+          <SidebarRow label="Einmalkosten" value={oneTimeCosts} />
           <div className="border-t border-gray-100 pt-2.5 mt-2.5">
-            <SidebarRow label="24-Month Total" value={total24M} highlight />
+            <SidebarRow label="Gesamt 24 Monate" value={total24M} highlight />
           </div>
         </div>
 
         <p className="text-[10px] text-gray-400 mt-3 leading-tight">
-          *Includes all discounts and taxes
+          *inkl. aller Rabatte, netto
         </p>
       </div>
 
@@ -134,7 +134,7 @@ export function SummarySidebar({ onResetForNewTariff, className }: SummarySideba
             />
           )}
           <p className="text-[10px] text-gray-400 text-center pt-1">
-            Need help calculating margins?
+            Hilfe zur Margenberechnung?
           </p>
         </div>
       )}

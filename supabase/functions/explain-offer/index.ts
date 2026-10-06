@@ -9,7 +9,7 @@ import {
   createLovableAiGatewayRunIdFetch,
   getLovableAiGatewayRunId,
   getLovableAiGatewayResponseHeaders,
-} from "../_shared/run-id.ts";
+} from "./run-id.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

@@ -62,6 +62,8 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { ChevronDown } from "lucide-react";
+import { useWorkspaceProfile, applyPalette } from "@/hooks/useWorkspaceProfile";
+import { USER_TYPES, DEMO_TOOLS } from "@/margenkalkulator/workspace/profiles";
 
 // ============================================
 // NAVIGATION STRUCTURE - Klare deutsche Begriffe
@@ -152,6 +154,9 @@ export function AppSidebar() {
     }
   }, [isPOS, setOpen]);
 
+  const { profile: workspaceProfile } = useWorkspaceProfile();
+  useEffect(() => { applyPalette(workspaceProfile.paletteId); }, [workspaceProfile.paletteId]);
+
   const handleWorkplaceModeToggle = () => {
     toggleWorkplaceMode();
     if (!isPOS) {
@@ -179,6 +184,8 @@ export function AppSidebar() {
   const visibleDailyItems = filterByPermission(dailyItems);
   const visibleToolItems = filterByPermission(toolItems);
   const visibleAnalyticsItems = filterByPermission(analyticsItems);
+  const currentType = USER_TYPES.find((t) => t.id === workspaceProfile.userType);
+  const salesTools = (currentType?.tools ?? []).map((id) => DEMO_TOOLS[id]).filter(Boolean);
 
   return (
     <Sidebar collapsible="icon">
@@ -275,6 +282,37 @@ export function AppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
         )}
+
+        {/* Vertriebs-Werkzeuge je Nutzertyp */}
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-muted-foreground/70 uppercase text-[10px] tracking-wider">
+            {currentType ? currentType.label : "Arbeitsplatz"}
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {salesTools.map((tool) => (
+                <SidebarMenuItem key={tool.url}>
+                  <SidebarMenuButton asChild isActive={isActive(tool.url)} tooltip={collapsed ? tool.title : undefined}
+                    className={cn("transition-all", isActive(tool.url) ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50")}>
+                    <NavLink to={tool.url}>
+                      <Sparkles className="h-4 w-4" />
+                      <span>{tool.title}</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={isActive("/settings/workspace")} tooltip={collapsed ? "Arbeitsplatz anpassen" : undefined}
+                  className="text-muted-foreground/70 hover:text-foreground hover:bg-muted/50">
+                  <NavLink to="/settings/workspace">
+                    <Settings className="h-4 w-4" />
+                    <span>{currentType ? "Arbeitsplatz anpassen" : "Nutzertyp wählen"}</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
 
         {/* Werkzeuge */}
         {visibleToolItems.length > 0 && (

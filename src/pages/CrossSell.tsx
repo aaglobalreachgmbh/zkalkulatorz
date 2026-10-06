@@ -44,7 +44,7 @@ export default function CrossSell() {
       <div className="space-y-2 pt-4">
         <h2 className="text-lg font-semibold text-foreground">Strom & Gas – Gesamtübersicht für den Kunden</h2>
         <p className="text-sm text-muted-foreground">Energie als Zusatzgeschäft: Verbrauch eintragen, Ersparnis zeigen, alles in einer Rechnung.</p>
-        <EnergyCalculator telcoMonthlyNet={0} />
+        <EnergyCalculator />
       </div>
     </DemoPageShell>
   );

@@ -9,6 +9,8 @@ import { Calculator, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { PUBLISHER } from "@/margenkalkulator/publisherConfig";
 import { PublisherModal } from "@/components/PublisherModal";
+import { supabase } from "@/integrations/supabase/client";
+import { isTestModeAllowed, enableTestMode } from "@/lib/testMode";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -73,6 +75,24 @@ export default function Auth() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleMagicLink = async () => {
+    if (!email) {
+      toast.error("Bitte zuerst Ihre E-Mail eingeben");
+      return;
+    }
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: window.location.origin, shouldCreateUser: false },
+    });
+    if (error) toast.error(`Login-Link fehlgeschlagen: ${error.message}`);
+    else toast.success("Login-Link gesendet – bitte Postfach prüfen.");
+  };
+
+  const handleTestMode = () => {
+    enableTestMode();
+    navigate("/", { replace: true });
   };
 
   if (authLoading) {
@@ -194,6 +214,18 @@ export default function Auth() {
                 </button>
               </div>
             </form>
+            {isLogin && (
+              <div className="mt-4 space-y-2">
+                <Button type="button" variant="ghost" className="w-full" onClick={handleMagicLink}>
+                  Login-Link per E-Mail (ohne Passwort)
+                </Button>
+                {isTestModeAllowed() && (
+                  <Button type="button" variant="outline" className="w-full border-warning" onClick={handleTestMode}>
+                    Ohne Login testen (nur Vorschau)
+                  </Button>
+                )}
+              </div>
+            )}
 
             {/* Security Note */}
             <div className="pt-6 mt-6 border-t border-border/50">

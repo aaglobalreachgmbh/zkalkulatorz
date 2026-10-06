@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useApprovalStatus } from "@/hooks/useApprovalStatus";
 import { Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { isTestModeActive } from "@/lib/testMode";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -52,6 +53,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   // Redirect to auth if not logged in
   if (!user) {
+    if (isTestModeActive()) return <>{children}</>;
     return <Navigate to="/auth" replace />;
   }
 

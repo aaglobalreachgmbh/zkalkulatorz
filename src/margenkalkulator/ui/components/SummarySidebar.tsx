@@ -105,7 +105,7 @@ export function SummarySidebar({ onResetForNewTariff, className }: SummarySideba
 
           <div className="space-y-2.5">
             <SidebarRow label="Marge gesamt" value={margin} colorize />
-            <SidebarRow label="Total Provision" value={provision} />
+            <SidebarRow label="Provision gesamt" value={provision} />
           </div>
         </div>
       )}

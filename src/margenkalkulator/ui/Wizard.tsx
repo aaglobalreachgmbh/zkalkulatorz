@@ -30,6 +30,7 @@ import { useDatasetVersions } from "@/margenkalkulator/hooks/useDatasetVersions"
 import { useTenantDataStatus } from "@/margenkalkulator/hooks/useTenantDataStatus";
 import { useOfferBasket } from "@/margenkalkulator/contexts/OfferBasketContext";
 import { HardwareStep } from "./steps/HardwareStep";
+import { DeviceSuggestionsPanel } from "./components/DeviceSuggestionsPanel";
 import { MobileStep } from "./steps/MobileStep";
 import { FixedNetStep } from "./steps/FixedNetStep";
 import { ValidationWarning } from "./components/ValidationWarning";
@@ -519,7 +520,8 @@ function WizardContent() {
 
           {/* Mobile Step */}
           {activeSection === "mobile" && (
-            <div>
+            <div className="space-y-4">
+              <DeviceSuggestionsPanel state={activeState} onApply={setActiveState} viewMode={effectiveViewMode} />
               <MobileStep
                 value={activeState.mobile}
                 onChange={(mobile) => setActiveState({ ...activeState, mobile })}

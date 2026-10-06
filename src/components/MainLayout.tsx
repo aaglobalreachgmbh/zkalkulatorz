@@ -20,6 +20,7 @@ import { FollowupReminders } from "@/margenkalkulator/ui/components/FollowupRemi
 import { PUBLISHER } from "@/margenkalkulator/publisherConfig";
 import { cn } from "@/lib/utils";
 import { BrandLogo } from "@/components/BrandLogo";
+import { isTestModeActive, disableTestMode } from "@/lib/testMode";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -42,6 +43,14 @@ export function MainLayout({ children }: MainLayoutProps) {
         <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
           {/* VVL Notification Banner */}
           <VVLNotificationBanner />
+          {!user && isTestModeActive() && (
+            <div className="bg-warning/15 border-b border-warning text-foreground px-4 py-2 text-sm flex items-center justify-between gap-3">
+              <span className="font-medium">Testmodus – nicht angemeldet. Gespeicherte Daten sind nicht sichtbar.</span>
+              <Button size="sm" variant="outline" onClick={() => { disableTestMode(); window.location.href = "/auth"; }}>
+                Beenden
+              </Button>
+            </div>
+          )}
           
           {/* Header */}
           <header className={cn(

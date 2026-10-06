@@ -21,15 +21,15 @@ export function RoleQuickStart() {
           </div>
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
             {USER_TYPES.map((t) => (
-              <button
+              <Button
                 key={t.id}
                 type="button"
+                variant="outline"
                 onClick={() => update({ userType: t.id })}
-                className="text-left rounded-lg border border-border p-3 hover:border-primary hover:bg-primary/5 transition-colors"
+                className="h-auto justify-start p-3 text-left hover:border-primary hover:bg-primary/5"
               >
-                <t.icon className="h-5 w-5 text-primary mb-1" />
-                <div className="text-sm font-medium text-foreground">{t.label}</div>
-              </button>
+                <span><t.icon className="mb-1 h-5 w-5 text-primary" /><span className="block text-sm font-medium text-foreground">{t.label}</span></span>
+              </Button>
             ))}
           </div>
         </CardContent>

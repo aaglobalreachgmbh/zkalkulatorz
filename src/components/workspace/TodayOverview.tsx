@@ -23,7 +23,7 @@ export function TodayOverview({ compact = false }: { compact?: boolean }) {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-semibold text-foreground">Heute</h2>
-          <Badge variant="outline" className="border-warning text-warning">Demo-Firma – Beispieldaten</Badge>
+          <Badge variant="secondary">Demo-Firma – Beispieldaten</Badge>
         </div>
         <div className="flex gap-2">
           <Button size="sm" variant="outline" onClick={() => navigate("/demo-betrieb")}>Demo-Betrieb öffnen</Button>

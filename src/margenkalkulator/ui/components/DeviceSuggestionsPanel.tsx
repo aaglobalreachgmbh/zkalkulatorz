@@ -36,7 +36,7 @@ export function DeviceSuggestionsPanel({ state, onApply, viewMode = "dealer" }: 
       const tariffs = listMobileTariffs(version);
       const subs = listSubVariants(version).map((s) => s.id);
       const top = suggestTariffs(ekNet, tariffs, focus, 3, { showDealerReasons: showDealerEconomics });
-      const promos = suggestPromos(listPromos(version), top.map((t) => t.tariff.id), 3);
+      const promos = suggestPromos(listPromos(version), [state.mobile.tariffId, ...top.map((t) => t.tariff.id)].filter(Boolean), 3);
       const sub = suggestSubVariant(ekNet, subs);
       const known = new Set(tariffs.map((t) => t.id));
       const templates = loadTemplates().slice(0, 3);
@@ -112,9 +112,8 @@ export function DeviceSuggestionsPanel({ state, onApply, viewMode = "dealer" }: 
           <div className="space-y-2">
             <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Aktionen jetzt</h4>
             {data.promos.length === 0 && <p className="text-xs text-muted-foreground">Aktuell keine passende Aktion.</p>}
-            {data.promos.map((p) => (
-              <button key={p.id} type="button" onClick={() => applyTariff(state.mobile.tariffId || data.top[0]?.tariff.id || "", p.id)}
-                disabled={!state.mobile.tariffId && !data.top[0]}
+            {data.promos.map(({ promo: p, tariffId }) => (
+              <button key={p.id} type="button" onClick={() => applyTariff(tariffId, p.id)}
                 className="flex w-full items-center gap-2 rounded-lg border border-border p-3 text-left hover:border-primary hover:bg-primary/5">
                 <Tag className="h-4 w-4 text-primary shrink-0" />
                 <span className="text-sm">{p.label}</span>

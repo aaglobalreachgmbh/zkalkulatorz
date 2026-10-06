@@ -92,15 +92,24 @@ export function suggestTariffs(
   return scored.sort((a, b) => b.score - a.score || a.tariff.id.localeCompare(b.tariff.id)).slice(0, limit);
 }
 
-/** Aktionen, die für mindestens einen der Tarife gelten (ohne "NONE"). */
-export function suggestPromos(promos: Promo[], tariffIds: string[], limit = 3): Promo[] {
-  return (promos ?? [])
-    .filter((p) => p && p.id !== "NONE" && p.appliesTo !== "fixed")
-    .filter((p) => {
-      const ids = (p as Promo & { tariffIds?: string[] | "*" }).tariffIds;
-      return !ids || ids === "*" || (Array.isArray(ids) && ids.some((id) => tariffIds.includes(id)));
-    })
-    .slice(0, limit);
+/** Aktionen für die Tarife, gültig zum Stichtag. Liefert je Aktion den passenden Tarif. */
+export function suggestPromos(
+  promos: Promo[],
+  tariffIds: string[],
+  limit = 3,
+  todayISO: string = new Date().toISOString().slice(0, 10),
+): { promo: Promo; tariffId: string }[] {
+  const out: { promo: Promo; tariffId: string }[] = [];
+  for (const p of promos ?? []) {
+    if (!p || p.id === "NONE" || p.appliesTo === "fixed") continue;
+    if (p.validFromISO && p.validFromISO > todayISO) continue;
+    if (p.validUntilISO && p.validUntilISO < todayISO) continue;
+    const ids = p.appliesToTariffs;
+    const match = !ids || ids === "*" ? tariffIds[0] : tariffIds.find((id) => ids.includes(id));
+    if (match) out.push({ promo: p, tariffId: match });
+    if (out.length >= limit) break;
+  }
+  return out;
 }
 
 /** Sub-Variante passend zur Geräteklasse, nur wenn im Katalog vorhanden. */

@@ -5,11 +5,34 @@
 // ============================================
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { z } from "npm:zod@3.23.8";
-import {
-  createLovableAiGatewayRunIdFetch,
-  getLovableAiGatewayRunId,
-  getLovableAiGatewayResponseHeaders,
-} from "./run-id.ts";
+
+
+// --- Lovable AI Gateway run-ID helpers (inline) ---
+const RUN_ID_HEADER = "X-Lovable-AIG-Run-ID";
+function createLovableAiGatewayRunIdFetch(initialRunId?: string) {
+  let runId = initialRunId?.trim() || undefined;
+  return {
+    fetch: async (input: string, init?: RequestInit) => {
+      const headers = new Headers(init?.headers);
+      if (runId && !headers.has(RUN_ID_HEADER)) headers.set(RUN_ID_HEADER, runId);
+      const response = await fetch(input, { ...init, headers });
+      runId ??= response.headers.get(RUN_ID_HEADER)?.trim() || undefined;
+      return response;
+    },
+  };
+}
+function getLovableAiGatewayRunId(request: Request) {
+  return request.headers.get(RUN_ID_HEADER)?.trim() || undefined;
+}
+function getLovableAiGatewayResponseHeaders(providerHeaders: Headers, init: Record<string, string>) {
+  const headers = new Headers(init);
+  const exposed = new Set((headers.get("Access-Control-Expose-Headers") ?? "").split(",").map((h) => h.trim()).filter(Boolean));
+  providerHeaders.forEach((value, name) => {
+    if (name.toLowerCase().startsWith("x-lovable-aig-")) { headers.set(name, value); exposed.add(name); }
+  });
+  if (exposed.size) headers.set("Access-Control-Expose-Headers", Array.from(exposed).join(", "));
+  return headers;
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

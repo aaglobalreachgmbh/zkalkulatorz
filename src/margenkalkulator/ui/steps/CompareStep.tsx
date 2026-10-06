@@ -6,6 +6,7 @@ import { Eye, EyeOff, Printer, Link2Off, Smartphone, Signal, Wifi, Lock, LockKey
 import { DiscreteMarginIndicator } from "../components/DiscreteMarginIndicator";
 import { PdfDownloadButton } from "../components/PdfDownloadButton";
 import { AiOfferCheck } from "../components/AiOfferCheck";
+import { OfferExplainDialog } from "../components/OfferExplainDialog";
 import { CreateCalendarEventModal } from "../components/CreateCalendarEventModal";
 import { QuickSaveOfferButton } from "../components/QuickSaveOfferButton";
 import { PricePeriodBreakdown } from "../components/PricePeriodBreakdown";
@@ -339,6 +340,11 @@ export function CompareStep({
             </div>
           </DealerOnly>
         </div>
+      </div>
+
+      {/* KI-Kundenerklärung */}
+      <div className="mt-6 flex justify-end">
+        <OfferExplainDialog config={option1} result={result1} />
       </div>
 
       {/* KI-Angebots-Check - prominente Integration */}

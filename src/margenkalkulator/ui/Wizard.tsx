@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { usePOSMode } from "@/contexts/POSModeContext";
+import { useWorkplaceMode } from "@/contexts/WorkplaceModeContext";
 import {
   type OfferOptionState,
   type OfferOptionMeta,
@@ -123,7 +123,7 @@ function WizardContent() {
   const { session: customerSession, toggleSession } = useCustomerSession();
   const policy = useEffectivePolicy();
   const isMobile = useIsMobile();
-  const { isPOSMode } = usePOSMode();
+  const { isPOS: isPOSMode } = useWorkplaceMode();
 
   // === CALCULATOR CONTEXT ===
   const {

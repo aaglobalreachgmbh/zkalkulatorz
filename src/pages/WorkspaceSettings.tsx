@@ -91,7 +91,6 @@ export default function WorkspaceSettings() {
             <Button variant={demo.enabled ? "default" : "outline"} onClick={() => demo.setDemo(!demo.enabled)}>
               {demo.enabled ? "Beispieldaten ausblenden" : "Beispieldaten anzeigen"}
             </Button>
-            <Button variant="ghost" asChild><a href="/demo-betrieb">Demo-Betrieb öffnen</a></Button>
           </div>
         </CardContent>
       </Card>

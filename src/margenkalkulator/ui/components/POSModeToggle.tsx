@@ -2,7 +2,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Zap } from "lucide-react";
-import { usePOSMode } from "@/contexts/POSModeContext";
+import { useWorkplaceMode } from "@/contexts/WorkplaceModeContext";
 import { cn } from "@/lib/utils";
 
 interface POSModeToggleProps {
@@ -11,7 +11,7 @@ interface POSModeToggleProps {
 }
 
 export function POSModeToggle({ className, showLabel = true }: POSModeToggleProps) {
-  const { isPOSMode, togglePOSMode } = usePOSMode();
+  const { isPOS: isPOSMode, toggleWorkplaceMode } = useWorkplaceMode();
 
   return (
     <Tooltip>
@@ -20,7 +20,7 @@ export function POSModeToggle({ className, showLabel = true }: POSModeToggleProp
           <Switch
             id="pos-mode"
             checked={isPOSMode}
-            onCheckedChange={togglePOSMode}
+            onCheckedChange={toggleWorkplaceMode}
             className="data-[state=checked]:bg-amber-500"
           />
           {showLabel && (
@@ -47,7 +47,7 @@ export function POSModeToggle({ className, showLabel = true }: POSModeToggleProp
       </TooltipTrigger>
       <TooltipContent side="bottom">
         <div className="text-sm">
-          <p className="font-medium">POS-Modus (Point-of-Sale)</p>
+          <p className="font-medium">Arbeitsplatz: Shop / POS</p>
           <p className="text-muted-foreground text-xs mt-1">
             Vereinfachte Ansicht für schnellen Verkauf am Tresen
           </p>

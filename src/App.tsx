@@ -11,7 +11,7 @@ import { SecurityProvider } from "@/providers/SecurityProvider";
 import { OfflineBoundary } from "@/components/OfflineBoundary";
 import { IdentityProvider } from "@/contexts/IdentityContext";
 import { CustomerSessionProvider } from "@/contexts/CustomerSessionContext";
-import { POSModeProvider } from "@/contexts/POSModeContext";
+import { WorkplaceModeProvider } from "@/contexts/WorkplaceModeContext";
 import { SeatLimitGate } from "@/components/SeatLimitGate";
 import { AdminSetupGate } from "@/components/AdminSetupGate";
 import { FeatureRoute } from "@/components/FeatureRoute";
@@ -372,13 +372,13 @@ function SafeProviderStack({ children }: { children: ReactNode }) {
           <AuthProvider>
             <IdentityProvider>
               <CustomerSessionProvider>
-                <POSModeProvider>
+                <WorkplaceModeProvider>
                   <DensityProvider>
                     <OfferBasketProvider>
                       {children}
                     </OfferBasketProvider>
                   </DensityProvider>
-                </POSModeProvider>
+                </WorkplaceModeProvider>
               </CustomerSessionProvider>
             </IdentityProvider>
           </AuthProvider>

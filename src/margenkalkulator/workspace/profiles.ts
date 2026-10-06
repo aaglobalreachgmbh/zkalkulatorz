@@ -60,9 +60,9 @@ export const USER_TYPES: UserTypeProfile[] = [
     id: "direct", label: "Direct Sales Store", icon: Building,
     description: "Hohe Frequenz, Team-Ziele, Bundles.",
     quickActions: [
-      { label: "Bundles", description: "Standardpakete", url: "/bundles" },
-      { label: "Kasse", description: "Verkauf abschließen", url: "/pos" },
+      { label: "Neues Angebot", description: "Kalkulator starten", url: "/calculator" },
       { label: "Team", description: "Ziele und Ranking", url: "/team" },
+      { label: "Bundles", description: "Standardpakete", url: "/bundles" },
     ],
     tools: ["pos", "campaigns", "crossSell"],
   },
@@ -84,7 +84,7 @@ export const USER_TYPES: UserTypeProfile[] = [
       { label: "Neues Angebot", description: "Kalkulator starten", url: "/calculator" },
       { label: "Mein Tag", description: "Termine", url: "/field-day" },
     ],
-    tools: ["pos", "fieldDay", "crossSell", "campaigns", "provisionCheck"],
+    tools: ["crossSell", "fieldDay", "campaigns"],
   },
 ];
 
@@ -106,7 +106,7 @@ export const PALETTES: PalettePreset[] = [
 ];
 
 export const HOME_LAYOUTS: { id: HomeLayout; label: string; description: string }[] = [
-  { id: "focus", label: "Fokus", description: "Nur Schnellstart-Kacheln" },
-  { id: "cockpit", label: "Cockpit", description: "Schnellstart + Widgets" },
-  { id: "classic", label: "Klassisch", description: "Nur Widgets wie bisher" },
+  { id: "focus", label: "Fokus", description: "Schnellstart und nächste Aufgabe" },
+  { id: "cockpit", label: "Cockpit", description: "Schnellstart und kompakte Heute-Übersicht" },
+  { id: "classic", label: "Klassisch", description: "Konfigurierbare Widgets wie bisher" },
 ];

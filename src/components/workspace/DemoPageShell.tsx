@@ -20,7 +20,7 @@ export function DemoPageShell({ title, description, demo = true, children }: Dem
             <p className="text-sm text-muted-foreground mt-1">{description}</p>
           </div>
           {demo && (
-            <Badge variant="outline" className="border-warning text-warning">
+            <Badge variant="secondary" className="text-muted-foreground">
               Demo – Beispieldaten
             </Badge>
           )}

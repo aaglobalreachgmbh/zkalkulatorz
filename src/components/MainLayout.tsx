@@ -4,7 +4,7 @@ import { AppFooter } from "@/components/AppFooter";
 import { PublisherModal } from "@/components/PublisherModal";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenantBranding } from "@/hooks/useTenantBranding";
-import { usePOSMode } from "@/contexts/POSModeContext";
+import { useWorkplaceMode } from "@/contexts/WorkplaceModeContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { LogOut, User, Monitor } from "lucide-react";
@@ -29,7 +29,7 @@ interface MainLayoutProps {
 export function MainLayout({ children }: MainLayoutProps) {
   const { user, signOut } = useAuth();
   const { branding } = useTenantBranding();
-  const { isPOSMode } = usePOSMode();
+  const { isPOS: isPOSMode } = useWorkplaceMode();
 
   // Apply branding primary color as CSS variable
   const brandingStyle = branding.primaryColor 

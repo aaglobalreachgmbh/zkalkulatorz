@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DemoPageShell } from "@/components/workspace/DemoPageShell";
 import { DEMO_CUSTOMERS, type DemoCustomer } from "@/margenkalkulator/workspace/demoData";
+import { EnergyCalculator } from "@/components/workspace/EnergyCalculator";
 
 interface Chance { label: string; tone: "default" | "secondary" | "outline" }
 
@@ -38,6 +39,12 @@ export default function CrossSell() {
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      <div className="space-y-2 pt-4">
+        <h2 className="text-lg font-semibold text-foreground">Strom & Gas – Gesamtübersicht für den Kunden</h2>
+        <p className="text-sm text-muted-foreground">Energie als Zusatzgeschäft: Verbrauch eintragen, Ersparnis zeigen, alles in einer Rechnung.</p>
+        <EnergyCalculator />
       </div>
     </DemoPageShell>
   );

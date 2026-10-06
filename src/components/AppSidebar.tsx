@@ -95,6 +95,7 @@ const analyticsItems = [
 const accountItems = [
   { title: "Meine Daten", url: "/daten", icon: UserIcon },
   { title: "Sicherheit", url: "/settings/security", icon: Shield },
+  { title: "Demo-Betrieb", url: "/demo-betrieb", icon: Sparkles },
   { title: "Lizenz", url: "/license", icon: Key },
 ];
 

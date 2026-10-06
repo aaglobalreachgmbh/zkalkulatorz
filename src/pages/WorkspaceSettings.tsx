@@ -3,12 +3,14 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { DemoPageShell } from "@/components/workspace/DemoPageShell";
 import { useWorkspaceProfile } from "@/hooks/useWorkspaceProfile";
+import { useDemoMode } from "@/hooks/useDemoMode";
 import { useDensity } from "@/contexts/DensityContext";
 import { USER_TYPES, PALETTES, HOME_LAYOUTS } from "@/margenkalkulator/workspace/profiles";
 
 export default function WorkspaceSettings() {
   const { profile, update } = useWorkspaceProfile();
   const { density, setDensity } = useDensity();
+  const demo = useDemoMode();
 
   return (
     <DemoPageShell title="Mein Arbeitsplatz" description="Nutzertyp, Farben und Startseite nach Ihrem Bedarf einstellen." demo={false}>
@@ -81,6 +83,18 @@ export default function WorkspaceSettings() {
           </CardContent>
         </Card>
       </div>
+      <Card>
+        <CardHeader><CardTitle className="text-base">Beispieldaten (Demo-Firma)</CardTitle></CardHeader>
+        <CardContent className="flex flex-wrap items-center justify-between gap-3 text-sm">
+          <span className="text-muted-foreground">Zeigt eine erfundene Firma mit Kunden, Angeboten, Verträgen und Terminen – nur in Ihrem Browser.</span>
+          <div className="flex gap-2">
+            <Button variant={demo.enabled ? "default" : "outline"} onClick={() => demo.setDemo(!demo.enabled)}>
+              {demo.enabled ? "Beispieldaten ausblenden" : "Beispieldaten anzeigen"}
+            </Button>
+            <Button variant="ghost" asChild><a href="/demo-betrieb">Demo-Betrieb öffnen</a></Button>
+          </div>
+        </CardContent>
+      </Card>
     </DemoPageShell>
   );
 }

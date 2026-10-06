@@ -6,6 +6,11 @@ import { Eye, EyeOff, Printer, Link2Off, Smartphone, Signal, Wifi, Lock, LockKey
 import { DiscreteMarginIndicator } from "../components/DiscreteMarginIndicator";
 import { PdfDownloadButton } from "../components/PdfDownloadButton";
 import { AiOfferCheck } from "../components/AiOfferCheck";
+import { OfferExplainDialog } from "../components/OfferExplainDialog";
+import { EnergyCalculator } from "@/components/workspace/EnergyCalculator";
+import { Dialog as EnergyDialogRoot, DialogContent as EnergyDialogContent, DialogHeader as EnergyDialogHeader, DialogTitle as EnergyDialogTitle, DialogTrigger as EnergyDialogTrigger } from "@/components/ui/dialog";
+import { Zap as EnergyIcon } from "lucide-react";
+import { Button as EnergyButton } from "@/components/ui/button";
 import { CreateCalendarEventModal } from "../components/CreateCalendarEventModal";
 import { QuickSaveOfferButton } from "../components/QuickSaveOfferButton";
 import { PricePeriodBreakdown } from "../components/PricePeriodBreakdown";
@@ -339,6 +344,24 @@ export function CompareStep({
             </div>
           </DealerOnly>
         </div>
+      </div>
+
+      {/* KI-Kundenerklärung */}
+      <div className="mt-6 flex flex-wrap justify-end gap-2">
+        <EnergyDialogRoot>
+          <EnergyDialogTrigger asChild>
+            <EnergyButton variant="outline" className="gap-2"><EnergyIcon className="h-4 w-4" /> Strom & Gas ergänzen (Demo)</EnergyButton>
+          </EnergyDialogTrigger>
+          <EnergyDialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+            <EnergyDialogHeader><EnergyDialogTitle>Gesamtübersicht inkl. Energie</EnergyDialogTitle></EnergyDialogHeader>
+            <EnergyCalculator
+              telcoMonthlyNet={result1.totals?.avgTermNet ?? 0}
+              telcoOneTimeNet={(result1.oneTime ?? []).reduce((s, m) => s + (m?.net ?? 0), 0)}
+              termMonths={option1.meta?.termMonths ?? 24}
+            />
+          </EnergyDialogContent>
+        </EnergyDialogRoot>
+        <OfferExplainDialog config={option1} result={result1} />
       </div>
 
       {/* KI-Angebots-Check - prominente Integration */}

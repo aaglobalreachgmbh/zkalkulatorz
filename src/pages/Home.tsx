@@ -31,6 +31,8 @@ import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { isTestModeActive } from "@/lib/testMode";
 import { RoleQuickStart } from "@/components/workspace/RoleQuickStart";
 import { useWorkspaceProfile } from "@/hooks/useWorkspaceProfile";
+import { useDemoMode } from "@/hooks/useDemoMode";
+import { TodayOverview, DemoModeToggleCard } from "@/components/workspace/TodayOverview";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -46,6 +48,7 @@ const Home = () => {
     moveWidget,
   } = useDashboardConfig();
   const { profile } = useWorkspaceProfile();
+  const { enabled: demoEnabled } = useDemoMode();
   const showQuickStart = (!!user || isTestModeActive()) && profile.homeLayout !== "classic";
   const showWidgets = profile.homeLayout !== "focus" || !profile.userType;
 
@@ -102,6 +105,9 @@ const Home = () => {
         <main className="flex-1 px-4 lg:px-6 py-6">
           <div className="max-w-5xl mx-auto w-full">
             {showQuickStart && <div className="mb-6"><RoleQuickStart /></div>}
+            {(!!user || isTestModeActive()) && (
+              <div className="mb-6">{demoEnabled ? <TodayOverview /> : <DemoModeToggleCard />}</div>
+            )}
             {showWidgets && (<>
             {/* Edit Header */}
             <DashboardEditHeader

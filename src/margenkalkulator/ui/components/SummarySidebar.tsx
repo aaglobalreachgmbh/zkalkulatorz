@@ -1,6 +1,6 @@
 // ============================================
 // SummarySidebar - Screenshot-based Rebuild
-// Two boxes: Customer Totals + Dealer Margins
+// Two boxes: Customer Totals + Händlermarge
 // ============================================
 
 import { Plus, Check, ShoppingBag, FileText, Lock } from "lucide-react";
@@ -84,7 +84,7 @@ export function SummarySidebar({ onResetForNewTariff, className }: SummarySideba
         </div>
 
         <p className="text-[10px] text-gray-400 mt-3 leading-tight">
-          *inkl. aller Rabatte, netto
+          *inkl. aller Rabatte
         </p>
       </div>
 
@@ -95,7 +95,7 @@ export function SummarySidebar({ onResetForNewTariff, className }: SummarySideba
             <div className="flex items-center gap-1.5">
               <Lock className="w-3 h-3 text-gray-400" />
               <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
-                Dealer Margins
+                Händlermarge
               </h3>
             </div>
             <span className="text-[9px] font-bold uppercase tracking-wider bg-red-100 text-red-600 px-2 py-0.5 rounded">
@@ -104,7 +104,7 @@ export function SummarySidebar({ onResetForNewTariff, className }: SummarySideba
           </div>
 
           <div className="space-y-2.5">
-            <SidebarRow label="Total Margin" value={margin} colorize />
+            <SidebarRow label="Marge gesamt" value={margin} colorize />
             <SidebarRow label="Total Provision" value={provision} />
           </div>
         </div>

@@ -165,9 +165,14 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: 'Manrope Variable', system-ui, -apple-system, sans-serif;
     /* Financial Standard: Tabular Nums & Stylistic Sets */
     font-feature-settings: "cv11", "ss01";
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Sora Variable', 'Manrope Variable', system-ui, sans-serif;
+    letter-spacing: 0;
   }
   
   /* Tenant Branding: CSS variable for dynamic primary color */

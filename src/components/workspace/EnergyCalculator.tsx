@@ -88,7 +88,7 @@ export function EnergyCalculator({ telcoMonthlyNet, telcoOneTimeNet = 0, termMon
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center justify-between">
             Gesamtübersicht für den Kunden
-            <Badge variant="outline" className="border-warning text-warning">Demo-Tarife</Badge>
+            <Badge variant="secondary" className="text-muted-foreground">Demo-Tarife</Badge>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">

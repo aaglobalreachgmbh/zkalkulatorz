@@ -19,7 +19,7 @@ import {
 } from "../../../lib/hardwareGrouping";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
 import { useHardwareImages } from "../../../hooks/useHardwareImages";
-import { usePOSMode } from "@/contexts/POSModeContext";
+import { useWorkplaceMode } from "@/contexts/WorkplaceModeContext";
 import { HardwareProductCard, BrandGroupHeader } from "./HardwareProductCard";
 
 // ─── Types ───────────────────────────────────────────────
@@ -46,7 +46,7 @@ export function HardwareStep({
   const visibility = useSensitiveFieldsVisible(viewMode);
   const showHardwareEk = visibility.showHardwareEk;
   const showDealerOptions = visibility.showDealerEconomics;
-  const { isPOSMode } = usePOSMode();
+  const { isPOS: isPOSMode } = useWorkplaceMode();
 
   // ─── Phase State ─────────────────────────────────────────
   const [configPhase, setConfigPhase] = useState<ConfigPhase>("select");

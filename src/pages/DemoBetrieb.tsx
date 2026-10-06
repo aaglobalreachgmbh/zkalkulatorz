@@ -82,7 +82,7 @@ export default function DemoBetrieb() {
           <TabsTrigger value="auswertung">Auswertung</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="heute"><TodayOverview /></TabsContent>
+        <TabsContent value="heute"><TodayOverview compact /></TabsContent>
 
         <TabsContent value="kunden">
           <Table head={["Kunde", "Branche", "Ort", "Karten", "Festnetz", "Energie", "Ø Monat"]} rows={DEMO_COMPANY_CUSTOMERS.map((c) => [

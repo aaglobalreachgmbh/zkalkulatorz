@@ -12,7 +12,7 @@ import {
   DEMO_COMPANY_EVENTS, DEMO_DUE_VVL, DEMO_COMPANY_OFFERS, DEMO_CROSS_CHANCES, DEMO_MONTH_GOALS,
 } from "@/margenkalkulator/workspace/demoDataset";
 
-export function TodayOverview() {
+export function TodayOverview({ compact = false }: { compact?: boolean }) {
   const navigate = useNavigate();
   const { tourSeen, markTourSeen, setDemo } = useDemoMode();
   const todays = DEMO_COMPANY_EVENTS.slice(0, 4);
@@ -31,7 +31,7 @@ export function TodayOverview() {
         </div>
       </div>
 
-      {!tourSeen && (
+      {!compact && !tourSeen && (
         <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 text-sm flex gap-3">
           <Sparkles className="h-5 w-5 text-primary shrink-0" />
           <div className="flex-1 space-y-1">
@@ -47,7 +47,7 @@ export function TodayOverview() {
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className={compact ? "grid gap-3 lg:grid-cols-4" : "grid gap-4 md:grid-cols-2"}>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><CalendarDays className="h-4 w-4 text-primary" /> Termine</CardTitle></CardHeader>
           <CardContent className="space-y-2 text-sm">
@@ -94,7 +94,7 @@ export function TodayOverview() {
         </Card>
       </div>
 
-      <Card>
+      {!compact && <Card>
         <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><Target className="h-4 w-4 text-primary" /> Monatsziel</CardTitle></CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {DEMO_MONTH_GOALS.map((g) => (
@@ -104,7 +104,7 @@ export function TodayOverview() {
             </div>
           ))}
         </CardContent>
-      </Card>
+      </Card>}
     </div>
   );
 }
@@ -113,7 +113,7 @@ export function DemoModeToggleCard() {
   const { enabled, setDemo } = useDemoMode();
   if (enabled) return null;
   return (
-    <div className="rounded-lg border border-dashed border-border p-4 flex flex-wrap items-center justify-between gap-3 text-sm">
+    <div className="rounded-lg border border-border bg-muted/30 p-3 flex flex-wrap items-center justify-between gap-3 text-sm">
       <div>
         <div className="font-medium text-foreground">Wie sieht die App im laufenden Betrieb aus?</div>
         <div className="text-muted-foreground">Blendet eine erfundene Demo-Firma mit Kunden, Angeboten, Verträgen und Terminen ein – nur in Ihrem Browser.</div>

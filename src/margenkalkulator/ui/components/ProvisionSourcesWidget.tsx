@@ -9,13 +9,13 @@ import { useCloudOffers } from "../../hooks/useCloudOffers";
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
-import { usePOSMode } from "@/contexts/POSModeContext";
+import { useWorkplaceMode } from "@/contexts/WorkplaceModeContext";
 
 const COLORS = ["hsl(221, 83%, 53%)", "hsl(142, 76%, 36%)", "hsl(280, 65%, 60%)"];
 
 export function ProvisionSourcesWidget() {
   const navigate = useNavigate();
-  const { isPOSMode } = usePOSMode();
+  const { isPOS: isPOSMode } = useWorkplaceMode();
   // All hooks must be called unconditionally before any early returns
   const { offers, isLoading } = useCloudOffers();
 

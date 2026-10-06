@@ -47,7 +47,7 @@ import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { toast } from "sonner";
 import { exportToCSV, CUSTOMER_COLUMNS } from "@/lib/csvExport";
-import { usePOSMode } from "@/contexts/POSModeContext";
+import { useWorkplaceMode } from "@/contexts/WorkplaceModeContext";
 import { getCustomerStatus } from "@/lib/statusBadges";
 import { cn } from "@/lib/utils";
 
@@ -79,7 +79,7 @@ export default function Customers() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { customers, isLoading, createCustomer, updateCustomer, deleteCustomer } = useCustomers();
-  const { isPOSMode } = usePOSMode();
+  const { isPOS: isPOSMode } = useWorkplaceMode();
   const { canManageCustomers, hasFullAccess, isLoading: permissionsLoading } = usePermissions();
 
   // All hooks must be called unconditionally before any early returns

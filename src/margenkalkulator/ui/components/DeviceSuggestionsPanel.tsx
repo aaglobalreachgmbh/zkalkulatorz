@@ -35,7 +35,7 @@ export function DeviceSuggestionsPanel({ state, onApply, viewMode = "dealer" }: 
     try {
       const tariffs = listMobileTariffs(version);
       const subs = listSubVariants(version).map((s) => s.id);
-      const top = suggestTariffs(ekNet, tariffs, focus, 3);
+      const top = suggestTariffs(ekNet, tariffs, focus, 3, { showDealerReasons: showDealerEconomics });
       const promos = suggestPromos(listPromos(version), top.map((t) => t.tariff.id), 3);
       const sub = suggestSubVariant(ekNet, subs);
       const known = new Set(tariffs.map((t) => t.id));
@@ -46,7 +46,7 @@ export function DeviceSuggestionsPanel({ state, onApply, viewMode = "dealer" }: 
       console.warn("[DeviceSuggestionsPanel] failed", err);
       return { top: [], promos: [], sub: "SIM_ONLY", templates: [], bundles: [] };
     }
-  }, [version, ekNet, focus]);
+  }, [version, ekNet, focus, showDealerEconomics]);
 
   const applyTariff = (tariffId: string, promoId?: string) => {
     onApply({ ...state, mobile: { ...state.mobile, tariffId, subVariantId: data.sub, promoId: promoId ?? state.mobile.promoId ?? "NONE" } });

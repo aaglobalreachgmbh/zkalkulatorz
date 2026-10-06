@@ -50,12 +50,19 @@ export function suggestTariffs(
   tariffs: MobileTariff[],
   focus: FocusProfile = DEFAULT_FOCUS,
   limit = 3,
+  opts: { showDealerReasons?: boolean } = {},
 ): TariffSuggestion[] {
+  const showDealer = opts.showDealerReasons ?? false;
   const cls = deviceClassFromEk(ekNet);
   const wantTier = cls === "premium" ? 4 : cls === "mittel" ? 3 : 2;
-  const pool = (tariffs ?? []).filter(
+  const valid = (tariffs ?? []).filter(
     (t) => t && t.productLine !== "TEAMDEAL" && (t.minTermMonths ?? 24) >= 12,
   );
+  // Business-Kalkulator: Privatkunden-Linien nur, wenn sonst nichts da ist oder Hausfavorit
+  const business = valid.filter(
+    (t) => !["GIGAMOBIL", "CONSUMER_SMART"].includes(t.productLine ?? "") || focus.preferredTariffIds.includes(t.id),
+  );
+  const pool = business.length ? business : valid;
   const scored = pool.map((t) => {
     const reasons: string[] = [];
     let score = 0;
@@ -68,7 +75,7 @@ export function suggestTariffs(
     }
     if (focus.goals.includes("marge")) {
       score += Math.min(6, (t.provisionBase ?? 0) / 100);
-      if ((t.provisionBase ?? 0) >= 300) reasons.push("starke Provision");
+      if (showDealer && (t.provisionBase ?? 0) >= 300) reasons.push("starke Provision");
     }
     if (focus.goals.includes("premium") && t.dataVolumeGB === "unlimited") {
       score += 4;

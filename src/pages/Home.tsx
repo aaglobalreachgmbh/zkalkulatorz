@@ -51,7 +51,7 @@ const Home = () => {
   const { enabled: demoEnabled } = useDemoMode();
   const canUseWorkspace = !!user || isTestModeActive();
   const showQuickStart = canUseWorkspace && profile.homeLayout !== "classic";
-  const showWidgets = profile.homeLayout === "classic" || !profile.userType;
+  const showWidgets = profile.homeLayout === "classic";
   const showToday = canUseWorkspace && profile.homeLayout === "cockpit" && demoEnabled;
   const showDemoEntry = canUseWorkspace && profile.homeLayout !== "classic" && !demoEnabled;
 
@@ -86,7 +86,7 @@ const Home = () => {
     <MainLayout>
       <div className="bg-background min-h-full flex flex-col">
         {/* Login Banner for unauthenticated users */}
-        {!authLoading && !user && (
+        {!authLoading && !user && !isTestModeActive() && (
           <div className="bg-primary/10 border-b border-primary/20 py-3 px-4">
             <div className="container mx-auto flex items-center justify-between">
               <p className="text-sm text-foreground">
@@ -163,7 +163,7 @@ const Home = () => {
             </>)}
 
             {/* Empty State for Guests */}
-            {!user && visibleWidgets.filter(w => {
+            {!canUseWorkspace && visibleWidgets.filter(w => {
               const def = DASHBOARD_WIDGETS[w.id];
               return def && !def.requiresAuth;
             }).length === 0 && (

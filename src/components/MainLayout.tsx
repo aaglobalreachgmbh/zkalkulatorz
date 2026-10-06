@@ -44,7 +44,7 @@ export function MainLayout({ children }: MainLayoutProps) {
           {/* VVL Notification Banner */}
           <VVLNotificationBanner />
           {!user && isTestModeActive() && (
-            <div className="bg-warning text-warning-foreground px-4 py-2 text-sm flex items-center justify-between gap-3">
+            <div className="bg-warning/15 border-b border-warning text-foreground px-4 py-2 text-sm flex items-center justify-between gap-3">
               <span className="font-medium">Testmodus – nicht angemeldet. Gespeicherte Daten sind nicht sichtbar.</span>
               <Button size="sm" variant="outline" onClick={() => { disableTestMode(); window.location.href = "/auth"; }}>
                 Beenden

@@ -128,7 +128,7 @@ export default function Auth() {
           </CardHeader>
           
           <CardContent className="px-8 pb-8">
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} method="post" action="#" autoComplete="on" className="space-y-5">
               {/* Display Name - nur bei Registrierung */}
               {!isLogin && (
                 <div className="space-y-2">
@@ -154,12 +154,13 @@ export default function Auth() {
                 </Label>
                 <Input
                   id="email"
+                  name="email"
                   type="email"
                   placeholder="ihre@email.de"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isSubmitting}
-                  autoComplete="email"
+                  autoComplete="username"
                   className="h-11"
                 />
               </div>
@@ -171,6 +172,7 @@ export default function Auth() {
                 </Label>
                 <Input
                   id="password"
+                  name="password"
                   type="password"
                   placeholder="••••••••"
                   value={password}

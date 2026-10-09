@@ -292,8 +292,8 @@ export function FixedNetStep({
 
           {/* Address grid */}
           <div className="p-5 space-y-4">
-            <div className="grid grid-cols-3 gap-3">
-              <div className="col-span-2">
+            <div className="grid grid-cols-[minmax(0,1fr)_5.5rem] gap-3">
+              <div>
                 <label className="block text-xs text-muted-foreground mb-1 font-medium">
                   Straße
                 </label>
@@ -322,7 +322,7 @@ export function FixedNetStep({
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 min-[390px]:grid-cols-[7.5rem_minmax(0,1fr)]">
               <div>
                 <label className="block text-xs text-muted-foreground mb-1 font-medium">
                   Postleitzahl
@@ -357,7 +357,7 @@ export function FixedNetStep({
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-1">
+            <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center sm:justify-between">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
@@ -373,7 +373,7 @@ export function FixedNetStep({
               <Button
                 onClick={handleCheckAvailability}
                 disabled={isChecking}
-                className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
+                className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground sm:w-auto"
                 size="sm"
               >
                 {isChecking ? (
@@ -393,27 +393,9 @@ export function FixedNetStep({
         </div>
 
         {/* Steps 2 & 3 — Locked */}
-        {[
-          { num: 2, label: "Technologie Auswahl" },
-          { num: 3, label: "Tarifdetails" },
-        ].map((step) => (
-          <div
-            key={step.num}
-            className="bg-card rounded-xl border border-border overflow-hidden opacity-50"
-          >
-            <div className="flex items-center justify-between px-5 py-3">
-              <div className="flex items-center gap-3">
-                <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground">
-                  {step.num}
-                </div>
-                <span className="font-medium text-sm text-muted-foreground">
-                  {step.label}
-                </span>
-              </div>
-              <Lock className="w-4 h-4 text-muted-foreground" />
-            </div>
-          </div>
-        ))}
+        <div className="rounded-lg border border-border bg-muted/30 px-4 py-3 text-xs text-muted-foreground">
+          Nach der Prüfung folgen Technologie und Tarifauswahl.
+        </div>
       </div>
     );
   }
@@ -478,7 +460,7 @@ export function FixedNetStep({
           </span>
         </div>
 
-        <div className="p-4 grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 gap-2 p-3 min-[390px]:grid-cols-2 sm:grid-cols-3 sm:gap-3 sm:p-4">
           {ACCESS_TYPE_CONFIG.map((tech) => {
             const Icon = tech.icon;
             const isSelected = selectedAccessType === tech.id;
@@ -492,7 +474,7 @@ export function FixedNetStep({
                 }
                 disabled={!tech.available}
                 className={cn(
-                  "relative flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all duration-200 gap-2 min-h-[100px]",
+                  "relative flex min-h-20 flex-row items-center justify-start gap-3 rounded-lg border-2 p-3 text-left transition-all duration-200 sm:min-h-[100px] sm:flex-col sm:justify-center sm:gap-2 sm:rounded-xl sm:p-4 sm:text-center",
                   !tech.available && "opacity-40 cursor-not-allowed",
                   tech.available &&
                     "hover:shadow-md hover:border-primary/50 hover:bg-muted/30",
@@ -516,7 +498,7 @@ export function FixedNetStep({
                 >
                   <Icon className="w-4 h-4" />
                 </div>
-                <div className="text-center">
+                <div className="text-left sm:text-center">
                   <p
                     className={cn(
                       "font-semibold text-sm",
@@ -532,12 +514,12 @@ export function FixedNetStep({
                   </p>
                 </div>
                 {tech.available && (
-                  <span className="text-xs text-emerald-600 dark:text-emerald-400">
+                  <span className="ml-auto text-xs text-emerald-600 dark:text-emerald-400 sm:ml-0">
                     Verfügbar
                   </span>
                 )}
                 {!tech.available && (
-                  <span className="text-xs text-muted-foreground">
+                  <span className="ml-auto text-xs text-muted-foreground sm:ml-0">
                     Ausbau nicht geplant
                   </span>
                 )}

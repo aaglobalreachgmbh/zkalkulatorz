@@ -117,7 +117,7 @@ const superAdminItems = [
 ];
 
 export function AppSidebar() {
-  const { state, setOpenMobile, isMobile } = useSidebar();
+  const { state, setOpen, setOpenMobile, isMobile } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
   const { isAdmin } = useUserRole();

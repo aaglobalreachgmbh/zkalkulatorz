@@ -104,13 +104,13 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4">
+    <div className="min-h-svh flex items-start justify-center bg-gradient-to-br from-background via-background to-muted/20 p-3 sm:items-center sm:p-4">
       <div className="w-full max-w-md flex flex-col items-center">
-        <Card className="w-full rounded-2xl shadow-lg border-border/50 animate-fade-in">
-          <CardHeader className="text-center space-y-6 pb-2 pt-8">
+        <Card className="w-full rounded-lg shadow-lg border-border/50 animate-fade-in sm:rounded-2xl">
+          <CardHeader className="space-y-3 pb-2 pt-5 text-center sm:space-y-6 sm:pt-8">
             {/* Logo */}
-            <div className="mx-auto w-20 h-20 rounded-2xl bg-primary flex items-center justify-center shadow-lg">
-              <Calculator className="w-10 h-10 text-primary-foreground" />
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-primary shadow-lg sm:h-20 sm:w-20 sm:rounded-2xl">
+              <Calculator className="h-6 w-6 text-primary-foreground sm:h-10 sm:w-10" />
             </div>
             
             {/* Title & Subtitle */}
@@ -118,7 +118,7 @@ export default function Auth() {
               <CardTitle className="text-2xl font-bold tracking-tight">
                 MargenKalkulator
               </CardTitle>
-              <p className="text-sm font-medium text-primary">
+              <p className="hidden text-sm font-medium text-primary sm:block">
                 Vodafone Business Partner
               </p>
               <CardDescription className="text-muted-foreground pt-2">
@@ -127,8 +127,8 @@ export default function Auth() {
             </div>
           </CardHeader>
           
-          <CardContent className="px-8 pb-8">
-            <form onSubmit={handleSubmit} method="post" action="#" autoComplete="on" className="space-y-5">
+          <CardContent className="px-4 pb-5 sm:px-8 sm:pb-8">
+            <form onSubmit={handleSubmit} method="post" action="#" autoComplete="on" className="space-y-4 sm:space-y-5">
               {/* Display Name - nur bei Registrierung */}
               {!isLogin && (
                 <div className="space-y-2">
@@ -230,7 +230,7 @@ export default function Auth() {
             )}
 
             {/* Security Note */}
-            <div className="pt-6 mt-6 border-t border-border/50">
+            <div className="hidden pt-6 mt-6 border-t border-border/50 sm:block">
               <p className="text-xs text-center text-muted-foreground">
                 🔒 Sichere Authentifizierung
               </p>
@@ -239,7 +239,7 @@ export default function Auth() {
         </Card>
 
         {/* Publisher Info */}
-        <div className="mt-8 text-center">
+        <div className="mt-4 hidden text-center sm:block">
           <PublisherModal
             trigger={
               <button className="text-xs text-muted-foreground/70 hover:text-primary transition-colors duration-200">

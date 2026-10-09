@@ -15,6 +15,7 @@ import { listMobileTariffs, listPromos, listSubVariants } from "../../engine/cat
 import { suggestTariffs, suggestPromos, suggestSubVariant, FOCUS_LABELS } from "../../workspace/suggestions";
 import { useBusinessFocus } from "../../workspace/useBusinessFocus";
 import { DEMO_BUNDLES, loadTemplates, saveTemplate } from "../../storage/bundles";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Props {
   state: OfferOptionState;
@@ -25,7 +26,9 @@ interface Props {
 const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
 
 export function DeviceSuggestionsPanel({ state, onApply, viewMode = "dealer" }: Props) {
-  const [open, setOpen] = useState(true);
+  const isMobile = useIsMobile();
+  const [openOverride, setOpenOverride] = useState<boolean | null>(null);
+  const open = openOverride ?? !isMobile;
   const { showDealerEconomics } = useSensitiveFieldsVisible(viewMode);
   const { focus } = useBusinessFocus();
   const version = state.meta.datasetVersion;
@@ -78,17 +81,17 @@ export function DeviceSuggestionsPanel({ state, onApply, viewMode = "dealer" }: 
 
   return (
     <section className="rounded-xl border border-border bg-card shadow-sm">
-      <button type="button" onClick={() => setOpen((o) => !o)} className="flex w-full items-center gap-2 px-4 py-3 text-left">
+      <button type="button" onClick={() => setOpenOverride(!open)} className="flex w-full items-center gap-2 px-3 py-3 text-left sm:px-4">
         <Sparkles className="h-4 w-4 text-primary" />
         <span className="font-semibold text-sm">Vorschläge zu {state.hardware.name}</span>
         <span className="hidden sm:inline text-xs text-muted-foreground">
           · Fokus: {focus.goals.map((g) => FOCUS_LABELS[g]).join(", ") || "neutral"}
         </span>
-        <span className="ml-auto text-xs text-muted-foreground">{open ? "Einklappen" : "Anzeigen"}</span>
+        <span className="ml-auto hidden text-xs text-muted-foreground min-[390px]:inline">{open ? "Einklappen" : "Anzeigen"}</span>
         {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
       </button>
       {open && (
-        <div className="grid gap-4 border-t border-border p-4 md:grid-cols-3">
+        <div className="grid gap-4 border-t border-border p-3 sm:p-4 md:grid-cols-3">
           <div className="space-y-2">
             <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Passt oft dazu</h4>
             {data.top.length === 0 && <p className="text-xs text-muted-foreground">Keine Tarife im Datenstand.</p>}

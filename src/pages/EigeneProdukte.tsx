@@ -184,13 +184,13 @@ export default function EigeneProdukte() {
         </CardHeader>
         <CardContent className="space-y-2">
           {shown.map((p) => (
-            <div key={p.id} className="grid items-center gap-2 rounded-lg border border-border p-2.5 sm:grid-cols-[1fr_140px_110px_110px_100px_36px]">
+            <div key={p.id} className="grid grid-cols-2 items-center gap-2 rounded-lg border border-border p-3 sm:grid-cols-[1fr_140px_110px_110px_100px_36px] sm:p-2.5">
               {isDemoList ? <span className="text-sm font-medium">{p.name}</span>
                 : <Input value={p.name} onChange={(e) => update(p.id, { name: e.target.value })} className="h-8" />}
               <Badge variant="outline" className="w-fit">{p.category}</Badge>
-              <span className="text-sm tabular-nums">{eur(p.monthlyNet)}<span className="text-xs text-muted-foreground"> /M</span></span>
-              <span className="text-sm tabular-nums">{eur(p.oneTimeNet)}<span className="text-xs text-muted-foreground"> einm.</span></span>
-              <span className="text-sm tabular-nums text-muted-foreground">Prov. {eur(p.provision)}</span>
+              <span className="text-sm tabular-nums"><span className="block text-[10px] text-muted-foreground sm:hidden">Monatlich</span>{eur(p.monthlyNet)}<span className="text-xs text-muted-foreground"> /M</span></span>
+              <span className="text-sm tabular-nums"><span className="block text-[10px] text-muted-foreground sm:hidden">Einmalig</span>{eur(p.oneTimeNet)}</span>
+              <span className="text-sm tabular-nums text-muted-foreground"><span className="block text-[10px] sm:hidden">Provision</span>{eur(p.provision)}</span>
               {!isDemoList && <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setProducts(products.filter((x) => x.id !== p.id))} aria-label="Löschen"><Trash2 className="h-4 w-4" /></Button>}
             </div>
           ))}

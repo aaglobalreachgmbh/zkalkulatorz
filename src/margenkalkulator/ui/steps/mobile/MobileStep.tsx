@@ -204,9 +204,9 @@ export function MobileStep({
         </div>
 
         {/* Row 2: Portfolio Tabs + Controls on same line */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-center">
           {/* Portfolio Tabs */}
-          <div className="flex border border-border rounded-lg overflow-hidden">
+          <div className="grid grid-cols-3 overflow-hidden rounded-lg border border-border sm:flex">
             {PORTFOLIO_TABS.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -215,7 +215,7 @@ export function MobileStep({
                   key={tab.id}
                   onClick={() => handleTabChange(tab.id)}
                   className={cn(
-                    "flex items-center gap-1 px-3 py-1.5 text-xs font-medium transition-colors",
+                    "flex min-h-10 items-center justify-center gap-1 px-2 py-1.5 text-xs font-medium transition-colors sm:min-h-0 sm:px-3",
                     isActive
                       ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -229,17 +229,17 @@ export function MobileStep({
           </div>
 
           {/* Spacer */}
-          <div className="flex-1" />
+          <div className="hidden flex-1 sm:block" />
 
           {/* Lead Time quick-toggle (business only) */}
           {activeTab !== "consumer" && (
-            <div className="flex items-center gap-1">
+            <div className="flex min-h-10 items-center justify-between gap-2 rounded-lg border border-border px-2 sm:min-h-0 sm:justify-start sm:border-0 sm:px-0">
               <Clock className="w-3 h-3 text-muted-foreground" />
               <span className="text-[10px] text-muted-foreground">Vorlauf</span>
               <select
                 value={currentLeadTime}
                 onChange={(e) => onMetaUpdate?.({ leadTimeMonths: Number(e.target.value) })}
-                className="h-7 px-1 text-xs border border-border rounded bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30"
+                className="h-9 px-2 text-xs border border-border rounded bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 sm:h-7 sm:px-1"
               >
                 {[0, 1, 2, 3, 6, 12].map(m => (
                   <option key={m} value={m}>{m === 0 ? "Kein" : `${m} Mon.`}</option>
@@ -249,10 +249,10 @@ export function MobileStep({
           )}
 
           {/* SIM Stepper */}
-          <div className="flex items-center gap-1 border border-border rounded-lg overflow-hidden">
+          <div className="grid grid-cols-[2.75rem_1fr_2.75rem] items-center overflow-hidden rounded-lg border border-border sm:flex">
             <button
               onClick={() => adjustQty(-1)}
-              className="w-7 h-7 flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors text-sm font-bold"
+              className="flex h-10 w-full items-center justify-center text-sm font-bold text-muted-foreground transition-colors hover:bg-muted sm:h-7 sm:w-7"
             >−</button>
             <input
               type="number"
@@ -263,23 +263,23 @@ export function MobileStep({
                 const max = isTeamDeal ? 10 : 100;
                 updateField("quantity", Math.max(1, Math.min(max, Number(e.target.value) || 1)));
               }}
-              className="w-10 h-7 text-center text-xs font-bold bg-card text-foreground border-x border-border focus:outline-none"
+              className="h-10 w-full border-x border-border bg-card text-center text-xs font-bold text-foreground focus:outline-none sm:h-7 sm:w-10"
             />
             <button
               onClick={() => adjustQty(1)}
-              className="w-7 h-7 flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors text-sm font-bold"
+              className="flex h-10 w-full items-center justify-center text-sm font-bold text-muted-foreground transition-colors hover:bg-muted sm:h-7 sm:w-7"
             >+</button>
           </div>
-          <span className="text-[10px] text-muted-foreground">SIM</span>
+          <span className="hidden text-[10px] text-muted-foreground sm:inline">SIM</span>
 
           {/* NV | VVL Segmented Control */}
-          <div className="flex border border-border rounded-lg overflow-hidden">
+          <div className="grid grid-cols-2 overflow-hidden rounded-lg border border-border sm:flex">
             {(["new", "renewal"] as ContractType[]).map((type) => (
               <button
                 key={type}
                 onClick={() => updateField("contractType", type)}
                 className={cn(
-                  "px-3 py-1.5 text-xs font-semibold transition-colors",
+                  "min-h-10 px-3 py-1.5 text-xs font-semibold transition-colors sm:min-h-0",
                   value.contractType === type
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -292,7 +292,7 @@ export function MobileStep({
 
           {/* ─── SUB-Stufe Selector (nur für business/smart) ─── */}
           {activeTab !== "consumer" && headerSubVariants.length > 0 && (
-            <div className="flex border border-border rounded-lg overflow-hidden">
+            <div className="grid grid-cols-3 overflow-hidden rounded-lg border border-border sm:flex">
               {headerSubVariants.map((sv) => (
                 <button
                   key={sv.id}
@@ -301,7 +301,7 @@ export function MobileStep({
                   }}
                   title={sv.label}
                   className={cn(
-                    "px-2.5 py-1.5 text-xs font-semibold transition-colors",
+                    "min-h-10 px-2.5 py-1.5 text-xs font-semibold transition-colors sm:min-h-0",
                     value.subVariantId === sv.id
                       ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -317,7 +317,7 @@ export function MobileStep({
           <select
             value={value.promoId || "NONE"}
             onChange={(e) => updateField("promoId", e.target.value)}
-            className="h-7 px-2 text-xs border border-border rounded-lg bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30"
+            className="h-10 w-full px-2 text-xs border border-border rounded-lg bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 sm:h-7 sm:w-auto"
           >
             <option value="NONE">Keine Aktion</option>
             {promos.filter(p => p.id !== "NONE").map((promo) => (
@@ -337,7 +337,7 @@ export function MobileStep({
               {blockedCount} gesperrt
             </Badge>
           )}
-          <span className="ml-auto text-[10px] text-muted-foreground/60">Tipp: Zifferntasten 1-{Math.min(9, filteredTariffs.length)} zum Schnellwählen</span>
+          <span className="ml-auto hidden text-[10px] text-muted-foreground/60 md:inline">Tipp: Zifferntasten 1-{Math.min(9, filteredTariffs.length)} zum Schnellwählen</span>
         </div>
       )}
 

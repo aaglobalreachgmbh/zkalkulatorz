@@ -54,15 +54,15 @@ export function MainLayout({ children }: MainLayoutProps) {
           
           {/* Header */}
           <header className={cn(
-            "h-20 border-b border-border bg-card/80 backdrop-blur-sm flex items-center justify-between px-4 sticky top-0 z-40",
+            "h-14 md:h-20 border-b border-border bg-card/80 backdrop-blur-sm flex items-center justify-between px-3 md:px-4 sticky top-0 z-40",
             isPOSMode && "h-12 px-2"
           )}>
             <div className="flex items-center gap-4">
               <SidebarTrigger />
-              <div className="flex flex-col">
+              <div className="flex min-w-0 flex-col">
                 {/* Publisher-Text oben */}
                 {!isPOSMode && (
-                  <span className="text-[10px] text-muted-foreground leading-tight">
+                  <span className="hidden text-[10px] text-muted-foreground leading-tight md:block">
                     {PUBLISHER.subline}
                   </span>
                 )}
@@ -72,12 +72,12 @@ export function MainLayout({ children }: MainLayoutProps) {
                   <BrandLogo
                     src={branding.logoUrl}
                     alt={branding.companyName || "Firmenlogo"}
-                    className="mt-0.5 h-10 w-[clamp(7rem,18vw,12.5rem)] md:h-12"
+                    className="h-8 w-[min(9rem,42vw)] md:mt-0.5 md:h-12 md:w-[clamp(7rem,18vw,12.5rem)]"
                     imageClassName="object-left"
                     showFallback={false}
                   />
                 ) : (
-                  <span className="text-lg md:text-xl font-bold text-foreground tracking-tight">
+                  <span className="truncate text-sm font-bold text-foreground md:text-xl">
                     {branding.companyName || PUBLISHER.displayName}
                   </span>
                 )}
@@ -97,7 +97,7 @@ export function MainLayout({ children }: MainLayoutProps) {
               )}
               
               {/* About/Publisher Info */}
-              {!isPOSMode && <PublisherModal />}
+              {!isPOSMode && <div className="hidden sm:block"><PublisherModal /></div>}
               
               <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -124,7 +124,7 @@ export function MainLayout({ children }: MainLayoutProps) {
 
           {/* Main content */}
           <main className={cn(
-            "flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto overflow-x-hidden",
+            "flex-1 p-3 sm:p-4 md:p-6 lg:p-8 overflow-y-auto overflow-x-hidden",
             isPOSMode && "p-2 md:p-3"
           )}>
             <div className="max-w-screen-2xl mx-auto">

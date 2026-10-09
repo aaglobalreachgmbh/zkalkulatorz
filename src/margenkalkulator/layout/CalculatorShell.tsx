@@ -28,9 +28,9 @@ export function CalculatorShell({
   return (
     <div className={cn("flex flex-col h-full w-full overflow-hidden bg-white", className)}>
       {/* Top Bar - 48px flat nav */}
-      <header className="flex-none h-12 bg-gray-900 px-4 lg:px-6 flex items-center justify-between z-30">
+      <header className="flex-none h-11 lg:h-12 bg-gray-900 px-2 lg:px-6 flex items-center justify-between z-30">
         <div className="flex items-center gap-6">
-          <span className="text-white font-bold text-base tracking-tight">{title}</span>
+          <span className="hidden text-white font-bold text-base tracking-tight lg:inline">{title}</span>
         </div>
         <div className="flex items-center gap-2">
           {headerActions}
@@ -39,7 +39,7 @@ export function CalculatorShell({
 
       {/* Step Navigation Bar - 44px */}
       {stepIndicator && (
-        <div className="flex-none h-11 bg-gray-50 border-b border-gray-200 px-4 lg:px-6 flex items-center">
+        <div className="flex-none h-10 lg:h-11 bg-gray-50 border-b border-gray-200 px-2 lg:px-6 flex items-center">
           {stepIndicator}
         </div>
       )}
@@ -47,7 +47,7 @@ export function CalculatorShell({
       {/* Content Grid */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_340px] overflow-hidden">
         {/* Left: Scrollable Content Area */}
-        <main className="h-full overflow-y-auto bg-gray-50 p-4 lg:p-6 pb-32 lg:pb-6">
+        <main className="h-full overflow-y-auto bg-gray-50 p-3 lg:p-6 pb-28 lg:pb-6">
           <div className="max-w-4xl mx-auto">{children}</div>
         </main>
 
@@ -60,7 +60,7 @@ export function CalculatorShell({
 
         {/* Mobile Footer */}
         {mobileFooter && (
-          <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 z-50 shadow-[0_-4px_12px_rgba(0,0,0,0.08)]">
+          <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-3 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] z-50 shadow-[0_-4px_12px_rgba(0,0,0,0.08)]">
             {mobileFooter}
           </div>
         )}

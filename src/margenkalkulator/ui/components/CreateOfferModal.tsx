@@ -157,11 +157,11 @@ export function CreateOfferModal() {
   return (
     <Dialog open={isModalOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className={cn(
-        "max-h-[90vh] overflow-y-auto transition-all duration-300",
+        "max-h-[calc(100svh-1rem)] w-[calc(100vw-1rem)] overflow-y-auto p-4 transition-all duration-300 sm:max-h-[90vh] sm:w-full sm:p-6",
         step === "quick" ? "max-w-xl" : "max-w-4xl"
       )}>
-        <DialogHeader>
-          <DialogTitle className="text-xl font-semibold">
+        <DialogHeader className="sticky top-0 z-10 -mx-1 bg-background px-1 pb-2 text-left">
+          <DialogTitle className="pr-8 text-lg font-semibold sm:text-xl">
             Personalisiertes Angebot herunterladen
           </DialogTitle>
         </DialogHeader>

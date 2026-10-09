@@ -117,7 +117,7 @@ const superAdminItems = [
 ];
 
 export function AppSidebar() {
-  const { state, setOpen } = useSidebar();
+  const { state, setOpen, setOpenMobile, isMobile } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
   const { isAdmin } = useUserRole();
@@ -180,6 +180,10 @@ export function AppSidebar() {
   const isActive = (path: string) => {
     if (path === "/") return location.pathname === "/";
     return location.pathname.startsWith(path);
+  };
+
+  const closeMobileNavigation = () => {
+    if (isMobile) setOpenMobile(false);
   };
 
   // Filter items based on permissions
@@ -247,7 +251,7 @@ export function AppSidebar() {
                       : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50"
                   )}
                 >
-                  <NavLink to="/">
+                    <NavLink to="/" onClick={closeMobileNavigation}>
                     <LayoutDashboard className="h-4 w-4" />
                     <span>Dashboard</span>
                   </NavLink>
@@ -278,7 +282,7 @@ export function AppSidebar() {
                           : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50"
                       )}
                     >
-                      <NavLink to={item.url}>
+                      <NavLink to={item.url} onClick={closeMobileNavigation}>
                         <item.icon className="h-4 w-4" />
                         <span>{item.title}</span>
                       </NavLink>
@@ -301,7 +305,7 @@ export function AppSidebar() {
                 <SidebarMenuItem key={tool.url}>
                   <SidebarMenuButton asChild isActive={isActive(tool.url)} tooltip={collapsed ? tool.title : undefined}
                     className={cn("transition-all", isActive(tool.url) ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50")}>
-                    <NavLink to={tool.url}>
+                    <NavLink to={tool.url} onClick={closeMobileNavigation}>
                       <Sparkles className="h-4 w-4" />
                       <span>{tool.title}</span>
                     </NavLink>
@@ -330,7 +334,7 @@ export function AppSidebar() {
                         <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={collapsed ? item.title : undefined}
                           className={cn("transition-all", isActive(item.url) ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50")}
                         >
-                          <NavLink to={item.url}><item.icon className="h-4 w-4" /><span>{item.title}</span></NavLink>
+                          <NavLink to={item.url} onClick={closeMobileNavigation}><item.icon className="h-4 w-4" /><span>{item.title}</span></NavLink>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                     ))}
@@ -376,7 +380,7 @@ export function AppSidebar() {
                             : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50"
                         )}
                       >
-                        <NavLink to={item.url}>
+                        <NavLink to={item.url} onClick={closeMobileNavigation}>
                           <item.icon className="h-4 w-4" />
                           <span>{item.title}</span>
                         </NavLink>
@@ -420,7 +424,7 @@ export function AppSidebar() {
                               : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50"
                           )}
                         >
-                          <NavLink to={item.url}>
+                        <NavLink to={item.url} onClick={closeMobileNavigation}>
                             <item.icon className="h-4 w-4" />
                             <span>{item.title}</span>
                           </NavLink>
@@ -465,7 +469,7 @@ export function AppSidebar() {
                               : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50"
                           )}
                         >
-                          <NavLink to={item.url}>
+                        <NavLink to={item.url} onClick={closeMobileNavigation}>
                             <item.icon className="h-4 w-4" />
                             <span>{item.title}</span>
                           </NavLink>

@@ -6,3 +6,4 @@
 - Calculator suggestions (tariffs/promos/bundles after device choice) come from the pure `workspace/suggestions.ts` plus per-user `useBusinessFocus` (focus goals, custom products, scoped localStorage); they only pre-fill wizard state and never touch the pricing engine or show dealer values in customer view.
 
 - Own products added to an offer ("Zusatzleistungen") live in `workspace/useOfferExtras` (scoped localStorage), shown additively in the basket, never fed into the pricing engine and never showing provision.
+- Mobile calculator completion uses the same `OfferBasketPanel` and `CreateOfferModal` as desktop through a bottom sheet, so basket, extras, and offer creation never diverge by viewport.

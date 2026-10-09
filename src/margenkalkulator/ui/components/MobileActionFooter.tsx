@@ -3,7 +3,7 @@
 // Flat, minimal mobile CTA bar
 // ============================================
 
-import { Plus, Check, ShoppingBag, TrendingUp, TrendingDown } from "lucide-react";
+import { Plus, Check, ShoppingBag, TrendingUp, TrendingDown, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useOfferBasket } from "../../contexts/OfferBasketContext";
 import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
@@ -16,9 +16,10 @@ import { AnimatedCurrency } from "./AnimatedCurrency";
 
 interface MobileActionFooterProps {
   onResetForNewTariff?: () => void;
+  onOpenBasket?: () => void;
 }
 
-export function MobileActionFooter({ onResetForNewTariff }: MobileActionFooterProps) {
+export function MobileActionFooter({ onResetForNewTariff, onOpenBasket }: MobileActionFooterProps) {
   const {
     option1: option,
     result1: result,
@@ -54,14 +55,24 @@ export function MobileActionFooter({ onResetForNewTariff }: MobileActionFooterPr
   }, [addItem, tariffName, option, result, onResetForNewTariff]);
 
   const hasTariff = !!option.mobile.tariffId;
-  if (!hasTariff || !result) return null;
+  if ((!hasTariff || !result) && items.length === 0) return null;
+
+  if (!hasTariff || !result) {
+    return (
+      <Button type="button" className="h-11 w-full gap-2" onClick={onOpenBasket}>
+        <ShoppingBag className="h-4 w-4" />
+        Angebotskorb öffnen
+        <span className="rounded bg-primary-foreground/15 px-1.5 py-0.5 text-xs">{items.length}</span>
+      </Button>
+    );
+  }
 
   const avgMonthly = result.totals.avgTermNet;
   const margin = result.dealer.margin + quantityBonus;
 
   return (
-    <div className="flex items-center justify-between gap-3">
-      <div className="flex items-center gap-3 min-w-0">
+    <div className="flex min-h-12 items-center justify-between gap-2">
+      <div className="flex min-w-0 items-center gap-2">
         <div>
           <span className="text-[10px] font-medium uppercase tracking-wider text-gray-400">Ø/Monat</span>
           <span className="block text-lg font-bold tabular-nums text-gray-900">
@@ -69,7 +80,7 @@ export function MobileActionFooter({ onResetForNewTariff }: MobileActionFooterPr
           </span>
         </div>
         {visibility.showDealerEconomics && (
-          <div className="flex items-center gap-1">
+          <div className="hidden min-[390px]:flex items-center gap-1">
             {margin >= 0 ? <TrendingUp className="w-3.5 h-3.5 text-green-600" /> : <TrendingDown className="w-3.5 h-3.5 text-red-600" />}
             <span className={cn("text-base font-bold tabular-nums", margin >= 0 ? "text-green-600" : "text-red-600")}>
               <AnimatedCurrency value={margin} variant="margin" decimals={0} />
@@ -80,15 +91,21 @@ export function MobileActionFooter({ onResetForNewTariff }: MobileActionFooterPr
 
       <div className="flex items-center gap-2">
         {items.length > 0 && (
-          <div className="flex items-center gap-1 bg-gray-100 rounded-full px-2 py-0.5">
+          <button
+            type="button"
+            onClick={onOpenBasket}
+            className="flex h-9 items-center gap-1 rounded-md bg-gray-100 px-2 text-gray-700"
+            aria-label={`Angebotskorb mit ${items.length} Positionen öffnen`}
+          >
             <ShoppingBag className="w-3.5 h-3.5 text-gray-500" />
             <span className="text-xs font-semibold tabular-nums">{items.length}</span>
-          </div>
+            <ArrowRight className="h-3 w-3" />
+          </button>
         )}
         {isAlreadyAdded ? (
-          <span className="flex items-center gap-1 text-green-600 text-xs font-semibold">
-            <Check className="w-4 h-4" /> Im Angebot
-          </span>
+          <Button size="sm" variant="outline" onClick={onOpenBasket} className="gap-1 text-xs font-semibold">
+            <Check className="w-4 h-4" /> Öffnen
+          </Button>
         ) : (
           <Button
             size="sm"

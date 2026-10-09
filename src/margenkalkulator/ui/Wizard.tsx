@@ -39,6 +39,8 @@ import { ModeSelector } from "./components/ModeSelector";
 import { SummarySidebar } from "./components/SummarySidebar";
 import { MobileActionFooter } from "./components/MobileActionFooter";
 import { OfferBasketPanel } from "./components/OfferBasketPanel";
+import { MobileBasketSheet } from "./components/MobileBasketSheet";
+import { CreateOfferModal } from "./components/CreateOfferModal";
 import { PricePeriodBreakdown } from "./components/PricePeriodBreakdown";
 import { useHistory } from "../hooks/useHistory";
 import { toast } from "sonner";
@@ -165,6 +167,7 @@ function WizardContent() {
   const { status: tenantDataStatus, isLoading: isLoadingTenantData } = useTenantDataStatus();
   const { isAdmin: isSuperAdmin } = useUserRole();
   const { enabled: option2Enabled, reason: option2Reason } = useFeature("compareOption2");
+  const [mobileBasketOpen, setMobileBasketOpen] = useState(false);
 
   // === DERIVED STATE ===
   const activeState = activeOption === 1 ? option1 : option2;
@@ -433,6 +436,8 @@ function WizardContent() {
         onRestore={handleRestoreDraft}
         onDiscard={handleDiscardDraft}
       />
+      <CreateOfferModal />
+      <MobileBasketSheet open={mobileBasketOpen} onOpenChange={setMobileBasketOpen} />
 
       {/* Onboarding Tour */}
       <OnboardingTour
@@ -501,7 +506,10 @@ function WizardContent() {
           </>
         }
         mobileFooter={
-          <MobileActionFooter onResetForNewTariff={resetForNewTariff} />
+          <MobileActionFooter
+            onResetForNewTariff={resetForNewTariff}
+            onOpenBasket={() => setMobileBasketOpen(true)}
+          />
         }
       >
         {/* Step Content - Full Page Render */}
@@ -561,7 +569,7 @@ function WizardContent() {
 
           {/* Proceed to Next Step Button */}
           {nextStepLabel && (
-            <div className="flex justify-end pt-2">
+            <div className="hidden justify-end pt-2 lg:flex">
               <Button
                 onClick={goToNextStep}
                 size="lg"

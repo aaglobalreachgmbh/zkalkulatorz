@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { MainLayout } from "@/components/MainLayout";
+import { DemoListSection, DemoEnableHint } from "@/components/workspace/DemoListSection";
 import { useCloudOffers, CloudOffer } from "@/margenkalkulator/hooks/useCloudOffers";
 import { useCustomers } from "@/margenkalkulator/hooks/useCustomers";
 import { useTeams } from "@/margenkalkulator/hooks/useTeams";
@@ -359,6 +360,7 @@ export default function Offers() {
                 <p className="text-sm">
                   {searchQuery ? "Versuchen Sie eine andere Suche" : "Erstellen Sie Ihr erstes Angebot im Kalkulator"}
                 </p>
+                <DemoEnableHint />
               </div>
             ) : (
               <Table>
@@ -480,6 +482,7 @@ export default function Offers() {
             )}
           </CardContent>
         </Card>
+        <DemoListSection kind="offers" />
       </div>
     </MainLayout>
   );

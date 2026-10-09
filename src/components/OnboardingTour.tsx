@@ -280,7 +280,7 @@ interface OnboardingPromptProps {
 
 export function OnboardingPrompt({ onStart, onDismiss }: OnboardingPromptProps) {
   return (
-    <div className="fixed bottom-6 right-6 z-50 w-80 bg-card border border-border rounded-xl shadow-2xl p-5 animate-in slide-in-from-bottom-4 duration-500">
+    <div className="fixed bottom-[5.5rem] left-3 right-3 z-[60] max-h-[calc(100svh-6rem)] overflow-y-auto bg-card border border-border rounded-lg shadow-2xl p-4 animate-in slide-in-from-bottom-4 duration-500 sm:bottom-6 sm:left-auto sm:right-6 sm:w-80 sm:max-h-[calc(100svh-3rem)] sm:p-5">
       <div className="flex items-start gap-3 mb-4">
         <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shrink-0">
           <Sparkles className="w-5 h-5 text-primary-foreground" />

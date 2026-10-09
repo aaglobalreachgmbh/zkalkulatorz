@@ -193,7 +193,7 @@ export function EmailSendDialog({
       <DialogContent className="max-w-lg">
         {step === 'form' ? (
           <>
-            <DialogHeader>
+            <DialogHeader className="sticky top-0 z-10 bg-background pb-2 text-left">
               <DialogTitle className="flex items-center gap-2">
                 <Mail className="w-5 h-5" />
                 Angebot per E-Mail senden
@@ -317,7 +317,7 @@ export function EmailSendDialog({
               </div>
             </div>
 
-            <DialogFooter className="gap-2">
+            <DialogFooter className="sticky bottom-0 z-10 gap-2 border-t bg-background pt-3">
               <Button variant="ghost" onClick={handleClose}>
                 Abbrechen
               </Button>

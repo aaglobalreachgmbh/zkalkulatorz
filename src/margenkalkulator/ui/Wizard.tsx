@@ -458,9 +458,9 @@ function WizardContent() {
 
       {/* Demo Mode Banner */}
       {usingFallbackCatalog && (
-        <div className="bg-amber-50 border-b border-amber-200 px-4 py-1.5 flex-none">
+        <div className="mobile-short-hide bg-warning/10 border-b border-warning/30 px-4 py-1.5 flex-none">
           <div className="flex items-center justify-between gap-2 text-sm">
-            <div className="flex items-center gap-2 text-amber-800">
+            <div className="flex items-center gap-2 text-foreground">
               <Zap className="w-4 h-4" />
               <span>
                 <strong>Demo-Modus:</strong> Es werden Beispieldaten verwendet.
@@ -468,7 +468,7 @@ function WizardContent() {
             </div>
             <Link
               to="/daten"
-              className="text-amber-700 underline hover:no-underline text-xs font-medium"
+              className="text-foreground underline hover:no-underline text-xs font-medium"
             >
               Eigene Daten hinterlegen →
             </Link>

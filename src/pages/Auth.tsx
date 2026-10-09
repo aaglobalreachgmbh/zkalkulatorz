@@ -104,7 +104,7 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-svh flex items-start justify-center bg-gradient-to-br from-background via-background to-muted/20 p-3 sm:items-center sm:p-4">
+    <div className="min-h-svh overflow-y-auto flex items-start justify-center bg-gradient-to-br from-background via-background to-muted/20 p-3 sm:items-center sm:p-4">
       <div className="w-full max-w-md flex flex-col items-center">
         <Card className="w-full rounded-lg shadow-lg border-border/50 animate-fade-in sm:rounded-2xl">
           <CardHeader className="space-y-3 pb-2 pt-5 text-center sm:space-y-6 sm:pt-8">

@@ -82,7 +82,7 @@ export function ActionMenu({ config, avgMonthly, result, viewMode, onLoadConfig 
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="gap-2">
+          <Button variant="outline" size="icon" className="h-10 w-10" aria-label="Weitere Aktionen">
             <MoreHorizontal className="w-4 h-4" />
             <span className="hidden sm:inline">Aktionen</span>
           </Button>

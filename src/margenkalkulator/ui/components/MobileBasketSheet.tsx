@@ -1,6 +1,8 @@
+import { useEffect } from "react";
 import { ShoppingCart } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { OfferBasketPanel } from "./OfferBasketPanel";
+import { useOfferBasket } from "../../contexts/OfferBasketContext";
 
 interface MobileBasketSheetProps {
   open: boolean;
@@ -9,6 +11,12 @@ interface MobileBasketSheetProps {
 
 /** Mobile access to the complete basket, extras and offer creation flow. */
 export function MobileBasketSheet({ open, onOpenChange }: MobileBasketSheetProps) {
+  const { isModalOpen } = useOfferBasket();
+
+  useEffect(() => {
+    if (isModalOpen) onOpenChange(false);
+  }, [isModalOpen, onOpenChange]);
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent

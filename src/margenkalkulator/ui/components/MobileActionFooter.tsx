@@ -55,7 +55,17 @@ export function MobileActionFooter({ onResetForNewTariff, onOpenBasket }: Mobile
   }, [addItem, tariffName, option, result, onResetForNewTariff]);
 
   const hasTariff = !!option.mobile.tariffId;
-  if (!hasTariff || !result) return null;
+  if ((!hasTariff || !result) && items.length === 0) return null;
+
+  if (!hasTariff || !result) {
+    return (
+      <Button type="button" className="h-11 w-full gap-2" onClick={onOpenBasket}>
+        <ShoppingBag className="h-4 w-4" />
+        Angebotskorb öffnen
+        <span className="rounded bg-primary-foreground/15 px-1.5 py-0.5 text-xs">{items.length}</span>
+      </Button>
+    );
+  }
 
   const avgMonthly = result.totals.avgTermNet;
   const margin = result.dealer.margin + quantityBonus;

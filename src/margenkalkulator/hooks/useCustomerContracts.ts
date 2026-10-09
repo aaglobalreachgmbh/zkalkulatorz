@@ -261,8 +261,11 @@ export function useAllContracts() {
         `)
         .order("vvl_datum", { ascending: true, nullsFirst: false });
 
-      if (error) throw error;
-      return data as ContractWithCustomer[];
+      if (error) {
+        console.warn("[useAllContracts] Query error:", error.message);
+        return [] as ContractWithCustomer[];
+      }
+      return (data ?? []) as ContractWithCustomer[];
     },
   });
 }

@@ -67,10 +67,13 @@ export default function Reporting() {
   if (!permissionsLoading && !hasFullAccess && !canViewReporting) {
     return (
       <MainLayout>
-        <AccessDeniedCard
-          title="Kein Zugriff auf Auswertungen"
-          description="Sie haben keine Berechtigung, Auswertungen einzusehen. Kontaktieren Sie Ihren Shop-Administrator."
-        />
+        <div className="space-y-6">
+          <AccessDeniedCard
+            title="Kein Zugriff auf Auswertungen"
+            description="Sie haben keine Berechtigung, Auswertungen einzusehen. Kontaktieren Sie Ihren Shop-Administrator."
+          />
+          <DemoListSection kind="reporting" />
+        </div>
       </MainLayout>
     );
   }

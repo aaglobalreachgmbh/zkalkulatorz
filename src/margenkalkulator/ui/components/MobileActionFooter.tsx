@@ -74,15 +74,15 @@ export function MobileActionFooter({ onResetForNewTariff, onOpenBasket }: Mobile
     <div className="flex min-h-12 items-center justify-between gap-2">
       <div className="flex min-w-0 items-center gap-2">
         <div>
-          <span className="text-[10px] font-medium uppercase tracking-wider text-gray-400">Ø/Monat</span>
-          <span className="block text-lg font-bold tabular-nums text-gray-900">
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Ø/Monat</span>
+          <span className="block text-lg font-bold tabular-nums text-foreground">
             <AnimatedCurrency value={avgMonthly} decimals={2} />
           </span>
         </div>
         {visibility.showDealerEconomics && (
           <div className="hidden min-[390px]:flex items-center gap-1">
-            {margin >= 0 ? <TrendingUp className="w-3.5 h-3.5 text-green-600" /> : <TrendingDown className="w-3.5 h-3.5 text-red-600" />}
-            <span className={cn("text-base font-bold tabular-nums", margin >= 0 ? "text-green-600" : "text-red-600")}>
+            {margin >= 0 ? <TrendingUp className="w-3.5 h-3.5 text-margin-positive" /> : <TrendingDown className="w-3.5 h-3.5 text-margin-negative" />}
+            <span className={cn("text-base font-bold tabular-nums", margin >= 0 ? "text-margin-positive" : "text-margin-negative")}>
               <AnimatedCurrency value={margin} variant="margin" decimals={0} />
             </span>
           </div>
@@ -91,16 +91,18 @@ export function MobileActionFooter({ onResetForNewTariff, onOpenBasket }: Mobile
 
       <div className="flex items-center gap-2">
         {items.length > 0 && (
-          <button
+          <Button
             type="button"
+            variant="secondary"
+            size="sm"
             onClick={onOpenBasket}
-            className="flex h-9 items-center gap-1 rounded-md bg-gray-100 px-2 text-gray-700"
+            className="h-10 gap-1 px-2"
             aria-label={`Angebotskorb mit ${items.length} Positionen öffnen`}
           >
-            <ShoppingBag className="w-3.5 h-3.5 text-gray-500" />
+            <ShoppingBag className="w-3.5 h-3.5 text-muted-foreground" />
             <span className="text-xs font-semibold tabular-nums">{items.length}</span>
             <ArrowRight className="h-3 w-3" />
-          </button>
+          </Button>
         )}
         {isAlreadyAdded ? (
           <Button size="sm" variant="outline" onClick={onOpenBasket} className="gap-1 text-xs font-semibold">
@@ -110,7 +112,7 @@ export function MobileActionFooter({ onResetForNewTariff, onOpenBasket }: Mobile
           <Button
             size="sm"
             onClick={handleAdd}
-            className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold gap-1"
+            className="bg-brand hover:bg-brand/90 text-brand-foreground text-xs font-semibold gap-1"
           >
             <Plus className="w-3.5 h-3.5" />
             Hinzufügen

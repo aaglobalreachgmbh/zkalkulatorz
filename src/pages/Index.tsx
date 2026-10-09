@@ -59,7 +59,7 @@ const Index = () => {
           {/* VVL Notification Banner (flex-none) */}
           <VVLNotificationBanner />
           {!user && isTestModeActive() && (
-            <div className="flex flex-none items-center justify-between gap-2 border-b border-warning bg-warning/15 px-3 py-1.5 text-xs text-foreground">
+            <div className="mobile-short-hide flex flex-none items-center justify-between gap-2 border-b border-warning bg-warning/15 px-3 py-1.5 text-xs text-foreground">
               <span className="truncate font-medium">Vorschau ohne Anmeldung</span>
               <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => { disableTestMode(); window.location.href = "/auth"; }}>
                 Beenden
@@ -94,6 +94,11 @@ const Index = () => {
                 ) : (
                   <span className="truncate text-sm font-bold text-foreground md:text-lg">
                     {branding.companyName || PUBLISHER.displayName}
+                  </span>
+                )}
+                {!user && isTestModeActive() && (
+                  <span className="mobile-short-only items-center text-[10px] font-medium text-warning-foreground">
+                    Vorschau
                   </span>
                 )}
               </div>

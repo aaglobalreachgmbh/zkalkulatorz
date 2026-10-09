@@ -47,8 +47,8 @@ export function ModeSelector({
           variant="ghost"
           size="sm"
           className={cn(
-            "gap-1.5 text-xs font-medium text-white/80 hover:text-white hover:bg-white/10",
-            isSessionActive && "text-amber-400 hover:text-amber-300"
+            "h-10 gap-1.5 px-2 text-xs font-medium text-panel-dark-foreground/80 hover:text-panel-dark-foreground hover:bg-panel-dark-foreground/10",
+            isSessionActive && "text-warning hover:text-warning"
           )}
         >
           {isSessionActive ? (

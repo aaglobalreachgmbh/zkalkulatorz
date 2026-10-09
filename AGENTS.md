@@ -7,3 +7,4 @@
 
 - Own products added to an offer ("Zusatzleistungen") live in `workspace/useOfferExtras` (scoped localStorage), shown additively in the basket, never fed into the pricing engine and never showing provision.
 - Mobile calculator completion uses the same `OfferBasketPanel` and `CreateOfferModal` as desktop through a bottom sheet, so basket, extras, and offer creation never diverge by viewport.
+- Shared dialog primitives enforce dynamic viewport height and internal scrolling so completion actions remain reachable on short mobile screens.

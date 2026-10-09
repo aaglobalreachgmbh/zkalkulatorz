@@ -25,6 +25,7 @@ import { FollowupReminders } from "@/margenkalkulator/ui/components/FollowupRemi
 import { PUBLISHER } from "@/margenkalkulator/publisherConfig";
 import { cn } from "@/lib/utils";
 import { BrandLogo } from "@/components/BrandLogo";
+import { isTestModeActive, disableTestMode } from "@/lib/testMode";
 
 /**
  * Calculator Index Page - Zero-Scroll Cockpit Layout
@@ -57,18 +58,26 @@ const Index = () => {
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           {/* VVL Notification Banner (flex-none) */}
           <VVLNotificationBanner />
+          {!user && isTestModeActive() && (
+            <div className="flex flex-none items-center justify-between gap-2 border-b border-warning bg-warning/15 px-3 py-1.5 text-xs text-foreground">
+              <span className="truncate font-medium">Vorschau ohne Anmeldung</span>
+              <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => { disableTestMode(); window.location.href = "/auth"; }}>
+                Beenden
+              </Button>
+            </div>
+          )}
           
           {/* Header (flex-none, fixed height) */}
           <header className={cn(
-            "flex-none h-16 border-b border-border bg-card/80 backdrop-blur-sm flex items-center justify-between px-4 z-40",
+            "flex-none h-12 md:h-16 border-b border-border bg-card/80 backdrop-blur-sm flex items-center justify-between px-2 md:px-4 z-40",
             isPOSMode && "h-12 px-2"
           )}>
-            <div className="flex items-center gap-4">
+            <div className="flex min-w-0 items-center gap-2 md:gap-4">
               <SidebarTrigger />
-              <div className="flex flex-col">
+              <div className="flex min-w-0 flex-col">
                 {/* Publisher-Text oben */}
                 {!isPOSMode && (
-                  <span className="text-[10px] text-muted-foreground leading-tight">
+                  <span className="hidden text-[10px] text-muted-foreground leading-tight md:block">
                     {PUBLISHER.subline}
                   </span>
                 )}
@@ -78,12 +87,12 @@ const Index = () => {
                   <BrandLogo
                     src={branding.logoUrl}
                     alt={branding.companyName || "Firmenlogo"}
-                    className="mt-0.5 h-8 w-[clamp(6.5rem,16vw,11.25rem)] md:h-10"
+                    className="h-7 w-[min(8rem,38vw)] md:mt-0.5 md:h-10 md:w-[clamp(6.5rem,16vw,11.25rem)]"
                     imageClassName="object-left"
                     showFallback={false}
                   />
                 ) : (
-                  <span className="text-base md:text-lg font-bold text-foreground tracking-tight">
+                  <span className="truncate text-sm font-bold text-foreground md:text-lg">
                     {branding.companyName || PUBLISHER.displayName}
                   </span>
                 )}
@@ -103,7 +112,7 @@ const Index = () => {
               )}
               
               {/* About/Publisher Info */}
-              {!isPOSMode && <PublisherModal />}
+              {!isPOSMode && <div className="hidden sm:block"><PublisherModal /></div>}
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

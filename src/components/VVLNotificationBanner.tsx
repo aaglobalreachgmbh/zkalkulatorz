@@ -35,18 +35,18 @@ export function VVLNotificationBanner() {
   if (dismissed || criticalCount === 0) return null;
 
   return (
-    <div className="bg-red-500/10 border-b border-red-500/30 px-4 py-3 animate-fade-in">
-      <div className="flex items-center justify-between max-w-7xl mx-auto">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-8 h-8 bg-red-500/20 rounded-full">
+    <div className="bg-red-500/10 border-b border-red-500/30 px-3 py-2 md:px-4 md:py-3 animate-fade-in">
+      <div className="flex items-center justify-between gap-2 max-w-7xl mx-auto">
+        <div className="flex min-w-0 items-center gap-2 md:gap-3">
+          <div className="hidden sm:flex items-center justify-center w-8 h-8 bg-red-500/20 rounded-full">
             <AlertTriangle className="h-4 w-4 text-red-500" />
           </div>
           <div>
-            <p className="text-sm font-medium text-foreground">
+            <p className="truncate text-xs font-medium text-foreground sm:text-sm">
               <span className="text-red-600 font-bold">{criticalCount}</span> 
               {criticalCount === 1 ? ' Vertrag benötigt' : ' Verträge benötigen'} dringend Aufmerksamkeit
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className="hidden text-xs text-muted-foreground sm:block">
               VVL-Datum in weniger als 30 Tagen
             </p>
           </div>
@@ -55,11 +55,11 @@ export function VVLNotificationBanner() {
           <Button 
             size="sm" 
             variant="destructive"
-            className="h-8"
+            className="h-8 px-2"
             onClick={() => navigate("/contracts")}
           >
-            <Bell className="h-3 w-3 mr-1" />
-            Anzeigen
+            <Bell className="h-3 w-3 sm:mr-1" />
+            <span className="hidden sm:inline">Anzeigen</span>
           </Button>
           <Button 
             size="sm" 

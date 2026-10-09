@@ -13,27 +13,26 @@ export function RoleQuickStart() {
 
   if (!current) {
     return (
-      <Card className="border-primary/30">
-        <CardContent className="p-5 space-y-4">
+      <div className="space-y-4">
+        <Link
+          to="/calculator"
+          className="group flex items-center justify-between rounded-lg border border-primary bg-primary p-6 text-primary-foreground shadow-sm transition-all hover:shadow-md"
+        >
           <div>
-            <h2 className="text-lg font-semibold text-foreground">Wie arbeiten Sie?</h2>
-            <p className="text-sm text-muted-foreground">Wir passen Startseite und Werkzeuge an Ihren Alltag an.</p>
+            <div className="text-xl font-bold">Neues Angebot starten</div>
+            <div className="text-sm text-primary-foreground/80">Direkt in den Kalkulator – Gerät, Tarif, fertig.</div>
           </div>
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-            {USER_TYPES.map((t) => (
-              <Button
-                key={t.id}
-                type="button"
-                variant="outline"
-                onClick={() => update({ userType: t.id })}
-                className="h-auto justify-start p-3 text-left hover:border-primary hover:bg-primary/5"
-              >
-                <span><t.icon className="mb-1 h-5 w-5 text-primary" /><span className="block text-sm font-medium text-foreground">{t.label}</span></span>
-              </Button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+          <ArrowRight className="h-6 w-6 transition-transform group-hover:translate-x-1" />
+        </Link>
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-card px-4 py-3">
+          <span className="mr-1 text-sm text-muted-foreground">Startseite anpassen – ich arbeite als:</span>
+          {USER_TYPES.map((t) => (
+            <Button key={t.id} type="button" variant="outline" size="sm" className="gap-1.5" onClick={() => update({ userType: t.id })}>
+              <t.icon className="h-3.5 w-3.5 text-primary" />{t.label}
+            </Button>
+          ))}
+        </div>
+      </div>
     );
   }
 

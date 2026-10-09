@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { MainLayout } from "@/components/MainLayout";
+import { DemoListSection, DemoEnableHint } from "@/components/workspace/DemoListSection";
 import { useReporting, TimeRange, SalesLeaderboardEntry } from "@/margenkalkulator/hooks/useReporting";
 import { usePermissions } from "@/hooks/usePermissions";
 import { AccessDeniedCard } from "@/components/AccessDeniedCard";
@@ -119,7 +120,7 @@ export default function Reporting() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Reporting</h1>
+            <h1 className="text-2xl font-bold text-foreground">Auswertungen</h1>
             <p className="text-muted-foreground">Statistiken und Analysen</p>
           </div>
           <div className="flex gap-2">
@@ -750,6 +751,7 @@ export default function Reporting() {
             )}
           </TabsContent>
         </Tabs>
+        <DemoListSection kind="reporting" />
       </div>
     </MainLayout>
   );

@@ -88,9 +88,8 @@ export default function EigeneProdukte() {
         });
         setPreview(rowsToProducts(rows));
       } else if (name.endsWith(".pdf")) {
-        setPdfSim(true);
-        setPreview({ ok: DEMO_CUSTOM_PRODUCTS.slice(0, 3).map((p, i) => ({ ...p, id: `pdf-${Date.now()}-${i}`, demo: false })), errors: ["Simulation: PDF wird noch nicht wirklich ausgelesen – Beispielergebnis"] });
-      } else toast.error("Bitte CSV, XLSX oder PDF wählen");
+        toast.info("PDF-Übernahme kommt später – bitte CSV oder XLSX nutzen");
+      } else toast.error("Bitte CSV oder XLSX wählen");
     } catch (err) {
       console.warn("[EigeneProdukte] import failed", err);
       toast.error("Datei konnte nicht gelesen werden");
@@ -150,14 +149,14 @@ export default function EigeneProdukte() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base"><Upload className="h-4 w-4 text-primary" /> Liste importieren</CardTitle>
-          <CardDescription>CSV oder Excel (XLSX) mit Spalten: {HEADERS.join(", ")}. PDF-Übernahme ist derzeit eine Vorschau mit Beispielergebnis.</CardDescription>
+          <CardDescription>CSV oder Excel (XLSX) mit Spalten: {HEADERS.join(", ")}. PDF-Übernahme kommt später.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex flex-wrap gap-2">
             <Button onClick={() => fileRef.current?.click()}><Upload className="mr-1.5 h-4 w-4" /> Datei wählen</Button>
             <Button variant="outline" onClick={downloadTemplate}><Download className="mr-1.5 h-4 w-4" /> Vorlage (CSV)</Button>
             <Button variant="ghost" onClick={addEmpty}><Plus className="mr-1.5 h-4 w-4" /> Manuell anlegen</Button>
-            <input ref={fileRef} type="file" accept=".csv,.xlsx,.pdf" className="hidden"
+            <input ref={fileRef} type="file" accept=".csv,.xlsx" className="hidden"
               onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ""; }} />
           </div>
           {preview && (

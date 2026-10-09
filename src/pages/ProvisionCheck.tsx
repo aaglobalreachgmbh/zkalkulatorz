@@ -10,7 +10,7 @@ import { useSensitiveFieldsVisible } from "@/hooks/useSensitiveFieldsVisible";
 const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
 
 export default function ProvisionCheck() {
-  const [loaded, setLoaded] = useState(false);
+  const [loaded, setLoaded] = useState(true);
   const { showDealerEconomics: showSensitive } = useSensitiveFieldsVisible("dealer");
   const expected = DEMO_PROVISIONS.reduce((s, r) => s + r.expected, 0);
   const received = DEMO_PROVISIONS.reduce((s, r) => s + r.received, 0);

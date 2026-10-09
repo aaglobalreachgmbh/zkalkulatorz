@@ -82,7 +82,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                   </span>
                 )}
                 {!user && isTestModeActive() && (
-                  <span className="mobile-short-only items-center text-[10px] font-medium text-warning-foreground">
+                  <span className="mobile-short-only items-center text-[10px] font-medium text-warning">
                     Vorschau
                   </span>
                 )}

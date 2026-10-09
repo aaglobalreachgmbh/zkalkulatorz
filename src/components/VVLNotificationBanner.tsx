@@ -35,15 +35,15 @@ export function VVLNotificationBanner() {
   if (dismissed || criticalCount === 0) return null;
 
   return (
-    <div className="bg-red-500/10 border-b border-red-500/30 px-3 py-2 md:px-4 md:py-3 animate-fade-in">
+    <div className="bg-destructive/10 border-b border-destructive/30 px-3 py-2 md:px-4 md:py-3 animate-fade-in">
       <div className="flex items-center justify-between gap-2 max-w-7xl mx-auto">
         <div className="flex min-w-0 items-center gap-2 md:gap-3">
-          <div className="hidden sm:flex items-center justify-center w-8 h-8 bg-red-500/20 rounded-full">
-            <AlertTriangle className="h-4 w-4 text-red-500" />
+          <div className="hidden sm:flex items-center justify-center w-8 h-8 bg-destructive/20 rounded-full">
+            <AlertTriangle className="h-4 w-4 text-destructive" />
           </div>
           <div>
             <p className="truncate text-xs font-medium text-foreground sm:text-sm">
-              <span className="text-red-600 font-bold">{criticalCount}</span> 
+              <span className="text-destructive font-bold">{criticalCount}</span> 
               {criticalCount === 1 ? ' Vertrag benötigt' : ' Verträge benötigen'} dringend Aufmerksamkeit
             </p>
             <p className="hidden text-xs text-muted-foreground sm:block">

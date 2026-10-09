@@ -21,7 +21,7 @@ export function MobileBasketSheet({ open, onOpenChange }: MobileBasketSheetProps
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="max-h-[88svh] overflow-y-auto rounded-t-lg p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] lg:hidden"
+        className="max-h-[min(88svh,42rem)] overflow-y-auto rounded-t-lg p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] lg:hidden"
       >
         <SheetHeader className="mb-3 text-left">
           <SheetTitle className="flex items-center gap-2 text-base">

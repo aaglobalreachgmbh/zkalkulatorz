@@ -192,9 +192,9 @@ export function CreateCalendarEventModal({ trigger }: CreateCalendarEventModalPr
         )}
       </DialogTrigger>
 
-      <DialogContent className="max-w-lg p-0 overflow-hidden">
+      <DialogContent className="max-w-lg gap-0 overflow-y-auto p-0">
         {/* Header */}
-        <DialogHeader className="px-6 pt-6 pb-4 border-b border-border bg-muted/30">
+        <DialogHeader className="sticky top-0 z-10 border-b border-border bg-background px-4 pb-3 pt-4 sm:px-6 sm:pb-4 sm:pt-6">
           <DialogTitle className="flex items-center gap-3 text-lg">
             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
               <CalendarCheck className="w-5 h-5 text-primary" />
@@ -212,7 +212,7 @@ export function CreateCalendarEventModal({ trigger }: CreateCalendarEventModalPr
 
         {showResult && resultData ? (
           // Success Result View
-          <div className="p-6 space-y-4">
+            <div className="space-y-4 p-4 sm:p-6">
             <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 p-6 rounded-xl text-center border border-green-200/50 dark:border-green-800/50">
               <div className="w-14 h-14 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center mx-auto mb-4 shadow-sm">
                 <Check className="w-7 h-7 text-green-600 dark:text-green-400" />
@@ -257,7 +257,7 @@ export function CreateCalendarEventModal({ trigger }: CreateCalendarEventModalPr
           // Form View with Tabs
           <div>
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "create" | "sync")} className="w-full">
-              <div className="px-6 pt-4">
+              <div className="px-4 pt-3 sm:px-6 sm:pt-4">
                 <TabsList className="w-full grid grid-cols-2 h-10">
                   <TabsTrigger value="create" className="gap-2">
                     <Calendar className="w-4 h-4" />
@@ -270,7 +270,7 @@ export function CreateCalendarEventModal({ trigger }: CreateCalendarEventModalPr
                 </TabsList>
               </div>
 
-              <TabsContent value="create" className="p-6 pt-4 space-y-4 mt-0">
+              <TabsContent value="create" className="mt-0 space-y-4 p-4 pt-3 sm:p-6 sm:pt-4">
                 {/* Pre-fill button */}
                 {(customer.apEmail || customer.vorname || customer.firma) && (
                   <Button

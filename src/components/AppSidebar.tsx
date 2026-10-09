@@ -154,12 +154,12 @@ export function AppSidebar() {
     }
   }, [location.pathname]);
 
-  // Auto-collapse sidebar when POS mode is active
+  // POS: Seitenleiste nur im Kalkulator einklappen, sonst mit Beschriftung
   useEffect(() => {
-    if (isPOS) {
+    if (isPOS && location.pathname.startsWith("/calculator")) {
       setOpen(false);
     }
-  }, [isPOS, setOpen]);
+  }, [isPOS, setOpen, location.pathname]);
 
   const { profile: workspaceProfile } = useWorkspaceProfile();
   useEffect(() => { applyPalette(workspaceProfile.paletteId); }, [workspaceProfile.paletteId]);

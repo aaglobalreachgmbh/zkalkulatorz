@@ -14,6 +14,7 @@ import {
 import { useOfferBasket } from "../../contexts/OfferBasketContext";
 import { formatMonthlyPrice } from "../../lib/formatters";
 import { cn } from "@/lib/utils";
+import { OfferExtrasSection } from "./OfferExtrasSection";
 
 export function OfferBasketPanel() {
   const { items, itemCount, removeItem, openModal } = useOfferBasket();
@@ -72,6 +73,8 @@ export function OfferBasketPanel() {
             )}
           </CollapsibleContent>
         </Collapsible>
+
+        <OfferExtrasSection />
 
         <Button
           onClick={openModal}

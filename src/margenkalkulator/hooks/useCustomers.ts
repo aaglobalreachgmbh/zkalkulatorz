@@ -4,6 +4,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useActivityTracker } from "@/hooks/useActivityTracker";
 import { useIdentity } from "@/contexts/IdentityContext";
 import { toast } from "sonner";
+import { useDemoMode } from "@/hooks/useDemoMode";
+import { useDemoWorkspace } from "@/margenkalkulator/workspace/demoWorkspace";
 
 export interface Customer {
   id: string;
@@ -68,6 +70,8 @@ export interface CustomerInput {
 export function useCustomers() {
   const { user } = useAuth();
   const { identity } = useIdentity();
+  const { enabled: demoEnabled } = useDemoMode();
+  const { state: demo, update: updateDemo } = useDemoWorkspace(user?.id);
   const queryClient = useQueryClient();
   const { trackCustomerCreated, trackCustomerUpdated, trackCustomerDeleted } = useActivityTracker();
 
@@ -83,11 +87,28 @@ export function useCustomers() {
       if (error) throw error;
       return data as Customer[];
     },
-    enabled: !!user,
+    enabled: !!user && !demoEnabled,
   });
 
   const createCustomer = useMutation({
     mutationFn: async (input: CustomerInput) => {
+      if (demoEnabled) {
+        const now = new Date().toISOString();
+        const customer: Customer = {
+          id: `demo-customer-${Date.now()}`, user_id: "demo-user", company_name: input.company_name,
+          contact_name: input.contact_name || null, email: input.email || null, phone: input.phone || null,
+          industry: input.industry || null, notes: input.notes || null, anrede: input.anrede || null,
+          vorname: input.vorname || null, nachname: input.nachname || null, strasse: input.strasse || null,
+          hausnummer: input.hausnummer || null, plz: input.plz || null, ort: input.ort || null,
+          festnetz: input.festnetz || null, handy_nr: input.handy_nr || null, geburtstag: input.geburtstag || null,
+          customer_status: input.customer_status || "aktiv", vip_kunde: input.vip_kunde ?? false,
+          marketing_sms: input.marketing_sms ?? false, marketing_email: input.marketing_email ?? false,
+          marketing_brief: input.marketing_brief ?? false, won_at: null, external_id: null,
+          external_refs: null, mocca_customer_number: null, created_at: now, updated_at: now,
+        };
+        updateDemo({ ...demo, customers: [customer, ...demo.customers] });
+        return customer;
+      }
       if (!user) {
         console.warn("[useCustomers] Not authenticated");
         toast.error("Bitte zuerst einloggen");
@@ -142,6 +163,13 @@ export function useCustomers() {
 
   const updateCustomer = useMutation({
     mutationFn: async ({ id, ...input }: CustomerInput & { id: string }) => {
+      if (demoEnabled) {
+        const current = demo.customers.find((customer) => customer.id === id);
+        if (!current) return null;
+        const updated: Customer = { ...current, ...input, updated_at: new Date().toISOString() };
+        updateDemo({ ...demo, customers: demo.customers.map((customer) => customer.id === id ? updated : customer) });
+        return updated;
+      }
       const { data, error } = await supabase
         .from("customers")
         .update({
@@ -178,7 +206,7 @@ export function useCustomers() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["customers"] });
       toast.success("Kunde aktualisiert");
-      trackCustomerUpdated(data.id, data.company_name);
+      if (data) trackCustomerUpdated(data.id, data.company_name);
     },
     onError: (error) => {
       toast.error("Fehler beim Aktualisieren: " + error.message);
@@ -187,6 +215,14 @@ export function useCustomers() {
 
   const deleteCustomer = useMutation({
     mutationFn: async (customer: { id: string; company_name: string }) => {
+      if (demoEnabled) {
+        updateDemo({
+          customers: demo.customers.filter((item) => item.id !== customer.id),
+          offers: demo.offers.filter((offer) => offer.customer_id !== customer.id),
+          contracts: demo.contracts.filter((contract) => contract.customer_id !== customer.id),
+        });
+        return customer;
+      }
       const { error } = await supabase.from("customers").delete().eq("id", customer.id);
       if (error) throw error;
       return customer;
@@ -202,8 +238,8 @@ export function useCustomers() {
   });
 
   return {
-    customers: customersQuery.data ?? [],
-    isLoading: customersQuery.isLoading,
+    customers: demoEnabled ? demo.customers : customersQuery.data ?? [],
+    isLoading: demoEnabled ? false : customersQuery.isLoading,
     error: customersQuery.error,
     createCustomer,
     updateCustomer,

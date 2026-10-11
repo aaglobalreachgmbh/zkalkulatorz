@@ -2,6 +2,7 @@ import { createDefaultOptionState } from "@/margenkalkulator/engine";
 import type { Customer } from "@/margenkalkulator/hooks/useCustomers";
 import type { CustomerContract, ContractWithCustomer } from "@/margenkalkulator/hooks/useCustomerContracts";
 import type { CloudOffer } from "@/margenkalkulator/storage/types";
+import { useEffect, useState } from "react";
 import {
   DEMO_COMPANY_CONTRACTS,
   DEMO_COMPANY_CUSTOMERS,
@@ -156,4 +157,17 @@ export function resetDemoWorkspace(userId?: string) {
 export function subscribeDemoWorkspace(listener: () => void) {
   window.addEventListener(EVENT, listener);
   return () => window.removeEventListener(EVENT, listener);
+}
+
+export function useDemoWorkspace(userId?: string) {
+  const [state, setState] = useState<DemoWorkspaceState>(() => readDemoWorkspace(userId));
+
+  useEffect(() => {
+    const sync = () => setState(readDemoWorkspace(userId));
+    sync();
+    return subscribeDemoWorkspace(sync);
+  }, [userId]);
+
+  const update = (next: DemoWorkspaceState) => writeDemoWorkspace(next, userId);
+  return { state, update };
 }

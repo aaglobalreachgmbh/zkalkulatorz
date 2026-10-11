@@ -10,6 +10,8 @@ import { useIdentity } from "@/contexts/IdentityContext";
 import type { OfferOptionState } from "../engine/types";
 import type { CloudOffer, OfferPreview } from "../storage/types";
 import { toast } from "sonner";
+import { useDemoMode } from "@/hooks/useDemoMode";
+import { useDemoWorkspace } from "@/margenkalkulator/workspace/demoWorkspace";
 
 // Re-export CloudOffer type
 export type { CloudOffer };
@@ -34,6 +36,8 @@ function createPreview(config: OfferOptionState, avgMonthly: number): OfferPrevi
 export function useCloudOffers() {
   const { user } = useAuth();
   const { identity } = useIdentity();
+  const { enabled: demoEnabled } = useDemoMode();
+  const { state: demo, update: updateDemo } = useDemoWorkspace(user?.id);
   const queryClient = useQueryClient();
   const { trackOfferCreated, trackOfferDeleted, trackOfferRenamed } = useActivityTracker();
 
@@ -72,7 +76,7 @@ export function useCloudOffers() {
         status: ((row as any).status as "offen" | "gesendet" | "angenommen" | "abgelehnt") ?? "offen",
       }));
     },
-    enabled: !!user,
+    enabled: !!user && !demoEnabled,
     staleTime: 1000 * 60,
   });
 
@@ -91,6 +95,17 @@ export function useCloudOffers() {
       customerId?: string | null;
       datasetVersionId?: string | null;
     }): Promise<CloudOffer> => {
+      if (demoEnabled) {
+        const now = new Date().toISOString();
+        const offer: CloudOffer = {
+          id: `demo-offer-${Date.now()}`, user_id: "demo-user", name, config,
+          preview: createPreview(config, avgMonthly), is_draft: false, created_at: now, updated_at: now,
+          customer_id: customerId || null, team_id: null, visibility: "private",
+          dataset_version_id: datasetVersionId || null, status: "offen",
+        };
+        updateDemo({ ...demo, offers: [offer, ...demo.offers] });
+        return offer;
+      }
       if (!user) {
         console.warn("[useCloudOffers] Not authenticated");
         toast.error("Bitte zuerst einloggen");
@@ -156,6 +171,10 @@ export function useCloudOffers() {
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string): Promise<void> => {
+      if (demoEnabled) {
+        updateDemo({ ...demo, offers: demo.offers.filter((offer) => offer.id !== id) });
+        return;
+      }
       const { error } = await supabase
         .from("saved_offers")
         .delete()
@@ -186,6 +205,10 @@ export function useCloudOffers() {
   // Rename mutation
   const renameMutation = useMutation({
     mutationFn: async ({ id, name }: { id: string; name: string }): Promise<void> => {
+      if (demoEnabled) {
+        updateDemo({ ...demo, offers: demo.offers.map((offer) => offer.id === id ? { ...offer, name, updated_at: new Date().toISOString() } : offer) });
+        return;
+      }
       const { error } = await supabase
         .from("saved_offers")
         .update({ name })
@@ -219,8 +242,8 @@ export function useCloudOffers() {
   };
 
   return {
-    offers,
-    isLoading,
+    offers: demoEnabled ? demo.offers : offers,
+    isLoading: demoEnabled ? false : isLoading,
     error,
     refetch,
     isAuthenticated: !!user,

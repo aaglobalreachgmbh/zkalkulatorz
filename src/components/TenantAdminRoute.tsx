@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Loader2, ShieldAlert, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useDemoAccess } from "@/hooks/useDemoAccess";
+import { DemoAdminBoundary } from "@/components/demo/DemoAdminBoundary";
 
 interface TenantAdminRouteProps {
   children: React.ReactNode;
@@ -58,15 +59,7 @@ export function TenantAdminRoute({ children }: TenantAdminRouteProps) {
   }, [authLoading, adminLoading, sessionStable]);
 
   if (demoAccess) {
-    return (
-      <>
-        <div className="m-3 flex items-center gap-2 rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-sm text-foreground">
-          <ShieldAlert className="h-4 w-4 text-primary" />
-          <span><strong>Shop-Verwaltung in der Demo.</strong> Ansichten sind vollständig sichtbar; echte Änderungen bleiben gesperrt.</span>
-        </div>
-        {children}
-      </>
-    );
+    return <DemoAdminBoundary scope="shop">{children}</DemoAdminBoundary>;
   }
 
   // 1. FIRST: Wait until auth is COMPLETELY loaded AND session is stable

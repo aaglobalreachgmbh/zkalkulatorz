@@ -47,9 +47,9 @@ export function CalculatorShell({
       {/* Content Grid */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_340px] overflow-hidden">
         {/* Left: Scrollable Content Area */}
-        <div className="h-full overflow-y-auto bg-background p-3 lg:p-6 pb-28 lg:pb-6">
+        <main className="h-full overflow-y-auto bg-background p-3 lg:p-6 pb-28 lg:pb-6">
           <div className="max-w-4xl mx-auto">{children}</div>
-        </div>
+        </main>
 
         {/* Right: Fixed Sidebar */}
         <aside className="hidden lg:flex flex-col h-full border-l border-border bg-background overflow-hidden">

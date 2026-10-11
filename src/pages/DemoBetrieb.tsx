@@ -58,7 +58,7 @@ export default function DemoBetrieb() {
         </div>
       )}
 
-      <div className="grid gap-3 grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
         {[
           ["Kunden", String(stats.customers)],
           ["Angebote", String(stats.offers)],
@@ -66,7 +66,7 @@ export default function DemoBetrieb() {
           ["Abschlussquote", `${stats.quote} %`],
           [showDealerEconomics ? "Marge (angenommen)" : "Fällige VVL", showDealerEconomics ? eur(stats.margin) : String(DEMO_DUE_VVL.length)],
         ].map(([l, v]) => (
-          <Card key={l}><CardContent className="p-4"><div className="text-xs text-muted-foreground">{l}</div><div className="text-xl font-semibold tabular-nums">{v}</div></CardContent></Card>
+          <Card key={l} className="min-w-0 shadow-none"><CardContent className="p-4"><div className="break-words text-xs leading-4 text-muted-foreground">{l}</div><div className="mt-1 break-words text-xl font-semibold tabular-nums">{v}</div></CardContent></Card>
         ))}
       </div>
 

@@ -137,7 +137,7 @@ export function MainLayout({ children }: MainLayoutProps) {
               
               <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size={isPOSMode ? "icon" : "sm"} className="gap-2">
+                <Button variant="ghost" size={isPOSMode ? "icon" : "sm"} className="gap-2" aria-label="Benutzermenü öffnen">
                   <User className="h-4 w-4" />
                   {!isPOSMode && (
                     <span className="hidden sm:inline">{user?.email?.split("@")[0]}</span>

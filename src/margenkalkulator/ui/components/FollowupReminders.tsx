@@ -62,10 +62,10 @@ export function FollowupReminders({ compact = false }: FollowupRemindersProps) {
           >
             <Bell className="w-5 h-5" />
             {followups.length > 0 && (
-              <span className={`absolute -top-1 -right-1 w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center text-white ${
+              <span className={`absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold text-primary-foreground ${
                 urgentCount > 0 ? "bg-red-500" : "bg-amber-500"
               }`}>
-                {followups.length}
+                {followups.length > 99 ? "99+" : followups.length}
               </span>
             )}
           </Button>
@@ -214,11 +214,11 @@ export function FollowupReminders({ compact = false }: FollowupRemindersProps) {
                     <p className="text-xs text-muted-foreground mt-0.5">{offer.customerName}</p>
                   )}
                 </div>
-                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-1 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
                   <Button aria-label="Anzeigen"
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8"
+                    className="h-11 w-11 sm:h-8 sm:w-8"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleViewOffer(offer.id);
@@ -229,7 +229,7 @@ export function FollowupReminders({ compact = false }: FollowupRemindersProps) {
                   <Button aria-label="Schließen"
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8"
+                    className="h-11 w-11 sm:h-8 sm:w-8"
                     onClick={(e) => handleDismiss(offer.id, e)}
                   >
                     <X className="w-4 h-4" />

@@ -50,7 +50,7 @@ export function HistoryDropdown({ onLoadHistory }: HistoryDropdownProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
+        <Button aria-label="Wird geladen" variant="ghost" size="icon" className="relative">
           {isLoading ? (
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : (

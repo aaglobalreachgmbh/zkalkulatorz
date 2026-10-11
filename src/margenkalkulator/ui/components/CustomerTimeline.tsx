@@ -261,7 +261,7 @@ export function CustomerTimeline({
 
                   {/* Actions */}
                   {(item.type === "offer" || item.type === "contract") && (
-                    <Button 
+                    <Button aria-label="Extern öffnen" 
                       variant="ghost" 
                       size="icon"
                       onClick={() => handleItemClick(item)}

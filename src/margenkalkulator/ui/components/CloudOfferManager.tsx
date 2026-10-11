@@ -269,7 +269,7 @@ export function CloudOfferManager({
                             )}
                           </div>
                         </button>
-                        <Button
+                        <Button aria-label="Löschen"
                           variant="ghost"
                           size="icon"
                           onClick={(e) => {

@@ -126,7 +126,7 @@ function PageHeader() {
             className="pl-9 w-48 bg-background"
           />
         </div>
-        <Button variant="ghost" size="icon" className="relative">
+        <Button aria-label="Benachrichtigungen" variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" />
           <span className="absolute top-1 right-1 h-2 w-2 bg-primary rounded-full" />
         </Button>
@@ -260,7 +260,7 @@ function BundleCard({ bundle, badgeInfo, onClick, onDelete, showDelete }: Bundle
               </Badge>
             )}
             {showDelete && onDelete && (
-              <Button
+              <Button aria-label="Löschen"
                 variant="ghost"
                 size="icon"
                 className="h-7 w-7 text-muted-foreground hover:text-destructive"

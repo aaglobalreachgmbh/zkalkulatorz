@@ -74,7 +74,7 @@ export function SetupStepTeam({ onComplete, isCompleted }: SetupStepTeamProps) {
           <code className="flex-1 px-3 py-2 bg-muted rounded text-sm truncate">
             {window.location.origin}/auth
           </code>
-          <Button variant="outline" size="icon" onClick={handleCopyInviteInfo}>
+          <Button aria-label="Kopieren" variant="outline" size="icon" onClick={handleCopyInviteInfo}>
             <Copy className="w-4 h-4" />
           </Button>
         </div>

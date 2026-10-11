@@ -191,7 +191,7 @@ export default function GDPRDashboard() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" asChild>
+            <Button aria-label="Zurück" variant="ghost" size="icon" asChild>
               <Link to="/security/status">
                 <ArrowLeft className="h-5 w-5" />
               </Link>
@@ -303,7 +303,7 @@ export default function GDPRDashboard() {
                         className="pl-9 w-64"
                       />
                     </div>
-                    <Button
+                    <Button aria-label="Aktualisieren"
                       variant="outline"
                       size="icon"
                       onClick={() => {

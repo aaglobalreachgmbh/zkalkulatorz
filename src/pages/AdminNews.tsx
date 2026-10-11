@@ -305,7 +305,7 @@ export default function AdminNews() {
                       <NewsCard news={item} compact />
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <Button
+                      <Button aria-label="Anheften"
                         variant="ghost"
                         size="icon"
                         onClick={() => togglePinned(item.id, !item.is_pinned)}
@@ -313,14 +313,14 @@ export default function AdminNews() {
                       >
                         <Pin className="h-4 w-4" />
                       </Button>
-                      <Button
+                      <Button aria-label="Bearbeiten"
                         variant="ghost"
                         size="icon"
                         onClick={() => handleEditNews(item)}
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button
+                      <Button aria-label="Löschen"
                         variant="ghost"
                         size="icon"
                         onClick={() => handleDeleteNews(item.id)}

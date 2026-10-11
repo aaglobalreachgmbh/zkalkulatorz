@@ -171,7 +171,7 @@ export function TeamMemberCard({
         {canManage && !member.isCurrentUser && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
+              <Button aria-label="Weitere Aktionen"
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"

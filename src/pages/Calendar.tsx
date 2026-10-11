@@ -148,13 +148,13 @@ export default function CalendarPage() {
             <CardHeader className="flex-row items-center justify-between space-y-0 pb-4">
               <CardTitle>{format(currentMonth, "MMMM yyyy", { locale: de })}</CardTitle>
               <div className="flex gap-2">
-                <Button variant="outline" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
+                <Button aria-label="Zurück" variant="outline" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => setCurrentMonth(new Date())}>
                   Heute
                 </Button>
-                <Button variant="outline" size="icon" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
+                <Button aria-label="Weiter" variant="outline" size="icon" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
                   <ChevronRight className="w-4 h-4" />
                 </Button>
               </div>

@@ -53,7 +53,7 @@ export function DashboardWidgetRenderer({
       {isEditMode && (
         <div className="absolute -top-2 -right-2 z-10 flex gap-1">
           {/* Drag Handle */}
-          <Button
+          <Button aria-label="Verschieben"
             type="button"
             variant="outline"
             size="icon"
@@ -70,7 +70,7 @@ export function DashboardWidgetRenderer({
           </Button>
           
           {/* Remove Button */}
-          <Button
+          <Button aria-label="Schließen"
             type="button"
             variant="outline"
             size="icon"

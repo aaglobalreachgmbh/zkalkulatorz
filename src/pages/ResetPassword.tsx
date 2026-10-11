@@ -199,7 +199,7 @@ export default function ResetPassword() {
                   disabled={isLoading}
                   className={errors.password ? "border-destructive" : ""}
                 />
-                <Button
+                <Button aria-label="Ausblenden"
                   type="button"
                   variant="ghost"
                   size="icon"

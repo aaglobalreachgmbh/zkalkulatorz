@@ -253,7 +253,7 @@ export default function Admin() {
                         <p className="font-medium">{dept.name}</p>
                         <p className="text-sm text-muted-foreground">{dept.description || dept.id}</p>
                       </div>
-                      <Button
+                      <Button aria-label="Löschen"
                         variant="ghost"
                         size="icon"
                         onClick={() => handleDeleteDepartment(dept.id)}

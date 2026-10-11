@@ -186,7 +186,7 @@ export function MFASetup() {
                     <code className="flex-1 p-2 bg-background rounded text-xs font-mono break-all">
                       {enrollmentData.secret}
                     </code>
-                    <Button
+                    <Button aria-label="Kopieren"
                       variant="outline"
                       size="icon"
                       onClick={() => {

@@ -89,13 +89,13 @@ export function TimeTrackingOverview() {
               </Button>
             )}
             <div className="flex items-center gap-1">
-              <Button variant="ghost" size="icon" onClick={goToPrevWeek}>
+              <Button aria-label="Zurück" variant="ghost" size="icon" onClick={goToPrevWeek}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               <span className="font-medium min-w-[100px] text-center">
                 KW {weekNumber}
               </span>
-              <Button variant="ghost" size="icon" onClick={goToNextWeek} disabled={weekOffset >= 0}>
+              <Button aria-label="Weiter" variant="ghost" size="icon" onClick={goToNextWeek} disabled={weekOffset >= 0}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
@@ -229,7 +229,7 @@ export function TimeTrackingOverview() {
 
                 {/* Edit Button */}
                 {status.entries.length > 0 && !status.hasActiveEntry && (
-                  <Button variant="ghost" size="icon" className="shrink-0">
+                  <Button aria-label="Bearbeiten" variant="ghost" size="icon" className="shrink-0">
                     <Edit className="h-4 w-4" />
                   </Button>
                 )}

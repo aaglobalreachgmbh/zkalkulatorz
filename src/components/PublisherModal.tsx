@@ -28,7 +28,7 @@ export function PublisherModal({ trigger }: PublisherModalProps) {
     <Dialog>
       <DialogTrigger asChild>
         {(trigger as any) ?? (
-          <Button variant="ghost" size="icon" className="h-8 w-8">
+          <Button aria-label="Information" variant="ghost" size="icon" className="h-8 w-8">
             <Info className="h-4 w-4" />
             <span className="sr-only">Über diese App</span>
           </Button>

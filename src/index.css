@@ -168,6 +168,14 @@
     font-family: 'Manrope Variable', system-ui, -apple-system, sans-serif;
     /* Financial Standard: Tabular Nums & Stylistic Sets */
     font-feature-settings: "cv11", "ss01";
+    font-variant-numeric: tabular-nums;
+    text-rendering: optimizeLegibility;
+  }
+
+  @media (max-width: 767px) {
+    button, [role="button"], a[href] {
+      touch-action: manipulation;
+    }
   }
 
   h1, h2, h3, h4, h5, h6 {

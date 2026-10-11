@@ -34,7 +34,7 @@ import { useDemoMode } from "@/hooks/useDemoMode";
  * 
  * IMPORTANT: This page does NOT use MainLayout.
  * It implements the Phase 12 "Zero-Scroll Contract":
- * - h-screen enforced (no body scroll on 1366x768)
+ * - h-dvh enforced (no body scroll on 1366x768)
  * - Internal scroll only within CalculatorShell panels
  * - CTA always visible without scrolling
  */
@@ -58,9 +58,9 @@ const Index = () => {
 
   return (
     <SidebarProvider>
-      {/* PHASE 12: h-screen container - NO overflow on body */}
+      {/* PHASE 12: h-dvh container - NO overflow on body */}
       <div 
-        className="h-screen flex w-full overflow-hidden" 
+        className="h-dvh flex w-full overflow-hidden" 
         style={brandingStyle}
       >
         <AppSidebar />

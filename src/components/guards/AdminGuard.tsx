@@ -25,7 +25,7 @@ export function AdminGuard({ children }: AdminGuardProps) {
 
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center h-screen bg-slate-50 dark:bg-slate-900">
+            <div className="flex items-center justify-center h-dvh bg-slate-50 dark:bg-slate-900">
                 <div className="flex flex-col items-center gap-4">
                     <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
                     <p className="text-sm text-slate-500">Überprüfe Berechtigungen...</p>
@@ -36,7 +36,7 @@ export function AdminGuard({ children }: AdminGuardProps) {
 
     if (error) {
         return (
-            <div className="flex items-center justify-center h-screen bg-rose-50 dark:bg-rose-950">
+            <div className="flex items-center justify-center h-dvh bg-rose-50 dark:bg-rose-950">
                 <div className="text-center p-6 bg-white dark:bg-slate-900 rounded-lg shadow-lg border border-rose-200 dark:border-rose-900">
                     <h3 className="text-lg font-bold text-rose-600 dark:text-rose-400">Authentifizierungsfehler</h3>
                     <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">

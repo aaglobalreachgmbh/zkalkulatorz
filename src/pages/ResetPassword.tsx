@@ -109,7 +109,7 @@ export default function ResetPassword() {
 
   if (checkingSession) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/30">
+      <div className="min-h-dvh flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/30">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
@@ -117,7 +117,7 @@ export default function ResetPassword() {
 
   if (!hasSession) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/30 p-4">
+      <div className="min-h-dvh flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/30 p-4">
         <Card className="w-full max-w-md shadow-elevated">
           <CardHeader className="text-center space-y-4">
             <div className="mx-auto w-16 h-16 rounded-2xl bg-destructive/10 flex items-center justify-center">
@@ -146,7 +146,7 @@ export default function ResetPassword() {
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/30 p-4">
+      <div className="min-h-dvh flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/30 p-4">
         <Card className="w-full max-w-md shadow-elevated">
           <CardHeader className="text-center space-y-4">
             <div className="mx-auto w-16 h-16 rounded-2xl bg-green-500/10 flex items-center justify-center">
@@ -169,7 +169,7 @@ export default function ResetPassword() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/30 p-4">
+    <div className="min-h-dvh flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/30 p-4">
       <Card className="w-full max-w-md shadow-elevated animate-fade-in">
         <CardHeader className="text-center space-y-4">
           <div className="mx-auto w-16 h-16 rounded-2xl bg-primary flex items-center justify-center shadow-lg">

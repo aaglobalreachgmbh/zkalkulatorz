@@ -41,7 +41,7 @@ export function AdminRoute({ children }: AdminRouteProps) {
   // Show loading while checking auth or MFA
   if (authLoading || isCheckingMFA) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-dvh flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
           <p className="text-muted-foreground">Berechtigungen werden geprüft...</p>
@@ -56,7 +56,7 @@ export function AdminRoute({ children }: AdminRouteProps) {
     // Guest user - check if they can access
     if (!canAccessAdmin) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="min-h-dvh flex items-center justify-center bg-background">
           <div className="flex flex-col items-center gap-6 text-center p-8">
             <div className="p-4 rounded-full bg-destructive/10">
               <ShieldX className="w-12 h-12 text-destructive" />
@@ -87,7 +87,7 @@ export function AdminRoute({ children }: AdminRouteProps) {
   // Check role-based access
   if (!canAccessAdmin) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-dvh flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-6 text-center p-8">
           <div className="p-4 rounded-full bg-destructive/10">
             <ShieldX className="w-12 h-12 text-destructive" />

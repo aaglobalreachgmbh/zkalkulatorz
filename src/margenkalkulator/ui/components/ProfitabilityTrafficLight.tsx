@@ -6,6 +6,7 @@
 import { cn } from "@/lib/utils";
 import type { ProfitabilityStatus } from "../../engine/marginWaterfallEngine";
 import { formatCurrency } from "../../lib/formatters";
+import { CircleCheck, CircleAlert, CircleX } from "lucide-react";
 
 interface ProfitabilityTrafficLightProps {
   /** Gesamte Netto-Marge */
@@ -29,9 +30,9 @@ const STATUS_CONFIG = {
     bgLight: "bg-success/10",
     borderColor: "border-success/30",
     label: "POSITIV",
-    emoji: "🟢",
+    icon: CircleCheck,
     statusText: "Sehr gut!",
-    actionText: "Verkaufen ✓",
+    actionText: "Verkaufen",
   },
   warning: {
     color: "bg-warning",
@@ -39,9 +40,9 @@ const STATUS_CONFIG = {
     bgLight: "bg-warning/10",
     borderColor: "border-warning/30",
     label: "WARNING",
-    emoji: "🟡",
+    icon: CircleAlert,
     statusText: "Knapp, aber ok",
-    actionText: "Optimieren ⚠️",
+    actionText: "Optimieren",
   },
   critical: {
     color: "bg-destructive",
@@ -49,7 +50,7 @@ const STATUS_CONFIG = {
     bgLight: "bg-destructive/10",
     borderColor: "border-destructive/30",
     label: "KRITISCH",
-    emoji: "🔴",
+    icon: CircleX,
     statusText: "Verlust!",
     actionText: "Nicht verkaufen",
   },
@@ -64,6 +65,7 @@ export function ProfitabilityTrafficLight({
   compact = false,
 }: ProfitabilityTrafficLightProps) {
   const config = STATUS_CONFIG[profitabilityStatus];
+  const StatusIcon = config.icon;
   const marginPerContract = contractCount > 0 ? marginTotal / contractCount : 0;
 
   if (compact) {
@@ -75,7 +77,7 @@ export function ProfitabilityTrafficLight({
           config.borderColor
         )}
       >
-        <span className="text-lg">{config.emoji}</span>
+        <StatusIcon className={cn("h-5 w-5", config.textColor)} />
         <div className="flex-1 min-w-0">
           <span className={cn("font-semibold text-sm", config.textColor)}>
             {config.label}
@@ -106,7 +108,7 @@ export function ProfitabilityTrafficLight({
 
       {/* Main Status */}
       <div className="text-center mb-4">
-        <div className="text-4xl mb-2">{config.emoji}</div>
+        <StatusIcon className={cn("mx-auto mb-2 h-9 w-9", config.textColor)} />
         <div className={cn("text-xl font-bold", config.textColor)}>
           {config.label}
         </div>

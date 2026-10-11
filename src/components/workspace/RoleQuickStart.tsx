@@ -1,10 +1,8 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Search, Settings2 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { ArrowRight, Search, Settings2, Calculator, Users, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useWorkspaceProfile } from "@/hooks/useWorkspaceProfile";
 import { USER_TYPES } from "@/margenkalkulator/workspace/profiles";
-import { cn } from "@/lib/utils";
 
 /** Schnellstart je Nutzertyp auf der Startseite. */
 export function RoleQuickStart() {
@@ -37,44 +35,34 @@ export function RoleQuickStart() {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-card px-3 py-2.5 sm:px-4 sm:py-3">
-        <div className="flex items-center gap-3">
-          <span className="hidden h-9 w-9 items-center justify-center rounded-md bg-primary/10 text-primary min-[390px]:flex">
-            <current.icon className="h-4 w-4" />
-          </span>
-          <div>
-            <div className="text-xs font-semibold uppercase text-muted-foreground">Arbeitsmodus</div>
-            <div className="text-sm font-semibold text-foreground">{current.label}</div>
-          </div>
+    <div className="space-y-4">
+      <Link to="/calculator" className="group flex min-h-28 items-center justify-between rounded-lg bg-primary px-5 py-5 text-primary-foreground shadow-sm transition-shadow hover:shadow-md sm:px-6">
+        <div className="flex items-center gap-4">
+          <span className="flex h-11 w-11 items-center justify-center rounded-md bg-primary-foreground/10"><Calculator className="h-5 w-5" /></span>
+          <div><h1 className="text-xl font-bold sm:text-2xl">Neues Angebot</h1><p className="text-sm text-primary-foreground/75">Gerät, Tarif und Kundenvorteil in einem Vorgang.</p></div>
         </div>
-        <Button asChild variant="ghost" size="sm" className="gap-1 px-2">
-          <Link to="/settings/workspace"><Settings2 className="h-4 w-4" /><span className="hidden min-[390px]:inline">Anpassen</span></Link>
-        </Button>
-      </div>
-      <div className="space-y-1 text-left sm:text-center">
-        <h1 className="text-xl font-bold text-foreground sm:text-2xl md:text-3xl">Wie möchten Sie <span className="text-primary">arbeiten?</span></h1>
-        <p className="hidden text-sm text-muted-foreground min-[390px]:block">Direkt in den passenden Vorgang starten.</p>
-      </div>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {[...current.quickActions, { label: "Kundensuche", description: "Bestand öffnen", url: "/customers", icon: Search }].map((a, i) => (
+        <ArrowRight className="h-6 w-6 transition-transform group-hover:translate-x-1" />
+      </Link>
+      <div className="grid gap-2 sm:grid-cols-3">
+        {[
+          { label: "Kunden finden", description: "Bestand und Historie", url: "/customers", icon: Users },
+          { label: "Angebote", description: "Entwürfe und Status", url: "/offers", icon: FileText },
+          ...current.quickActions.filter((action) => action.url !== "/calculator").slice(0, 1).map(action => ({ ...action, icon: Search })),
+        ].map((a) => (
           <Link
             key={`${a.url}-${a.label}`}
             to={a.url}
-            className={cn(
-              "group flex min-h-20 flex-col justify-between rounded-lg border p-3 transition-all duration-150 sm:min-h-28 sm:p-4",
-              i === 0 ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-card hover:border-primary hover:shadow-sm"
-            )}
+            className="group flex min-h-20 items-center gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:border-primary"
           >
-            <div className="flex items-start justify-between font-semibold">
-              {a.label}
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </div>
-            <div className={cn("text-xs mt-1", i === 0 ? "text-primary-foreground/80" : "text-muted-foreground")}>
-              {a.description}
-            </div>
+            <a.icon className="h-4 w-4 text-primary" />
+            <div className="min-w-0 flex-1"><div className="text-sm font-semibold">{a.label}</div><div className="truncate text-xs text-muted-foreground">{a.description}</div></div>
+            <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1" />
           </Link>
         ))}
+      </div>
+      <div className="flex items-center justify-between border-t border-border pt-3">
+        <div className="flex items-center gap-2 text-sm"><current.icon className="h-4 w-4 text-primary" /><span className="font-medium">{current.label}</span><span className="hidden text-muted-foreground sm:inline">Arbeitsplatz</span></div>
+        <Button asChild variant="ghost" size="sm" className="gap-1.5"><Link to="/settings/workspace"><Settings2 className="h-4 w-4" />Anpassen</Link></Button>
       </div>
     </div>
   );

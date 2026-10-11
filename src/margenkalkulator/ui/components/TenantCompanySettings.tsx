@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Building2, CreditCard, UserCheck, Save, Eye } from "lucide-react";
+import { Building2, CreditCard, UserCheck, Save, Eye, Mail, Phone } from "lucide-react";
 import { useTenantCompanySettings, type CompanyInfo, type BillingInfo, type PdfContact } from "@/hooks/useTenantCompanySettings";
 import { cn } from "@/lib/utils";
 
@@ -50,8 +50,8 @@ function PdfPreview({
               {(companyInfo.zip || companyInfo.city) && (
                 <p className="text-muted-foreground">{companyInfo.zip} {companyInfo.city}</p>
               )}
-              {companyInfo.phone && <p className="text-muted-foreground">📞 {companyInfo.phone}</p>}
-              {companyInfo.email && <p className="text-muted-foreground">✉ {companyInfo.email}</p>}
+              {companyInfo.phone && <p className="flex items-center gap-1.5 text-muted-foreground"><Phone className="h-3 w-3" />{companyInfo.phone}</p>}
+              {companyInfo.email && <p className="flex items-center gap-1.5 text-muted-foreground"><Mail className="h-3 w-3" />{companyInfo.email}</p>}
             </div>
           </div>
         )}
@@ -63,8 +63,8 @@ function PdfPreview({
             <div className="text-sm">
               <p className="font-medium">{pdfContact.name || "Name"}</p>
               {pdfContact.position && <p className="text-muted-foreground">{pdfContact.position}</p>}
-              {pdfContact.email && <p className="text-muted-foreground">✉ {pdfContact.email}</p>}
-              {pdfContact.phone && <p className="text-muted-foreground">📞 {pdfContact.phone}</p>}
+              {pdfContact.email && <p className="flex items-center gap-1.5 text-muted-foreground"><Mail className="h-3 w-3" />{pdfContact.email}</p>}
+              {pdfContact.phone && <p className="flex items-center gap-1.5 text-muted-foreground"><Phone className="h-3 w-3" />{pdfContact.phone}</p>}
             </div>
           </div>
         )}

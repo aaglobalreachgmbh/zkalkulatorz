@@ -13,13 +13,17 @@ import {
   FileText,
   Inbox,
   ClipboardList,
-  LayoutDashboard,
+  House,
   UserCog,
   HardDrive,
   Sparkles,
   Megaphone,
   Calendar,
   User as UserIcon,
+  CircleDollarSign,
+  Repeat2,
+  Route,
+  ShoppingCart,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -99,6 +103,14 @@ const accountItems = [
   { title: "Demo-Betrieb", url: "/demo-betrieb", icon: Sparkles },
   { title: "Lizenz", url: "/license", icon: Key },
 ];
+
+const demoToolIcons: Record<string, typeof Calculator> = {
+  pos: ShoppingCart,
+  campaigns: Megaphone,
+  provisionCheck: CircleDollarSign,
+  crossSell: Repeat2,
+  fieldDay: Route,
+};
 
 // SHOP-VERWALTUNG - Nur für Tenant-Admins
 const shopAdminItems = [
@@ -196,7 +208,10 @@ export function AppSidebar() {
   const visibleToolItems = filterByPermission(toolItems);
   const visibleAnalyticsItems = filterByPermission(analyticsItems);
   const currentType = USER_TYPES.find((t) => t.id === workspaceProfile.userType);
-  const salesTools = (currentType?.tools ?? []).map((id) => DEMO_TOOLS[id]).filter(Boolean);
+  const salesTools = (currentType?.tools ?? []).map((id) => {
+    const tool = DEMO_TOOLS[id];
+    return tool ? { ...tool, icon: demoToolIcons[id] ?? Sparkles } : null;
+  }).filter((tool): tool is NonNullable<typeof tool> => Boolean(tool));
 
   return (
     <Sidebar collapsible="icon">
@@ -235,7 +250,7 @@ export function AppSidebar() {
         {/* Dashboard - Haupteinstieg */}
         <SidebarGroup>
           <SidebarGroupLabel className="text-muted-foreground/70 uppercase text-[10px] tracking-wider">
-            Startseite
+            Start
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -243,7 +258,7 @@ export function AppSidebar() {
                 <SidebarMenuButton 
                   asChild 
                   isActive={isActive("/")}
-                  tooltip={collapsed ? "Dashboard" : undefined}
+                  tooltip={collapsed ? "Start" : undefined}
                   className={cn(
                     "transition-all",
                     isActive("/") 
@@ -252,8 +267,8 @@ export function AppSidebar() {
                   )}
                 >
                     <NavLink to="/" onClick={closeMobileNavigation}>
-                    <LayoutDashboard className="h-4 w-4" />
-                    <span>Dashboard</span>
+                    <House className="h-4 w-4" />
+                    <span>Start</span>
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -294,42 +309,20 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
 
-        {/* Vertriebs-Werkzeuge je Nutzertyp */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-muted-foreground/70 uppercase text-[10px] tracking-wider">
-            {currentType ? currentType.label : "Arbeitsplatz"}
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {salesTools.map((tool) => (
-                <SidebarMenuItem key={tool.url}>
-                  <SidebarMenuButton asChild isActive={isActive(tool.url)} tooltip={collapsed ? tool.title : undefined}
-                    className={cn("transition-all", isActive(tool.url) ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50")}>
-                    <NavLink to={tool.url} onClick={closeMobileNavigation}>
-                      <Sparkles className="h-4 w-4" />
-                      <span>{tool.title}</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
         {/* Seltenere Werkzeuge bleiben erreichbar, ohne die Hauptnavigation zu überladen. */}
-        {(visibleToolItems.length > 0 || visibleAnalyticsItems.length > 0) && (
+        {(salesTools.length > 0 || visibleToolItems.length > 0 || visibleAnalyticsItems.length > 0) && (
           <SidebarGroup>
             <Collapsible open={toolsOpen} onOpenChange={setToolsOpen}>
               <CollapsibleTrigger className="w-full">
                 <SidebarGroupLabel className="flex cursor-pointer items-center justify-between uppercase text-[10px] text-muted-foreground/70 hover:text-foreground">
-                  <span>Weitere Werkzeuge</span>
+                  <span>Werkzeuge</span>
                   {!collapsed && <ChevronRight className={cn("h-3 w-3 transition-transform", toolsOpen && "rotate-90")} />}
                 </SidebarGroupLabel>
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <SidebarGroupContent>
                   <SidebarMenu>
-                    {[...visibleToolItems, ...visibleAnalyticsItems].map((item) => (
+                    {[...salesTools, ...visibleToolItems, ...visibleAnalyticsItems].filter((item, index, items) => items.findIndex(candidate => candidate.url === item.url) === index).map((item) => (
                       <SidebarMenuItem key={item.title}>
                         <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={collapsed ? item.title : undefined}
                           className={cn("transition-all", isActive(item.url) ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50")}
@@ -355,7 +348,7 @@ export function AppSidebar() {
           <Collapsible open={accountOpen} onOpenChange={setAccountOpen}>
             <CollapsibleTrigger className="w-full">
               <SidebarGroupLabel className="flex items-center justify-between cursor-pointer hover:text-foreground text-muted-foreground/70 uppercase text-[10px] tracking-wider">
-                <span>Mein Konto</span>
+                <span>Einstellungen</span>
                 {!collapsed && (
                   <ChevronRight className={cn(
                     "h-3 w-3 transition-transform",
@@ -444,7 +437,7 @@ export function AppSidebar() {
             <Collapsible open={superAdminOpen} onOpenChange={setSuperAdminOpen}>
               <CollapsibleTrigger className="w-full">
                 <SidebarGroupLabel className="flex items-center justify-between cursor-pointer hover:text-foreground text-primary/70 uppercase text-[10px] tracking-wider font-semibold">
-                  <span>⚡ Allenetze Admin</span>
+                  <span>Allenetze Admin</span>
                   {!collapsed && (
                     <ChevronRight className={cn(
                       "h-3 w-3 transition-transform",

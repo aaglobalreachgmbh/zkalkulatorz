@@ -55,6 +55,16 @@ import { WizardRestoreDialog } from "@/components/WizardRestoreDialog";
 import { cn } from "@/lib/utils";
 import { CalculatorProvider, useCalculator } from "../context/CalculatorContext";
 import { CalculatorShell } from "../layout/CalculatorShell";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // ============================================
 // STEP CONFIGURATION
@@ -95,19 +105,17 @@ function StepIndicator({
               onClick={() => onStepClick(step.id)}
               className={cn(
                 "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
-                isActive && "bg-red-50 text-red-700 border border-red-200",
-                isPast && "text-green-700 hover:bg-green-50",
-                !isActive && !isPast && "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                isActive && "border border-primary/20 bg-primary/10 text-primary",
+                isPast && "text-[hsl(var(--status-success))] hover:bg-[hsl(var(--status-success)/0.08)]",
+                !isActive && !isPast && "text-muted-foreground hover:bg-muted hover:text-foreground"
               )}
             >
               <Icon className="w-4 h-4" />
-              <span className="hidden sm:inline">
-                Step {idx + 1}: {step.label}
-              </span>
+              <span className="hidden sm:inline">{idx + 1}. {step.label}</span>
               <span className="sm:hidden">{idx + 1}</span>
             </button>
             {idx < visibleSteps.length - 1 && (
-              <ChevronRight className="w-4 h-4 text-gray-300 mx-1" />
+              <ChevronRight className="mx-1 h-4 w-4 text-border" />
             )}
           </div>
         );
@@ -168,6 +176,7 @@ function WizardContent() {
   const { isAdmin: isSuperAdmin } = useUserRole();
   const { enabled: option2Enabled, reason: option2Reason } = useFeature("compareOption2");
   const [mobileBasketOpen, setMobileBasketOpen] = useState(false);
+  const [dealerConfirmOpen, setDealerConfirmOpen] = useState(false);
 
   // === DERIVED STATE ===
   const activeState = activeOption === 1 ? option1 : option2;
@@ -347,9 +356,8 @@ function WizardContent() {
   const handleViewModeChange = useCallback(
     (newMode: ViewMode) => {
       if (newMode === "dealer" && viewMode === "customer" && policy.requireConfirmOnDealerSwitch) {
-        if (!window.confirm("Wechsel in den Händler-Modus?")) {
-          return;
-        }
+        setDealerConfirmOpen(true);
+        return;
       }
 
       if (newMode === "customer" && policy.requireCustomerSessionWhenCustomerMode && !customerSession.isActive) {
@@ -438,6 +446,18 @@ function WizardContent() {
       />
       <CreateOfferModal />
       <MobileBasketSheet open={mobileBasketOpen} onOpenChange={setMobileBasketOpen} />
+      <AlertDialog open={dealerConfirmOpen} onOpenChange={setDealerConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Händleransicht öffnen?</AlertDialogTitle>
+            <AlertDialogDescription>In dieser Ansicht werden interne Margen und Provisionen sichtbar. Stellen Sie sicher, dass der Kunde den Bildschirm nicht sehen kann.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { setViewMode("dealer"); setDealerConfirmOpen(false); }}>Händleransicht öffnen</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Onboarding Tour */}
       <OnboardingTour
@@ -573,7 +593,7 @@ function WizardContent() {
               <Button
                 onClick={goToNextStep}
                 size="lg"
-                className="bg-red-600 hover:bg-red-700 text-white gap-2 font-semibold shadow-md px-8"
+                className="gap-2 px-8 font-semibold shadow-md"
               >
                 {nextStepLabel}
                 <ChevronRight className="w-5 h-5" />

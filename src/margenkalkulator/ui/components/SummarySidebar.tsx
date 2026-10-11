@@ -70,36 +70,36 @@ export function SummarySidebar({ onResetForNewTariff, className }: SummarySideba
   return (
     <div className={cn("space-y-3", className)}>
       {/* Box 1: CUSTOMER TOTALS */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
-        <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-4">
+      <div className="rounded-lg border border-border bg-card p-4">
+        <h3 className="mb-4 text-[11px] font-bold uppercase text-muted-foreground">
           Kundenpreis
         </h3>
 
         <div className="space-y-2.5">
           <SidebarRow label="Ø monatlich" value={avgMonthly} />
           <SidebarRow label="Einmalkosten" value={oneTimeCosts} />
-          <div className="border-t border-gray-100 pt-2.5 mt-2.5">
+          <div className="mt-2.5 border-t border-border pt-2.5">
             <SidebarRow label="Gesamt 24 Monate" value={total24M} highlight />
           </div>
         </div>
 
-        <p className="text-[10px] text-gray-400 mt-3 leading-tight">
+        <p className="mt-3 text-[10px] leading-tight text-muted-foreground">
           *inkl. aller Rabatte
         </p>
       </div>
 
       {/* Box 2: DEALER MARGINS */}
       {visibility.showDealerEconomics && (
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="rounded-lg border border-border bg-card p-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-1.5">
-              <Lock className="w-3 h-3 text-gray-400" />
-              <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+              <Lock className="h-3 w-3 text-muted-foreground" />
+              <h3 className="text-[11px] font-bold uppercase text-muted-foreground">
                 Händlermarge
               </h3>
             </div>
-            <span className="text-[9px] font-bold uppercase tracking-wider bg-red-100 text-red-600 px-2 py-0.5 rounded">
-              Internal Only
+            <span className="rounded bg-destructive/10 px-2 py-0.5 text-[9px] font-bold uppercase text-destructive">
+              Nur intern
             </span>
           </div>
 
@@ -112,7 +112,7 @@ export function SummarySidebar({ onResetForNewTariff, className }: SummarySideba
 
       {/* Box 3: PDF Export */}
       {result && (
-        <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-2">
+        <div className="space-y-2 rounded-lg border border-border bg-card p-4">
           <PdfDownloadButton
             option={option}
             result={result}
@@ -120,7 +120,7 @@ export function SummarySidebar({ onResetForNewTariff, className }: SummarySideba
             size="default"
             type="customer"
             viewMode={effectiveViewMode}
-            className="w-full bg-red-600 hover:bg-red-700 text-white gap-2 text-sm font-medium"
+            className="w-full gap-2 text-sm font-medium"
           />
           {visibility.showDealerEconomics && (
             <PdfDownloadButton
@@ -133,20 +133,20 @@ export function SummarySidebar({ onResetForNewTariff, className }: SummarySideba
               className="w-full gap-2 text-sm font-medium"
             />
           )}
-          <p className="text-[10px] text-gray-400 text-center pt-1">
+          <p className="pt-1 text-center text-[10px] text-muted-foreground">
             Hilfe zur Margenberechnung?
           </p>
         </div>
       )}
 
       {/* Box 4: CTA */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
+      <div className="rounded-lg border border-border bg-card p-4">
         {hasTariff ? (
           isAlreadyAdded ? (
             <div className="space-y-2">
-              <div className="flex items-center justify-center gap-2 py-2 px-3 bg-green-50 rounded border border-green-200">
-                <Check className="w-4 h-4 text-green-600" />
-                <span className="text-sm font-medium text-green-700">Im Angebot</span>
+              <div className="flex items-center justify-center gap-2 rounded border border-[hsl(var(--status-success)/0.3)] bg-[hsl(var(--status-success)/0.1)] px-3 py-2">
+                <Check className="h-4 w-4 text-[hsl(var(--status-success))]" />
+                <span className="text-sm font-medium text-[hsl(var(--status-success))]">Im Angebot</span>
                 {items.length > 0 && (
                   <Badge variant="secondary" className="ml-auto text-xs">
                     <ShoppingBag className="w-3 h-3 mr-1" />
@@ -170,7 +170,7 @@ export function SummarySidebar({ onResetForNewTariff, className }: SummarySideba
             <Button
               size="lg"
               onClick={(e) => { e.stopPropagation(); handleAddToOffer(); }}
-              className="w-full bg-red-600 hover:bg-red-700 text-white gap-2 font-semibold"
+              className="w-full gap-2 font-semibold"
             >
               <Plus className="w-5 h-5" />
               Zum Angebot
@@ -194,7 +194,7 @@ export function SummarySidebar({ onResetForNewTariff, className }: SummarySideba
             size="lg"
             variant="default"
             onClick={(e) => { e.stopPropagation(); handleGoToCheckout(); }}
-            className="w-full mt-2 gap-2 bg-green-600 hover:bg-green-700 text-white"
+            className="mt-2 w-full gap-2"
           >
             <FileText className="w-5 h-5" />
             Gesamtangebot ({items.length})
@@ -224,17 +224,17 @@ function SidebarRow({
     <div className="flex items-center justify-between">
       <span className={cn(
         "text-sm",
-        highlight ? "font-semibold text-gray-900" : "text-gray-500"
+        highlight ? "font-semibold text-foreground" : "text-muted-foreground"
       )}>
         {label}
       </span>
       <span
         className={cn(
           "tabular-nums font-medium",
-          highlight ? "text-base font-bold text-red-600" : "text-sm",
-          isZero && !highlight && "text-gray-400",
-          !isZero && !colorize && !highlight && "text-gray-900",
-          colorize && !isZero && (isNegative ? "text-red-600 font-semibold" : "text-green-600 font-semibold")
+          highlight ? "text-base font-bold text-primary" : "text-sm",
+          isZero && !highlight && "text-muted-foreground",
+          !isZero && !colorize && !highlight && "text-foreground",
+          colorize && !isZero && (isNegative ? "font-semibold text-destructive" : "font-semibold text-[hsl(var(--status-success))]")
         )}
       >
         <AnimatedCurrency value={value} decimals={2} />

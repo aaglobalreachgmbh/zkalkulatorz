@@ -67,6 +67,10 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { exportToCSV, OFFER_COLUMNS } from "@/lib/csvExport";
 import type { OfferStatus } from "@/margenkalkulator/storage/types";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function Offers() {
   const navigate = useNavigate();
@@ -80,6 +84,7 @@ export default function Offers() {
   const [selectedOffer, setSelectedOffer] = useState<CloudOffer | null>(null);
   const [newName, setNewName] = useState("");
   const [shareTeamId, setShareTeamId] = useState<string>("");
+  const [offerToDelete, setOfferToDelete] = useState<CloudOffer | null>(null);
 
   const filteredOffers = offers.filter(
     (offer) =>
@@ -88,9 +93,13 @@ export default function Offers() {
   );
 
   const handleDelete = async (offer: CloudOffer) => {
-    if (window.confirm(`Angebot "${offer.name}" wirklich löschen?`)) {
-      await deleteOffer.mutateAsync(offer.id);
-    }
+    setOfferToDelete(offer);
+  };
+
+  const confirmDelete = async () => {
+    if (!offerToDelete) return;
+    await deleteOffer.mutateAsync(offerToDelete.id);
+    setOfferToDelete(null);
   };
 
   const handleRename = async (e: React.FormEvent) => {
@@ -341,6 +350,12 @@ export default function Offers() {
         </Dialog>
 
         {/* Content */}
+        <AlertDialog open={Boolean(offerToDelete)} onOpenChange={(open) => !open && setOfferToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader><AlertDialogTitle>Angebot löschen?</AlertDialogTitle><AlertDialogDescription>„{offerToDelete?.name}“ wird dauerhaft entfernt. Diese Aktion kann nicht rückgängig gemacht werden.</AlertDialogDescription></AlertDialogHeader>
+            <AlertDialogFooter><AlertDialogCancel>Abbrechen</AlertDialogCancel><AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Löschen</AlertDialogAction></AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

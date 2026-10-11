@@ -633,7 +633,6 @@ export default function Customers() {
                 <Building2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>{searchQuery || showVipOnly ? "Keine Kunden gefunden" : "Noch keine Kunden vorhanden"}</p>
                 <p className="text-sm">{searchQuery || showVipOnly ? "Passen Sie Ihre Filter an" : "Erstellen Sie Ihren ersten Kunden"}</p>
-                <DemoEnableHint />
               </div>
             ) : (
               <Table>

@@ -92,7 +92,7 @@ export function PdfPreviewPane({
 
         {/* Zoom Controls */}
         <div className="flex items-center gap-2">
-          <Button
+          <Button aria-label="Verkleinern"
             variant="ghost"
             size="icon"
             onClick={handleZoomOut}
@@ -117,7 +117,7 @@ export function PdfPreviewPane({
             {zoom}%
           </span>
           
-          <Button
+          <Button aria-label="Vergrößern"
             variant="ghost"
             size="icon"
             onClick={handleZoomIn}

@@ -44,7 +44,7 @@ export function VisitQuickActions({ compact = false }: VisitQuickActionsProps) {
     return (
       <Popover>
         <PopoverTrigger asChild>
-          <Button variant="ghost" size="icon" className="relative">
+          <Button aria-label="Standort" variant="ghost" size="icon" className="relative">
             <MapPin className="h-5 w-5" />
             {pendingCount > 0 && (
               <Badge 

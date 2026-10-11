@@ -199,7 +199,7 @@ export function FieldServiceDashboard() {
                           </Button>
                         )}
                         {customer.address && (
-                          <Button
+                          <Button aria-label="Standort"
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8"

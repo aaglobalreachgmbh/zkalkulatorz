@@ -523,7 +523,7 @@ export function AppSidebar() {
               </Button>
             </div>
           ) : (
-            <Button
+            <Button aria-label="Shop wechseln"
               variant="ghost"
               size="icon"
               className="h-8 w-8"

@@ -305,7 +305,7 @@ export default function AdminNews() {
                       <NewsCard news={item} compact />
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <Button
+                      <Button aria-label="Anheften"
                         variant="ghost"
                         size="icon"
                         onClick={() => togglePinned(item.id, !item.is_pinned)}

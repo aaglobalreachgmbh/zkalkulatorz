@@ -266,7 +266,7 @@ const handler = async (req: Request): Promise<Response> => {
     
     // Hash sensitive data for privacy
     const ipHash = rateKey;
-    const userAgentHash = userAgent ? hashString(userAgent) : null;
+    const userAgentHash = userAgent ? await privateHash(userAgent, "security-log-ua") : null;
 
     // ==========================================================================
     // VAULT SECURITY: IP Blocking Check

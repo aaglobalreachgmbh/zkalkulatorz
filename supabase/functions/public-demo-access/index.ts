@@ -1,5 +1,6 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { z } from "npm:zod@3.23.8";
+import { clientOrigin, enforceRateLimit, privateHash, requestTooLarge } from "./requestSecurity.ts";
 
 const LoginSchema = z.object({
   action: z.literal("login"),
@@ -11,10 +12,10 @@ const VerifySchema = z.object({
   ticket: z.string().min(20).max(4000),
 });
 
-const attempts = new Map<string, { count: number; resetAt: number }>();
-const WINDOW_MS = 10 * 60 * 1000;
 const MAX_ATTEMPTS = 8;
+const WINDOW_SECONDS = 10 * 60;
 const TICKET_TTL_SECONDS = 8 * 60 * 60;
+const MAX_REQUEST_BYTES = 5000;
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -82,6 +83,8 @@ async function verifyTicket(ticket: string, secret: string): Promise<boolean> {
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (request.method !== "POST") return json({ error: "Nur POST erlaubt" }, 405);
+  if (!request.headers.get("content-type")?.includes("application/json")) return json({ error: "Nur JSON erlaubt" }, 415);
+  if (requestTooLarge(request, MAX_REQUEST_BYTES)) return json({ error: "Anfrage zu groß" }, 413);
 
   const password = Deno.env.get("PUBLIC_DEMO_PASSWORD");
   const signingSecret = Deno.env.get("PUBLIC_DEMO_SIGNING_SECRET");
@@ -96,24 +99,35 @@ Deno.serve(async (request) => {
 
   const login = LoginSchema.safeParse(body);
   if (login.success) {
-    const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
-    const clientKey = forwarded || "unknown";
-    const now = Date.now();
-    const current = attempts.get(clientKey);
-    const state = !current || current.resetAt <= now ? { count: 0, resetAt: now + WINDOW_MS } : current;
-    if (state.count >= MAX_ATTEMPTS) return json({ error: "Zu viele Versuche. Bitte später erneut versuchen." }, 429);
+    let limit;
+    try {
+      const key = await privateHash(clientOrigin(request), "public-demo-login");
+      limit = await enforceRateLimit(key, "public_demo_login", MAX_ATTEMPTS, WINDOW_SECONDS);
+    } catch {
+      return json({ error: "Demo-Zugang vorübergehend nicht verfügbar" }, 503);
+    }
+    if (!limit.allowed) {
+      const response = json({ error: "Zu viele Versuche. Bitte später erneut versuchen.", retryAfter: limit.retryAfter }, 429);
+      response.headers.set("Retry-After", String(limit.retryAfter));
+      return response;
+    }
 
     if (!timingSafeEqual(login.data.password, password)) {
-      attempts.set(clientKey, { ...state, count: state.count + 1 });
       return json({ error: "Demo-Passwort ist nicht korrekt" }, 401);
     }
 
-    attempts.delete(clientKey);
     return json({ ticket: await issueTicket(signingSecret), expiresIn: TICKET_TTL_SECONDS });
   }
 
   const verify = VerifySchema.safeParse(body);
   if (verify.success) {
+    try {
+      const key = await privateHash(clientOrigin(request), "public-demo-verify");
+      const limit = await enforceRateLimit(key, "public_demo_verify", 120, 60);
+      if (!limit.allowed) return json({ error: "Zu viele Prüfungen", retryAfter: limit.retryAfter }, 429);
+    } catch {
+      return json({ error: "Demo-Zugang vorübergehend nicht verfügbar" }, 503);
+    }
     const valid = await verifyTicket(verify.data.ticket, signingSecret);
     return json({ valid }, valid ? 200 : 401);
   }

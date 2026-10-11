@@ -5,6 +5,7 @@
 // ============================================
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { z } from "npm:zod@3.23.8";
+import { enforceRateLimit, privateHash, requestTooLarge } from "./requestSecurity.ts";
 
 
 // --- Lovable AI Gateway run-ID helpers (inline) ---
@@ -71,6 +72,8 @@ const eur = (n: number) => `${n.toFixed(2).replace(".", ",")} €`;
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Nur POST erlaubt" }, 405);
+  if (!req.headers.get("content-type")?.includes("application/json")) return json({ error: "Nur JSON erlaubt" }, 415);
+  if (requestTooLarge(req, 32 * 1024)) return json({ error: "Anfrage zu groß" }, 413);
 
   const authHeader = req.headers.get("Authorization") ?? "";
   if (!authHeader.startsWith("Bearer ")) return json({ error: "Bitte anmelden" }, 401);
@@ -79,6 +82,13 @@ Deno.serve(async (req) => {
   });
   const { data: userData, error: authError } = await supabase.auth.getUser();
   if (authError || !userData?.user) return json({ error: "Bitte anmelden" }, 401);
+  try {
+    const key = await privateHash(userData.user.id, "explain-offer");
+    const limit = await enforceRateLimit(key, "explain_offer", 10, 60);
+    if (!limit.allowed) return json({ error: "Zu viele Anfragen – bitte in einer Minute erneut versuchen." }, 429);
+  } catch {
+    return json({ error: "KI-Schutz vorübergehend nicht verfügbar" }, 503);
+  }
 
   let raw: unknown;
   try {

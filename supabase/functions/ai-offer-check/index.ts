@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import { enforceRateLimit, privateHash, requestTooLarge } from "./requestSecurity.ts";
 
 // =============================================================================
 // AI Offer Check - Intelligente Verkaufsargumente (Modul 3: KI-Experte)
@@ -285,6 +286,9 @@ serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+  if (req.method !== "POST") return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: { ...corsHeaders, ...SECURITY_HEADERS, "Content-Type": "application/json" } });
+  if (!req.headers.get("content-type")?.includes("application/json")) return new Response(JSON.stringify({ error: "JSON required" }), { status: 415, headers: { ...corsHeaders, ...SECURITY_HEADERS, "Content-Type": "application/json" } });
+  if (requestTooLarge(req, 64 * 1024)) return new Response(JSON.stringify({ error: "Payload too large" }), { status: 413, headers: { ...corsHeaders, ...SECURITY_HEADERS, "Content-Type": "application/json" } });
 
   try {
     // Authenticate
@@ -309,6 +313,14 @@ serve(async (req) => {
         status: 401,
         headers: { ...corsHeaders, ...SECURITY_HEADERS, "Content-Type": "application/json" },
       });
+    }
+
+    try {
+      const key = await privateHash(user.id, "ai-offer-check");
+      const limit = await enforceRateLimit(key, "ai_offer_check", 10, 60);
+      if (!limit.allowed) return new Response(JSON.stringify({ error: "Rate limit exceeded" }), { status: 429, headers: { ...corsHeaders, ...SECURITY_HEADERS, "Content-Type": "application/json", "Retry-After": String(limit.retryAfter) } });
+    } catch {
+      return new Response(JSON.stringify({ error: "Protection unavailable" }), { status: 503, headers: { ...corsHeaders, ...SECURITY_HEADERS, "Content-Type": "application/json" } });
     }
 
     // Parse input

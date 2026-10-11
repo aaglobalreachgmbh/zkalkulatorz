@@ -5,7 +5,6 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 
 // ============================================================================
 // TYPES
@@ -24,7 +23,7 @@ interface RateLimitStatus {
 interface UseServerRateLimitOptions {
   /** Cache duration in ms (default: 5000) */
   cacheDuration?: number;
-  /** Fallback to client-side limiting when offline */
+  /** Deprecated: server-side protection always fails closed */
   fallbackToClient?: boolean;
 }
 
@@ -42,7 +41,7 @@ interface UseServerRateLimitReturn {
 }
 
 // ============================================================================
-// CLIENT-SIDE FALLBACK
+// CLIENT-SIDE DISPLAY ESTIMATE
 // ============================================================================
 
 const CLIENT_LIMITS: Record<RateLimitCategory, { max: number; windowMs: number }> = {
@@ -97,11 +96,10 @@ function checkClientLimit(limiter: ClientRateLimiter): RateLimitStatus {
 export function useServerRateLimit(
   options: UseServerRateLimitOptions = {}
 ): UseServerRateLimitReturn {
-  const { cacheDuration = 5000, fallbackToClient = true } = options;
+  const { cacheDuration = 5000 } = options;
   
   const [isChecking, setIsChecking] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const { isOnline } = useNetworkStatus();
   
   // Cache for status responses
   const statusCache = useRef<Map<RateLimitCategory, { status: RateLimitStatus; timestamp: number }>>(
@@ -124,13 +122,6 @@ export function useServerRateLimit(
   // Check rate limit (increments counter)
   const checkLimit = useCallback(
     async (category: RateLimitCategory): Promise<RateLimitStatus> => {
-      // If offline, use client-side limiting
-      if (!isOnline && fallbackToClient) {
-        const limiter = getClientLimiter(category);
-        const result = checkClientLimit(limiter);
-        return { ...result, category };
-      }
-      
       setIsChecking(true);
       setError(null);
       
@@ -162,17 +153,10 @@ export function useServerRateLimit(
         console.error(`[useServerRateLimit] Check failed for ${category}:`, err);
         setError(err instanceof Error ? err : new Error(String(err)));
         
-        // Fallback to client-side on error
-        if (fallbackToClient) {
-          const limiter = getClientLimiter(category);
-          const result = checkClientLimit(limiter);
-          return { ...result, category };
-        }
-        
-        // If no fallback, allow the request (fail open)
+        // Fail closed: browser counters are not a security boundary.
         return {
-          allowed: true,
-          remaining: 999,
+          allowed: false,
+          remaining: 0,
           resetAt: new Date(Date.now() + 60000),
           category,
           fromServer: false,
@@ -181,7 +165,7 @@ export function useServerRateLimit(
         setIsChecking(false);
       }
     },
-    [isOnline, fallbackToClient, getClientLimiter]
+    []
   );
   
   // Get status without incrementing
@@ -194,7 +178,7 @@ export function useServerRateLimit(
       }
       
       // If offline, estimate from client limiter
-      if (!isOnline) {
+      if (!navigator.onLine) {
         const limiter = getClientLimiter(category);
         const now = Date.now();
         const validRequests = limiter.requests.filter((t) => t > now - limiter.windowMs);
@@ -239,10 +223,10 @@ export function useServerRateLimit(
         console.error(`[useServerRateLimit] Status failed for ${category}:`, err);
         setError(err instanceof Error ? err : new Error(String(err)));
         
-        // Return permissive status on error
+        // Fail closed when the shared server status cannot be verified.
         return {
-          allowed: true,
-          remaining: 999,
+          allowed: false,
+          remaining: 0,
           resetAt: new Date(Date.now() + 60000),
           category,
           fromServer: false,
@@ -251,7 +235,7 @@ export function useServerRateLimit(
         setIsChecking(false);
       }
     },
-    [isOnline, cacheDuration, getClientLimiter]
+    [cacheDuration, getClientLimiter]
   );
   
   // Clear cache

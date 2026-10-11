@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { z } from "npm:zod@3.23.8";
+import { clientOrigin, enforceRateLimit, privateHash, requestTooLarge } from "./requestSecurity.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const alertEmail = Deno.env.get("SECURITY_ALERT_EMAIL");
@@ -103,15 +105,12 @@ interface SecurityEvent {
   details?: Record<string, unknown>;
 }
 
-function hashString(input: string): string {
-  let hash = 0;
-  for (let i = 0; i < input.length; i++) {
-    const char = input.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
-  }
-  return Math.abs(hash).toString(16).substring(0, 12);
-}
+const SecurityEventSchema = z.object({
+  event_type: z.string().min(1).max(80).regex(/^[a-z0-9_-]+$/),
+  risk_level: z.enum(["low", "medium", "high", "critical"]),
+  user_id: z.string().uuid().optional(),
+  details: z.record(z.unknown()).optional(),
+});
 
 function detectBot(userAgent: string | null): boolean {
   if (!userAgent) return true; // No user agent = suspicious
@@ -238,18 +237,35 @@ const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+  if (req.method !== "POST") return new Response(JSON.stringify({ success: false, error: "Method not allowed" }), { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  if (!req.headers.get("content-type")?.includes("application/json")) return new Response(JSON.stringify({ success: false, error: "JSON required" }), { status: 415, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  if (requestTooLarge(req, 12 * 1024)) return new Response(JSON.stringify({ success: false, error: "Payload too large" }), { status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const event: SecurityEvent = await req.json();
+    const parsed = SecurityEventSchema.safeParse(await req.json());
+    if (!parsed.success || JSON.stringify(parsed.data.details ?? {}).length > 8192) {
+      return new Response(JSON.stringify({ success: false, error: "Invalid event" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    const event: SecurityEvent = parsed.data;
     const userAgent = req.headers.get("user-agent");
-    const forwardedFor = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown";
+    const originKey = clientOrigin(req);
+    const rateKey = await privateHash(originKey, "security-log");
+    const limit = await enforceRateLimit(rateKey, "security_log", 30, 60);
+    if (!limit.allowed) return new Response(JSON.stringify({ success: false, error: "Too many events" }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json", "Retry-After": String(limit.retryAfter) } });
+
+    const authHeader = req.headers.get("authorization") ?? "";
+    let authenticatedUserId: string | null = null;
+    if (authHeader.startsWith("Bearer ")) {
+      const { data: { user } } = await supabase.auth.getUser(authHeader.slice(7));
+      authenticatedUserId = user?.id ?? null;
+    }
     
     // Hash sensitive data for privacy
-    const ipHash = hashString(forwardedFor);
+    const ipHash = rateKey;
     const userAgentHash = userAgent ? hashString(userAgent) : null;
 
     // ==========================================================================
@@ -314,7 +330,7 @@ const handler = async (req: Request): Promise<Response> => {
       .insert({
         event_type: event.event_type,
         risk_level: adjustedRiskLevel,
-        user_id: event.user_id || null,
+        user_id: authenticatedUserId,
         ip_hash: ipHash,
         user_agent_hash: userAgentHash,
         details: {

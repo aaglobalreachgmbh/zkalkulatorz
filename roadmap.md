@@ -1,5 +1,8 @@
 # UX-Produktreife
 
+- [x] Öffentliche und kostenintensive Aufrufe gegen Missbrauch absichern
+- [ ] Abrufgrenzen und Sicherheit praktisch nachweisen
+
 - [x] Öffentlichen Link mit passwortgeschütztem, lokalem Superadmin-Demo-Arbeitsplatz ausstatten
 
 - [x] Start und konfigurierbares Dashboard zu einer Vertriebsübersicht vereinen

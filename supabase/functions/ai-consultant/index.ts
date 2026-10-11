@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import { enforceRateLimit, privateHash } from "./requestSecurity.ts";
 
 // =============================================================================
 // SECURITY: CORS Configuration
@@ -119,15 +120,6 @@ async function checkBlockedIP(hashedIP: string): Promise<boolean> {
   }
 }
 
-// =============================================================================
-// SECURITY: Rate Limiting (In-Memory, per User)
-// =============================================================================
-interface RateLimitEntry {
-  count: number;
-  resetAt: number;
-}
-
-const rateLimitMap = new Map<string, RateLimitEntry>();
 const RATE_LIMIT_MAX = 10; // Max requests per window
 const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
 
@@ -150,31 +142,6 @@ function hashIP(ip: string): string {
     hash = hash & hash;
   }
   return Math.abs(hash).toString(16).slice(0, 8);
-}
-
-function checkRateLimit(identifier: string): { allowed: boolean; retryAfter?: number } {
-  const now = Date.now();
-  const entry = rateLimitMap.get(identifier);
-
-  // Cleanup old entries periodically
-  if (rateLimitMap.size > 1000) {
-    for (const [key, val] of rateLimitMap.entries()) {
-      if (val.resetAt < now) rateLimitMap.delete(key);
-    }
-  }
-
-  if (!entry || entry.resetAt < now) {
-    rateLimitMap.set(identifier, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-    return { allowed: true };
-  }
-
-  if (entry.count >= RATE_LIMIT_MAX) {
-    const retryAfter = Math.ceil((entry.resetAt - now) / 1000);
-    return { allowed: false, retryAfter };
-  }
-
-  entry.count++;
-  return { allowed: true };
 }
 
 // =============================================================================
@@ -466,8 +433,14 @@ serve(async (req) => {
       );
     }
 
-    // SECURITY: Check rate limit (per user)
-    const rateCheck = checkRateLimit(authResult.userId);
+    // SECURITY: Persistent rate limit (per user, shared across instances)
+    let rateCheck;
+    try {
+      const rateKey = await privateHash(authResult.userId, "ai-consultant");
+      rateCheck = await enforceRateLimit(rateKey, "ai_consultant", RATE_LIMIT_MAX, RATE_LIMIT_WINDOW_MS / 1000);
+    } catch {
+      return createErrorResponse("Protection unavailable", 500, corsHeaders, requestId);
+    }
     if (!rateCheck.allowed) {
       console.warn(`[${requestId}] Rate limit exceeded for user: ${authResult.userId.slice(0, 8)}`);
       return new Response(

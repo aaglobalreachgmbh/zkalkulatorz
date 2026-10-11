@@ -86,7 +86,7 @@ function SeatLimitBlockedScreen({
   plan: string;
 }) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="min-h-dvh flex items-center justify-center bg-background p-4">
       <div className="text-center max-w-md">
         <div className="w-20 h-20 mx-auto rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-6">
           <Users className="w-10 h-10 text-amber-600 dark:text-amber-400" />

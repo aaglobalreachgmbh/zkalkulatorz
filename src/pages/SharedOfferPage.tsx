@@ -66,7 +66,7 @@ export default function SharedOfferPage() {
   // Error state
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex items-center justify-center p-4">
+      <div className="min-h-dvh bg-gradient-to-b from-background to-muted/30 flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
           <CardContent className="pt-6 text-center space-y-4">
             <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto">
@@ -90,7 +90,7 @@ export default function SharedOfferPage() {
   // Loading state
   if (isLoading || !offer) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex items-center justify-center p-4">
+      <div className="min-h-dvh bg-gradient-to-b from-background to-muted/30 flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
           <CardContent className="pt-6 text-center space-y-4">
             <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto animate-pulse">
@@ -108,7 +108,7 @@ export default function SharedOfferPage() {
   const isExpired = isPast(expiresAt);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 py-8 px-4">
+    <div className="min-h-dvh bg-gradient-to-b from-background to-muted/30 py-8 px-4">
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">

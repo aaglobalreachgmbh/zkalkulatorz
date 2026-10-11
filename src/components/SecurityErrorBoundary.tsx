@@ -145,7 +145,7 @@ export class SecurityErrorBoundary extends Component<Props, State> {
       
       // Default error UI
       return (
-        <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <div className="min-h-dvh flex items-center justify-center bg-background p-4">
           <Card className="max-w-md w-full">
             <CardHeader className="text-center">
               <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center">

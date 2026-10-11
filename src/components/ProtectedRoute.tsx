@@ -50,7 +50,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   // Show loading while checking auth status
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-dvh flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
           <p className="text-muted-foreground">Authentifizierung wird geprüft...</p>
@@ -69,7 +69,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   if (!user) {
     if (publicDemoValid === null) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="min-h-dvh flex items-center justify-center bg-background">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
       );
@@ -83,7 +83,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   // Show loading while checking approval status
   // if (approvalLoading) {
   //   return (
-  //     <div className="min-h-screen flex items-center justify-center bg-background">
+  //     <div className="min-h-dvh flex items-center justify-center bg-background">
   //       <div className="flex flex-col items-center gap-4">
   //         <Loader2 className="w-8 h-8 animate-spin text-primary" />
   //         <p className="text-muted-foreground">Berechtigungen werden geprüft...</p>

@@ -93,7 +93,7 @@ const PageLoader = () => {
   }, []);
 
   return (
-    <div className="flex items-center justify-center min-h-screen">
+    <div className="flex items-center justify-center min-h-dvh">
       <div className="text-center space-y-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
         <p className="text-muted-foreground text-sm">Lade...</p>
@@ -176,7 +176,7 @@ class AppErrorBoundary extends Component<{ children: ReactNode }, AppErrorBounda
       const isDev = import.meta.env.DEV;
 
       return (
-        <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
+        <div className="min-h-dvh flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
           <div className="max-w-md w-full text-center space-y-4">
             <div className="w-16 h-16 mx-auto bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
               <span className="text-red-600 dark:text-red-400 text-2xl">!</span>
@@ -283,7 +283,7 @@ class RouteErrorBoundary extends Component<{ children: ReactNode }, RouteErrorBo
       const isDev = import.meta.env.DEV;
 
       return (
-        <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+        <div className="min-h-dvh flex items-center justify-center p-4 bg-background">
           <div className="max-w-md w-full text-center space-y-4">
             <div className="w-16 h-16 mx-auto bg-destructive/10 rounded-full flex items-center justify-center">
               <span className="text-destructive text-2xl">!</span>

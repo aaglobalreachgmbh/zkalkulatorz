@@ -65,7 +65,7 @@ export function TenantAdminRoute({ children }: TenantAdminRouteProps) {
   // 1. FIRST: Wait until auth is COMPLETELY loaded AND session is stable
   if (authLoading || !sessionStable) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+      <div className="flex flex-col items-center justify-center min-h-dvh gap-4">
         <div className="flex items-center">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           <span className="ml-2 text-muted-foreground">Authentifizierung wird geprüft...</span>
@@ -88,7 +88,7 @@ export function TenantAdminRoute({ children }: TenantAdminRouteProps) {
   // 3. THEN: Wait until roles are loaded
   if (adminLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+      <div className="flex flex-col items-center justify-center min-h-dvh gap-4">
         <div className="flex items-center">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           <span className="ml-2 text-muted-foreground">Berechtigungen werden geprüft...</span>
@@ -106,7 +106,7 @@ export function TenantAdminRoute({ children }: TenantAdminRouteProps) {
   // 4. FINALLY: Check permission (both auth and roles are loaded)
   if (!isTenantAdmin) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+      <div className="flex flex-col items-center justify-center min-h-dvh gap-4">
         <ShieldAlert className="h-16 w-16 text-destructive" />
         <div className="text-center">
           <h1 className="text-2xl font-bold text-destructive mb-2">

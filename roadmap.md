@@ -1,5 +1,7 @@
 # UX-Produktreife
 
+- [x] Öffentlichen Link mit passwortgeschütztem, lokalem Superadmin-Demo-Arbeitsplatz ausstatten
+
 - [x] Start und konfigurierbares Dashboard zu einer Vertriebsübersicht vereinen
 - [x] Demo-Navigation vollständig öffnen und Verwaltungszugänge klar kennzeichnen
 - [x] Globale Suche um Arbeitsplatz, Werkzeuge, VVL und Verwaltung ergänzen

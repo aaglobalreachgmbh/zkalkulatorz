@@ -5,6 +5,7 @@ import { useApprovalStatus } from "@/hooks/useApprovalStatus";
 import { Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { isTestModeActive } from "@/lib/testMode";
+import { disablePublicDemoMode, getPublicDemoTicket, verifyPublicDemo } from "@/lib/publicDemo";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -14,6 +15,19 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, isLoading: authLoading } = useAuth();
   const { isApproved, isLoading: approvalLoading } = useApprovalStatus();
   const [showRetry, setShowRetry] = useState(false);
+  const [publicDemoValid, setPublicDemoValid] = useState<boolean | null>(() => getPublicDemoTicket() ? null : false);
+
+  useEffect(() => {
+    if (user || !getPublicDemoTicket()) {
+      setPublicDemoValid(false);
+      return;
+    }
+    let active = true;
+    void verifyPublicDemo().then((valid) => {
+      if (active) setPublicDemoValid(valid);
+    });
+    return () => { active = false; };
+  }, [user]);
 
   // DEBUG: Log auth state for troubleshooting (v2.1)
   console.log("[ProtectedRoute] State:", {
@@ -53,6 +67,15 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   // Redirect to auth if not logged in
   if (!user) {
+    if (publicDemoValid === null) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      );
+    }
+    if (publicDemoValid) return <>{children}</>;
+    if (getPublicDemoTicket()) disablePublicDemoMode();
     if (isTestModeActive()) return <>{children}</>;
     return <Navigate to="/auth" replace />;
   }

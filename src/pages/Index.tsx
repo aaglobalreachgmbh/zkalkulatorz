@@ -26,6 +26,8 @@ import { PUBLISHER } from "@/margenkalkulator/publisherConfig";
 import { cn } from "@/lib/utils";
 import { BrandLogo } from "@/components/BrandLogo";
 import { isTestModeActive, disableTestMode } from "@/lib/testMode";
+import { disablePublicDemoMode, isPublicDemoActive } from "@/lib/publicDemo";
+import { useDemoMode } from "@/hooks/useDemoMode";
 
 /**
  * Calculator Index Page - Zero-Scroll Cockpit Layout
@@ -40,6 +42,14 @@ const Index = () => {
   const { user, signOut } = useAuth();
   const { branding } = useTenantBranding();
   const { isPOS: isPOSMode } = useWorkplaceMode();
+  const { enabled: demoEnabled, resetDemo } = useDemoMode();
+  const publicDemo = !user && isPublicDemoActive();
+
+  const leaveGuestMode = () => {
+    if (publicDemo) disablePublicDemoMode();
+    else disableTestMode();
+    window.location.href = "/auth";
+  };
 
   // Apply branding primary color as CSS variable
   const brandingStyle = branding.primaryColor 
@@ -58,10 +68,11 @@ const Index = () => {
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           {/* VVL Notification Banner (flex-none) */}
           <VVLNotificationBanner />
-          {!user && isTestModeActive() && (
+          {!user && (isTestModeActive() || publicDemo) && (
             <div className="mobile-short-hide flex flex-none items-center justify-between gap-2 border-b border-warning bg-warning/15 px-3 py-1.5 text-xs text-foreground">
-              <span className="truncate font-medium">Vorschau ohne Anmeldung</span>
-              <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => { disableTestMode(); window.location.href = "/auth"; }}>
+              <span className="truncate font-medium">{publicDemo && demoEnabled ? "Demo-Modus – ausschließlich Beispieldaten" : "Vorschau ohne Anmeldung"}</span>
+              {publicDemo && demoEnabled && <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={resetDemo}>Zurücksetzen</Button>}
+              <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={leaveGuestMode}>
                 Beenden
               </Button>
             </div>
@@ -96,9 +107,9 @@ const Index = () => {
                     {branding.companyName || PUBLISHER.displayName}
                   </span>
                 )}
-                {!user && isTestModeActive() && (
+                {!user && (isTestModeActive() || publicDemo) && (
                   <span className="mobile-short-only items-center text-[10px] font-medium text-warning">
-                    Vorschau
+                    {publicDemo ? "Demo" : "Vorschau"}
                   </span>
                 )}
               </div>

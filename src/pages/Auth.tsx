@@ -5,12 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Calculator, Loader2 } from "lucide-react";
+import { Calculator, Eye, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { PUBLISHER } from "@/margenkalkulator/publisherConfig";
 import { PublisherModal } from "@/components/PublisherModal";
 import { supabase } from "@/integrations/supabase/client";
 import { isTestModeAllowed, enableTestMode } from "@/lib/testMode";
+import { startPublicDemo } from "@/lib/publicDemo";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -21,6 +22,8 @@ export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [demoPassword, setDemoPassword] = useState("");
+  const [isDemoSubmitting, setIsDemoSubmitting] = useState(false);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -92,6 +95,23 @@ export default function Auth() {
 
   const handleTestMode = () => {
     enableTestMode();
+    navigate("/", { replace: true });
+  };
+
+  const handlePublicDemo = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!demoPassword) {
+      toast.error("Bitte Demo-Passwort eingeben");
+      return;
+    }
+    setIsDemoSubmitting(true);
+    const result = await startPublicDemo(demoPassword);
+    setIsDemoSubmitting(false);
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+    setDemoPassword("");
     navigate("/", { replace: true });
   };
 
@@ -226,6 +246,37 @@ export default function Auth() {
                     Ohne Login testen (nur Vorschau)
                   </Button>
                 )}
+              </div>
+            )}
+
+            {isLogin && (
+              <div className="mt-5 border-t border-border/50 pt-5">
+                <div className="mb-3 flex items-start gap-3">
+                  <div className="mt-0.5 rounded-md bg-primary/10 p-2 text-primary">
+                    <Eye className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Demo ansehen</p>
+                    <p className="text-xs text-muted-foreground">Vollständiger Beispiel-Arbeitsplatz ohne Zugriff auf Echtdaten.</p>
+                  </div>
+                </div>
+                <form onSubmit={handlePublicDemo} className="space-y-3">
+                  <Label htmlFor="demoPassword" className="sr-only">Demo-Passwort</Label>
+                  <Input
+                    id="demoPassword"
+                    type="password"
+                    placeholder="Demo-Passwort"
+                    value={demoPassword}
+                    onChange={(event) => setDemoPassword(event.target.value)}
+                    autoComplete="off"
+                    disabled={isDemoSubmitting}
+                    className="h-11"
+                  />
+                  <Button type="submit" variant="outline" className="h-11 w-full" disabled={isDemoSubmitting}>
+                    {isDemoSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Demo öffnen
+                  </Button>
+                </form>
               </div>
             )}
 

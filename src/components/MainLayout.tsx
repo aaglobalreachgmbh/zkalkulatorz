@@ -23,6 +23,7 @@ import { BrandLogo } from "@/components/BrandLogo";
 import { isTestModeActive, disableTestMode } from "@/lib/testMode";
 import { useDemoMode } from "@/hooks/useDemoMode";
 import { toast } from "sonner";
+import { disablePublicDemoMode, isPublicDemoActive } from "@/lib/publicDemo";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -33,6 +34,16 @@ export function MainLayout({ children }: MainLayoutProps) {
   const { branding } = useTenantBranding();
   const { isPOS: isPOSMode } = useWorkplaceMode();
   const { enabled: demoEnabled, setDemo, resetDemo } = useDemoMode();
+  const publicDemo = !user && isPublicDemoActive();
+
+  const leaveDemo = () => {
+    if (publicDemo) {
+      disablePublicDemoMode();
+      window.location.href = "/auth";
+      return;
+    }
+    setDemo(false);
+  };
 
   // Apply branding primary color as CSS variable
   const brandingStyle = branding.primaryColor 
@@ -56,14 +67,14 @@ export function MainLayout({ children }: MainLayoutProps) {
                   <Button size="sm" variant="ghost" className="h-7 gap-1.5" onClick={() => { resetDemo(); toast.success("Beispieldaten zurückgesetzt"); }}>
                     <RotateCcw className="h-3.5 w-3.5" /> Zurücksetzen
                   </Button>
-                  <Button size="sm" variant="outline" className="h-7" onClick={() => setDemo(false)}>Beenden</Button>
+                  <Button size="sm" variant="outline" className="h-7" onClick={leaveDemo}>Beenden</Button>
                 </div>
               </div>
             </div>
           )}
           {/* VVL Notification Banner */}
           <VVLNotificationBanner />
-          {!user && isTestModeActive() && (
+          {!user && isTestModeActive() && !publicDemo && (
             <div className="mobile-short-hide bg-warning/15 border-b border-warning text-foreground px-4 py-2 text-sm flex items-center justify-between gap-3">
               <span className="font-medium">Testmodus – nicht angemeldet. Gespeicherte Daten sind nicht sichtbar.</span>
               <Button size="sm" variant="outline" onClick={() => { disableTestMode(); window.location.href = "/auth"; }}>
@@ -101,9 +112,9 @@ export function MainLayout({ children }: MainLayoutProps) {
                     {branding.companyName || PUBLISHER.displayName}
                   </span>
                 )}
-                {!user && isTestModeActive() && (
+                {!user && (isTestModeActive() || publicDemo) && (
                   <span className="mobile-short-only items-center text-[10px] font-medium text-warning">
-                    Vorschau
+                    {publicDemo ? "Demo" : "Vorschau"}
                   </span>
                 )}
               </div>

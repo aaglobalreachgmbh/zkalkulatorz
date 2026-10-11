@@ -222,9 +222,9 @@ export const DASHBOARD_WIDGETS: Record<string, WidgetDefinition> = {
 
 // Default layout for new users
 export const DEFAULT_DASHBOARD_LAYOUT: WidgetLayout[] = [
-  { id: "welcome-banner", x: 0, y: 0, w: 4, h: 2, visible: true },
-  { id: "headline", x: 0, y: 2, w: 4, h: 1, visible: true },
-  { id: "quick-actions", x: 0, y: 3, w: 4, h: 1, visible: true },
+  { id: "welcome-banner", x: 0, y: 0, w: 4, h: 2, visible: false },
+  { id: "headline", x: 0, y: 2, w: 4, h: 1, visible: false },
+  { id: "quick-actions", x: 0, y: 3, w: 4, h: 1, visible: false },
   { id: "tasks", x: 0, y: 4, w: 4, h: 2, visible: true },
   { id: "dashboard-widgets", x: 0, y: 6, w: 4, h: 1, visible: true },
   { id: "margin-analytics", x: 0, y: 7, w: 4, h: 1, visible: true },

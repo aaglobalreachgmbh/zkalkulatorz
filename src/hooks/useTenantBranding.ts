@@ -49,8 +49,8 @@ export function useTenantBranding() {
         .maybeSingle();
 
       if (error) {
-        console.error("[useTenantBranding] Error fetching branding:", error);
-        throw error;
+        console.warn("[useTenantBranding] Branding unavailable:", error.message);
+        return DEFAULT_BRANDING;
       }
 
       if (!data?.branding) {
@@ -96,7 +96,10 @@ export function useTenantBranding() {
           })
           .eq("tenant_id", tenantId);
 
-        if (error) throw error;
+        if (error) {
+          console.warn("[useTenantBranding] Update failed:", error.message);
+          return null;
+        }
       } else {
         // Insert new
         const { error } = await supabase
@@ -106,7 +109,10 @@ export function useTenantBranding() {
             branding: mergedBranding,
           });
 
-        if (error) throw error;
+        if (error) {
+          console.warn("[useTenantBranding] Insert failed:", error.message);
+          return null;
+        }
       }
 
       return mergedBranding;

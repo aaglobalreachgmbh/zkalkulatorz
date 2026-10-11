@@ -106,7 +106,7 @@ export const PALETTES: PalettePreset[] = [
 ];
 
 export const HOME_LAYOUTS: { id: HomeLayout; label: string; description: string }[] = [
-  { id: "focus", label: "Fokus", description: "Schnellstart und nächste Aufgabe" },
-  { id: "cockpit", label: "Cockpit", description: "Schnellstart und kompakte Heute-Übersicht" },
-  { id: "classic", label: "Klassisch", description: "Konfigurierbare Widgets wie bisher" },
+  { id: "focus", label: "Fokus", description: "Kompakte Startübersicht mit Ihren wichtigsten Karten" },
+  { id: "cockpit", label: "Cockpit", description: "Tagesgeschäft und konfigurierbare Übersicht in einem" },
+  { id: "classic", label: "Klassisch", description: "Vertraute, ausführliche Startübersicht für Umsteiger" },
 ];

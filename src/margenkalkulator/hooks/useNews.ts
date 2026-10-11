@@ -7,6 +7,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useIdentity } from "@/contexts/IdentityContext";
+import { useDemoAccess } from "@/hooks/useDemoAccess";
+
+const DEMO_NEWS: NewsItem[] = [
+  { id: "demo-news-1", tenant_id: "demo", title: "Business-Aktion im Oktober", description: "Zusätzlicher Fokus auf Festnetz und GigaKombi im Geschäftskundenbestand.", content: "Beispielinhalt für die Demo-Firma.", type: "promo", is_pinned: true, valid_from: "2026-10-01", valid_until: "2026-10-31", created_by: null, created_at: "2026-10-01T08:00:00.000Z", updated_at: "2026-10-01T08:00:00.000Z" },
+  { id: "demo-news-2", tenant_id: "demo", title: "VVL-Woche vorbereiten", description: "Fällige Vertragsverlängerungen priorisieren und Kundentermine bündeln.", content: "Beispielinhalt für die Demo-Firma.", type: "info", is_pinned: false, valid_from: "2026-10-01", valid_until: null, created_by: null, created_at: "2026-10-03T08:00:00.000Z", updated_at: "2026-10-03T08:00:00.000Z" },
+];
 
 export type NewsType = "alert" | "info" | "training" | "promo" | "stock" | "urgent";
 
@@ -46,6 +52,7 @@ interface UpdateNewsParams {
 export function useNews(options?: { includeExpired?: boolean }) {
   const queryClient = useQueryClient();
   const { identity } = useIdentity();
+  const demoAccess = useDemoAccess();
   const tenantId = identity?.tenantId || "";
   const { includeExpired = false } = options || {};
 
@@ -53,6 +60,7 @@ export function useNews(options?: { includeExpired?: boolean }) {
   const { data: news = [], isLoading, error } = useQuery({
     queryKey: ["news-items", tenantId, includeExpired],
     queryFn: async (): Promise<NewsItem[]> => {
+      if (demoAccess) return DEMO_NEWS;
       let query = supabase
         .from("news_items")
         .select("*")
@@ -88,6 +96,7 @@ export function useNews(options?: { includeExpired?: boolean }) {
   // Create news mutation
   const createMutation = useMutation({
     mutationFn: async (params: CreateNewsParams) => {
+      if (demoAccess) return { ...DEMO_NEWS[0], ...params, id: `demo-news-${Date.now()}` };
       const { data: user } = await supabase.auth.getUser();
 
       const { data, error } = await supabase
@@ -121,6 +130,7 @@ export function useNews(options?: { includeExpired?: boolean }) {
   // Update news mutation
   const updateMutation = useMutation({
     mutationFn: async ({ id, updates }: UpdateNewsParams) => {
+      if (demoAccess) return { ...DEMO_NEWS[0], ...updates, id };
       const { data, error } = await supabase
         .from("news_items")
         .update(updates)
@@ -143,6 +153,7 @@ export function useNews(options?: { includeExpired?: boolean }) {
   // Delete news mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      if (demoAccess) return id;
       const { error } = await supabase
         .from("news_items")
         .delete()

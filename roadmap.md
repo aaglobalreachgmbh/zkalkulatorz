@@ -1,5 +1,9 @@
 # UX-Produktreife
 
+- [x] Start und konfigurierbares Dashboard zu einer Vertriebsübersicht vereinen
+- [x] Demo-Navigation vollständig öffnen und Verwaltungszugänge klar kennzeichnen
+- [x] Globale Suche um Arbeitsplatz, Werkzeuge, VVL und Verwaltung ergänzen
+
 - [x] Navigation auf Kernverkauf und klare Icons reduzieren
 - [x] Startseite als tägliche Vertriebszentrale ordnen
 - [x] Kalkulator visuell vereinheitlichen und Schein-Aktionen entfernen

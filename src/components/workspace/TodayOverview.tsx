@@ -2,7 +2,7 @@
 // TodayOverview – "Heute" auf der Startseite (Demo-Firma)
 // ============================================
 import { useNavigate } from "react-router-dom";
-import { CalendarDays, RefreshCcw, FileText, Sparkles, Target, X } from "lucide-react";
+import { CalendarDays, RefreshCcw, FileText, Sparkles, Target, X, Users, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -85,10 +85,10 @@ export function TodayOverview({ compact = false }: { compact?: boolean }) {
           <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary" /> Kreuzgeschäft-Chancen</CardTitle></CardHeader>
           <CardContent className="space-y-2 text-sm">
             {DEMO_CROSS_CHANCES.slice(0, 4).map(({ c, chances }) => (
-              <button key={c.id} type="button" onClick={() => navigate("/calculator")} className="w-full text-left flex justify-between gap-2 hover:text-primary">
+              <Button key={c.id} type="button" variant="ghost" onClick={() => navigate("/calculator")} className="h-auto w-full justify-between gap-2 px-0 py-0 text-left font-normal hover:bg-transparent hover:text-primary">
                 <span>{c.name}</span>
                 <span className="text-xs text-muted-foreground">{chances.join(" · ")}</span>
-              </button>
+              </Button>
             ))}
           </CardContent>
         </Card>
@@ -119,6 +119,51 @@ export function DemoModeToggleCard() {
         <div className="text-muted-foreground">Nutzt die normalen Ansichten mit einer erfundenen Demo-Firma – ausschließlich in Ihrem Browser.</div>
       </div>
       <Button onClick={() => setDemo(true)}>Beispieldaten anzeigen</Button>
+    </div>
+  );
+}
+
+export function DemoDashboardOverview() {
+  const accepted = DEMO_COMPANY_OFFERS.filter((offer) => offer.status === "Angenommen").length;
+  const open = DEMO_COMPANY_OFFERS.filter((offer) => offer.status === "Gesendet").length;
+  const pipeline = DEMO_COMPANY_OFFERS
+    .filter((offer) => offer.status === "Gesendet")
+    .reduce((total, offer) => total + offer.monthlyNet, 0);
+
+  const metrics = [
+    { label: "Kunden", value: String(DEMO_DUE_VVL.length), detail: "mit VVL-Potenzial", icon: Users },
+    { label: "Offene Angebote", value: String(open), detail: "aktuell nachfassen", icon: FileText },
+    { label: "Gewonnen", value: String(accepted), detail: "im Beispielzeitraum", icon: TrendingUp },
+    { label: "Monatliche Pipeline", value: pipeline.toLocaleString("de-DE", { style: "currency", currency: "EUR" }), detail: "netto, Beispieldaten", icon: Target },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {metrics.map((metric) => (
+          <Card key={metric.label} className="border-border shadow-none">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-sm text-muted-foreground">{metric.label}</span>
+                <metric.icon className="h-4 w-4 text-primary" />
+              </div>
+              <div className="mt-2 text-2xl font-semibold tabular-nums text-foreground">{metric.value}</div>
+              <div className="mt-1 text-xs text-muted-foreground">{metric.detail}</div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      <Card className="border-border shadow-none">
+        <CardHeader className="pb-3"><CardTitle className="text-sm flex items-center gap-2"><Target className="h-4 w-4 text-primary" /> Zielerreichung</CardTitle></CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {DEMO_MONTH_GOALS.map((goal) => (
+            <div key={goal.label} className="space-y-2">
+              <div className="flex justify-between text-xs"><span>{goal.label}</span><span className="tabular-nums">{goal.current}/{goal.target}</span></div>
+              <Progress value={Math.min(100, (goal.current / goal.target) * 100)} />
+            </div>
+          ))}
+        </CardContent>
+      </Card>
     </div>
   );
 }

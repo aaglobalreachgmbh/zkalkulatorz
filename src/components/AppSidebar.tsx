@@ -24,6 +24,7 @@ import {
   Repeat2,
   Route,
   ShoppingCart,
+  LayoutDashboard,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -68,6 +69,7 @@ import { Separator } from "@/components/ui/separator";
 import { ChevronDown } from "lucide-react";
 import { useWorkspaceProfile, applyPalette } from "@/hooks/useWorkspaceProfile";
 import { USER_TYPES, DEMO_TOOLS } from "@/margenkalkulator/workspace/profiles";
+import { useDemoAccess } from "@/hooks/useDemoAccess";
 
 // ============================================
 // NAVIGATION STRUCTURE - Klare deutsche Begriffe
@@ -98,6 +100,7 @@ const analyticsItems = [
 
 // MEIN KONTO - Persönliche Einstellungen (immer sichtbar)
 const accountItems = [
+  { title: "Arbeitsplatz", url: "/settings/workspace", icon: LayoutDashboard },
   { title: "Meine Daten", url: "/daten", icon: UserIcon },
   { title: "Meine Sicherheit", url: "/settings/security", icon: Shield },
   { title: "Lizenz", url: "/license", icon: Key },
@@ -137,6 +140,7 @@ export function AppSidebar() {
   const { branding } = useTenantBranding();
   const { workplaceMode, isPOS, toggleWorkplaceMode } = useWorkplaceMode();
   const { canAccessMenu, hasFullAccess } = usePermissions();
+  const demoAccess = useDemoAccess();
   
   // Collapsible section states
   const [accountOpen, setAccountOpen] = useState(false);
@@ -164,6 +168,14 @@ export function AppSidebar() {
       setSuperAdminOpen(true);
     }
   }, [location.pathname]);
+
+  useEffect(() => {
+    if (!demoAccess) return;
+    setToolsOpen(true);
+    setAccountOpen(true);
+    setShopAdminOpen(true);
+    setSuperAdminOpen(true);
+  }, [demoAccess]);
 
   // POS: Seitenleiste nur im Kalkulator einklappen, sonst mit Beschriftung
   useEffect(() => {
@@ -267,7 +279,7 @@ export function AppSidebar() {
                 >
                     <NavLink to="/" onClick={closeMobileNavigation}>
                     <House className="h-4 w-4" />
-                    <span>Start</span>
+                    <span>Start & Übersicht</span>
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>

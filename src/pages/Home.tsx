@@ -4,7 +4,7 @@
 // ============================================
 
 import { useNavigate } from "react-router-dom";
-import { LogIn } from "lucide-react";
+import { LogIn, LayoutDashboard } from "lucide-react";
 import { MainLayout } from "@/components/MainLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -30,16 +30,14 @@ import {
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { isTestModeActive } from "@/lib/testMode";
 import { RoleQuickStart } from "@/components/workspace/RoleQuickStart";
-import { useWorkspaceProfile } from "@/hooks/useWorkspaceProfile";
 import { useDemoMode } from "@/hooks/useDemoMode";
-import { TodayOverview, DemoModeToggleCard } from "@/components/workspace/TodayOverview";
+import { TodayOverview, DemoModeToggleCard, DemoDashboardOverview } from "@/components/workspace/TodayOverview";
 
 const Home = () => {
   const navigate = useNavigate();
   const { user, isLoading: authLoading } = useAuth();
   const {
     layout,
-    isLoading: layoutLoading,
     isEditMode,
     setEditMode,
     addWidget,
@@ -47,13 +45,12 @@ const Home = () => {
     resetToDefault,
     moveWidget,
   } = useDashboardConfig();
-  const { profile } = useWorkspaceProfile();
   const { enabled: demoEnabled } = useDemoMode();
   const canUseWorkspace = !!user || isTestModeActive();
-  const showQuickStart = canUseWorkspace && profile.homeLayout !== "classic";
-  const showWidgets = profile.homeLayout === "classic";
-  const showToday = canUseWorkspace && profile.homeLayout === "cockpit" && demoEnabled;
-  const showDemoEntry = canUseWorkspace && profile.homeLayout !== "classic" && !demoEnabled;
+  const showQuickStart = canUseWorkspace;
+  const showWidgets = canUseWorkspace;
+  const showToday = canUseWorkspace && demoEnabled;
+  const showDemoEntry = canUseWorkspace && !demoEnabled;
 
   // DnD sensors
   const sensors = useSensors(
@@ -79,7 +76,8 @@ const Home = () => {
   };
 
   // Filter visible widgets
-  const visibleWidgets = layout.filter(w => w.visible);
+  const duplicatedBySalesOverview = new Set(["welcome-banner", "headline", "quick-actions"]);
+  const visibleWidgets = layout.filter(w => w.visible && !duplicatedBySalesOverview.has(w.id));
   const widgetIds = visibleWidgets.map(w => w.id);
 
   return (
@@ -106,21 +104,30 @@ const Home = () => {
 
         {/* Main Content */}
         <main className="flex-1 px-4 py-6 lg:px-6">
-          <div className="mx-auto w-full max-w-5xl space-y-6">
+          <div className="mx-auto w-full max-w-6xl space-y-6">
             {showQuickStart && <RoleQuickStart />}
             {showToday && <TodayOverview compact />}
             {showDemoEntry && <DemoModeToggleCard />}
             {showWidgets && (<>
-            {/* Edit Header */}
-            <DashboardEditHeader
-              isEditMode={isEditMode}
-              onToggleEditMode={() => setEditMode(!isEditMode)}
-              onResetToDefault={resetToDefault}
-              isAuthenticated={!!user}
-            />
+            <section aria-labelledby="dashboard-heading" className="space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
+                <div>
+                  <h2 id="dashboard-heading" className="flex items-center gap-2 text-lg font-semibold text-foreground">
+                    <LayoutDashboard className="h-5 w-5 text-primary" />
+                    Meine Übersicht
+                  </h2>
+                  <p className="text-sm text-muted-foreground">Kennzahlen und Arbeitslisten für Ihren Tag.</p>
+                </div>
+                {!demoEnabled && <DashboardEditHeader
+                  isEditMode={isEditMode}
+                  onToggleEditMode={() => setEditMode(!isEditMode)}
+                  onResetToDefault={resetToDefault}
+                  isAuthenticated={!!user || demoEnabled}
+                />}
+              </div>
 
             {/* Widget Grid with DnD */}
-            <DndContext
+            {demoEnabled ? <DemoDashboardOverview /> : <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
               onDragEnd={handleDragEnd}
@@ -159,7 +166,8 @@ const Home = () => {
                   )}
                 </div>
               </SortableContext>
-            </DndContext>
+            </DndContext>}
+            </section>
             </>)}
 
             {/* Empty State for Guests */}

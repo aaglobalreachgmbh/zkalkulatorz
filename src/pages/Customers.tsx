@@ -51,6 +51,10 @@ import { exportToCSV, CUSTOMER_COLUMNS } from "@/lib/csvExport";
 import { useWorkplaceMode } from "@/contexts/WorkplaceModeContext";
 import { getCustomerStatus } from "@/lib/statusBadges";
 import { cn } from "@/lib/utils";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const initialFormData: CustomerInput = {
   company_name: "",
@@ -89,6 +93,7 @@ export default function Customers() {
   const [formData, setFormData] = useState<CustomerInput>(initialFormData);
   const [searchQuery, setSearchQuery] = useState("");
   const [showVipOnly, setShowVipOnly] = useState(false);
+  const [customerToDelete, setCustomerToDelete] = useState<{ id: string; company_name: string } | null>(null);
 
   // Handle ?action=new query parameter
   useEffect(() => {
@@ -163,9 +168,13 @@ export default function Customers() {
   };
 
   const handleDelete = async (customer: { id: string; company_name: string }) => {
-    if (window.confirm("Kunde wirklich löschen?")) {
-      await deleteCustomer.mutateAsync(customer);
-    }
+    setCustomerToDelete(customer);
+  };
+
+  const confirmDelete = async () => {
+    if (!customerToDelete) return;
+    await deleteCustomer.mutateAsync(customerToDelete);
+    setCustomerToDelete(null);
   };
 
   const getStatusBadge = (status: string | null) => {
@@ -602,6 +611,12 @@ export default function Customers() {
         </div>
 
         {/* Content */}
+        <AlertDialog open={Boolean(customerToDelete)} onOpenChange={(open) => !open && setCustomerToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader><AlertDialogTitle>Kunde löschen?</AlertDialogTitle><AlertDialogDescription>„{customerToDelete?.company_name}“ wird dauerhaft aus der Kundenliste entfernt. Diese Aktion kann nicht rückgängig gemacht werden.</AlertDialogDescription></AlertDialogHeader>
+            <AlertDialogFooter><AlertDialogCancel>Abbrechen</AlertDialogCancel><AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Löschen</AlertDialogAction></AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

@@ -580,7 +580,7 @@ export default function CustomerDetail() {
                       {Object.entries(NOTE_TYPE_CONFIG).map(([key, config]) => (
                         <SelectItem key={key} value={key}>
                           <span className="flex items-center gap-2">
-                            <span>{config.icon}</span>
+                            <config.icon className="h-4 w-4" />
                             {config.label}
                           </span>
                         </SelectItem>
@@ -630,7 +630,7 @@ export default function CustomerDetail() {
                       <CardContent className="py-4">
                         <div className="flex items-start gap-3">
                           <Badge className={config.color}>
-                            <span className="mr-1">{config.icon}</span>
+                            <config.icon className="mr-1 h-3 w-3" />
                             {config.label}
                           </Badge>
                           <div className="flex-1 space-y-1">

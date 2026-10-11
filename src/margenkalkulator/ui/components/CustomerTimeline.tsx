@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { 
   FileText, Mail, ScrollText, MessageSquare, Calendar,
-  ExternalLink, Check, AlertCircle, Clock, Send
+  ExternalLink, Check, AlertCircle, Clock, Send, Phone, Handshake, PenLine
 } from "lucide-react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
@@ -69,12 +69,12 @@ const TYPE_CONFIG = {
   },
 };
 
-const NOTE_TYPE_ICONS: Record<string, string> = {
-  info: "💬",
-  call: "📞",
-  meeting: "🤝",
-  offer: "📄",
-  contract: "✍️",
+const NOTE_TYPE_ICONS: Record<string, typeof MessageSquare> = {
+  info: MessageSquare,
+  call: Phone,
+  meeting: Handshake,
+  offer: FileText,
+  contract: PenLine,
 };
 
 const EMAIL_STATUS_CONFIG: Record<string, { icon: typeof Check; label: string; color: string }> = {
@@ -199,6 +199,7 @@ export function CustomerTimeline({
       {timelineItems.map((item, index) => {
         const config = TYPE_CONFIG[item.type];
         const Icon = config.icon;
+        const NoteIcon = item.type === "note" && item.status ? NOTE_TYPE_ICONS[item.status] ?? MessageSquare : null;
 
         return (
           <div key={item.id} className="relative flex gap-4 pl-2">
@@ -240,11 +241,7 @@ export function CustomerTimeline({
                           {item.status}
                         </Badge>
                       )}
-                      {item.type === "note" && item.status && (
-                        <span className="text-sm">
-                          {NOTE_TYPE_ICONS[item.status] || "💬"}
-                        </span>
-                      )}
+                      {NoteIcon && <NoteIcon className="h-4 w-4 text-muted-foreground" />}
                     </div>
 
                     {/* Title */}

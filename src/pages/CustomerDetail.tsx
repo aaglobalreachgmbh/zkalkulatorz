@@ -56,6 +56,8 @@ import {
   ScrollText,
   History,
   TrendingUp,
+  Handshake,
+  PenLine,
 } from "lucide-react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
@@ -68,11 +70,11 @@ import {
 } from "@/margenkalkulator/lib/formatters";
 
 const NOTE_TYPE_CONFIG = {
-  info: { label: "Info", icon: "💬", color: "bg-blue-500/20 text-blue-600" },
-  call: { label: "Telefonat", icon: "📞", color: "bg-green-500/20 text-green-600" },
-  meeting: { label: "Meeting", icon: "🤝", color: "bg-purple-500/20 text-purple-600" },
-  offer: { label: "Angebot", icon: "📄", color: "bg-amber-500/20 text-amber-600" },
-  contract: { label: "Vertrag", icon: "✍️", color: "bg-emerald-500/20 text-emerald-600" },
+  info: { label: "Info", icon: MessageSquare, color: "bg-info/10 text-info" },
+  call: { label: "Telefonat", icon: Phone, color: "bg-[hsl(var(--status-success)/0.1)] text-[hsl(var(--status-success))]" },
+  meeting: { label: "Meeting", icon: Handshake, color: "bg-primary/10 text-primary" },
+  offer: { label: "Angebot", icon: FileText, color: "bg-warning/10 text-warning" },
+  contract: { label: "Vertrag", icon: PenLine, color: "bg-[hsl(var(--status-success)/0.1)] text-[hsl(var(--status-success))]" },
 } as const;
 
 const initialContractForm: ContractInput = {

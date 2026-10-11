@@ -29,6 +29,7 @@ import {
 } from "@dnd-kit/sortable";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { isTestModeActive } from "@/lib/testMode";
+import { isPublicDemoActive } from "@/lib/publicDemo";
 import { RoleQuickStart } from "@/components/workspace/RoleQuickStart";
 import { useDemoMode } from "@/hooks/useDemoMode";
 import { TodayOverview, DemoModeToggleCard, DemoDashboardOverview } from "@/components/workspace/TodayOverview";
@@ -36,6 +37,7 @@ import { TodayOverview, DemoModeToggleCard, DemoDashboardOverview } from "@/comp
 const Home = () => {
   const navigate = useNavigate();
   const { user, isLoading: authLoading } = useAuth();
+  const { enabled: demoEnabled } = useDemoMode();
   const {
     layout,
     isEditMode,
@@ -45,8 +47,8 @@ const Home = () => {
     resetToDefault,
     moveWidget,
   } = useDashboardConfig();
-  const { enabled: demoEnabled } = useDemoMode();
-  const canUseWorkspace = !!user || isTestModeActive();
+  const demoSession = isTestModeActive() || isPublicDemoActive();
+  const canUseWorkspace = !!user || demoSession || demoEnabled;
   const showQuickStart = canUseWorkspace;
   const showWidgets = canUseWorkspace;
   const showToday = canUseWorkspace && demoEnabled;
@@ -84,7 +86,7 @@ const Home = () => {
     <MainLayout>
       <div className="bg-background min-h-full flex flex-col">
         {/* Login Banner for unauthenticated users */}
-        {!authLoading && !user && !isTestModeActive() && (
+        {!authLoading && !user && !canUseWorkspace && (
           <div className="bg-primary/10 border-b border-primary/20 py-3 px-4">
             <div className="container mx-auto flex items-center justify-between">
               <p className="text-sm text-foreground">

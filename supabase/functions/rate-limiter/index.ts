@@ -3,7 +3,7 @@
 // Phase C1: Supabase-based Rate Limiting
 // ============================================
 
-import { clientOrigin, enforceRateLimit, privateHash, requestTooLarge } from "../_shared/requestSecurity.ts";
+import { clientOrigin, enforceRateLimit, privateHash, requestTooLarge } from "./requestSecurity.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

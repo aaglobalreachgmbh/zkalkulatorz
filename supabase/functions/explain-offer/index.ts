@@ -5,7 +5,7 @@
 // ============================================
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { z } from "npm:zod@3.23.8";
-import { enforceRateLimit, privateHash, requestTooLarge } from "../_shared/requestSecurity.ts";
+import { enforceRateLimit, privateHash, requestTooLarge } from "./requestSecurity.ts";
 
 
 // --- Lovable AI Gateway run-ID helpers (inline) ---

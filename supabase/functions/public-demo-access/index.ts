@@ -1,6 +1,6 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { z } from "npm:zod@3.23.8";
-import { clientOrigin, enforceRateLimit, privateHash, requestTooLarge } from "../_shared/requestSecurity.ts";
+import { clientOrigin, enforceRateLimit, privateHash, requestTooLarge } from "./requestSecurity.ts";
 
 const LoginSchema = z.object({
   action: z.literal("login"),

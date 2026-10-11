@@ -7,7 +7,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { enforceRateLimit, privateHash, requestTooLarge } from "../_shared/requestSecurity.ts";
+import { enforceRateLimit, privateHash, requestTooLarge } from "./requestSecurity.ts";
 
 const MAX_REQUEST_BYTES = 2 * 1024 * 1024;
 const MAX_TARIFFS = 2000;

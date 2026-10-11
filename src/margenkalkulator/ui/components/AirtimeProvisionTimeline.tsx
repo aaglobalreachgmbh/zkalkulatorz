@@ -181,7 +181,7 @@ export function AirtimeProvisionTimeline({
               <div className="mt-3 p-3 rounded-lg bg-info/10 border border-info/30 flex items-start gap-2">
                 <Lightbulb className="w-4 h-4 text-info flex-shrink-0 mt-0.5" />
                 <div className="text-sm">
-                  <span className="font-medium text-info">💡 Tipp:</span>{" "}
+                  <span className="font-medium text-info">Tipp:</span>{" "}
                   <span className="text-muted-foreground">
                     Nach Monat 12 könnte ein Upgrade auf einen höheren Tarif
                     sinnvoll sein, um die Airtime-Provision zu erhöhen.

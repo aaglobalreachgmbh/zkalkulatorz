@@ -154,7 +154,7 @@ export function MarginBreakdownWidget({
       {/* Recommendation */}
       {showRecommendation && marginData.profitabilityStatus !== "positive" && (
         <div className="mt-4 p-3 rounded-lg bg-muted/50 text-sm">
-          <span className="font-medium text-foreground">💡 Empfehlung: </span>
+          <span className="font-medium text-foreground">Empfehlung: </span>
           <span className="text-muted-foreground">
             {marginData.profitabilityStatus === "critical"
               ? "Sub-Stufe reduzieren oder SIM-Only anbieten"

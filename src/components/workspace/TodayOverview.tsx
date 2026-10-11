@@ -26,8 +26,8 @@ export function TodayOverview({ compact = false }: { compact?: boolean }) {
           <Badge variant="secondary">Demo-Firma – Beispieldaten</Badge>
         </div>
         <div className="flex gap-2">
-          <Button size="sm" variant="outline" onClick={() => navigate("/demo-betrieb")}>Demo-Betrieb öffnen</Button>
-          <Button size="sm" variant="ghost" onClick={() => setDemo(false)}>Beispieldaten ausblenden</Button>
+          <Button size="sm" variant="outline" onClick={() => navigate("/customers")}>Kunden öffnen</Button>
+          <Button size="sm" variant="ghost" onClick={() => setDemo(false)}>Demo beenden</Button>
         </div>
       </div>
 
@@ -40,7 +40,7 @@ export function TodayOverview({ compact = false }: { compact?: boolean }) {
               <li>Morgens hier: Termine, fällige Vertragsverlängerungen und offene Angebote auf einen Blick.</li>
               <li>Chancen anklicken → Kalkulator öffnet sich, Angebot in 2–3 Minuten.</li>
               <li>Im Ergebnis: „Für Kunden erklären" und „Strom & Gas ergänzen" für die Gesamtübersicht.</li>
-              <li>Im Demo-Betrieb sehen Sie Kunden, Verträge, Provisionen und Auswertungen im laufenden Betrieb.</li>
+              <li>Kunden, Angebote und Verträge nutzen dieselben Ansichten wie im echten Betrieb.</li>
             </ol>
           </div>
           <Button size="icon" variant="ghost" onClick={markTourSeen} aria-label="Hinweis schließen"><X className="h-4 w-4" /></Button>
@@ -116,7 +116,7 @@ export function DemoModeToggleCard() {
     <div className="rounded-lg border border-border bg-muted/30 p-3 flex flex-wrap items-center justify-between gap-3 text-sm">
       <div>
         <div className="font-medium text-foreground">Wie sieht die App im laufenden Betrieb aus?</div>
-        <div className="text-muted-foreground">Blendet eine erfundene Demo-Firma mit Kunden, Angeboten, Verträgen und Terminen ein – nur in Ihrem Browser.</div>
+        <div className="text-muted-foreground">Nutzt die normalen Ansichten mit einer erfundenen Demo-Firma – ausschließlich in Ihrem Browser.</div>
       </div>
       <Button onClick={() => setDemo(true)}>Beispieldaten anzeigen</Button>
     </div>

@@ -277,7 +277,7 @@ export function useAllContracts() {
   const { user } = useAuth();
   const { enabled: demoEnabled } = useDemoMode();
   const { state: demo } = useDemoWorkspace(user?.id);
-  return useQuery({
+  const query = useQuery({
     queryKey: ["all-contracts", demoEnabled ? "demo" : "live"],
     queryFn: async () => {
       if (demoEnabled) return demo.contracts;
@@ -301,8 +301,9 @@ export function useAllContracts() {
       }
       return (data ?? []) as ContractWithCustomer[];
     },
-    initialData: demoEnabled ? demo.contracts : undefined,
+    enabled: !demoEnabled,
   });
+  return demoEnabled ? { ...query, data: demo.contracts, isLoading: false, isError: false } : query;
 }
 
 // Hook to get counts by urgency

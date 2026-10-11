@@ -7,7 +7,7 @@ import { useTenantBranding } from "@/hooks/useTenantBranding";
 import { useWorkplaceMode } from "@/contexts/WorkplaceModeContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, User, Monitor } from "lucide-react";
+import { LogOut, User, Monitor, RotateCcw, FlaskConical } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,6 +21,8 @@ import { PUBLISHER } from "@/margenkalkulator/publisherConfig";
 import { cn } from "@/lib/utils";
 import { BrandLogo } from "@/components/BrandLogo";
 import { isTestModeActive, disableTestMode } from "@/lib/testMode";
+import { useDemoMode } from "@/hooks/useDemoMode";
+import { toast } from "sonner";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -30,6 +32,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   const { user, signOut } = useAuth();
   const { branding } = useTenantBranding();
   const { isPOS: isPOSMode } = useWorkplaceMode();
+  const { enabled: demoEnabled, setDemo, resetDemo } = useDemoMode();
 
   // Apply branding primary color as CSS variable
   const brandingStyle = branding.primaryColor 
@@ -41,6 +44,23 @@ export function MainLayout({ children }: MainLayoutProps) {
       <div className="min-h-screen flex w-full" style={brandingStyle}>
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
+          {demoEnabled && (
+            <div className="border-b border-primary/30 bg-primary/10 px-3 py-2 text-sm text-foreground">
+              <div className="mx-auto flex max-w-screen-2xl flex-wrap items-center justify-between gap-2">
+                <span className="flex items-center gap-2 font-medium">
+                  <FlaskConical className="h-4 w-4 text-primary" />
+                  Demo-Modus aktiv
+                  <span className="hidden font-normal text-muted-foreground sm:inline">– ausschließlich erfundene Beispieldaten</span>
+                </span>
+                <div className="flex items-center gap-1">
+                  <Button size="sm" variant="ghost" className="h-7 gap-1.5" onClick={() => { resetDemo(); toast.success("Beispieldaten zurückgesetzt"); }}>
+                    <RotateCcw className="h-3.5 w-3.5" /> Zurücksetzen
+                  </Button>
+                  <Button size="sm" variant="outline" className="h-7" onClick={() => setDemo(false)}>Beenden</Button>
+                </div>
+              </div>
+            </div>
+          )}
           {/* VVL Notification Banner */}
           <VVLNotificationBanner />
           {!user && isTestModeActive() && (

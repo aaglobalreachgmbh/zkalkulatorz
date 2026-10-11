@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { MainLayout } from "@/components/MainLayout";
-import { DemoListSection, DemoEnableHint } from "@/components/workspace/DemoListSection";
 import { useCustomers, Customer, CustomerInput } from "@/margenkalkulator/hooks/useCustomers";
 import { usePermissions } from "@/hooks/usePermissions";
 import { AccessDeniedCard } from "@/components/AccessDeniedCard";
@@ -736,7 +735,6 @@ export default function Customers() {
             )}
           </CardContent>
         </Card>
-        <DemoListSection kind="customers" />
       </div>
     </MainLayout>
   );

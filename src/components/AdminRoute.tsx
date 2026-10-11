@@ -10,6 +10,7 @@ import { useAdminMFAEnforcement } from "@/hooks/useAdminMFAEnforcement";
 import { MFAEnforcementDialog } from "@/components/mfa/MFAEnforcementDialog";
 import { Loader2, ShieldX } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useDemoAccess } from "@/hooks/useDemoAccess";
 
 interface AdminRouteProps {
   children: React.ReactNode;
@@ -29,6 +30,20 @@ export function AdminRoute({ children }: AdminRouteProps) {
   const { isLoading: authLoading } = useAuth();
   const { identity, canAccessAdmin, isSupabaseAuth, isAuthenticated } = useIdentity();
   const { requiresMFASetup, isCheckingMFA } = useAdminMFAEnforcement();
+  const demoAccess = useDemoAccess();
+
+  // Demo-Modus: Admin-Seiten nur zur Ansicht. Echte Daten bleiben serverseitig geschützt.
+  if (demoAccess) {
+    return (
+      <>
+        <div className="mb-4 flex items-center gap-2 rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-sm text-foreground">
+          <ShieldX className="h-4 w-4 text-primary" />
+          <span><strong>Im Demo-Modus nur Ansicht.</strong> Verwaltungsfunktionen werden gezeigt, aber nicht ausgeführt.</span>
+        </div>
+        {children}
+      </>
+    );
+  }
 
   // Show loading while checking auth or MFA
   if (authLoading || isCheckingMFA) {

@@ -6,6 +6,7 @@
 import { useAuth } from "./useAuth";
 import { useUserRole } from "./useUserRole";
 import { useIdentity } from "@/contexts/IdentityContext";
+import { useDemoAccess } from "./useDemoAccess";
 
 interface UseTenantAdminResult {
   isTenantAdmin: boolean;
@@ -24,12 +25,9 @@ export function useTenantAdmin(): UseTenantAdminResult {
   // FIX: Use isTenantAdmin directly from useUserRole instead of checking role string
   const { isTenantAdmin: roleIsTenantAdmin, isLoading } = useUserRole();
   const { identity, isSupabaseAuth } = useIdentity();
+  const demoAccess = useDemoAccess();
 
-  // Debug logging
-  console.log("[useTenantAdmin] isSupabaseAuth:", isSupabaseAuth, 
-              "user:", !!user, 
-              "roleIsTenantAdmin:", roleIsTenantAdmin,
-              "isLoading:", isLoading);
+  if (demoAccess) return { isTenantAdmin: true, isLoading: false };
 
   // If using Supabase auth, use the pre-calculated isTenantAdmin from useUserRole
   if (isSupabaseAuth && user) {

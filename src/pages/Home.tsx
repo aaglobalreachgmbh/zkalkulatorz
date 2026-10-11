@@ -103,7 +103,7 @@ const Home = () => {
         )}
 
         {/* Main Content */}
-        <main className="flex-1 px-4 py-6 lg:px-6">
+        <div className="flex-1 px-4 py-6 lg:px-6">
           <div className="mx-auto w-full max-w-6xl space-y-6">
             {showQuickStart && <RoleQuickStart />}
             {showToday && <TodayOverview compact />}
@@ -180,7 +180,7 @@ const Home = () => {
               </div>
             )}
           </div>
-        </main>
+        </div>
 
       </div>
     </MainLayout>

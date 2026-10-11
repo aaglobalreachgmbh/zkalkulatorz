@@ -259,7 +259,7 @@ export default function AdminPermissions() {
           </div>
         </header>
 
-        <main className="flex-1 p-6 space-y-6">
+        <div className="flex-1 p-6 space-y-6">
           {/* Info */}
           <Alert className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
             <Info className="h-4 w-4 text-blue-600" />
@@ -443,7 +443,7 @@ export default function AdminPermissions() {
               );
             })}
           </div>
-        </main>
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );

@@ -60,11 +60,11 @@ export function WizardContainer({
             </header>
 
             {/* Scrollable Content Area */}
-            <main className="flex-1 overflow-y-auto p-6 md:p-8 scroll-smooth">
+            <div className="flex-1 overflow-y-auto p-6 md:p-8 scroll-smooth">
                 <div className="max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
                     {children}
                 </div>
-            </main>
+            </div>
 
             {/* Footer (Actions) - Sticky is handled by parent flex layout */}
             {/* Actions are typically injected here via slots or children if needed globally */}

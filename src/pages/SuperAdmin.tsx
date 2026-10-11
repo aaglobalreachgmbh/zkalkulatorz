@@ -116,7 +116,7 @@ export default function SuperAdmin() {
           <CreateTenantModal />
         </header>
 
-        <main className="flex-1 p-6 space-y-6">
+        <div className="flex-1 p-6 space-y-6">
           {/* Info Banner */}
           <Alert className="bg-primary/5 border-primary/20">
             <Shield className="h-4 w-4 text-primary" />
@@ -259,7 +259,7 @@ export default function SuperAdmin() {
               )}
             </CardContent>
           </Card>
-        </main>
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );

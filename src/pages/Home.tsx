@@ -31,7 +31,7 @@ import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { isTestModeActive } from "@/lib/testMode";
 import { RoleQuickStart } from "@/components/workspace/RoleQuickStart";
 import { useDemoMode } from "@/hooks/useDemoMode";
-import { TodayOverview, DemoModeToggleCard } from "@/components/workspace/TodayOverview";
+import { TodayOverview, DemoModeToggleCard, DemoDashboardOverview } from "@/components/workspace/TodayOverview";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -118,16 +118,16 @@ const Home = () => {
                   </h2>
                   <p className="text-sm text-muted-foreground">Kennzahlen und Arbeitslisten für Ihren Tag.</p>
                 </div>
-                <DashboardEditHeader
+                {!demoEnabled && <DashboardEditHeader
                   isEditMode={isEditMode}
                   onToggleEditMode={() => setEditMode(!isEditMode)}
                   onResetToDefault={resetToDefault}
                   isAuthenticated={!!user || demoEnabled}
-                />
+                />}
               </div>
 
             {/* Widget Grid with DnD */}
-            <DndContext
+            {demoEnabled ? <DemoDashboardOverview /> : <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
               onDragEnd={handleDragEnd}
@@ -166,7 +166,7 @@ const Home = () => {
                   )}
                 </div>
               </SortableContext>
-            </DndContext>
+            </DndContext>}
             </section>
             </>)}
 

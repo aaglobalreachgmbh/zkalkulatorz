@@ -43,7 +43,7 @@ export function useDashboardConfig(): UseDashboardConfigReturn {
 
   // Fetch config from database
   const { data: config, isLoading, error } = useQuery({
-    queryKey: ["dashboard-config", user?.id],
+    queryKey: ["dashboard-config", user?.id, demoEnabled],
     queryFn: async (): Promise<DashboardConfig> => {
       if (demoEnabled) {
         try {
@@ -171,7 +171,7 @@ export function useDashboardConfig(): UseDashboardConfigReturn {
     },
     onSuccess: () => {
       if (demoEnabled) {
-        queryClient.setQueryData(["dashboard-config", user?.id], () => {
+        queryClient.setQueryData(["dashboard-config", user?.id, demoEnabled], () => {
           try {
             const stored = localStorage.getItem(`demo-dashboard-config:${user?.id ?? "anon"}`);
             return stored ? JSON.parse(stored) as DashboardConfig : undefined;

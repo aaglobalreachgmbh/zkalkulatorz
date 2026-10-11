@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { FlaskConical } from "lucide-react";
 import { toast } from "sonner";
 import { useDemoAccess } from "@/hooks/useDemoAccess";
@@ -15,6 +15,7 @@ interface DemoAdminBoundaryProps {
  */
 export function DemoAdminBoundary({ children, scope }: DemoAdminBoundaryProps) {
   const demoAccess = useDemoAccess();
+  const [armed, setArmed] = useState(!demoAccess);
 
   useEffect(() => {
     if (!demoAccess) return;
@@ -23,29 +24,35 @@ export function DemoAdminBoundary({ children, scope }: DemoAdminBoundaryProps) {
     window.fetch = async (input, init) => {
       const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
       const method = (init?.method || (input instanceof Request ? input.method : "GET")).toUpperCase();
-      const isBackendWrite = method !== "GET" && (
+      const isBackendRequest = (
         url.includes("/rest/v1/") ||
         url.includes("/functions/v1/") ||
         url.includes("/storage/v1/")
       );
 
-      if (isBackendWrite) {
-        toast.info("Demo-Vorschau: Diese Änderung wurde nicht an das echte System gesendet.");
-        return new Response(JSON.stringify({ demo: true, blocked: true }), {
+      if (isBackendRequest) {
+        if (method !== "GET") toast.info("Demo-Vorschau: Diese Änderung wurde nicht an das echte System gesendet.");
+        const body = method === "GET" ? [] : { demo: true, blocked: true };
+        return new Response(JSON.stringify(body), {
           status: 200,
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", "Content-Range": "0-0/0" },
         });
       }
 
       return originalFetch(input, init);
     };
 
+    setArmed(true);
     return () => {
       window.fetch = originalFetch;
+      setArmed(false);
     };
   }, [demoAccess]);
 
   if (!demoAccess) return <>{children}</>;
+  if (!armed) {
+    return <div className="p-6 text-sm text-muted-foreground">Demo-Verwaltung wird vorbereitet...</div>;
+  }
 
   return (
     <div data-demo-admin-scope={scope}>

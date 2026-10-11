@@ -6,6 +6,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useDemoAccess } from "@/hooks/useDemoAccess";
+
+const DEMO_TENANTS: TenantWithLicense[] = [
+  { id: "demo-shop-koeln", company_name: "Demo Partner Köln", contact_email: "demo-koeln@example.invalid", contact_phone: null, address: { city: "Köln" }, status: "active", created_at: "2026-01-15T09:00:00.000Z", updated_at: "2026-10-01T09:00:00.000Z", created_by: null, license: { id: "demo-license-1", plan: "professional", seat_limit: 12, seats_used: 8, valid_until: null, features: {} }, allowed_domains: ["example.invalid"], allowed_emails_count: 8, active_users_count: 8 },
+  { id: "demo-shop-bonn", company_name: "Demo Business Store Bonn", contact_email: "demo-bonn@example.invalid", contact_phone: null, address: { city: "Bonn" }, status: "trial", created_at: "2026-08-03T09:00:00.000Z", updated_at: "2026-10-05T09:00:00.000Z", created_by: null, license: { id: "demo-license-2", plan: "starter", seat_limit: 5, seats_used: 3, valid_until: "2026-11-30", features: {} }, allowed_domains: [], allowed_emails_count: 3, active_users_count: 3 },
+  { id: "demo-shop-duesseldorf", company_name: "Demo Außendienst Rheinland", contact_email: "demo-rheinland@example.invalid", contact_phone: null, address: { city: "Düsseldorf" }, status: "suspended", created_at: "2025-11-20T09:00:00.000Z", updated_at: "2026-09-20T09:00:00.000Z", created_by: null, license: { id: "demo-license-3", plan: "enterprise", seat_limit: 25, seats_used: 19, valid_until: null, features: {} }, allowed_domains: ["example.invalid"], allowed_emails_count: 19, active_users_count: 17 },
+];
 
 // Types
 export interface Tenant {
@@ -50,11 +57,13 @@ export interface CreateTenantInput {
 // Hook
 export function useTenants() {
   const queryClient = useQueryClient();
+  const demoAccess = useDemoAccess();
 
   // Fetch all tenants with license info
   const { data: tenants = [], isLoading, error } = useQuery({
     queryKey: ["tenants-admin"],
     queryFn: async () => {
+      if (demoAccess) return DEMO_TENANTS;
       // Fetch tenants
       const { data: tenantsData, error: tenantsError } = await supabase
         .from("tenants")
@@ -116,6 +125,10 @@ export function useTenants() {
   // Create tenant mutation
   const createTenantMutation = useMutation({
     mutationFn: async (input: CreateTenantInput) => {
+      if (demoAccess) {
+        toast.info("Demo-Vorschau: Der neue Shop wurde nicht an das echte System gesendet.");
+        return { tenantId: `demo-${Date.now()}`, inviteToken: "demo" };
+      }
       // Generate tenant ID from company name
       const tenantId = `tenant_${input.company_name
         .toLowerCase()
@@ -216,6 +229,7 @@ export function useTenants() {
   // Update tenant status
   const updateStatusMutation = useMutation({
     mutationFn: async ({ tenantId, status }: { tenantId: string; status: Tenant["status"] }) => {
+      if (demoAccess) return null;
       const { error } = await supabase
         .from("tenants")
         .update({ status, updated_at: new Date().toISOString() })
@@ -245,6 +259,7 @@ export function useTenants() {
       seatLimit?: number;
       validUntil?: string | null;
     }) => {
+      if (demoAccess) return null;
       const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
       if (plan !== undefined) updates.plan = plan;
       if (seatLimit !== undefined) updates.seat_limit = seatLimit;
@@ -269,6 +284,7 @@ export function useTenants() {
   // Add allowed domain
   const addDomainMutation = useMutation({
     mutationFn: async ({ tenantId, domain }: { tenantId: string; domain: string }) => {
+      if (demoAccess) return null;
       const { error } = await supabase
         .from("tenant_allowed_domains")
         .insert({
@@ -290,6 +306,7 @@ export function useTenants() {
   // Remove allowed domain
   const removeDomainMutation = useMutation({
     mutationFn: async ({ tenantId, domain }: { tenantId: string; domain: string }) => {
+      if (demoAccess) return null;
       const { error } = await supabase
         .from("tenant_allowed_domains")
         .delete()

@@ -12,6 +12,13 @@ import { toast } from "sonner";
 import { Check, X, Clock, UserCheck, UserX, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
+import { useDemoAccess } from "@/hooks/useDemoAccess";
+
+const DEMO_USERS: UserProfile[] = [
+  { id: "demo-user-1", email: "verkauf@example.invalid", display_name: "Mara Verkauf", is_approved: true, approved_at: "2026-09-01T10:00:00.000Z", approved_by: null, created_at: "2026-08-30T10:00:00.000Z" },
+  { id: "demo-user-2", email: "teamleitung@example.invalid", display_name: "Tobias Teamleitung", is_approved: true, approved_at: "2026-08-15T10:00:00.000Z", approved_by: null, created_at: "2026-08-14T10:00:00.000Z" },
+  { id: "demo-user-3", email: "neu@example.invalid", display_name: "Nina Neu", is_approved: false, approved_at: null, approved_by: null, created_at: "2026-10-10T10:00:00.000Z" },
+];
 
 interface UserProfile {
   id: string;
@@ -27,10 +34,12 @@ export default function AdminUsers() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("pending");
+  const demoAccess = useDemoAccess();
 
   const { data: users, isLoading } = useQuery({
     queryKey: ["admin-users"],
     queryFn: async () => {
+      if (demoAccess) return DEMO_USERS;
       const { data, error } = await supabase
         .from("profiles")
         .select("id, email, display_name, is_approved, approved_at, approved_by, created_at")
@@ -43,6 +52,10 @@ export default function AdminUsers() {
 
   const approveMutation = useMutation({
     mutationFn: async ({ userId, approve }: { userId: string; approve: boolean }) => {
+      if (demoAccess) {
+        toast.info(`Demo-Vorschau: Benutzer würde ${approve ? "freigeschaltet" : "deaktiviert"}.`);
+        return null;
+      }
       const { error } = await supabase
         .from("profiles")
         .update({

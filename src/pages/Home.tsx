@@ -76,7 +76,8 @@ const Home = () => {
   };
 
   // Filter visible widgets
-  const visibleWidgets = layout.filter(w => w.visible);
+  const duplicatedBySalesOverview = new Set(["welcome-banner", "headline", "quick-actions"]);
+  const visibleWidgets = layout.filter(w => w.visible && !duplicatedBySalesOverview.has(w.id));
   const widgetIds = visibleWidgets.map(w => w.id);
 
   return (

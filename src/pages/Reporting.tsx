@@ -14,7 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Loader2, FileText, TrendingUp, Target, Euro, Calendar, AlertTriangle, Package, Receipt, Download, Trophy, Users } from "lucide-react";
+import { Loader2, FileText, TrendingUp, Target, Euro, Calendar, AlertTriangle, Package, Receipt, Download, Trophy, Users, Circle } from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -209,13 +209,13 @@ export default function Reporting() {
                   <div className="text-2xl font-bold">{stats?.vvlStats.total || 0}</div>
                   <div className="flex gap-2 text-xs">
                     {(stats?.vvlStats.critical || 0) > 0 && (
-                      <span className="text-destructive">🔴 {stats?.vvlStats.critical}</span>
+                      <span className="flex items-center gap-1 text-destructive"><Circle className="h-2.5 w-2.5 fill-current" />{stats?.vvlStats.critical}</span>
                     )}
                     {(stats?.vvlStats.warning || 0) > 0 && (
-                      <span className="text-yellow-600">🟡 {stats?.vvlStats.warning}</span>
+                      <span className="flex items-center gap-1 text-warning"><Circle className="h-2.5 w-2.5 fill-current" />{stats?.vvlStats.warning}</span>
                     )}
                     {(stats?.vvlStats.ok || 0) > 0 && (
-                      <span className="text-green-600">🟢 {stats?.vvlStats.ok}</span>
+                      <span className="flex items-center gap-1 text-[hsl(var(--status-success))]"><Circle className="h-2.5 w-2.5 fill-current" />{stats?.vvlStats.ok}</span>
                     )}
                   </div>
                 </CardContent>

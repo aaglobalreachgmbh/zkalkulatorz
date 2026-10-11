@@ -194,8 +194,7 @@
    Verhindert, dass Elemente (Buttons, etc.) ihre Container überlaufen.
    ============================================================================ */
 @layer components {
-  /* Cards, Dialogs, Popovers: Overflow hidden + proper containment */
-  .card,
+  /* Overlay-Inhalte begrenzen; Karten dürfen ihren Inhalt selbst anordnen. */
   [data-radix-popper-content-wrapper] > *,
   .popover-content,
   .dialog-content {

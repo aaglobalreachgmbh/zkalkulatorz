@@ -1,5 +1,7 @@
 # UX-Produktreife
 
+- [x] Überschneidungen, Typografie und Barrierefreiheit in Vertriebsansichten korrigieren und responsiv prüfen
+
 - [x] Öffentliche und kostenintensive Aufrufe gegen Missbrauch absichern
 - [ ] Abrufgrenzen und Sicherheit praktisch nachweisen
 

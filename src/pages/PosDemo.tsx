@@ -38,9 +38,9 @@ export default function PosDemo() {
                   <div className="text-sm text-muted-foreground">{eur(p.price)}</div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button aria-label="Verringern" size="icon" variant="outline" onClick={() => change(p.id, -1)} aria-label="Weniger"><Minus className="h-4 w-4" /></Button>
+                  <Button size="icon" variant="outline" onClick={() => change(p.id, -1)} aria-label={`${p.name}: Menge verringern`}><Minus className="h-4 w-4" /></Button>
                   <span className="w-6 text-center">{cart[p.id] ?? 0}</span>
-                  <Button aria-label="Hinzufügen" size="icon" variant="outline" onClick={() => change(p.id, 1)} aria-label="Mehr"><Plus className="h-4 w-4" /></Button>
+                  <Button size="icon" variant="outline" onClick={() => change(p.id, 1)} aria-label={`${p.name}: Menge erhöhen`}><Plus className="h-4 w-4" /></Button>
                 </div>
               </CardContent>
             </Card>

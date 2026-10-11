@@ -30,8 +30,8 @@ export function DemoListSection({ kind }: { kind: Kind }) {
   if (!enabled) return null;
 
   const header = (title: string) => (
-    <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
-      <CardTitle className="flex items-center gap-2 text-base">
+    <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 pb-3">
+      <CardTitle className="flex min-w-0 flex-wrap items-center gap-2 text-base leading-6">
         {title} <Badge variant="secondary">Beispieldaten – erfunden</Badge>
       </CardTitle>
       <Button variant="ghost" size="sm" onClick={() => setDemo(false)}>Ausblenden</Button>

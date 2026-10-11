@@ -3,7 +3,7 @@
 // Compact single-line: Name | Data | Price | CTA
 // ============================================
 
-import { Signal, Zap } from "lucide-react";
+import { Check, Signal, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { MobileTariff } from "@/margenkalkulator";
 
@@ -100,7 +100,7 @@ export function TariffCard({
             : "bg-primary text-primary-foreground hover:bg-primary/90"
         )}
       >
-        {isSelected ? "Gewählt ✓" : "Wählen"}
+        {isSelected ? <span className="flex items-center gap-1"><Check className="h-3 w-3" />Gewählt</span> : "Wählen"}
       </div>
     </button>
   );

@@ -13,7 +13,6 @@ import {
   FolderOpen, 
   Save, 
   FileText, 
-  Package, 
   Cloud 
 } from "lucide-react";
 import type { OfferOptionState, CalculationResult, ViewMode } from "@/margenkalkulator";
@@ -68,16 +67,6 @@ export function ActionMenu({ config, avgMonthly, result, viewMode, onLoadConfig 
     navigate("/offers");
   };
 
-  const handleSaveTemplate = () => {
-    toast("Template speichern", { description: "Bitte nutze den Vorlagen-Button auf der Angebote-Seite." });
-    navigate("/offers");
-  };
-
-  const handleSaveBundle = () => {
-    navigate("/bundles");
-    toast("Bundle speichern", { description: "Du wirst zur Bundle-Verwaltung weitergeleitet." });
-  };
-
   return (
     <>
       <DropdownMenu>
@@ -113,10 +102,6 @@ export function ActionMenu({ config, avgMonthly, result, viewMode, onLoadConfig 
           <DropdownMenuItem onClick={handleSaveDraft} className="gap-3 cursor-pointer">
             <Save className="w-4 h-4" />
             Als Entwurf speichern
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleSaveBundle} className="gap-3 cursor-pointer">
-            <Package className="w-4 h-4" />
-            Als Bundle speichern
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleNavigateCloud} className="gap-3 cursor-pointer">

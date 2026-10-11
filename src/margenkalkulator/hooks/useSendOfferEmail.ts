@@ -44,6 +44,13 @@ interface SendEmailResult {
   retryAfter?: number;
 }
 
+/** Removes null/empty-string fields so optional server validation accepts them. */
+function dropEmpty<T extends Record<string, unknown>>(obj: T): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, v]) => v !== null && v !== undefined && v !== "")
+  ) as Partial<T>;
+}
+
 export function useSendOfferEmail() {
   const [isSending, setIsSending] = useState(false);
   const { branding } = useTenantBranding();
@@ -59,15 +66,16 @@ export function useSendOfferEmail() {
     
     try {
       const { data, error } = await supabase.functions.invoke("send-offer-email", {
-        body: {
+        body: dropEmpty({
           ...params,
-          branding: {
+          branding: dropEmpty({
             logoUrl: branding.logoUrl,
             primaryColor: branding.primaryColor,
             secondaryColor: branding.secondaryColor,
             companyName: branding.companyName,
-          },
-        },
+          }),
+          companyLegal: params.companyLegal ? dropEmpty(params.companyLegal) : undefined,
+        }),
       });
 
       if (error) {

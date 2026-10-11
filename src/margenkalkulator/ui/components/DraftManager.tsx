@@ -121,7 +121,7 @@ export function DraftManager({
                       )}
                     </div>
                   </button>
-                  <Button
+                  <Button aria-label="Löschen"
                     variant="ghost"
                     size="icon"
                     onClick={(e) => {

@@ -67,7 +67,7 @@ export function PdfPreviewPane({
       <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/30">
         {/* Page Navigation */}
         <div className="flex items-center gap-1">
-          <Button
+          <Button aria-label="Zurück"
             variant="ghost"
             size="icon"
             onClick={handlePrevPage}
@@ -79,7 +79,7 @@ export function PdfPreviewPane({
           <span className="text-sm text-muted-foreground min-w-[80px] text-center">
             Seite {currentPage} von {pageCount}
           </span>
-          <Button
+          <Button aria-label="Weiter"
             variant="ghost"
             size="icon"
             onClick={handleNextPage}
@@ -127,7 +127,7 @@ export function PdfPreviewPane({
             <ZoomIn className="w-4 h-4" />
           </Button>
           
-          <Button
+          <Button aria-label="Zurücksetzen"
             variant="ghost"
             size="icon"
             onClick={handleZoomReset}
@@ -138,7 +138,7 @@ export function PdfPreviewPane({
           
           <div className="w-px h-4 bg-border mx-1" />
           
-          <Button
+          <Button aria-label="Verkleinern"
             variant="ghost"
             size="icon"
             onClick={toggleFullscreen}

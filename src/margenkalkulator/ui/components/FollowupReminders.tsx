@@ -55,7 +55,7 @@ export function FollowupReminders({ compact = false }: FollowupRemindersProps) {
     return (
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
-          <Button 
+          <Button aria-label="Benachrichtigungen" 
             variant="ghost" 
             size="icon" 
             className="relative"
@@ -109,7 +109,7 @@ export function FollowupReminders({ compact = false }: FollowupRemindersProps) {
                       )}
                     </div>
                   </div>
-                  <Button
+                  <Button aria-label="Schließen"
                     variant="ghost"
                     size="icon"
                     className="shrink-0 h-6 w-6"
@@ -215,7 +215,7 @@ export function FollowupReminders({ compact = false }: FollowupRemindersProps) {
                   )}
                 </div>
                 <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button
+                  <Button aria-label="Anzeigen"
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8"
@@ -226,7 +226,7 @@ export function FollowupReminders({ compact = false }: FollowupRemindersProps) {
                   >
                     <Eye className="w-4 h-4" />
                   </Button>
-                  <Button
+                  <Button aria-label="Schließen"
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8"

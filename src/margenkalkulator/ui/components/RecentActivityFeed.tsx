@@ -193,7 +193,7 @@ export function RecentActivityFeed({ limit = 10, compact = false }: RecentActivi
               </div>
 
               {/* Action */}
-              <Button 
+              <Button aria-label="Extern öffnen" 
                 variant="ghost" 
                 size="icon" 
                 className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"

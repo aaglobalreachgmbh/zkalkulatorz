@@ -186,7 +186,7 @@ export function FieldServiceDashboard() {
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
                         {customer.phone && (
-                          <Button
+                          <Button aria-label="Anrufen"
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8"

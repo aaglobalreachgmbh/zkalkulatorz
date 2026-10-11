@@ -217,7 +217,7 @@ export function OnboardingTour({
               Schritt {currentStepIndex + 1} von {totalSteps}
             </span>
           </div>
-          <Button
+          <Button aria-label="Schließen"
             variant="ghost"
             size="icon"
             className="h-6 w-6 -mr-2 -mt-2"

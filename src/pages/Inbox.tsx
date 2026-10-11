@@ -248,7 +248,7 @@ export default function InboxPage() {
                     )}
                   </p>
                 </div>
-                <Button
+                <Button aria-label="Löschen"
                   variant="ghost"
                   size="icon"
                   className="text-muted-foreground hover:text-destructive"
@@ -301,7 +301,7 @@ export default function InboxPage() {
                     Verbunden
                   </p>
                 </div>
-                <Button
+                <Button aria-label="Löschen"
                   variant="ghost"
                   size="icon"
                   className="text-muted-foreground hover:text-destructive"
@@ -383,7 +383,7 @@ export default function InboxPage() {
                           )}
                           onClick={() => setSelectedEmail(email.id)}
                         >
-                          <Button
+                          <Button aria-label="Favorit"
                             variant="ghost"
                             size="icon"
                             className="shrink-0 h-8 w-8"

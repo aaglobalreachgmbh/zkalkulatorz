@@ -44,7 +44,7 @@ export function NotificationBell() {
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative">
+                <Button aria-label="Benachrichtigungen" variant="ghost" size="icon" className="relative">
                     <Bell className="w-5 h-5" />
                     {notifications.length > 0 && (
                         <span className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full" />

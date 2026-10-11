@@ -171,7 +171,7 @@ export function EmailHistoryPanel() {
             <Clock className="w-5 h-5 text-primary" />
             E-Mail-Historie
           </CardTitle>
-          <Button 
+          <Button aria-label="Aktualisieren" 
             variant="ghost" 
             size="icon" 
             onClick={() => refetch()}

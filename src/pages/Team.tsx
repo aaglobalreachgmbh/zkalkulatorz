@@ -201,7 +201,7 @@ export default function Team() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0"><ArrowLeft className="h-5 w-5" /></Button>
+            <Button aria-label="Zurück" variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0"><ArrowLeft className="h-5 w-5" /></Button>
             <div>
               <div className="flex items-center gap-2"><Users className="h-6 w-6 text-primary" /><h1 className="text-2xl font-bold text-foreground">Team-Verwaltung</h1></div>
               <p className="text-muted-foreground mt-1">Verwalten Sie Ihre Mitarbeiter und Einladungen</p>

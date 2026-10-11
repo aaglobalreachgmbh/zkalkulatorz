@@ -34,7 +34,7 @@ export default function TenantAdmin() {
         {/* Header with Back Button */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button
+            <Button aria-label="Zurück"
               variant="ghost"
               size="icon"
               onClick={() => navigate(-1)}

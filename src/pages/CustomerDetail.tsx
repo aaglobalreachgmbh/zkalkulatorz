@@ -639,7 +639,7 @@ export default function CustomerDetail() {
                               {format(new Date(note.created_at), "dd.MM.yyyy HH:mm", { locale: de })}
                             </p>
                           </div>
-                          <Button
+                          <Button aria-label="Löschen"
                             variant="ghost"
                             size="icon"
                             className="opacity-0 group-hover:opacity-100 transition-opacity"

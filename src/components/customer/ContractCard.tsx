@@ -194,7 +194,7 @@ export function ContractCard({
                             <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
-                                        <Button
+                                        <Button aria-label="Bearbeiten"
                                             variant="ghost"
                                             size="icon"
                                             className="h-8 w-8"
@@ -208,7 +208,7 @@ export function ContractCard({
 
                                 <Tooltip>
                                     <TooltipTrigger asChild>
-                                        <Button
+                                        <Button aria-label="Aktualisieren"
                                             variant="ghost"
                                             size="icon"
                                             className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
@@ -222,7 +222,7 @@ export function ContractCard({
 
                                 <Tooltip>
                                     <TooltipTrigger asChild>
-                                        <Button
+                                        <Button aria-label="Dokument öffnen"
                                             variant="ghost"
                                             size="icon"
                                             className="h-8 w-8 text-primary hover:text-primary/80"
@@ -236,7 +236,7 @@ export function ContractCard({
 
                                 <Tooltip>
                                     <TooltipTrigger asChild>
-                                        <Button
+                                        <Button aria-label="Löschen"
                                             variant="ghost"
                                             size="icon"
                                             className="h-8 w-8 text-destructive hover:text-destructive/80 opacity-0 group-hover:opacity-100 transition-opacity"

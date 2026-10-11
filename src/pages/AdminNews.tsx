@@ -313,14 +313,14 @@ export default function AdminNews() {
                       >
                         <Pin className="h-4 w-4" />
                       </Button>
-                      <Button
+                      <Button aria-label="Bearbeiten"
                         variant="ghost"
                         size="icon"
                         onClick={() => handleEditNews(item)}
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button
+                      <Button aria-label="Löschen"
                         variant="ghost"
                         size="icon"
                         onClick={() => handleDeleteNews(item.id)}

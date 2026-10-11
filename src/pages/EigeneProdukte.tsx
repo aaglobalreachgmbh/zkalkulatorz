@@ -191,7 +191,7 @@ export default function EigeneProdukte() {
               <span className="text-sm tabular-nums"><span className="block text-[10px] text-muted-foreground sm:hidden">Monatlich</span>{eur(p.monthlyNet)}<span className="text-xs text-muted-foreground"> /M</span></span>
               <span className="text-sm tabular-nums"><span className="block text-[10px] text-muted-foreground sm:hidden">Einmalig</span>{eur(p.oneTimeNet)}</span>
               <span className="text-sm tabular-nums text-muted-foreground"><span className="block text-[10px] sm:hidden">Provision</span>{eur(p.provision)}</span>
-              {!isDemoList && <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setProducts(products.filter((x) => x.id !== p.id))} aria-label="Löschen"><Trash2 className="h-4 w-4" /></Button>}
+              {!isDemoList && <Button aria-label="Löschen" size="icon" variant="ghost" className="h-8 w-8" onClick={() => setProducts(products.filter((x) => x.id !== p.id))} aria-label="Löschen"><Trash2 className="h-4 w-4" /></Button>}
             </div>
           ))}
         </CardContent>

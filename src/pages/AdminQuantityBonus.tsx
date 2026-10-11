@@ -588,7 +588,7 @@ export default function AdminQuantityBonus() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
-                            <Button
+                            <Button aria-label="Bearbeiten"
                               variant="ghost"
                               size="icon"
                               onClick={() => handleOpenEditPosition(tier)}
@@ -596,7 +596,7 @@ export default function AdminQuantityBonus() {
                             >
                               <Pencil className="w-4 h-4" />
                             </Button>
-                            <Button
+                            <Button aria-label="Löschen"
                               variant="ghost"
                               size="icon"
                               onClick={() => handleDeletePosition(tier)}
@@ -740,14 +740,14 @@ export default function AdminQuantityBonus() {
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex items-center justify-end gap-1">
-                              <Button
+                              <Button aria-label="Bearbeiten"
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => handleOpenEditRule(rule)}
                               >
                                 <Pencil className="w-4 h-4" />
                               </Button>
-                              <Button
+                              <Button aria-label="Löschen"
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => handleDeleteRule(rule)}

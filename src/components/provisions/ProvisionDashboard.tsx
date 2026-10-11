@@ -86,13 +86,13 @@ export function ProvisionDashboard() {
             </Button>
           )}
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" onClick={goToPrevMonth}>
+            <Button aria-label="Zurück" variant="ghost" size="icon" onClick={goToPrevMonth}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <span className="font-medium min-w-[140px] text-center">
               {format(selectedMonth, "MMMM yyyy", { locale: de })}
             </span>
-            <Button variant="ghost" size="icon" onClick={goToNextMonth} disabled={monthOffset >= 0}>
+            <Button aria-label="Weiter" variant="ghost" size="icon" onClick={goToNextMonth} disabled={monthOffset >= 0}>
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>

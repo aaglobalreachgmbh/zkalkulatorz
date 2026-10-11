@@ -303,7 +303,7 @@ export default function GDPRDashboard() {
                         className="pl-9 w-64"
                       />
                     </div>
-                    <Button
+                    <Button aria-label="Aktualisieren"
                       variant="outline"
                       size="icon"
                       onClick={() => {

@@ -310,7 +310,7 @@ export function VisitReportForm({ reportId, customerId, onSuccess }: VisitReport
                     alt={`Foto ${index + 1}`}
                     className="w-full h-full object-cover rounded-lg"
                   />
-                  <Button
+                  <Button aria-label="Schließen"
                     variant="destructive"
                     size="icon"
                     className="absolute top-1 right-1 h-6 w-6"

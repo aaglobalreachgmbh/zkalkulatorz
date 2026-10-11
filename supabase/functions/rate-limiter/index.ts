@@ -3,7 +3,7 @@
 // Phase C1: Supabase-based Rate Limiting
 // ============================================
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { clientOrigin, enforceRateLimit, privateHash, requestTooLarge } from "../_shared/requestSecurity.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,11 +20,7 @@ const RATE_LIMITS: Record<string, { maxRequests: number; windowSeconds: number }
   calculation: { maxRequests: 200, windowSeconds: 60 },
 };
 
-interface RateLimitRequest {
-  category: string;
-  action: "check" | "status" | "cleanup";
-  identifier?: string; // Optional: custom identifier (default: IP hash)
-}
+interface RateLimitRequest { category: string; action: "check"; }
 
 interface RateLimitResponse {
   allowed: boolean;
@@ -37,26 +33,6 @@ interface RateLimitResponse {
 /**
  * Hash an identifier (IP address) for privacy
  */
-async function hashIdentifier(identifier: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(identifier + Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")?.slice(0, 16));
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, "0")).join("").slice(0, 32);
-}
-
-/**
- * Get client identifier from request
- */
-function getClientIdentifier(req: Request): string {
-  // Try various headers for client IP
-  const forwarded = req.headers.get("x-forwarded-for");
-  const realIp = req.headers.get("x-real-ip");
-  const cfIp = req.headers.get("cf-connecting-ip");
-  
-  return forwarded?.split(",")[0]?.trim() || realIp || cfIp || "unknown";
-}
-
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -64,17 +40,12 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Create Supabase client with service role
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    
-    const supabase = createClient(supabaseUrl, serviceRoleKey, {
-      auth: { persistSession: false },
-    });
-
+    if (req.method !== "POST") return new Response(JSON.stringify({ allowed: false, error: "Method not allowed" }), { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (requestTooLarge(req, 2048)) return new Response(JSON.stringify({ allowed: false, error: "Payload too large" }), { status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     // Parse request
     const body: RateLimitRequest = await req.json().catch(() => ({}));
-    const { category = "api", action = "check", identifier } = body;
+    const { category = "api", action = "check" } = body;
+    if (action !== "check") return new Response(JSON.stringify({ allowed: false, error: "Action not available" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     // Validate category
     const limits = RATE_LIMITS[category];
@@ -82,107 +53,28 @@ Deno.serve(async (req) => {
       console.warn(`[RateLimiter] Unknown category: ${category}`);
       return new Response(
         JSON.stringify({ 
-          allowed: true, 
-          remaining: 999, 
+          allowed: false,
+          remaining: 0,
           resetAt: new Date().toISOString(),
           category,
-          error: "Unknown category, allowing request" 
+          error: "Unknown category"
         }),
-        { 
-          status: 200, 
+        {
+          status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" } 
         }
       );
     }
 
     // Get client identifier
-    const clientId = identifier || getClientIdentifier(req);
-    const keyHash = await hashIdentifier(clientId);
+    const keyHash = await privateHash(clientOrigin(req), `rate:${category}`);
 
     console.log(`[RateLimiter] ${action} for ${category}, key: ${keyHash.slice(0, 8)}...`);
 
-    // Handle different actions
-    if (action === "cleanup") {
-      // Cleanup old entries (should be called periodically)
-      const { data, error } = await supabase.rpc("cleanup_rate_limits");
-      
-      if (error) {
-        console.error("[RateLimiter] Cleanup error:", error);
-        throw error;
-      }
+    const rate = await enforceRateLimit(keyHash, category, limits.maxRequests, limits.windowSeconds);
+    const remaining = rate.remaining;
 
-      console.log(`[RateLimiter] Cleaned up ${data} old entries`);
-      
-      return new Response(
-        JSON.stringify({ cleaned: data }),
-        { 
-          status: 200, 
-          headers: { ...corsHeaders, "Content-Type": "application/json" } 
-        }
-      );
-    }
-
-    if (action === "status") {
-      // Get current status without incrementing
-      const { data, error } = await supabase.rpc("get_rate_limit_status", {
-        _key_hash: keyHash,
-        _category: category,
-        _window_seconds: limits.windowSeconds,
-      });
-
-      if (error) {
-        console.error("[RateLimiter] Status error:", error);
-        throw error;
-      }
-
-      const row = data?.[0];
-      const currentCount = row?.current_count || 0;
-      const remaining = limits.maxRequests - currentCount;
-      const resetAt = row?.window_end || new Date(Date.now() + limits.windowSeconds * 1000).toISOString();
-
-      const response: RateLimitResponse = {
-        allowed: remaining > 0,
-        remaining: Math.max(0, remaining),
-        resetAt,
-        category,
-      };
-
-      return new Response(
-        JSON.stringify(response),
-        { 
-          status: 200, 
-          headers: { ...corsHeaders, "Content-Type": "application/json" } 
-        }
-      );
-    }
-
-    // Default: check action (increment counter)
-    const { data: remaining, error } = await supabase.rpc("check_rate_limit", {
-      _key_hash: keyHash,
-      _category: category,
-      _max_requests: limits.maxRequests,
-      _window_seconds: limits.windowSeconds,
-    });
-
-    if (error) {
-      console.error("[RateLimiter] Check error:", error);
-      // On error, allow the request (fail open)
-      return new Response(
-        JSON.stringify({ 
-          allowed: true, 
-          remaining: 999, 
-          resetAt: new Date().toISOString(),
-          category,
-          error: "Rate limit check failed, allowing request" 
-        }),
-        { 
-          status: 200, 
-          headers: { ...corsHeaders, "Content-Type": "application/json" } 
-        }
-      );
-    }
-
-    const allowed = remaining >= 0;
+    const allowed = rate.allowed;
     const resetAt = new Date(Date.now() + limits.windowSeconds * 1000).toISOString();
 
     const response: RateLimitResponse = {
@@ -221,17 +113,17 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error("[RateLimiter] Error:", error);
     
-    // Fail open on errors
+    // Fail closed: an unavailable limiter must not silently disable protection.
     return new Response(
       JSON.stringify({ 
-        allowed: true, 
-        remaining: 999, 
+        allowed: false,
+        remaining: 0,
         resetAt: new Date().toISOString(),
         category: "unknown",
-        error: "Internal error, allowing request" 
+        error: "Rate limit unavailable"
       }),
       { 
-        status: 200, 
+        status: 503,
         headers: { ...corsHeaders, "Content-Type": "application/json" } 
       }
     );

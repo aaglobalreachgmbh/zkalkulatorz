@@ -15,6 +15,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
+import { z } from "npm:zod@3.23.8";
+import { enforceRateLimit, privateHash, requestTooLarge } from "../_shared/requestSecurity.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -59,6 +61,39 @@ interface SendOfferEmailRequest {
     dataProtectionEmail?: string;
   };
 }
+
+const OptionalShortText = z.string().max(500).optional();
+const SendOfferEmailSchema = z.object({
+  recipientEmail: z.string().email().max(254),
+  recipientName: z.string().max(200),
+  senderName: z.string().min(1).max(200),
+  senderEmail: z.string().email().max(254).optional(),
+  senderPhone: z.string().max(50).optional(),
+  subject: z.string().min(1).max(200),
+  message: z.string().max(5000).optional(),
+  pdfBase64: z.string().min(1).max(14_000_000),
+  pdfFilename: z.string().min(1).max(180),
+  offerId: OptionalShortText,
+  sharedOfferId: OptionalShortText,
+  gdprConsentGiven: z.literal(true),
+  gdprConsentTimestamp: z.string().max(100).optional(),
+  branding: z.object({
+    logoUrl: z.string().url().max(2000).optional(),
+    primaryColor: z.string().max(30).optional(),
+    secondaryColor: z.string().max(30).optional(),
+    companyName: z.string().max(200).optional(),
+  }).optional(),
+  companyLegal: z.object({
+    companyName: OptionalShortText,
+    street: OptionalShortText,
+    postalCode: z.string().max(20).optional(),
+    city: OptionalShortText,
+    registerNumber: OptionalShortText,
+    ceo: OptionalShortText,
+    vatId: OptionalShortText,
+    dataProtectionEmail: z.string().email().max(254).optional(),
+  }).optional(),
+});
 
 // Generate HTML email template with DSGVO-compliant footer
 function generateEmailHtml(params: {
@@ -350,6 +385,9 @@ const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+  if (req.method !== "POST") return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  if (!req.headers.get("content-type")?.includes("application/json")) return new Response(JSON.stringify({ error: "JSON required" }), { status: 415, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  if (requestTooLarge(req, 15 * 1024 * 1024)) return new Response(JSON.stringify({ error: "Request too large" }), { status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   const startTime = Date.now();
 
@@ -387,6 +425,14 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    try {
+      const key = await privateHash(userId, "offer-email");
+      const limit = await enforceRateLimit(key, "offer_email", RATE_LIMIT_MAX, 3600);
+      if (!limit.allowed) return new Response(JSON.stringify({ error: "E-Mail-Limit erreicht", code: "RATE_LIMIT_EXCEEDED", retryAfter: limit.retryAfter }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json", "Retry-After": String(limit.retryAfter) } });
+    } catch {
+      return new Response(JSON.stringify({ error: "Versandschutz vorübergehend nicht verfügbar" }), { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     // Initialize Resend
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     if (!resendApiKey) {
@@ -400,7 +446,9 @@ const handler = async (req: Request): Promise<Response> => {
     const resend = new Resend(resendApiKey);
 
     // Parse request body
-    const body: SendOfferEmailRequest = await req.json();
+    const parsedBody = SendOfferEmailSchema.safeParse(await req.json());
+    if (!parsedBody.success) return new Response(JSON.stringify({ error: "Ungültige E-Mail-Daten" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const body: SendOfferEmailRequest = parsedBody.data;
     
     // DSGVO: Validate consent (REQUIRED)
     if (!body.gdprConsentGiven) {
@@ -443,7 +491,10 @@ const handler = async (req: Request): Promise<Response> => {
         .eq("user_id", userId)
         .gte("created_at", oneHourAgo);
       
-      if (!countError && count !== null && count >= RATE_LIMIT_MAX) {
+      if (countError) {
+        return new Response(JSON.stringify({ error: "Versandschutz vorübergehend nicht verfügbar" }), { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      if (count !== null && count >= RATE_LIMIT_MAX) {
         console.warn(`[send-offer-email] Rate limit exceeded for user ${userId}: ${count} emails in last hour`);
         return new Response(
           JSON.stringify({ 

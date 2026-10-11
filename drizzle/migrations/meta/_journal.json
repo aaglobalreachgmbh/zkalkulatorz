@@ -15,6 +15,13 @@
       "when": 1791221757330,
       "tag": "0001_restrict_badge_definitions_to_authenticated_users",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791733499951,
+      "tag": "0002_harden_internal_rate_limits",
+      "breakpoints": true
     }
   ]
 }

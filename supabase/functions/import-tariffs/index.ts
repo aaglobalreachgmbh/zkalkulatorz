@@ -7,6 +7,10 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { enforceRateLimit, privateHash, requestTooLarge } from "../_shared/requestSecurity.ts";
+
+const MAX_REQUEST_BYTES = 2 * 1024 * 1024;
+const MAX_TARIFFS = 2000;
 
 // --- CORS Headers ---
 const corsHeaders = {
@@ -20,6 +24,9 @@ serve(async (req) => {
     if (req.method === "OPTIONS") {
         return new Response("ok", { headers: corsHeaders });
     }
+    if (req.method !== "POST") return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (!req.headers.get("content-type")?.includes("application/json")) return new Response(JSON.stringify({ error: "JSON required" }), { status: 415, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (requestTooLarge(req, MAX_REQUEST_BYTES)) return new Response(JSON.stringify({ error: "Payload too large" }), { status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     try {
         // 1. Validate Admin Token (Simple check - in production, use JWT or API Key)
@@ -32,6 +39,10 @@ serve(async (req) => {
                 { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
         }
+
+        const key = await privateHash(adminToken, "tariff-import");
+        const limit = await enforceRateLimit(key, "tariff_import", 10, 60);
+        if (!limit.allowed) return new Response(JSON.stringify({ error: "Too many imports" }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json", "Retry-After": String(limit.retryAfter) } });
 
         // 2. Initialize Supabase Client with Service Role Key (Bypass RLS)
         const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
@@ -47,9 +58,9 @@ serve(async (req) => {
         const body = await req.json();
         const tariffs = body.tariffs;
 
-        if (!Array.isArray(tariffs) || tariffs.length === 0) {
+        if (!Array.isArray(tariffs) || tariffs.length === 0 || tariffs.length > MAX_TARIFFS) {
             return new Response(
-                JSON.stringify({ error: "Invalid payload: 'tariffs' array required" }),
+                JSON.stringify({ error: `Invalid payload: 1-${MAX_TARIFFS} tariffs required` }),
                 { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
         }

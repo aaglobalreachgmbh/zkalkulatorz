@@ -13,3 +13,4 @@
 - Home is a single sales overview: quick actions, daily work, and configurable dashboard widgets share `/`; workspace layouts adjust emphasis but never hide the dashboard.
 - Administrative demo routes run inside `DemoAdminBoundary`, which keeps their real UI explorable while blocking backend writes and function calls in demo mode.
 - Public demo access uses a server-verified, short-lived ticket and always activates the anonymous local demo workspace; it never creates an auth session or grants backend roles.
+- Server-side abuse limits use the shared persistent rate-limit helper with server-derived, keyed hashes and fail closed, because browser or instance-local counters are not a security boundary.

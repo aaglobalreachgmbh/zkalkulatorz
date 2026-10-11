@@ -10,6 +10,7 @@ import { useTenantAdmin } from "@/hooks/useTenantAdmin";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2, ShieldAlert, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useDemoAccess } from "@/hooks/useDemoAccess";
 
 interface TenantAdminRouteProps {
   children: React.ReactNode;
@@ -18,6 +19,7 @@ interface TenantAdminRouteProps {
 export function TenantAdminRoute({ children }: TenantAdminRouteProps) {
   const { user, isLoading: authLoading } = useAuth();
   const { isTenantAdmin, isLoading: adminLoading } = useTenantAdmin();
+  const demoAccess = useDemoAccess();
   const location = useLocation();
   
   // Wait for session to stabilize after auth loading completes
@@ -54,6 +56,18 @@ export function TenantAdminRoute({ children }: TenantAdminRouteProps) {
     }
     setShowRetry(false);
   }, [authLoading, adminLoading, sessionStable]);
+
+  if (demoAccess) {
+    return (
+      <>
+        <div className="m-3 flex items-center gap-2 rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-sm text-foreground">
+          <ShieldAlert className="h-4 w-4 text-primary" />
+          <span><strong>Shop-Verwaltung in der Demo.</strong> Ansichten sind vollständig sichtbar; echte Änderungen bleiben gesperrt.</span>
+        </div>
+        {children}
+      </>
+    );
+  }
 
   // 1. FIRST: Wait until auth is COMPLETELY loaded AND session is stable
   if (authLoading || !sessionStable) {

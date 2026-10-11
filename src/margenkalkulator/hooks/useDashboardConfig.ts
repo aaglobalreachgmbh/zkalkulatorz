@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { useDemoMode } from "@/hooks/useDemoMode";
 import { 
   WidgetLayout, 
   DEFAULT_DASHBOARD_LAYOUT,
@@ -36,6 +37,7 @@ interface UseDashboardConfigReturn {
 
 export function useDashboardConfig(): UseDashboardConfigReturn {
   const { user } = useAuth();
+  const { enabled: demoEnabled } = useDemoMode();
   const queryClient = useQueryClient();
   const [isEditMode, setEditMode] = useState(false);
 
@@ -94,8 +96,22 @@ export function useDashboardConfig(): UseDashboardConfigReturn {
   // Save config mutation
   const saveMutation = useMutation({
     mutationFn: async (newConfig: Partial<DashboardConfig>) => {
+      if (demoEnabled) {
+        const next = {
+          layout: newConfig.layout || config?.layout || DEFAULT_DASHBOARD_LAYOUT,
+          hidden_widgets: newConfig.hidden_widgets || config?.hidden_widgets || [],
+          settings: newConfig.settings || config?.settings || {},
+        };
+        try {
+          localStorage.setItem(`demo-dashboard-config:${user?.id ?? "anon"}`, JSON.stringify(next));
+        } catch (err) {
+          console.warn("[useDashboardConfig] Demo config write failed", err);
+        }
+        return next;
+      }
       if (!user) {
-        throw new Error("Not authenticated");
+        console.warn("[useDashboardConfig] Save skipped without authentication");
+        return null;
       }
 
       // First check if config exists
@@ -121,7 +137,10 @@ export function useDashboardConfig(): UseDashboardConfigReturn {
           })
           .eq("user_id", user.id);
         
-        if (error) throw error;
+        if (error) {
+          console.warn("[useDashboardConfig] Update failed:", error.message);
+          return null;
+        }
       } else {
         // Insert new
         const { error } = await supabase
@@ -134,10 +153,12 @@ export function useDashboardConfig(): UseDashboardConfigReturn {
             settings: settingsData,
           });
         
-        if (error) throw error;
+        if (error) {
+          console.warn("[useDashboardConfig] Insert failed:", error.message);
+          return null;
+        }
       }
-
-      if (error) throw error;
+      return null;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dashboard-config", user?.id] });
@@ -159,12 +180,12 @@ export function useDashboardConfig(): UseDashboardConfigReturn {
 
   // Update layout
   const updateLayout = useCallback((newLayout: WidgetLayout[]) => {
-    if (!user) {
+    if (!user && !demoEnabled) {
       toast.error("Bitte melden Sie sich an, um das Dashboard anzupassen");
       return;
     }
     saveMutation.mutate({ layout: newLayout });
-  }, [user, saveMutation]);
+  }, [user, demoEnabled, saveMutation]);
 
   // Toggle widget visibility
   const toggleWidget = useCallback((widgetId: string) => {

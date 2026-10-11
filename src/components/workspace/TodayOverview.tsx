@@ -85,10 +85,10 @@ export function TodayOverview({ compact = false }: { compact?: boolean }) {
           <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary" /> Kreuzgeschäft-Chancen</CardTitle></CardHeader>
           <CardContent className="space-y-2 text-sm">
             {DEMO_CROSS_CHANCES.slice(0, 4).map(({ c, chances }) => (
-              <button key={c.id} type="button" onClick={() => navigate("/calculator")} className="w-full text-left flex justify-between gap-2 hover:text-primary">
+              <Button key={c.id} type="button" variant="ghost" onClick={() => navigate("/calculator")} className="h-auto w-full justify-between gap-2 px-0 py-0 text-left font-normal hover:bg-transparent hover:text-primary">
                 <span>{c.name}</span>
                 <span className="text-xs text-muted-foreground">{chances.join(" · ")}</span>
-              </button>
+              </Button>
             ))}
           </CardContent>
         </Card>

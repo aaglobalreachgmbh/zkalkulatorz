@@ -10,3 +10,4 @@
 - Shared dialog primitives enforce dynamic viewport height and internal scrolling so completion actions remain reachable on short mobile screens.
 - The sales UI follows a light enterprise cockpit: core navigation stays sales-first, uses Lucide icons and semantic tokens, while classic layouts remain optional migration aids rather than competitor copies.
 - Demo mode grants a superadmin-like view only via `useDemoAccess` in role hooks/AdminRoute; it never assigns real roles, and server RLS remains the security boundary.
+- Home is a single sales overview: quick actions, daily work, and configurable dashboard widgets share `/`; workspace layouts adjust emphasis but never hide the dashboard.

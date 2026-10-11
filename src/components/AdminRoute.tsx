@@ -36,9 +36,9 @@ export function AdminRoute({ children }: AdminRouteProps) {
   if (demoAccess) {
     return (
       <>
-        <div className="mb-4 flex items-center gap-2 rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-sm text-foreground">
+        <div className="m-3 flex items-center gap-2 rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-sm text-foreground">
           <ShieldX className="h-4 w-4 text-primary" />
-          <span><strong>Im Demo-Modus nur Ansicht.</strong> Verwaltungsfunktionen werden gezeigt, aber nicht ausgeführt.</span>
+          <span><strong>Superadmin-Demo.</strong> Die vollständige Verwaltung ist sichtbar; echte Änderungen, Nachrichten und Veröffentlichungen bleiben gesperrt.</span>
         </div>
         {children}
       </>

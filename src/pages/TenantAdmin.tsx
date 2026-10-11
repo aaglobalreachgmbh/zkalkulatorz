@@ -84,30 +84,30 @@ export default function TenantAdmin() {
 
         {/* Tabs */}
         <Tabs defaultValue="company" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="company" className="flex items-center gap-2">
+          <TabsList className="flex h-auto w-full justify-start overflow-x-auto">
+            <TabsTrigger value="company" className="shrink-0 gap-2">
               <Briefcase className="h-4 w-4" />
               Unternehmen
             </TabsTrigger>
-            <TabsTrigger value="hardware" className="flex items-center gap-2">
+            <TabsTrigger value="hardware" className="shrink-0 gap-2">
               <FileSpreadsheet className="h-4 w-4" />
               Hardware
               {!hasHardware && <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 text-xs">!</Badge>}
             </TabsTrigger>
-            <TabsTrigger value="provisions" className="flex items-center gap-2">
+            <TabsTrigger value="provisions" className="shrink-0 gap-2">
               <CreditCard className="h-4 w-4" />
               Provisionen
               {!hasProvisions && <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 text-xs">!</Badge>}
             </TabsTrigger>
-            <TabsTrigger value="team" className="flex items-center gap-2">
+            <TabsTrigger value="team" className="shrink-0 gap-2">
               <Users className="h-4 w-4" />
               Team
             </TabsTrigger>
-            <TabsTrigger value="license" className="flex items-center gap-2">
+            <TabsTrigger value="license" className="shrink-0 gap-2">
               <Key className="h-4 w-4" />
               Lizenz
             </TabsTrigger>
-            <TabsTrigger value="permissions" className="flex items-center gap-2">
+            <TabsTrigger value="permissions" className="shrink-0 gap-2">
               <Shield className="h-4 w-4" />
               Rechte
             </TabsTrigger>

@@ -47,47 +47,47 @@ export function TodayOverview({ compact = false }: { compact?: boolean }) {
         </div>
       )}
 
-      <div className={compact ? "grid gap-3 lg:grid-cols-4" : "grid gap-4 md:grid-cols-2"}>
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><CalendarDays className="h-4 w-4 text-primary" /> Termine</CardTitle></CardHeader>
-          <CardContent className="space-y-2 text-sm">
+      <div className={compact ? "grid gap-3 md:grid-cols-2 2xl:grid-cols-4" : "grid gap-4 md:grid-cols-2"}>
+        <Card className="min-w-0 shadow-none">
+          <CardHeader className="p-4 pb-2"><CardTitle className="flex items-start gap-2 text-sm leading-5"><CalendarDays className="mt-0.5 h-4 w-4 shrink-0 text-primary" /> Termine</CardTitle></CardHeader>
+          <CardContent className="space-y-3 p-4 pt-0 text-sm">
             {todays.map((e) => (
-              <div key={e.id} className="flex justify-between gap-2">
-                <span><span className="font-medium tabular-nums">{e.time}</span> · {e.customer}</span>
-                <span className="text-muted-foreground text-xs">{e.topic}</span>
+              <div key={e.id} className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(5.5rem,auto)] items-start gap-3">
+                <span className="min-w-0 leading-5"><span className="font-medium tabular-nums">{e.time}</span> · {e.customer}</span>
+                <span className="break-words text-right text-xs leading-4 text-muted-foreground">{e.topic}</span>
               </div>
             ))}
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><RefreshCcw className="h-4 w-4 text-primary" /> Fällige Verlängerungen (≤ 90 Tage)</CardTitle></CardHeader>
-          <CardContent className="space-y-2 text-sm">
+        <Card className="min-w-0 shadow-none">
+          <CardHeader className="p-4 pb-2"><CardTitle className="flex items-start gap-2 text-sm leading-5"><RefreshCcw className="mt-0.5 h-4 w-4 shrink-0 text-primary" /> <span>Fällige Verlängerungen <span className="whitespace-nowrap">(≤ 90 Tage)</span></span></CardTitle></CardHeader>
+          <CardContent className="space-y-3 p-4 pt-0 text-sm">
             {DEMO_DUE_VVL.slice(0, 4).map((c) => (
-              <div key={c.id} className="flex justify-between gap-2">
-                <span>{c.name} · {c.mobileLines} Karten</span>
-                <Badge variant={c.vvlInDays <= 14 ? "destructive" : "secondary"}>{c.vvlInDays < 0 ? "überfällig" : `in ${c.vvlInDays} T.`}</Badge>
+              <div key={c.id} className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+                <span className="min-w-0 break-words leading-5">{c.name} · {c.mobileLines} Karten</span>
+                <Badge className="shrink-0 whitespace-nowrap" variant={c.vvlInDays <= 14 ? "destructive" : "secondary"}>{c.vvlInDays < 0 ? "überfällig" : `in ${c.vvlInDays} T.`}</Badge>
               </div>
             ))}
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><FileText className="h-4 w-4 text-primary" /> Offene Angebote</CardTitle></CardHeader>
-          <CardContent className="space-y-2 text-sm">
+        <Card className="min-w-0 shadow-none">
+          <CardHeader className="p-4 pb-2"><CardTitle className="flex items-start gap-2 text-sm leading-5"><FileText className="mt-0.5 h-4 w-4 shrink-0 text-primary" /> Offene Angebote</CardTitle></CardHeader>
+          <CardContent className="space-y-3 p-4 pt-0 text-sm">
             {openOffers.map((o) => (
-              <div key={o.id} className="flex justify-between gap-2">
-                <span className="truncate">{o.customer} · {o.title}</span>
-                <span className="tabular-nums text-muted-foreground">{o.monthlyNet.toLocaleString("de-DE", { style: "currency", currency: "EUR" })}</span>
+              <div key={o.id} className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+                <span className="min-w-0 truncate leading-5" title={`${o.customer} · ${o.title}`}>{o.customer} · {o.title}</span>
+                <span className="shrink-0 whitespace-nowrap text-right tabular-nums text-muted-foreground">{o.monthlyNet.toLocaleString("de-DE", { style: "currency", currency: "EUR" })}</span>
               </div>
             ))}
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary" /> Kreuzgeschäft-Chancen</CardTitle></CardHeader>
-          <CardContent className="space-y-2 text-sm">
+        <Card className="min-w-0 shadow-none">
+          <CardHeader className="p-4 pb-2"><CardTitle className="flex items-start gap-2 text-sm leading-5"><Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-primary" /> Kreuzgeschäft-Chancen</CardTitle></CardHeader>
+          <CardContent className="space-y-1 p-4 pt-0 text-sm">
             {DEMO_CROSS_CHANCES.slice(0, 4).map(({ c, chances }) => (
-              <Button key={c.id} type="button" variant="ghost" onClick={() => navigate("/calculator")} className="h-auto w-full justify-between gap-2 px-0 py-0 text-left font-normal hover:bg-transparent hover:text-primary">
-                <span>{c.name}</span>
-                <span className="text-xs text-muted-foreground">{chances.join(" · ")}</span>
+              <Button key={c.id} type="button" variant="ghost" onClick={() => navigate("/calculator")} className="h-auto min-h-11 w-full min-w-0 flex-col items-start justify-center gap-0.5 px-0 py-1 text-left font-normal hover:bg-transparent hover:text-primary">
+                <span className="w-full min-w-0 truncate" title={c.name}>{c.name}</span>
+                <span className="w-full whitespace-normal break-words text-xs leading-4 text-muted-foreground">{chances.join(" · ")}</span>
               </Button>
             ))}
           </CardContent>

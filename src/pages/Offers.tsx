@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { MainLayout } from "@/components/MainLayout";
-import { DemoListSection, DemoEnableHint } from "@/components/workspace/DemoListSection";
 import { useCloudOffers, CloudOffer } from "@/margenkalkulator/hooks/useCloudOffers";
 import { useCustomers } from "@/margenkalkulator/hooks/useCustomers";
 import { useTeams } from "@/margenkalkulator/hooks/useTeams";
@@ -71,6 +70,9 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useDemoMode } from "@/hooks/useDemoMode";
+import { useAuth } from "@/hooks/useAuth";
+import { useDemoWorkspace } from "@/margenkalkulator/workspace/demoWorkspace";
 
 export default function Offers() {
   const navigate = useNavigate();
@@ -78,6 +80,9 @@ export default function Offers() {
   const { offers, isLoading, deleteOffer, renameOffer } = useCloudOffers();
   const { customers } = useCustomers();
   const { teams } = useTeams();
+  const { user } = useAuth();
+  const { enabled: demoEnabled } = useDemoMode();
+  const { state: demo, update: updateDemo } = useDemoWorkspace(user?.id);
   const [searchQuery, setSearchQuery] = useState("");
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
@@ -114,6 +119,14 @@ export default function Offers() {
   const handleShare = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedOffer || !shareTeamId) return;
+    if (demoEnabled) {
+      updateDemo({ ...demo, offers: demo.offers.map((offer) => offer.id === selectedOffer.id ? { ...offer, team_id: shareTeamId, visibility: "team" } : offer) });
+      toast.success("Demo-Angebot mit Team geteilt");
+      setIsShareDialogOpen(false);
+      setSelectedOffer(null);
+      setShareTeamId("");
+      return;
+    }
 
     try {
       const { error } = await supabase
@@ -154,6 +167,18 @@ export default function Offers() {
   };
 
   const handleStatusChange = async (offerId: string, newStatus: OfferStatus) => {
+    if (demoEnabled) {
+      const selected = demo.offers.find((offer) => offer.id === offerId);
+      updateDemo({
+        ...demo,
+        offers: demo.offers.map((offer) => offer.id === offerId ? { ...offer, status: newStatus } : offer),
+        customers: newStatus === "angenommen" && selected?.customer_id
+          ? demo.customers.map((customer) => customer.id === selected.customer_id ? { ...customer, customer_status: "gewonnen", won_at: new Date().toISOString() } : customer)
+          : demo.customers,
+      });
+      toast.success(`Status auf "${getStatusLabel(newStatus)}" geändert`);
+      return;
+    }
     try {
       const { error } = await supabase
         .from("saved_offers")
@@ -375,7 +400,6 @@ export default function Offers() {
                 <p className="text-sm">
                   {searchQuery ? "Versuchen Sie eine andere Suche" : "Erstellen Sie Ihr erstes Angebot im Kalkulator"}
                 </p>
-                <DemoEnableHint />
               </div>
             ) : (
               <Table>
@@ -497,7 +521,6 @@ export default function Offers() {
             )}
           </CardContent>
         </Card>
-        <DemoListSection kind="offers" />
       </div>
     </MainLayout>
   );

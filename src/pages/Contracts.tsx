@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/MainLayout";
-import { DemoListSection, DemoEnableHint } from "@/components/workspace/DemoListSection";
 import {
   useAllContracts,
   getVVLUrgency,
@@ -297,7 +296,6 @@ export default function Contracts() {
             {renderGroup('none', 'Ohne VVL-Datum', <Calendar className="h-5 w-5 text-muted-foreground" />)}
           </div>
         )}
-        <DemoListSection kind="contracts" />
       </div>
     </MainLayout>
   );

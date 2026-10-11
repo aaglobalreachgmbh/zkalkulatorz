@@ -1,6 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
+import { useDemoMode } from "@/hooks/useDemoMode";
+import { useDemoWorkspace } from "@/margenkalkulator/workspace/demoWorkspace";
 
 // Types
 export interface CustomerContract {
@@ -142,6 +145,9 @@ export interface ContractWithCustomer extends CustomerContract {
 // Hook
 export function useCustomerContracts(customerId?: string) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const { enabled: demoEnabled } = useDemoMode();
+  const { state: demo, update: updateDemo } = useDemoWorkspace(user?.id);
 
   // Fetch contracts for a specific customer
   const contractsQuery = useQuery({
@@ -158,12 +164,26 @@ export function useCustomerContracts(customerId?: string) {
       if (error) throw error;
       return data as CustomerContract[];
     },
-    enabled: !!customerId,
+    enabled: !!customerId && !demoEnabled,
   });
 
   // Create contract
   const createContract = useMutation({
     mutationFn: async (input: ContractInput) => {
+      if (demoEnabled) {
+        const now = new Date().toISOString();
+        const contract: ContractWithCustomer = {
+          id: `demo-contract-${Date.now()}`, customer_id: input.customer_id, user_id: "demo-user",
+          netz: input.netz || "vodafone", tarif_name: input.tarif_name || null, handy_nr: input.handy_nr || null,
+          vertragsbeginn: input.vertragsbeginn || null, vertragsende: input.vertragsende || null,
+          vvl_datum: input.vvl_datum || null, status: input.status || "aktiv", hardware_name: input.hardware_name || null,
+          ek_preis: input.ek_preis ?? null, monatspreis: input.monatspreis ?? null,
+          provision_erhalten: input.provision_erhalten ?? null, notes: input.notes || null, created_at: now, updated_at: now,
+          customer: demo.customers.find((item) => item.id === input.customer_id),
+        };
+        updateDemo({ ...demo, contracts: [contract, ...demo.contracts] });
+        return contract;
+      }
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
@@ -192,6 +212,12 @@ export function useCustomerContracts(customerId?: string) {
   // Update contract
   const updateContract = useMutation({
     mutationFn: async ({ id, ...input }: Partial<ContractInput> & { id: string }) => {
+      if (demoEnabled) {
+        const updated = demo.contracts.find((contract) => contract.id === id);
+        if (!updated) return null;
+        updateDemo({ ...demo, contracts: demo.contracts.map((contract) => contract.id === id ? { ...contract, ...input, updated_at: new Date().toISOString() } : contract) });
+        return { ...updated, ...input };
+      }
       const { data, error } = await supabase
         .from("customer_contracts")
         .update(input)
@@ -215,6 +241,10 @@ export function useCustomerContracts(customerId?: string) {
   // Delete contract
   const deleteContract = useMutation({
     mutationFn: async (id: string) => {
+      if (demoEnabled) {
+        updateDemo({ ...demo, contracts: demo.contracts.filter((contract) => contract.id !== id) });
+        return;
+      }
       const { error } = await supabase
         .from("customer_contracts")
         .delete()
@@ -233,8 +263,8 @@ export function useCustomerContracts(customerId?: string) {
   });
 
   return {
-    contracts: contractsQuery.data ?? [],
-    isLoading: contractsQuery.isLoading,
+    contracts: demoEnabled ? demo.contracts.filter((contract) => contract.customer_id === customerId) : contractsQuery.data ?? [],
+    isLoading: demoEnabled ? false : contractsQuery.isLoading,
     error: contractsQuery.error,
     createContract,
     updateContract,
@@ -244,9 +274,13 @@ export function useCustomerContracts(customerId?: string) {
 
 // Hook for all contracts (VVL overview)
 export function useAllContracts() {
-  return useQuery({
-    queryKey: ["all-contracts"],
+  const { user } = useAuth();
+  const { enabled: demoEnabled } = useDemoMode();
+  const { state: demo } = useDemoWorkspace(user?.id);
+  const query = useQuery({
+    queryKey: ["all-contracts", demoEnabled ? "demo" : "live"],
     queryFn: async () => {
+      if (demoEnabled) return demo.contracts;
       const { data, error } = await supabase
         .from("customer_contracts")
         .select(`
@@ -267,7 +301,9 @@ export function useAllContracts() {
       }
       return (data ?? []) as ContractWithCustomer[];
     },
+    enabled: !demoEnabled,
   });
+  return demoEnabled ? { ...query, data: demo.contracts, isLoading: false, isError: false } : query;
 }
 
 // Hook to get counts by urgency

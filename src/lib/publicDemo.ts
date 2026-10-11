@@ -11,7 +11,8 @@ function ticketExpiry(ticket: string): number {
     const payload = ticket.split(".")[0];
     if (!payload) return 0;
     const normalized = payload.replaceAll("-", "+").replaceAll("_", "/");
-    const decoded = JSON.parse(atob(normalized)) as { exp?: number };
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+    const decoded = JSON.parse(atob(padded)) as { exp?: number };
     return typeof decoded.exp === "number" ? decoded.exp * 1000 : 0;
   } catch {
     return 0;

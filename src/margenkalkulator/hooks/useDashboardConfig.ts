@@ -45,6 +45,15 @@ export function useDashboardConfig(): UseDashboardConfigReturn {
   const { data: config, isLoading, error } = useQuery({
     queryKey: ["dashboard-config", user?.id],
     queryFn: async (): Promise<DashboardConfig> => {
+      if (demoEnabled) {
+        try {
+          const stored = localStorage.getItem(`demo-dashboard-config:${user?.id ?? "anon"}`);
+          if (stored) return JSON.parse(stored) as DashboardConfig;
+        } catch (err) {
+          console.warn("[useDashboardConfig] Demo config read failed", err);
+        }
+        return { layout: DEFAULT_DASHBOARD_LAYOUT, hidden_widgets: [], settings: {} };
+      }
       if (!user) {
         return {
           layout: DEFAULT_DASHBOARD_LAYOUT,
@@ -161,6 +170,18 @@ export function useDashboardConfig(): UseDashboardConfigReturn {
       return null;
     },
     onSuccess: () => {
+      if (demoEnabled) {
+        queryClient.setQueryData(["dashboard-config", user?.id], () => {
+          try {
+            const stored = localStorage.getItem(`demo-dashboard-config:${user?.id ?? "anon"}`);
+            return stored ? JSON.parse(stored) as DashboardConfig : undefined;
+          } catch (err) {
+            console.warn("[useDashboardConfig] Demo cache refresh failed", err);
+            return undefined;
+          }
+        });
+        return;
+      }
       queryClient.invalidateQueries({ queryKey: ["dashboard-config", user?.id] });
     },
     onError: (error) => {

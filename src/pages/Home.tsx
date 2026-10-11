@@ -30,7 +30,6 @@ import {
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { isTestModeActive } from "@/lib/testMode";
 import { RoleQuickStart } from "@/components/workspace/RoleQuickStart";
-import { useWorkspaceProfile } from "@/hooks/useWorkspaceProfile";
 import { useDemoMode } from "@/hooks/useDemoMode";
 import { TodayOverview, DemoModeToggleCard } from "@/components/workspace/TodayOverview";
 
@@ -39,7 +38,6 @@ const Home = () => {
   const { user, isLoading: authLoading } = useAuth();
   const {
     layout,
-    isLoading: layoutLoading,
     isEditMode,
     setEditMode,
     addWidget,
@@ -47,7 +45,6 @@ const Home = () => {
     resetToDefault,
     moveWidget,
   } = useDashboardConfig();
-  const { profile } = useWorkspaceProfile();
   const { enabled: demoEnabled } = useDemoMode();
   const canUseWorkspace = !!user || isTestModeActive();
   const showQuickStart = canUseWorkspace;

@@ -8,6 +8,7 @@ import { X, GripVertical, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { Button } from "@/components/ui/button";
 
 interface DashboardWidgetRendererProps {
   widgetId: string;
@@ -52,30 +53,36 @@ export function DashboardWidgetRenderer({
       {isEditMode && (
         <div className="absolute -top-2 -right-2 z-10 flex gap-1">
           {/* Drag Handle */}
-          <button
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
             {...attributes}
             {...listeners}
             className={cn(
-              "p-1.5 rounded-full bg-muted border border-border",
+              "h-7 w-7 rounded-full bg-muted",
               "hover:bg-accent cursor-grab active:cursor-grabbing",
               "transition-colors shadow-sm"
             )}
             title="Ziehen zum Verschieben"
           >
             <GripVertical className="w-3.5 h-3.5 text-muted-foreground" />
-          </button>
+          </Button>
           
           {/* Remove Button */}
-          <button
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
             onClick={onRemove}
             className={cn(
-              "p-1.5 rounded-full bg-destructive/10 border border-destructive/20",
+              "h-7 w-7 rounded-full bg-destructive/10 border-destructive/20",
               "hover:bg-destructive/20 transition-colors shadow-sm"
             )}
             title={`"${name}" entfernen`}
           >
             <X className="w-3.5 h-3.5 text-destructive" />
-          </button>
+          </Button>
         </div>
       )}
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useMFA } from "@/components/mfa";
 import { useUserRole } from "./useUserRole";
+import { useDemoAccess } from "./useDemoAccess";
 import { useAuth } from "./useAuth";
 
 interface UseAdminMFAEnforcementResult {
@@ -17,6 +18,7 @@ interface UseAdminMFAEnforcementResult {
 export function useAdminMFAEnforcement(): UseAdminMFAEnforcementResult {
   const { user } = useAuth();
   const { isAdmin, isLoading: isRoleLoading } = useUserRole();
+  const demoAccess = useDemoAccess();
   const { hasMFA, isLoading: isMFALoading } = useMFA();
   const [isCheckingMFA, setIsCheckingMFA] = useState(true);
 
@@ -37,7 +39,8 @@ export function useAdminMFAEnforcement(): UseAdminMFAEnforcementResult {
   }
 
   // Admin users without MFA must set it up
-  const requiresMFASetup = isAdmin && !hasMFA && !isCheckingMFA;
+  // Demo-Anzeige als Superadmin erzwingt keine MFA (keine echten Rechte)
+  const requiresMFASetup = isAdmin && !hasMFA && !isCheckingMFA && !demoAccess;
 
   return {
     requiresMFASetup,

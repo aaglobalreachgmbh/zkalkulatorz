@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
+import { useDemoAccess } from "./useDemoAccess";
 
 type AppRole = "superadmin" | "admin" | "tenant_admin" | "moderator" | "user";
 
@@ -26,6 +27,7 @@ interface UseUserRoleResult {
 
 export function useUserRole(): UseUserRoleResult {
   const { user } = useAuth();
+  const demoAccess = useDemoAccess();
   const [role, setRole] = useState<AppRole | null>(null);
   const [allRoles, setAllRoles] = useState<AppRole[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -91,6 +93,20 @@ export function useUserRole(): UseUserRoleResult {
 
   // Derive permissions from all roles, not just highest
   const hasRole = (checkRole: AppRole) => allRoles.includes(checkRole);
+
+  // Demo-Modus: reine Anzeige als Superadmin (keine echten Rechte)
+  if (demoAccess) {
+    return {
+      role: "superadmin",
+      allRoles: ["superadmin"],
+      isSuperAdmin: true,
+      isAdmin: true,
+      isTenantAdmin: true,
+      isModerator: true,
+      isLoading: false,
+      error: null,
+    };
+  }
 
   return {
     role,

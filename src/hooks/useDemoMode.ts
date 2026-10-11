@@ -4,6 +4,7 @@
 // ============================================
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { resetDemoWorkspace } from "@/margenkalkulator/workspace/demoWorkspace";
 
 const EVENT = "demo-mode-changed";
 const keyFor = (userId?: string) => `demo-mode:${userId ?? "anon"}`;
@@ -52,5 +53,9 @@ export function useDemoMode() {
     window.dispatchEvent(new Event(EVENT));
   }, [userId]);
 
-  return { enabled, setDemo, tourSeen, markTourSeen };
+  const resetDemo = useCallback(() => {
+    resetDemoWorkspace(userId);
+  }, [userId]);
+
+  return { enabled, setDemo, resetDemo, tourSeen, markTourSeen };
 }

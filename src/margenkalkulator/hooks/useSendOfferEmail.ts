@@ -66,7 +66,8 @@ export function useSendOfferEmail() {
     
     try {
       const { data, error } = await supabase.functions.invoke("send-offer-email", {
-        body: dropEmpty({
+        body: {
+          ...dropEmpty({
           ...params,
           branding: dropEmpty({
             logoUrl: branding.logoUrl,
@@ -75,7 +76,9 @@ export function useSendOfferEmail() {
             companyName: branding.companyName,
           }),
           companyLegal: params.companyLegal ? dropEmpty(params.companyLegal) : undefined,
-        }),
+          }),
+          recipientName: params.recipientName ?? "",
+        },
       });
 
       if (error) {

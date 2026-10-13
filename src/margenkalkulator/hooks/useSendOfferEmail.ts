@@ -76,7 +76,7 @@ export function useSendOfferEmail() {
             companyName: branding.companyName,
           }),
           companyLegal: params.companyLegal ? dropEmpty(params.companyLegal) : undefined,
-        ),
+          }),
           recipientName: params.recipientName ?? "",
         },
       });

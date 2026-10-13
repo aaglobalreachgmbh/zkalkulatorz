@@ -242,6 +242,24 @@ class RouteErrorBoundary extends Component<{ children: ReactNode }, RouteErrorBo
     console.error("[RouteErrorBoundary] Component Stack:", errorInfo.componentStack);
 
     const errorMessage = error?.message?.toLowerCase() || "";
+
+    // Nach einer neuen Veröffentlichung fehlen alte Seitenteile: einmalig automatisch neu laden.
+    if (
+      errorMessage.includes("dynamically imported module") ||
+      errorMessage.includes("importing a module script failed") ||
+      errorMessage.includes("loading chunk") ||
+      errorMessage.includes("failed to fetch")
+    ) {
+      try {
+        const key = "chunk-reload-at";
+        const last = Number(sessionStorage.getItem(key) ?? 0);
+        if (Date.now() - last > 30_000) {
+          sessionStorage.setItem(key, String(Date.now()));
+          window.location.reload();
+          return;
+        }
+      } catch { /* ignore */ }
+    }
     if (
       errorMessage.includes("refresh_token") ||
       errorMessage.includes("session") ||

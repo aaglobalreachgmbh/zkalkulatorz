@@ -44,6 +44,18 @@ import { logEnvironmentStatus } from "./lib/envGuard";
 // ============================================
 logEnvironmentStatus();
 
+// Veraltete Seitenteile nach neuer Veröffentlichung: einmalig neu laden statt Fehlerseite.
+window.addEventListener("vite:preloadError", (event) => {
+  try {
+    const key = "chunk-reload-at";
+    if (Date.now() - Number(sessionStorage.getItem(key) ?? 0) > 30_000) {
+      sessionStorage.setItem(key, String(Date.now()));
+      event.preventDefault();
+      window.location.reload();
+    }
+  } catch { /* ignore */ }
+});
+
 const root = createRoot(document.getElementById("root")!);
 
 root.render(

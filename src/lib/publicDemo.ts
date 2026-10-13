@@ -22,7 +22,8 @@ function ticketExpiry(ticket: string): number {
 export function getPublicDemoTicket(): string | null {
   try {
     const ticket = localStorage.getItem(TICKET_KEY);
-    if (!ticket || ticketExpiry(ticket) <= Date.now()) {
+    if (!ticket) return null;
+    if (ticketExpiry(ticket) <= Date.now()) {
       disablePublicDemoMode();
       return null;
     }
